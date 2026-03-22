@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0",
+  "project": "fortemi-browser",
+  "generated": "2026-03-21",
+  "command": "sdlc-accelerate --interactive",
+  "guidance": "full data compatibility with fortemi server required",
+
+  "phase": "Elaboration",
+  "phase_status": "READY_TO_START",
+  "gate_inception": "PASSED",
+  "gate_elaboration": "PENDING",
+  "gate_construction": "NOT_STARTED",
+  "gate_transition": "NOT_STARTED",
+
+  "inception": {
+    "status": "COMPLETE",
+    "started": "2026-03-20",
+    "completed": "2026-03-21",
+    "artifacts": [
+      ".aiwg/intake/project-intake.md",
+      ".aiwg/intake/solution-profile.md",
+      ".aiwg/intake/option-matrix.md",
+      ".aiwg/intake/architecture.md",
+      ".aiwg/intake/data-model.md",
+      ".aiwg/intake/flows.md",
+      ".aiwg/intake/README.md",
+      ".aiwg/adrs/ADR-001-pglite-storage-engine.md",
+      ".aiwg/adrs/ADR-002-capability-modules.md",
+      ".aiwg/adrs/ADR-003-pglite-single-writer.md",
+      ".aiwg/adrs/ADR-004-service-worker-api.md",
+      ".aiwg/adrs/ADR-005-browser-compatibility.md",
+      ".aiwg/risks/risk-list.md",
+      ".aiwg/team/agent-assignments.md",
+      ".aiwg/planning/phase-plan-inception.md",
+      ".aiwg/gates/gate-inception.md"
+    ]
+  },
+
+  "elaboration": {
+    "status": "READY_TO_START",
+    "started": null,
+    "completed": null,
+    "target_start": "2026-03-22",
+    "target_complete": "2026-05-16",
+    "weeks": 8,
+    "artifacts": [
+      ".aiwg/planning/phase-plan-elaboration.md",
+      ".aiwg/architecture/SAD.md",
+      ".aiwg/requirements/supplementary-requirements.md",
+      ".aiwg/requirements/use-cases/UC-001-capture-knowledge.md",
+      ".aiwg/requirements/use-cases/UC-002-search-notes.md",
+      ".aiwg/requirements/use-cases/UC-003-manage-collections.md",
+      ".aiwg/requirements/use-cases/UC-004-mcp-tool-access.md",
+      ".aiwg/requirements/use-cases/UC-005-manage-capabilities.md",
+      ".aiwg/requirements/use-cases/UC-006-manage-attachments.md",
+      ".aiwg/requirements/use-cases/UC-007-manage-archives.md",
+      ".aiwg/requirements/use-cases/UC-008-manage-links.md",
+      ".aiwg/testing/test-strategy.md",
+      ".aiwg/planning/iteration-plan-elaboration.csv",
+      ".aiwg/deployment/cm-plan.md",
+      ".aiwg/gates/gate-elaboration.md"
+    ],
+    "key_risk_retirement": {
+      "R-001": "Retired by PGlite PoC in Elaboration Iteration 1 (target: 2026-04-18)"
+    }
+  },
+
+  "construction": {
+    "status": "NOT_STARTED",
+    "target_start": "2026-05-17",
+    "iterations": [
+      {
+        "id": "C1",
+        "name": "Foundation Stack",
+        "target": "2026-05-17 to 2026-07-11",
+        "weeks": 8,
+        "plan": ".aiwg/planning/iteration-plan-construction-1.csv",
+        "stories": 20,
+        "points": 104
+      },
+      {
+        "id": "C2",
+        "name": "Core CRUD + FTS + SKOS + MCP (basic)",
+        "target": "2026-07-12 to 2026-09-05",
+        "weeks": 8,
+        "plan": ".aiwg/planning/iteration-plan-construction-2.csv",
+        "stories": 20,
+        "points": 112
+      }
+    ]
+  },
+
+  "key_decisions": {
+    "storage_engine": "PGlite (PostgreSQL WASM) — ADR-001",
+    "capability_system": "Opt-in WASM modules — ADR-002",
+    "write_serialization": "Single-writer PGlite Worker — ADR-003",
+    "api_surface": "Service Worker REST interception — ADR-004",
+    "browser_targets": "Chrome 102+, Firefox 111+, Safari 17+, iOS out of scope v1 — ADR-005"
+  },
+
+  "non_negotiables": [
+    "UUIDv7 primary keys",
+    "Soft-delete (deleted_at) on all mutable entities",
+    "JSON field names identical to server",
+    "Capability module system before any WASM",
+    "AGPL-3.0 license only",
+    "CalVer YYYY.M.PATCH no leading zeros"
+  ],
+
+  "top_risks": [
+    { "id": "R-001", "status": "Monitoring", "retirement": "Elaboration Iteration 1 PoC" },
+    { "id": "R-002", "status": "Mitigating", "mitigation": "Format parity test suite" },
+    { "id": "R-004", "status": "Mitigating", "mitigation": "Capability module opt-in system" }
+  ]
+}
