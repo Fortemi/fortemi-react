@@ -1,5 +1,5 @@
 iteration,id,title,type,priority,points,phase,owner,status,acceptance_criteria
-C1,C1-1,Project scaffolding (Vite + React 19 + TypeScript strict),task,CRITICAL,5,Construction,roctinam,PENDING,"npm run dev works; TypeScript strict; ESLint clean; COOP/COEP headers set"
+C1,C1-1,Project scaffolding (Vite + React 19 + TypeScript strict),task,CRITICAL,5,Construction,roctinam,PENDING,"npm run dev works; TypeScript strict; ESLint clean; PGlite optimizeDeps configured (Errata #5: COOP/COEP NOT required)"
 C1,C1-2,PGlite Worker implementation (production-quality),story,CRITICAL,13,Construction,roctinam,PENDING,"Full postMessage protocol; QUERY/EXEC/BEGIN/COMMIT/ROLLBACK; error handling; type-safe WorkerClient"
 C1,C1-3,Migration runner (production-quality),story,CRITICAL,8,Construction,roctinam,PENDING,"Runs all migrations in sequence; schema_version updated atomically; migration tests pass"
 C1,C1-4,Migration 0001: initial schema SQL file,task,CRITICAL,8,Construction,roctinam,PENDING,"All core tables created: note, note_original, note_revised_current, note_revision, job_queue, collection, archive, api_key, link, provenance_edge"
@@ -9,7 +9,7 @@ C1,C1-7,Migration 0004: embeddings and linking schema,task,CRITICAL,5,Constructi
 C1,C1-8,CapabilityManager (production-quality),story,CRITICAL,13,Construction,roctinam,PENDING,"enable/disable/isReady API; state machine (unloaded→loading→ready→disabled); no WASM loaded by default; CAP-001 enforced"
 C1,C1-9,Service Worker registration and localhost:3000 interception,story,CRITICAL,8,Construction,roctinam,PENDING,"SW registered; fetch intercepted; version-safe update lifecycle (drain before skipWaiting)"
 C1,C1-10,Event bus implementation,story,HIGH,5,Construction,roctinam,PENDING,"SSE-style pub/sub; note.created / note.updated / capability.ready events; typed event payloads"
-C1,C1-11,BLAKE3 WASM integration with SHA-256 fallback,story,MEDIUM,5,Construction,roctinam,PENDING,"computeHash(bytes) returns 'blake3:...' or 'sha256:...' based on availability"
+C1,C1-11,Content hashing via @noble/hashes (BLAKE3) with SHA-256 fallback,story,MEDIUM,5,Construction,roctinam,PENDING,"computeHash(bytes) returns 'blake3:...' or 'sha256:...' — uses @noble/hashes (pure JS) per Errata #2; blake3-wasm dropped"
 C1,C1-12,UUIDv7 utility,task,CRITICAL,2,Construction,roctinam,PENDING,"generateId() returns RFC 9562 UUIDv7; unit tests confirm format"
 C1,C1-13,Archive management (create, switch, delete),story,HIGH,8,Construction,roctinam,PENDING,"Multiple PGlite instances; opfs://fortemi-{name} paths; migration on switch; UC-007 ATs pass"
 C1,C1-14,Format parity test infrastructure scaffolding,task,CRITICAL,8,Construction,roctinam,PENDING,"tests/format-parity/ structure; loadServerFixture helper; matchServerShape matcher; CI runs format parity suite"

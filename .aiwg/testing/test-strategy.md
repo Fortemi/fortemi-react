@@ -3,7 +3,7 @@
 **Version**: 2026.3.0
 **Author**: roctinam + Test Engineer (agent)
 **Status**: Baselined
-**Frameworks**: Vitest 2.x (unit/integration), Playwright 1.x (E2E)
+**Frameworks**: Vitest 4.x (unit/integration), Playwright 1.x (E2E) <!-- Errata #4: Vitest 2.x → 4.x -->
 **CI**: Gitea Actions
 
 ---
@@ -41,7 +41,7 @@ Test pyramid (priority order):
 | `capability.manager.test.ts` | Module registration, state machine | HIGH |
 | `job.queue.test.ts` | Job insertion, priority ordering, retry logic | HIGH |
 | `uuidv7.test.ts` | UUIDv7 format validation | HIGH |
-| `blake3.fallback.test.ts` | BLAKE3 → SHA-256 fallback chain | MEDIUM |
+| `hashing.test.ts` | BLAKE3 (@noble/hashes) → SHA-256 (Web Crypto) fallback chain | MEDIUM | <!-- Errata #2: renamed from blake3.fallback; uses @noble/hashes not blake3-wasm -->
 | `attachment.blob.test.ts` | Reference counting, GC trigger | HIGH |
 
 **Run command**:

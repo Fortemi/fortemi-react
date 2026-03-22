@@ -56,9 +56,9 @@ These are functional requirements masquerading as NFRs — format parity is the 
 |---|---|---|---|---|
 | COMPAT-001 | Chrome / Chromium minimum version | CRITICAL | 102+ | Playwright matrix |
 | COMPAT-002 | Firefox minimum version | CRITICAL | 111+ | Playwright matrix |
-| COMPAT-003 | Safari minimum version | HIGH | 17+ | Manual + Playwright if available |
-| COMPAT-004 | SharedArrayBuffer required (COOP/COEP headers) | CRITICAL | Must be set for PGlite sync | HTTP header test |
-| COMPAT-005 | OPFS (Origin Private File System) required | CRITICAL | navigator.storage.getDirectory() available | Feature detection at startup |
+| COMPAT-003 | Safari minimum version | HIGH | 17+ (in-memory only — no persistent storage; see Errata #1) | Manual + Playwright if available |
+| COMPAT-004 | ~~SharedArrayBuffer required (COOP/COEP headers)~~ | ~~CRITICAL~~ **REMOVED** | PGlite 0.4.1 does NOT require SharedArrayBuffer. COOP/COEP headers not needed. See Errata #5. | N/A |
+| COMPAT-005 | OPFS or IndexedDB persistence (browser-specific) | CRITICAL | Chrome: `opfs-ahp://`, Firefox: `idb://`, Safari: in-memory. See ADR-005 persistence matrix. | Feature detection + adapter selection at startup |
 | COMPAT-006 | Web Workers required | CRITICAL | Worker API available | Feature detection at startup |
 | COMPAT-007 | Mobile Safari / iOS | OUT OF SCOPE v1 | Not supported | Documented in ADR-005 |
 

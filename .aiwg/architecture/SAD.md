@@ -156,7 +156,7 @@ C4Container
 ├─────────────────────────────────────────────────────────────────┤
 │                     Storage Layer                               │
 │  PGlite (PostgreSQL WASM) │ OPFS persistence                   │
-│  pgvector extension │ tsvector FTS │ BLAKE3 content hashing    │
+│  pgvector extension │ tsvector FTS │ content hashing (@noble)  │
 └─────────────────────────────────────────────────────────────────┘
 
 Transversal systems (all layers):
@@ -346,13 +346,9 @@ Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval
 
 ### 8.4 CORS / COOP / COEP
 
-SharedArrayBuffer for PGlite sync requires:
-```
-Cross-Origin-Opener-Policy: same-origin
-Cross-Origin-Embedder-Policy: require-corp
-```
+> **Errata (2026-03-22):** PGlite 0.4.1 uses OPFS sync access handles, NOT SharedArrayBuffer. COOP/COEP headers are **not required** by default.
 
-Set via Vite dev server config and production server headers.
+Do NOT set COOP/COEP headers unless a specific feature requires them. These headers block third-party resources (fonts, CDN scripts) and are unnecessary for PGlite persistence.
 
 ---
 
@@ -379,12 +375,14 @@ Set via Vite dev server config and production server headers.
 
 ### 9.3 Compatibility
 
-| Browser | Min Version | Notes |
-|---|---|---|
-| Chrome / Chromium | 102+ | SharedArrayBuffer + OPFS sync supported |
-| Firefox | 111+ | OPFS sync landed in 111 |
-| Safari | 17+ | OPFS sync landed in Safari 17 |
-| Mobile Safari | Out of scope v1 | SharedArrayBuffer restrictions |
+> **Errata (2026-03-22):** OPFS persistent storage is Chrome-only. See ADR-005 for full browser-specific persistence matrix.
+
+| Browser | Min Version | Persistence | Notes |
+|---|---|---|---|
+| Chrome / Chromium | 102+ | OPFS (`opfs-ahp://`) | Full support. Primary target. |
+| Firefox | 111+ | IndexedDB (`idb://`) | OPFS AHP not supported; `idb://` adapter works |
+| Safari | 17+ | In-memory only | OPFS sync access handle limit (252) below PGlite minimum (~300) |
+| Mobile Safari | Out of scope v1 | None | iOS forces WebKit; OPFS unreliable |
 
 ### 9.4 Offline-First
 
@@ -396,21 +394,39 @@ All operations work without network access. The only network-dependent features 
 
 ## 10. Technology Stack
 
-| Layer | Technology | Version |
-|---|---|---|
-| UI Framework | React | 19.x |
-| Language | TypeScript | 5.x |
-| Build Tool | Vite | 6.x |
-| Storage Engine | @electric-sql/pglite | 0.2.x |
-| Vector Extension | @electric-sql/pglite/vector | 0.2.x |
-| Embeddings | transformers.js | 3.x |
-| LLM (in-browser) | @mlc-ai/web-llm | latest |
-| Hashing | blake3-wasm | latest |
-| UUID Generation | uuidv7 | latest |
-| Testing (unit) | Vitest | 2.x |
-| Testing (E2E) | Playwright | 1.x |
-| CI/CD | Gitea Actions | — |
-| License | AGPL-3.0 | — |
+> **Errata (2026-03-22):** Versions corrected per Errata #4. See also Errata #2 (hashing) and #3 (MCP SDK).
+
+| Layer | Technology | Version | Notes |
+|---|---|---|---|
+| UI Framework | React | 19.x (19.2.4) | `forwardRef` deprecated; use ref callback with block body |
+| Language | TypeScript | 5.x | |
+| Build Tool | Vite | 7.x (7.3.1) | Vite 8 uses Rolldown — too new for v1 |
+| Storage Engine | @electric-sql/pglite | **0.4.x (0.4.1)** | Breaking: default DB `template1` → `postgres`; use explicit `database: 'postgres'` |
+| Vector Extension | @electric-sql/pglite/vector | 0.4.x | Bundled: `import { vector } from '@electric-sql/pglite/vector'` |
+| Multi-tab | @electric-sql/pglite/worker | 0.4.x | `PGliteWorker` with built-in leader election |
+| Embeddings | @huggingface/transformers | **3.x (3.8.1)** | `@xenova/transformers` is deprecated |
+| LLM (in-browser) | @mlc-ai/web-llm | 0.2.x (0.2.82) | `ChatModule` → `Engine` rename in 0.2.81; WebGPU required |
+| Hashing | @noble/hashes | latest | BLAKE3 (pure JS) + SHA-256 fallback. Errata #2: replaces unmaintained `blake3-wasm` |
+| UUID Generation | uuid | **13.x (13.0.0)** | Native UUIDv7 since v10; standalone `uuidv7` package unnecessary |
+| PDF Extraction | pdfjs-dist | 5.x (5.5.207) | `getTextContent` now async |
+| Testing (unit) | Vitest | **4.x (4.1.0)** | Supports Vite 6/7/8 |
+| Testing (E2E) | Playwright | 1.x (1.58.2) | |
+| Linting | ESLint | **10.x (10.1.0)** | Flat config mandatory; needs typescript-eslint v8+ |
+| CI/CD | Gitea Actions | — | |
+| License | AGPL-3.0 | — | |
+
+**MCP protocol implementation:**
+
+> **Errata #3:** The official `@modelcontextprotocol/sdk` (v1.27.1) provides only `StdioClientTransport` and `SSEClientTransport` — neither works in a Service Worker context. There is no browser transport. The MCP tool handlers (C2-13 through C2-15) must implement JSON-RPC 2.0 dispatching manually in the Service Worker. The protocol surface is small (`tools/call`, `tools/list`, `resources/*`, `prompts/*`) — manual implementation is straightforward.
+
+**Vite configuration required for PGlite:**
+```js
+// vite.config.ts
+{
+  optimizeDeps: { exclude: ['@electric-sql/pglite'] },
+  worker: { format: 'es' }
+}
+```
 
 ---
 
@@ -432,7 +448,7 @@ After Elaboration Iteration 1 PoC:
 | Issue | Target Resolution |
 |---|---|
 | PGlite multi-reader strategy (concurrent read-only connections) | E1 PoC |
-| BLAKE3 WASM integration with SHA-256 fallback | E1 PoC |
+| BLAKE3 via @noble/hashes (pure JS) with SHA-256 fallback | E1 PoC | <!-- Errata #2: blake3-wasm replaced -->
 | SW update draining strategy (count in-flight requests) | E1 PoC |
 | External LLM API key encryption format (Web Crypto AES-256-GCM) | E2 UC-005 |
 | Multi-archive switching (archive table + PGlite instance pool) | E2 UC-007 |

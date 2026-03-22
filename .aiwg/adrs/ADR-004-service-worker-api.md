@@ -28,6 +28,10 @@ Use a **Service Worker** to intercept all `fetch()` calls to `http://localhost:3
 
 **Browser compatibility:** Chrome 102+, Firefox 111+, Safari 17+ (see ADR-005).
 
+## MCP SDK Limitation
+
+> **Errata #3 (2026-03-22):** The official `@modelcontextprotocol/sdk` (v1.27.1) provides only `StdioClientTransport` and `SSEClientTransport` — neither works in a Service Worker context. MCP tool handlers must implement JSON-RPC 2.0 dispatching manually. The protocol surface is small (`tools/call`, `tools/list`) — manual implementation is straightforward.
+
 ## SW Architecture
 
 ```

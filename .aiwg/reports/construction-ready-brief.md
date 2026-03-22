@@ -104,7 +104,7 @@ fortemi-browser is a browser-only reimplementation of the fortemi knowledge mana
 
 The single most important action: build the PGlite PoC.
 
-1. **C1-1 equivalent: Vite project scaffolding** — TypeScript strict, React 19, COOP/COEP headers
+1. **C1-1 equivalent: Vite project scaffolding** — TypeScript strict, React 19, PGlite optimizeDeps (no COOP/COEP needed per Errata #5)
 2. **E1-1: PGlite Worker** — Initialize with OPFS, verify persistence
 3. **E1-2: pgvector** — Load extension, create HNSW index, vector round-trip
 4. **E1-3: Message bus** — postMessage protocol, concurrent write safety

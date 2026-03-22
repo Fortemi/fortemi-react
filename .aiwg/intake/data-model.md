@@ -243,7 +243,7 @@ erDiagram
 
     attachment_blob {
         uuid id PK "UUIDv7"
-        text content_hash "UNIQUE — blake3:... hex"
+        text content_hash "UNIQUE — blake3:... or sha256:... hex (Errata #2: use @noble/hashes for BLAKE3, Web Crypto for SHA-256)"
         text content_type "MIME type"
         bigint size_bytes
         text storage_backend "filesystem | database"

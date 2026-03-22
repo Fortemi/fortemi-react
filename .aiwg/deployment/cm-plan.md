@@ -224,15 +224,14 @@ npm run dev          # Vite dev server on :5173
 VITE_APP_VERSION=2026.3.0-dev
 ```
 
-**COOP/COEP headers** (required for SharedArrayBuffer):
+**Vite configuration** (required for PGlite):
 
 `vite.config.ts`:
 ```typescript
-server: {
-  headers: {
-    'Cross-Origin-Opener-Policy': 'same-origin',
-    'Cross-Origin-Embedder-Policy': 'require-corp',
-  }
+// Errata #4/#5: COOP/COEP headers NOT required (PGlite uses OPFS sync handles, not SharedArrayBuffer)
+{
+  optimizeDeps: { exclude: ['@electric-sql/pglite'] },
+  worker: { format: 'es' }
 }
 ```
 
@@ -256,11 +255,7 @@ fortemi-browser is a static web application. It can be served by:
 - Netlify, Vercel, Cloudflare Pages
 - `python -m http.server` for local distribution
 
-**Required headers** (must be set by serving infrastructure):
-```
-Cross-Origin-Opener-Policy: same-origin
-Cross-Origin-Embedder-Policy: require-corp
-```
+**Required headers**: None — PGlite 0.4.1 does not require COOP/COEP headers (see Errata #5). Any static file server works out-of-box.
 
 ---
 
