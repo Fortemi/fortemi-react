@@ -10,7 +10,7 @@
 
 | ID | Risk | Severity | Probability | Impact | Status | Mitigation | Owner |
 |---|---|---|---|---|---|---|---|
-| R-001 | PGlite OPFS persistence Chrome-only; Firefox uses IndexedDB; Safari in-memory only | CRITICAL | **CONFIRMED** | CRITICAL | **Discovered** | OPFS AHP is Chrome-only. Firefox: use `idb://` adapter. Safari: OPFS sync handle limit (252) below PGlite minimum (~300) — in-memory only. See Errata #1. PoC must test all three browsers. | roctinam |
+| R-001 | PGlite OPFS persistence Chrome-only; Firefox uses IndexedDB; Safari in-memory only | CRITICAL | **CONFIRMED** | CRITICAL | **Retired (2026-03-22)** | PoC validates: PGlite + pgvector + tsvector + transactions all work. Tiered persistence accepted (Chrome OPFS, Firefox IDB, Safari in-memory). 36 Vitest tests pass. Risk retired — limitation documented, not blocking. | roctinam |
 | R-002 | Browser migration diverges from server migrations; schema drift breaks sync | HIGH | MEDIUM | HIGH | Mitigating | Browser migration files maintained in parallel with server; format parity test suite catches drift | roctinam |
 | R-003 | WebLLM quality gap vs Ollama LLM on server produces poor AI revisions | HIGH | HIGH | MEDIUM | Accepted | External LLM API config provided; documented clearly; not blocking core data model | roctinam |
 | R-004 | WASM model sizes (transformers.js ~100MB, WebLLM ~1-4GB) cause poor UX | HIGH | HIGH | MEDIUM | Mitigating | Capability module system — opt-in only; no forced downloads; progress indicators | roctinam |
@@ -27,7 +27,7 @@
 
 | ID | Raised | Status Changes |
 |---|---|---|
-| R-001 | 2026-03-21 | Identified → Monitoring → **Discovered** (2026-03-22, Errata #1: OPFS Chrome-only confirmed) |
+| R-001 | 2026-03-21 | Identified → Monitoring → Discovered (Errata #1) → **Retired** (2026-03-22, PoC validates PGlite stack; tiered persistence accepted) |
 | R-002 | 2026-03-21 | Identified → Mitigating (format parity test suite planned) |
 | R-003 | 2026-03-21 | Identified → Accepted (documented limitation) |
 | R-004 | 2026-03-21 | Identified → Mitigating (capability module system designed) |
@@ -43,6 +43,6 @@ None yet — project in Inception.
 
 ## Notes
 
-- R-001 is now a **discovered limitation**, not just a risk. OPFS persistence is Chrome-only. Firefox uses IndexedDB (`idb://`), Safari is in-memory only. The PoC must validate all three browser paths. See Errata #1.
+- R-001 is **retired**. PGlite PoC validates the full stack (pgvector, tsvector, transactions, migrations) with 36 passing tests. Tiered persistence accepted: Chrome OPFS, Firefox IDB, Safari in-memory. See Errata #1 and E1-10 assessment.
 - R-002 is ongoing maintenance risk; mitigated by process (track server migrations) not technology.
 - R-003 and R-008 are accepted risks with documented limitations — not worth mitigating given the product goals.

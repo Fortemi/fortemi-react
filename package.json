@@ -1,0 +1,19 @@
+{
+  "name": "fortemi-browser",
+  "version": "2026.3.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.6.5",
+  "scripts": {
+    "dev": "pnpm --filter @fortemi/standalone dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "test:core": "pnpm --filter @fortemi/core test",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint ."
+  }
+}
