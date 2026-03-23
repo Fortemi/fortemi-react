@@ -29,8 +29,10 @@ No server required. Deploy `apps/standalone/dist/` to any static host.
 ## Features
 
 - Full note CRUD with revision history and soft-delete
-- Full-text search (PostgreSQL tsvector/tsquery)
-- Hybrid semantic search (pgvector HNSW + BM25 RRF fusion)
+- Full-text search (PostgreSQL tsvector/tsquery) with phrase search
+- Hybrid semantic search (pgvector HNSW + BM25 RRF fusion) with automatic mode selection
+- 12 search filters (date range, starred, archived, format, source, visibility, tags, collection, facets)
+- Search history and autocomplete suggestions
 - SKOS taxonomy management (schemes, concepts, relations)
 - Tags, collections, and inter-note links
 - 13 MCP tool functions for AI agent integration

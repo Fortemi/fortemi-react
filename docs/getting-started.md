@@ -266,26 +266,26 @@ const { data: note, loading, error } = useNote(selectedId)
 
 ## Search
 
-`useSearch` exposes a `search` function that runs a full-text query against all note content. Call it on demand (debounced input, form submit, etc.) and read results from `data`.
+`useSearch` exposes a `search` function that automatically selects the best available search mode. When semantic capability is enabled, it generates a query embedding and uses hybrid search (BM25 + vector RRF). Otherwise it falls back to text search.
 
 ```tsx
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useSearch } from '@fortemi/react'
 
 function SearchPanel() {
   const [query, setQuery] = useState('')
   const { data, loading, error, search, clear } = useSearch()
 
+  const handleSearch = useCallback((q: string) => {
+    if (!q.trim()) { clear(); return }
+    search(q, { limit: 10 })
+  }, [search, clear])
+
   // Debounce: search 300 ms after the user stops typing
   useEffect(() => {
-    if (!query.trim()) { clear(); return }
-
-    const timer = setTimeout(() => {
-      search(query, { limit: 10 })
-    }, 300)
-
+    const timer = setTimeout(() => handleSearch(query), 300)
     return () => clearTimeout(timer)
-  }, [query])
+  }, [query, handleSearch])
 
   return (
     <div>
@@ -300,11 +300,17 @@ function SearchPanel() {
       {error && <p role="alert">{error.message}</p>}
 
       {data && (
+        <p>
+          {data.total} results (mode: {data.mode})
+        </p>
+      )}
+
+      {data && (
         <ul>
           {data.results.map((result) => (
             <li key={result.id}>
               <strong>{result.title ?? 'Untitled'}</strong>
-              <p>{result.snippet}</p>
+              <div dangerouslySetInnerHTML={{ __html: result.snippet }} />
             </li>
           ))}
         </ul>
@@ -314,15 +320,22 @@ function SearchPanel() {
 }
 ```
 
-`search(query, options?)` parameters:
+`search(query, options?)` accepts 12 filter parameters:
 
 ```ts
-// options
 interface SearchOptions {
-  limit?: number
-  offset?: number
-  tags?: string[]          // pre-filter results to these tags
-  collection_id?: string   // pre-filter to a collection
+  limit?: number             // 1-100, default: 20
+  offset?: number            // pagination offset
+  tags?: string[]            // filter: notes with ANY of these tags
+  collection_id?: string     // filter: notes in this collection
+  date_from?: Date           // filter: created on or after
+  date_to?: Date             // filter: created on or before
+  is_starred?: boolean       // filter: starred status
+  is_archived?: boolean      // filter: archived status
+  format?: string            // filter: 'markdown' | 'plain' | 'html'
+  source?: string            // filter: 'user' | 'mcp' | 'import' | 'api'
+  visibility?: string        // filter: 'private' | 'shared' | 'public'
+  include_facets?: boolean   // include tag/collection counts (default: false)
 }
 ```
 
@@ -333,16 +346,17 @@ interface SearchResponse {
   results: SearchResult[]
   total: number
   query: string
-  mode: 'text'              // always 'text' without the semantic capability enabled
+  mode: 'text' | 'semantic' | 'hybrid'  // actual search mode used
   semantic_available: boolean
   limit: number
   offset: number
+  facets?: SearchFacets      // present when include_facets: true
 }
 
 interface SearchResult {
   id: string
   title: string | null
-  snippet: string           // excerpt with match context
+  snippet: string           // excerpt with match context (<mark> tags for text mode)
   rank: number              // relevance score (higher is more relevant)
   created_at: Date
   updated_at: Date
@@ -350,7 +364,7 @@ interface SearchResult {
 }
 ```
 
-`semantic_available` will be `false` until the `semantic` capability is loaded. Text search is always available regardless of capability state.
+Additional search hooks: `useSearchHistory()` persists recent queries to localStorage, and `useSearchSuggestions(history)` provides prefix-matched autocomplete from the note vocabulary. See [Search](./search.md) for details.
 
 ---
 

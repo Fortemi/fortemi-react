@@ -255,7 +255,7 @@ async function createNoteInCollection(
 | Class | Import | Purpose |
 |-------|--------|---------|
 | `NotesRepository` | `@fortemi/core` | Create, read, update, delete, star, pin, archive, list, getRevisions |
-| `SearchRepository` | `@fortemi/core` | Full-text search with FTS ranking |
+| `SearchRepository` | `@fortemi/core` | Full-text, semantic, and hybrid search with 12 filter options, phrase search, and faceted results |
 | `TagsRepository` | `@fortemi/core` | Tag enumeration and management |
 | `CollectionsRepository` | `@fortemi/core` | Collection CRUD, note membership |
 | `LinksRepository` | `@fortemi/core` | Semantic and manual links between notes |
@@ -329,10 +329,31 @@ const response = await searchTool(db, {
   limit: 20,
   offset: 0,
   tags: ['knowledge-management'],
+  date_from: '2026-01-01',       // filter by creation date range
+  is_starred: true,               // only starred notes
+  format: 'markdown',             // filter by note format
+  include_facets: true,           // include tag/collection counts
 })
 // response.results: SearchResult[]
+// response.mode: 'text' | 'semantic' | 'hybrid'
 // response.semantic_available: boolean
 // response.total: number
+// response.facets?: { tags: [...], collections: [...] }
+```
+
+The `useSearch` hook automatically dispatches to hybrid search when semantic capability is enabled — no manual embedding required:
+
+```typescript
+import { useSearch, useSearchHistory, useSearchSuggestions } from '@fortemi/react'
+
+// useSearch automatically uses hybrid when semantic is ready
+const { data, search } = useSearch()
+await search('machine learning', { include_facets: true })
+// data.mode will be 'hybrid' if semantic is enabled, 'text' otherwise
+
+// Search history + suggestions
+const { history, addEntry } = useSearchHistory()
+const { suggestions, getSuggestions } = useSearchSuggestions(history)
 ```
 
 ### manageAttachments

@@ -14,6 +14,8 @@ fortemi-react provides three search modes that mirror the fortemi server's searc
 
 ### Text Search (React Hook)
 
+The `useSearch` hook automatically dispatches to text, semantic, or hybrid search based on whether the semantic capability is ready:
+
 ```typescript
 import { useSearch } from '@fortemi/react'
 
@@ -36,73 +38,133 @@ function SearchPage() {
         <div key={result.id}>
           <h3>{result.title ?? 'Untitled'}</h3>
           <p dangerouslySetInnerHTML={{ __html: result.snippet }} />
-          <small>Rank: {result.rank.toFixed(3)} | Tags: {result.tags.join(', ')}</small>
+          <small>
+            Mode: {data.mode} | Rank: {result.rank.toFixed(3)} | Tags: {result.tags.join(', ')}
+          </small>
         </div>
       ))}
-      <p>{data?.total ?? 0} results</p>
+      <p>{data?.total ?? 0} results (mode: {data?.mode})</p>
     </div>
   )
 }
 ```
 
-### Text Search with Filters
+When semantic capability is enabled, `useSearch` automatically:
+1. Checks `capabilityManager.isReady('semantic')`
+2. Calls `getEmbedFunction()` to generate a query embedding
+3. Passes the embedding to `SearchRepository.search()`, which dispatches to hybrid (if query text present) or semantic (if query empty)
+
+When semantic is not enabled, only text search is used.
+
+### Search with Filters
 
 ```typescript
 await search('machine learning', {
   tags: ['ai', 'research'],        // filter by tags (ANY match)
   collection_id: 'col-uuid-here',  // filter by collection
-  limit: 10,                       // results per page (default: 20, max: 100)
-  offset: 0,                       // pagination offset
+  date_from: new Date('2026-01-01'), // filter by creation date range
+  date_to: new Date('2026-03-31'),
+  is_starred: true,                 // only starred notes
+  is_archived: false,               // exclude archived notes
+  format: 'markdown',               // filter by note format
+  source: 'user',                   // filter by note source
+  visibility: 'private',            // filter by visibility level
+  limit: 10,                        // results per page (default: 20, max: 100)
+  offset: 0,                        // pagination offset
+  include_facets: true,             // include tag/collection aggregate counts
 })
 ```
 
-### Semantic Search (Direct Repository)
+### Phrase Search
 
-The `useSearch` hook currently exposes text search only. For semantic and hybrid search, use the `SearchRepository` directly:
+Wrap terms in double quotes for exact phrase matching:
+
+```typescript
+await search('"machine learning"')  // Uses phraseto_tsquery — matches exact phrase
+await search('machine learning')    // Uses plainto_tsquery — matches both words (AND)
+```
+
+Phrase search is detected automatically when the query contains `"` characters.
+
+### Search History and Autocomplete
+
+```typescript
+import { useSearchHistory, useSearchSuggestions } from '@fortemi/react'
+
+function SearchWithSuggestions() {
+  const { history, addEntry, clearHistory } = useSearchHistory()
+  const { suggestions, getSuggestions, clearSuggestions } = useSearchSuggestions(history)
+
+  const handleInput = (value: string) => {
+    getSuggestions(value) // Get prefix-matched suggestions
+  }
+
+  const handleSearch = (query: string) => {
+    addEntry(query) // Save to history
+    clearSuggestions()
+    // ... execute search
+  }
+
+  return (
+    <div>
+      <input onChange={(e) => handleInput(e.target.value)} />
+      {suggestions.map((s) => (
+        <div key={s.text} onClick={() => handleSearch(s.text)}>
+          {s.text} <small>({s.source})</small>
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+`useSearchHistory` persists to localStorage (survives archive switches). `useSearchSuggestions` loads vocabulary from `ts_stat` on mount and merges with history for prefix-matched suggestions.
+
+### Faceted Results
+
+When `include_facets: true` is passed, the response includes aggregate counts:
+
+```typescript
+const result = await search('machine learning', { include_facets: true })
+
+console.log(result.facets)
+// {
+//   tags: [{ tag: 'ai', count: 15 }, { tag: 'research', count: 8 }, ...],
+//   collections: [{ id: 'col-1', name: 'Papers', count: 12 }, ...]
+// }
+```
+
+Facets are computed from the full (unpaginated) result set for accurate counts.
+
+### Direct Repository Usage
+
+For fine-grained control, use `SearchRepository` directly:
 
 ```typescript
 import { SearchRepository, getEmbedFunction } from '@fortemi/core'
 import { useFortemiContext } from '@fortemi/react'
 
-function SemanticSearch() {
+function AdvancedSearch() {
   const { db, capabilityManager } = useFortemiContext()
 
   const handleSearch = async (query: string) => {
-    const embedFn = getEmbedFunction()
-    if (!embedFn || !capabilityManager.isReady('semantic')) {
-      // Fall back to text search
-      const repo = new SearchRepository(db, false)
-      return repo.search(query)
+    const semanticReady = capabilityManager.isReady('semantic')
+    const repo = new SearchRepository(db, semanticReady)
+
+    if (semanticReady) {
+      const embedFn = getEmbedFunction()
+      if (embedFn) {
+        const [queryEmbedding] = await embedFn([query])
+        // Hybrid search (text + vector)
+        return repo.search(query, { limit: 20 }, queryEmbedding)
+      }
     }
 
-    // Generate embedding for the search query
-    const [queryEmbedding] = await embedFn([query])
-
-    const repo = new SearchRepository(db, true)
-    // Pure semantic search (no text query, just vector similarity)
-    return repo.semanticSearch(queryEmbedding, { limit: 20 })
+    // Text-only search
+    return repo.search(query, { limit: 20 })
   }
 }
 ```
-
-### Hybrid Search (BM25 + Vector RRF)
-
-Hybrid search combines both text and vector signals using Reciprocal Rank Fusion:
-
-```typescript
-const embedFn = getEmbedFunction()
-const [queryEmbedding] = await embedFn([query])
-
-const repo = new SearchRepository(db, true)
-// Both query text AND embedding provided = hybrid mode
-const results = await repo.search(query, { limit: 20 }, queryEmbedding)
-```
-
-The routing logic inside `SearchRepository.search()`:
-- Query text + embedding provided = **hybrid** (RRF fusion)
-- Embedding only (empty query) = **semantic** (vector cosine)
-- Query text only = **text** (BM25 tsvector)
-- Empty query, no embedding = **recent notes** (ordered by created_at DESC)
 
 ### MCP Tool Search
 
@@ -117,6 +179,9 @@ const results = await searchTool(db, {
   offset: 0,
   tags: ['research'],
   collection_id: 'optional-id',
+  date_from: '2026-01-01',
+  is_starred: true,
+  include_facets: true,
 })
 ```
 
@@ -127,14 +192,20 @@ Note: The `searchTool` function currently only supports `mode: 'text'`. Semantic
 All search modes return the same `SearchResponse` shape, matching the fortemi server format:
 
 ```typescript
+interface SearchFacets {
+  tags: { tag: string; count: number }[]
+  collections: { id: string; name: string; count: number }[]
+}
+
 interface SearchResponse {
   results: SearchResult[]
   total: number          // total matching results (before pagination)
   query: string          // echo of the search query
-  mode: 'text'           // search mode used
+  mode: 'text' | 'semantic' | 'hybrid'  // actual search mode used
   semantic_available: boolean  // true if semantic capability is loaded
   limit: number
   offset: number
+  facets?: SearchFacets  // present when include_facets: true
 }
 
 interface SearchResult {
@@ -160,11 +231,12 @@ Notes are indexed using PostgreSQL's built-in tsvector system:
 
 ### Query Parsing
 
-User input is parsed with `plainto_tsquery('english', query)` which:
+User input is parsed with `plainto_tsquery('english', query)` (or `phraseto_tsquery` for quoted phrases) which:
 - Applies English stemming (e.g., "running" matches "run")
 - Removes English stop words
 - Treats all terms as AND (all must match)
 - Handles special characters safely (no injection risk)
+- Quoted phrases use `phraseto_tsquery` for adjacency matching (e.g., `"machine learning"` matches the exact phrase)
 
 ### Ranking
 
@@ -238,26 +310,34 @@ This produces results that balance keyword precision (BM25) with semantic unders
 | Filter | Type | Applies To | Description |
 |--------|------|-----------|-------------|
 | `tags` | `string[]` | All modes | Notes must have ANY of the specified tags |
-| `collection_id` | `string` | Text mode | Notes must belong to this collection |
+| `collection_id` | `string` | All modes | Notes must belong to this collection |
+| `date_from` | `Date` | All modes | Notes created on or after this date |
+| `date_to` | `Date` | All modes | Notes created on or before this date |
+| `is_starred` | `boolean` | All modes | Filter by starred status |
+| `is_archived` | `boolean` | All modes | Filter by archived status |
+| `format` | `string` | All modes | Filter by note format (`'markdown'`, `'plain'`, `'html'`) |
+| `source` | `string` | All modes | Filter by note source (`'user'`, `'mcp'`, `'import'`, `'api'`) |
+| `visibility` | `string` | All modes | Filter by visibility (`'private'`, `'shared'`, `'public'`) |
+| `include_facets` | `boolean` | All modes | Include tag/collection aggregate counts (default: false) |
 | `limit` | `number` | All modes | Results per page (1-100, default: 20) |
 | `offset` | `number` | All modes | Pagination offset (default: 0) |
 
-### Not Yet Implemented
+All filters apply uniformly across text, semantic, and hybrid search modes via the shared `buildNoteConditions()` helper.
 
-The following filters exist in the fortemi server but are not yet available in fortemi-react search:
+### Shared Condition Builder
 
-| Filter | Server Behavior | Status |
-|--------|----------------|--------|
-| `date_from` / `date_to` | Filter by creation date range | Not implemented |
-| `is_starred` | Only starred notes | Available on `NoteListOptions` but not `SearchOptions` |
-| `is_archived` | Include archived notes | Available on `NoteListOptions` but not `SearchOptions` |
-| `sort` | Sort results by field | Text mode uses rank; no override |
-| `format` | Filter by note format (markdown, plain, etc.) | Not implemented |
-| `source` | Filter by note source (manual, mcp, import) | Not implemented |
-| `visibility` | Filter by visibility level | Not implemented |
-| `collection_id` on semantic/hybrid | Collection filter on vector search | Text mode only currently |
+Filters are generated by a shared `buildNoteConditions()` function used by both `SearchRepository` and `NotesRepository`. This prevents drift between the two repositories and makes adding future filters trivial:
 
-See the [fortemi server repository](https://git.integrolabs.net/Fortemi/fortemi) for the full search specification. The server's `SearchOptions` type in `src/search/types.rs` is the canonical reference for all filter parameters.
+```typescript
+import { buildNoteConditions } from '@fortemi/core'
+
+const { conditions, params, nextIdx } = buildNoteConditions(
+  { tags: ['ai'], is_starred: true, date_from: new Date('2026-01-01') },
+  1, // starting parameter index
+)
+// conditions: ['n.deleted_at IS NULL', 'EXISTS (...)', 'n.is_starred = $2', 'n.created_at >= $3']
+// params: [['ai'], true, Date]
+```
 
 ## Empty Query Behavior
 
@@ -290,21 +370,21 @@ Search results include the note's tags in every mode. Tags are fetched in a sing
 
 ### Mode Field
 
-The `SearchResponse.mode` field is currently always `'text'` regardless of the actual search mode used. This is a known divergence from the server which returns the actual mode. The `semantic_available` boolean correctly indicates whether the semantic capability is loaded.
+The `SearchResponse.mode` field correctly reflects the actual search mode used: `'text'`, `'semantic'`, or `'hybrid'`. The `semantic_available` boolean indicates whether the semantic capability is loaded.
 
-## Differences from fortemi Server
+## Parity with fortemi Server
 
 | Feature | Server | fortemi-react | Notes |
 |---------|--------|--------------|-------|
 | Text search (BM25) | Full | Full | Identical tsvector/tsquery implementation |
 | Semantic search (cosine) | Full | Full | Same pgvector HNSW, same distance metric |
 | Hybrid search (RRF k=60) | Full | Full | Same algorithm and k constant |
-| Search filters | 10+ filters | 4 filters | tags, collection_id, limit, offset implemented; date range, starred, format, source pending |
-| Response.mode field | Reflects actual mode | Always 'text' | Known divergence |
-| Phrase search | `phraseto_tsquery` | `plainto_tsquery` only | Phrase search not implemented |
-| Search suggestions | Autocomplete from tsvector | Not implemented | |
-| Search history | Stored in DB | Not implemented | |
-| Faceted results | Tag/collection counts | Not implemented | |
+| Search filters | 10+ filters | 12 filters | tags, collection_id, date_from, date_to, is_starred, is_archived, format, source, visibility, include_facets, limit, offset |
+| Response.mode field | Reflects actual mode | Reflects actual mode | Full parity |
+| Phrase search | `phraseto_tsquery` | `phraseto_tsquery` | Full parity — triggered by quoted input |
+| Search suggestions | Autocomplete from tsvector | `useSearchSuggestions` hook | Client-side prefix matching from `ts_stat` vocabulary |
+| Search history | Stored in DB | `useSearchHistory` hook | localStorage (survives archive switches) |
+| Faceted results | Tag/collection counts | `include_facets` option | Top 20 tags and collections by count |
 
 For the complete server search specification, see:
 - **Search types**: `fortemi/src/search/types.rs`

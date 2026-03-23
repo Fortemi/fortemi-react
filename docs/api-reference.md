@@ -367,19 +367,37 @@ class NotesRepository {
 
 ```typescript
 class SearchRepository {
-  constructor(db: PGlite, events?: TypedEventBus)
+  constructor(db: PGlite, semanticAvailable?: boolean)
 
-  textSearch(query: string, options?: SearchOptions): Promise<SearchResponse>
-  semanticSearch(embedding: number[], options?: SearchOptions): Promise<SearchResponse>
-  hybridSearch(query: string, embedding: number[], options?: SearchOptions): Promise<SearchResponse>
+  search(query: string, options?: SearchOptions, queryEmbedding?: number[]): Promise<SearchResponse>
+  semanticSearch(queryEmbedding: number[], options?: SearchOptions): Promise<SearchResponse>
+  hybridSearch(query: string, queryEmbedding: number[], options?: SearchOptions): Promise<SearchResponse>
 }
 ```
 
 | Method | Description |
 |--------|-------------|
-| `textSearch(query, options?)` | Full-text search using PostgreSQL `tsvector` ranking. |
-| `semanticSearch(embedding, options?)` | Vector similarity search. Requires the `'semantic'` capability to be ready. |
-| `hybridSearch(query, embedding, options?)` | Combines text and semantic scores using reciprocal rank fusion. |
+| `search(query, options?, queryEmbedding?)` | Main entry point. Dispatches to text, semantic, or hybrid based on inputs. Empty query returns recent notes. Quoted phrases use `phraseto_tsquery`. |
+| `semanticSearch(queryEmbedding, options?)` | Pure vector similarity search via pgvector cosine distance. |
+| `hybridSearch(query, queryEmbedding, options?)` | Combines BM25 text ranking and vector similarity using Reciprocal Rank Fusion (k=60). |
+
+The `search()` method routing logic:
+- Query text + embedding = **hybrid** (RRF fusion)
+- Embedding only (empty query) = **semantic** (vector cosine)
+- Query text only = **text** (BM25 tsvector)
+- Empty query, no embedding = **recent notes** (ordered by created_at DESC)
+
+#### `buildNoteConditions()`
+
+```typescript
+function buildNoteConditions(
+  options: Pick<SearchOptions, 'tags' | 'collection_id' | 'date_from' | 'date_to' | 'is_starred' | 'is_archived' | 'format' | 'source' | 'visibility'>,
+  startIdx: number,
+  includeDeleted?: boolean,
+): { conditions: string[]; params: unknown[]; nextIdx: number }
+```
+
+Shared SQL condition builder used by both `SearchRepository` and `NotesRepository`. Generates parameterized WHERE clause conditions for all filter fields.
 
 ---
 
@@ -618,6 +636,19 @@ interface SearchResult {
 
 ---
 
+#### `SearchFacets`
+
+```typescript
+interface SearchFacets {
+  tags: { tag: string; count: number }[]
+  collections: { id: string; name: string; count: number }[]
+}
+```
+
+Aggregate counts from the full (unpaginated) result set. Present on `SearchResponse` when `include_facets: true`.
+
+---
+
 #### `SearchResponse`
 
 ```typescript
@@ -625,8 +656,15 @@ interface SearchResponse {
   results: SearchResult[]
   total: number
   query: string
+  mode: 'text' | 'semantic' | 'hybrid'
+  semantic_available: boolean
+  limit: number
+  offset: number
+  facets?: SearchFacets
 }
 ```
+
+The `mode` field reflects the actual search mode used. `facets` is present when `include_facets: true` was requested.
 
 ---
 
@@ -634,13 +672,22 @@ interface SearchResponse {
 
 ```typescript
 interface SearchOptions {
-  limit?: number
-  offset?: number
-  tags?: string[]
-  archived?: boolean
-  includeDeleted?: boolean
+  limit?: number           // 1-100, default: 20
+  offset?: number          // default: 0
+  tags?: string[]          // filter: notes with ANY of these tags
+  collection_id?: string   // filter: notes in this collection
+  date_from?: Date         // filter: created on or after
+  date_to?: Date           // filter: created on or before
+  is_starred?: boolean     // filter: starred status
+  is_archived?: boolean    // filter: archived status
+  format?: string          // filter: 'markdown' | 'plain' | 'html'
+  source?: string          // filter: 'user' | 'mcp' | 'import' | 'api'
+  visibility?: string      // filter: 'private' | 'shared' | 'public'
+  include_facets?: boolean // include tag/collection aggregate counts (default: false)
 }
 ```
+
+All filters apply uniformly across text, semantic, and hybrid search modes.
 
 ---
 
@@ -1375,20 +1422,46 @@ Fetch and subscribe to a single note. Re-fetches when the note is updated or res
 
 ```typescript
 function useSearch(): {
-  results: SearchResult[]
-  total: number
+  data: SearchResponse | null
   loading: boolean
   error: Error | null
-  search: (
-    query: string,
-    mode?: 'text' | 'semantic' | 'hybrid',
-    options?: SearchOptions
-  ) => void
+  search: (query: string, options?: SearchOptions) => Promise<SearchResponse>
   clear: () => void
 }
 ```
 
-Exposes a `search` function that triggers the appropriate search mode. `'semantic'` and `'hybrid'` require the `'semantic'` capability to be ready.
+Automatically dispatches to the best available search mode. When semantic capability is ready, generates a query embedding and passes it to `SearchRepository.search()`, enabling hybrid search (text + vector). When semantic is not available, falls back to text-only search.
+
+---
+
+#### `useSearchHistory()`
+
+```typescript
+function useSearchHistory(): {
+  history: string[]
+  addEntry: (query: string) => void
+  removeEntry: (query: string) => void
+  clearHistory: () => void
+}
+```
+
+Persists search queries to `localStorage` (key: `fortemi:search-history`, max 50 entries). Deduplicates entries with most recent first. Survives archive switches.
+
+---
+
+#### `useSearchSuggestions(history?)`
+
+```typescript
+function useSearchSuggestions(history?: string[]): {
+  suggestions: Array<{ text: string; source: 'vocabulary' | 'history' }>
+  loading: boolean
+  getSuggestions: (prefix: string) => void
+  clearSuggestions: () => void
+  refreshVocabulary: () => Promise<void>
+}
+```
+
+Loads vocabulary from `ts_stat` (top 500 words by document frequency) on mount. Merges with search history for prefix-matched suggestions. Pass the `history` array from `useSearchHistory` for history-augmented suggestions.
 
 ---
 

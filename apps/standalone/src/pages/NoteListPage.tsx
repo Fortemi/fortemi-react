@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useNotes, useSearch, useCreateNote, useDeleteNote, useJobQueue } from '@fortemi/react'
 import { NoteList } from '../components/NoteList'
 import { NoteCreateForm } from '../components/NoteCreateForm'
@@ -19,14 +19,14 @@ export function NoteListPage() {
   // Start the job queue worker (title generation, etc.)
   useJobQueue(2000)
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query)
     if (query.trim()) {
       await search(query)
     } else {
       clear()
     }
-  }
+  }, [search, clear])
 
   const handleCreate = async (content: string, title?: string, tags?: string[]) => {
     await createNote({ content, title, tags })
