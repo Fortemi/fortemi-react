@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react'
-import { ArchiveManager, CapabilityManager, TypedEventBus, type PersistenceMode } from '@fortemi/core'
+import { ArchiveManager, CapabilityManager, TypedEventBus, createBlobStore, type PersistenceMode, type BlobStore } from '@fortemi/core'
 
 type PGliteInstance = Awaited<ReturnType<ArchiveManager['open']>>
 
@@ -8,6 +8,7 @@ export interface FortemiContextValue {
   events: TypedEventBus
   archiveManager: ArchiveManager
   capabilityManager: CapabilityManager
+  blobStore: BlobStore
 }
 
 const FortemiContext = createContext<FortemiContextValue | null>(null)
@@ -22,7 +23,7 @@ export interface FortemiProviderProps {
 // PGlite WASM can only be instantiated once per Response — a second call
 // to WebAssembly.instantiateStreaming() with the same cached Response fails
 // with "Response already consumed".
-let globalInitPromise: Promise<{ db: PGliteInstance; events: TypedEventBus; manager: ArchiveManager; capManager: CapabilityManager }> | null = null
+let globalInitPromise: Promise<{ db: PGliteInstance; events: TypedEventBus; manager: ArchiveManager; capManager: CapabilityManager; blobStore: BlobStore }> | null = null
 
 function initFortemi(persistence: PersistenceMode, archiveName: string) {
   if (!globalInitPromise) {
@@ -30,8 +31,9 @@ function initFortemi(persistence: PersistenceMode, archiveName: string) {
       const events = new TypedEventBus()
       const manager = new ArchiveManager(persistence, events)
       const capManager = new CapabilityManager(events)
+      const blobStore = createBlobStore(archiveName)
       const db = await manager.open(archiveName)
-      return { db, events, manager, capManager }
+      return { db, events, manager, capManager, blobStore }
     })()
   }
   return globalInitPromise
@@ -47,8 +49,8 @@ export function FortemiProvider({ persistence, archiveName = 'default', children
     if (initRef.current) return
     initRef.current = true
 
-    initFortemi(persistence, archiveName).then(({ db, events, manager, capManager }) => {
-      setCtx({ db, events, archiveManager: manager, capabilityManager: capManager })
+    initFortemi(persistence, archiveName).then(({ db, events, manager, capManager, blobStore }) => {
+      setCtx({ db, events, archiveManager: manager, capabilityManager: capManager, blobStore })
     }).catch((err) => {
       setError(err instanceof Error ? err.message : String(err))
     })

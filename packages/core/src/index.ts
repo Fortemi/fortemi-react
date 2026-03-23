@@ -97,6 +97,8 @@ export { manageArchive, ManageArchiveInputSchema } from './tools/index.js'
 export type { ManageArchiveInput, ManageArchiveResult } from './tools/index.js'
 export { manageCapabilities, ManageCapabilitiesInputSchema } from './tools/index.js'
 export type { ManageCapabilitiesInput, ManageCapabilitiesResult, CapabilityInfo } from './tools/index.js'
+export { manageAttachments, ManageAttachmentsInputSchema } from './tools/index.js'
+export type { ManageAttachmentsInput, ManageAttachmentsResult } from './tools/index.js'
 
 export { detectGpuCapabilities, estimateVramTier, selectLlmModel } from './capabilities/gpu-detect.js'
 export type { GpuCapabilities, VramTier } from './capabilities/gpu-detect.js'
