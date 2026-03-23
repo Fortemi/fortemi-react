@@ -1,8 +1,12 @@
 /// <reference lib="webworker" />
 declare const self: ServiceWorkerGlobalScope
 
+import { createRoutes, matchRoute } from './routes.js'
+
 const API_PREFIX = '/api/v1/'
 const MCP_PREFIX = '/mcp/'
+
+const routes = createRoutes()
 
 self.addEventListener('install', (event) => {
   event.waitUntil(self.skipWaiting())
@@ -24,8 +28,6 @@ self.addEventListener('fetch', (event) => {
 })
 
 async function handleRequest(request: Request, url: URL): Promise<Response> {
-  // For now, return a stub JSON response indicating the SW is active
-  // Real handlers will be added in C2 issues
   if (url.pathname.startsWith(MCP_PREFIX)) {
     return new Response(
       JSON.stringify({
@@ -40,13 +42,19 @@ async function handleRequest(request: Request, url: URL): Promise<Response> {
   }
 
   if (url.pathname.startsWith(API_PREFIX)) {
+    const route = matchRoute(routes, request, url)
+    if (route) {
+      const match = url.pathname.match(route.pattern)!
+      return route.handler(request, match, url.searchParams)
+    }
+
     return new Response(
       JSON.stringify({
-        error: 'Not implemented',
+        error: 'Not found',
         path: url.pathname,
       }),
       {
-        status: 501,
+        status: 404,
         headers: { 'Content-Type': 'application/json' },
       },
     )

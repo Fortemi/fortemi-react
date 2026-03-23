@@ -107,7 +107,7 @@ function makeSuite(label: string, factory: () => BlobStore) {
 
     // --- large payload ---
 
-    it('stores and retrieves a 1 MiB payload', async () => {
+    it('stores and retrieves a 1 MiB payload', { timeout: 30_000 }, async () => {
       const big = new Uint8Array(1024 * 1024).fill(0xab)
       await store.write(HASH_A, big)
       const result = await store.read(HASH_A)

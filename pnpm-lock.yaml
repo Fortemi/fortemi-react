@@ -23,6 +23,9 @@ importers:
       '@fortemi/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@fortemi/react':
+        specifier: workspace:*
+        version: link:../../packages/react
       react:
         specifier: ^19.2.4
         version: 19.2.4
@@ -73,6 +76,22 @@ importers:
       vitest:
         specifier: ^4.1.0
         version: 4.1.0(@types/node@22.19.15)(vite@7.3.1(@types/node@22.19.15))
+
+  packages/react:
+    dependencies:
+      '@fortemi/core':
+        specifier: workspace:*
+        version: link:../core
+      react:
+        specifier: ^19.2.4
+        version: 19.2.4
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.14
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
 
 packages:
 

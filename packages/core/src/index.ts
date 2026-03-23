@@ -26,6 +26,9 @@ export { computeHash } from './hash.js'
 export { registerServiceWorker } from './service-worker/register.js'
 export type { SWRegistrationResult } from './service-worker/register.js'
 
+export { createRoutes, matchRoute } from './service-worker/routes.js'
+export type { RouteHandler } from './service-worker/routes.js'
+
 export { createBlobStore, MemoryBlobStore } from './blob-store.js'
 export type { BlobStore } from './blob-store.js'
 
@@ -56,3 +59,14 @@ export { LinksRepository } from './repositories/links-repository.js'
 export type { LinkRow } from './repositories/links-repository.js'
 export { SkosRepository } from './repositories/skos-repository.js'
 export type { SkosScheme, SkosConcept, SkosRelation } from './repositories/skos-repository.js'
+
+export { captureKnowledge, manageNote, searchTool } from './tools/index.js'
+export type { CaptureKnowledgeResult, ManageNoteResult } from './tools/index.js'
+export {
+  CaptureKnowledgeInputSchema,
+  ManageNoteInputSchema,
+  SearchInputSchema,
+} from './tools/index.js'
+export type { CaptureKnowledgeInput, ManageNoteInput, SearchInput } from './tools/index.js'
+export { FortemiToolManifest, fortemiManifest } from './tools/index.js'
+export type { FortemiToolDefinition, PlinyCapability } from './tools/index.js'
