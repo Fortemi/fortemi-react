@@ -1,9 +1,23 @@
-import { Suspense, useState } from 'react'
+import { Suspense, useState, useEffect, useRef } from 'react'
 import { VERSION } from '@fortemi/core'
-import { FortemiProvider } from '@fortemi/react'
+import { FortemiProvider, useFortemiContext } from '@fortemi/react'
 import { LoadingScreen } from './components/LoadingScreen'
 import { NoteListPage } from './pages/NoteListPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { setupCapabilities } from './capabilities/setup'
+
+/** Register real capability loaders once on first render */
+function CapabilitySetup() {
+  const { capabilityManager } = useFortemiContext()
+  const initialized = useRef(false)
+  useEffect(() => {
+    if (!initialized.current) {
+      initialized.current = true
+      setupCapabilities(capabilityManager)
+    }
+  }, [capabilityManager])
+  return null
+}
 
 type Page = 'notes' | 'settings'
 
@@ -62,6 +76,7 @@ export function App() {
   return (
     <Suspense fallback={<LoadingScreen message="Starting database..." />}>
       <FortemiProvider persistence="idb">
+        <CapabilitySetup />
         <AppShell />
       </FortemiProvider>
     </Suspense>

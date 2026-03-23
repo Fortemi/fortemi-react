@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { NotesRepository, type NoteFull, type NoteRevision } from '@fortemi/core'
+import { useState, useEffect, useCallback } from 'react'
+import { NotesRepository, type NoteFull, type NoteRevision, enqueueJob, getJobQueueStatus, type JobStatus, type JobType, JOB_CAPABILITIES } from '@fortemi/core'
 import { useNote, useUpdateNote, useDeleteNote, useFortemiContext } from '@fortemi/react'
 
 interface NoteDetailProps {
@@ -141,6 +141,9 @@ function NoteView({ note }: { note: NoteFull }) {
         )}
       </div>
 
+      {/* AI Actions + per-note job status */}
+      <NoteAIActions noteId={note.id} />
+
       {/* Original content toggle */}
       <div style={{ marginBottom: 16 }}>
         <button
@@ -274,6 +277,155 @@ function RevisionPanel({ noteId }: { noteId: string }) {
             {selectedRevision.model && ` — ${selectedRevision.model}`}
           </div>
           {selectedRevision.content}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function AIJobButton({ label, jobType, enqueueing, onTrigger, capReady, capName, title }: {
+  label: string
+  jobType: JobType
+  enqueueing: string | null
+  onTrigger: (jobType: JobType, cap?: string | null) => void
+  capReady?: boolean
+  capName?: string
+  title: string
+}) {
+  const needsCap = capName !== undefined
+  const available = !needsCap || capReady
+  return (
+    <button
+      onClick={() => onTrigger(jobType, JOB_CAPABILITIES[jobType] ?? null)}
+      disabled={enqueueing === jobType}
+      style={{
+        padding: '4px 10px', fontSize: 12, borderRadius: 4, border: '1px solid #ccc',
+        cursor: 'pointer', background: '#fff',
+        opacity: available ? 1 : 0.6,
+      }}
+      title={title + (needsCap && !capReady ? ` (enable ${capName} in Settings — job will queue and wait)` : '')}
+    >
+      {enqueueing === jobType ? 'Queuing...' : label}
+      {needsCap && !capReady && <span style={{ color: '#999', marginLeft: 4, fontSize: 10 }}>({capName})</span>}
+    </button>
+  )
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  pending: '#f5a623',
+  processing: '#4a9eff',
+  completed: '#34a853',
+  failed: '#ea4335',
+}
+
+function NoteAIActions({ noteId }: { noteId: string }) {
+  const { db, events, capabilityManager } = useFortemiContext()
+  const [noteJobs, setNoteJobs] = useState<JobStatus[]>([])
+  const [enqueueing, setEnqueueing] = useState<string | null>(null)
+
+  const refresh = useCallback(() => {
+    getJobQueueStatus(db, noteId).then(setNoteJobs).catch(() => {})
+  }, [db, noteId])
+
+  useEffect(() => {
+    refresh()
+    const timer = setInterval(refresh, 2000)
+    const sub1 = events.on('job.completed', (e) => { if (e.noteId === noteId) refresh() })
+    const sub2 = events.on('job.failed', (e) => { if (e.noteId === noteId) refresh() })
+    return () => {
+      clearInterval(timer)
+      sub1.dispose()
+      sub2.dispose()
+    }
+  }, [refresh, events, noteId])
+
+  const triggerJob = async (jobType: JobType, requiredCapability?: string | null) => {
+    setEnqueueing(jobType)
+    try {
+      await enqueueJob(db, { noteId, jobType, requiredCapability })
+      refresh()
+    } finally {
+      setEnqueueing(null)
+    }
+  }
+
+  const semanticReady = capabilityManager.isReady('semantic')
+  const llmReady = capabilityManager.isReady('llm')
+
+  const pendingOrProcessing = noteJobs.filter((j) => j.status === 'pending' || j.status === 'processing')
+  const recentCompleted = noteJobs.filter((j) => j.status === 'completed').slice(0, 3)
+  const recentFailed = noteJobs.filter((j) => j.status === 'failed').slice(0, 3)
+
+  return (
+    <div style={{ border: '1px solid #e0e0e0', borderRadius: 8, padding: 12, marginBottom: 16, background: '#f0f4ff' }}>
+      <h4 style={{ margin: '0 0 8px', fontSize: 13, color: '#444' }}>AI Actions</h4>
+
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+        <AIJobButton
+          label="Generate Title"
+          jobType="title_generation"
+          enqueueing={enqueueing}
+          onTrigger={triggerJob}
+          title="Extract or generate title (LLM if available, fallback to first-line)"
+        />
+        <AIJobButton
+          label="AI Revision"
+          jobType="ai_revision"
+          enqueueing={enqueueing}
+          onTrigger={triggerJob}
+          capReady={llmReady}
+          capName="LLM"
+          title="LLM enhances note content, creates a revision record"
+        />
+        <AIJobButton
+          label="Generate Embedding"
+          jobType="embedding"
+          enqueueing={enqueueing}
+          onTrigger={triggerJob}
+          capReady={semanticReady}
+          capName="Semantic"
+          title="Generate vector embedding for semantic search and linking"
+        />
+        <AIJobButton
+          label="Concept Tagging"
+          jobType="concept_tagging"
+          enqueueing={enqueueing}
+          onTrigger={triggerJob}
+          capReady={llmReady}
+          capName="LLM"
+          title="Extract topic tags from content using LLM"
+        />
+        <AIJobButton
+          label="Find Links"
+          jobType="linking"
+          enqueueing={enqueueing}
+          onTrigger={triggerJob}
+          title="Discover semantically related notes (requires embedding)"
+        />
+      </div>
+      <div style={{ fontSize: 10, color: '#999', marginBottom: 4 }}>
+        Jobs requiring capabilities will queue and run when the capability is enabled in Settings.
+      </div>
+
+      {/* Active / recent jobs for this note */}
+      {(pendingOrProcessing.length > 0 || recentCompleted.length > 0 || recentFailed.length > 0) && (
+        <div style={{ fontSize: 11, marginTop: 4 }}>
+          {pendingOrProcessing.map((j) => (
+            <div key={j.id} style={{ color: STATUS_COLORS[j.status], padding: '2px 0' }}>
+              {j.status === 'processing' ? '\u2699' : '\u23f3'} {j.job_type} — {j.status}
+              {j.retry_count > 0 && ` (retry ${j.retry_count}/${j.max_retries})`}
+            </div>
+          ))}
+          {recentCompleted.map((j) => (
+            <div key={j.id} style={{ color: STATUS_COLORS.completed, padding: '2px 0' }}>
+              \u2713 {j.job_type} — completed {new Date(j.updated_at).toLocaleTimeString()}
+            </div>
+          ))}
+          {recentFailed.map((j) => (
+            <div key={j.id} style={{ color: STATUS_COLORS.failed, padding: '2px 0' }}>
+              \u2717 {j.job_type} — failed: {j.error?.slice(0, 80)}
+            </div>
+          ))}
         </div>
       )}
     </div>

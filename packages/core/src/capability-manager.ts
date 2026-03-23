@@ -48,6 +48,7 @@ function assertTransition(
 export class CapabilityManager {
   private capabilities = new Map<CapabilityName, CapabilityEntry>()
   private loaders = new Map<CapabilityName, () => Promise<void>>()
+  private progressMessages = new Map<CapabilityName, string>()
 
   constructor(private events: TypedEventBus) {
     const names: CapabilityName[] = ['semantic', 'llm', 'audio', 'vision', 'pdf']
@@ -170,6 +171,17 @@ export class CapabilityManager {
     if (!entry || entry.state !== 'loading') return
 
     this.events.emit('capability.loading', { name, progress })
+  }
+
+  /** Set a human-readable progress message for a loading capability */
+  setProgress(name: CapabilityName, message: string): void {
+    this.progressMessages.set(name, message)
+    this.events.emit('capability.loading', { name, progress: -1 })
+  }
+
+  /** Get the current progress message for a capability */
+  getProgress(name: CapabilityName): string | undefined {
+    return this.progressMessages.get(name)
   }
 
   getError(name: CapabilityName): string | undefined {

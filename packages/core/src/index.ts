@@ -50,8 +50,19 @@ export type {
   NoteRevision,
 } from './repositories/types.js'
 
-export { JobQueueWorker, titleGenerationHandler } from './job-queue-worker.js'
-export type { JobQueueOptions } from './job-queue-worker.js'
+export {
+  JobQueueWorker,
+  titleGenerationHandler,
+  aiRevisionHandler,
+  conceptTaggingHandler,
+  linkingHandler,
+  enqueueJob,
+  enqueueNoteCreationJobs,
+  getJobQueueStatus,
+  JOB_PRIORITIES,
+  JOB_CAPABILITIES,
+} from './job-queue-worker.js'
+export type { JobQueueOptions, JobType, EnqueueJobInput, JobStatus } from './job-queue-worker.js'
 
 export { TagsRepository } from './repositories/tags-repository.js'
 export { CollectionsRepository } from './repositories/collections-repository.js'

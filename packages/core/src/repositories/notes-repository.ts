@@ -79,14 +79,25 @@ export class NotesRepository {
         }
       }
 
-      // Queue title generation job when caller did not supply a title
+      // Queue the full note creation pipeline matching the server:
+      // title_generation (priority 2), ai_revision (priority 8, requires llm), embedding (priority 5, requires semantic)
       if (!input.title) {
         await tx.query(
           `INSERT INTO job_queue (id, note_id, job_type, status, priority)
-           VALUES ($1, $2, 'title_generation', 'pending', 5)`,
+           VALUES ($1, $2, 'title_generation', 'pending', 2)`,
           [generateId(), noteId],
         )
       }
+      await tx.query(
+        `INSERT INTO job_queue (id, note_id, job_type, status, priority, required_capability)
+         VALUES ($1, $2, 'ai_revision', 'pending', 8, 'llm')`,
+        [generateId(), noteId],
+      )
+      await tx.query(
+        `INSERT INTO job_queue (id, note_id, job_type, status, priority, required_capability)
+         VALUES ($1, $2, 'embedding', 'pending', 5, 'semantic')`,
+        [generateId(), noteId],
+      )
     })
 
     this.events?.emit('note.created', { id: noteId })

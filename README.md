@@ -20,9 +20,9 @@ pnpm monorepo with three packages:
 | `@fortemi/standalone` | Vite 7 application with note list, search, settings UI |
 
 All data stays in-browser via PGlite (PostgreSQL compiled to WASM):
-- **Chrome**: OPFS persistence (fastest)
-- **Firefox**: IndexedDB adapter
-- **Safari**: In-memory (no persistent storage)
+- **Chrome 113+** (tested: 146): OPFS persistence (fastest), WebGPU for LLM
+- **Firefox 111+** (tested: 148): IndexedDB adapter, WASM embedding (no WebGPU production support yet)
+- **Safari 17+**: In-memory (no persistent storage)
 
 No server required. Deploy `apps/standalone/dist/` to any static host.
 
@@ -55,6 +55,55 @@ Coverage: 88.56% statements, 96.89% repository layer, 90.24% lines.
 pnpm build                                          # Build all packages
 pnpm --filter @fortemi/standalone preview            # Preview production build
 ```
+
+## AI Capabilities
+
+fortemi-browser supports opt-in AI features through the capability system. Enable them in Settings.
+
+### Semantic Search (all browsers)
+
+Downloads the `all-MiniLM-L6-v2` embedding model (~23MB) via transformers.js (WASM). No GPU needed.
+
+Enables: Generate Embedding, Find Links, hybrid semantic search.
+
+### Local LLM (Chrome/Edge with WebGPU)
+
+Downloads a local language model via WebLLM. Requires WebGPU.
+
+Enables: AI Revision, Concept Tagging, LLM-powered title generation.
+
+### GPU Setup (Linux)
+
+WebGPU requires proper GPU driver setup. Check `chrome://gpu` — look for `WebGPU: Hardware accelerated`.
+
+If WebGPU shows as disabled:
+
+```bash
+# Ensure Vulkan is available
+vulkaninfo | head -20
+
+# Launch Chrome with Vulkan backend (if not auto-detected)
+google-chrome --enable-features=Vulkan --enable-unsafe-webgpu
+
+# NVIDIA users: ensure proprietary drivers are installed
+nvidia-smi
+```
+
+For Intel integrated GPUs, Mesa drivers (25.x+) provide Vulkan support automatically. The NVIDIA discrete GPU can be selected in Chrome via `chrome://flags/#enable-webgpu-developer-features`.
+
+### Job Queue
+
+All AI operations run through a background job queue matching the fortemi server's pipeline:
+
+| Job Type | Priority | Requires | Description |
+|---|---|---|---|
+| `title_generation` | 2 | none (LLM optional) | Extract or generate title from content |
+| `linking` | 3 | embeddings exist | Discover semantically related notes |
+| `embedding` | 5 | Semantic capability | Generate vector embedding for search |
+| `concept_tagging` | 5 | LLM capability | Extract topic tags via LLM |
+| `ai_revision` | 8 | LLM capability | LLM-based content enhancement |
+
+Jobs that require unavailable capabilities stay queued as `pending` and run automatically when the capability is enabled.
 
 ## MCP Integration
 

@@ -27,8 +27,10 @@ export function useNote(id: string | null) {
     }
 
     void load()
-    const sub = events.on('note.updated', (e) => { if (e.id === id) void load() })
-    return () => { cancelled = true; sub.dispose() }
+    const sub1 = events.on('note.updated', (e) => { if (e.id === id) void load() })
+    // Reload when jobs complete (title generation, ai_revision, etc.)
+    const sub2 = events.on('job.completed', (e) => { if (e.noteId === id) void load() })
+    return () => { cancelled = true; sub1.dispose(); sub2.dispose() }
   }, [id, db, events])
 
   return { data, loading, error }

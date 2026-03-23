@@ -5,6 +5,7 @@ import { NoteCreateForm } from '../components/NoteCreateForm'
 import { NoteDetail } from '../components/NoteDetail'
 import { SearchBar } from '../components/SearchBar'
 import { SearchResults } from '../components/SearchResults'
+import { JobQueuePanel } from '../components/JobQueuePanel'
 
 export function NoteListPage() {
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -63,6 +64,8 @@ export function NoteListPage() {
           {showCreateForm ? 'Cancel' : '+ New Note'}
         </button>
       </div>
+
+      <JobQueuePanel />
 
       {showCreateForm && (
         <NoteCreateForm onSubmit={handleCreate} onCancel={() => setShowCreateForm(false)} />

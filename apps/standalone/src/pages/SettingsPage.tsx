@@ -14,6 +14,7 @@ import {
   type CapabilityName,
   type CapabilityState,
 } from '@fortemi/core'
+import { LLM_PRESETS, getSelectedLlmModel, setSelectedLlmModel } from '../capabilities/setup'
 
 interface CapabilityCardProps {
   name: CapabilityName
@@ -23,6 +24,7 @@ interface CapabilityCardProps {
   requires: string
   state: CapabilityState
   error?: string
+  progress?: string
   onEnable: () => void
   onDisable: () => void
 }
@@ -34,6 +36,7 @@ function CapabilityCard({
   requires,
   state,
   error,
+  progress,
   onEnable,
   onDisable,
 }: CapabilityCardProps) {
@@ -81,9 +84,24 @@ function CapabilityCard({
             borderRadius: 4,
             fontSize: 12,
             marginBottom: 8,
+            whiteSpace: 'pre-wrap',
           }}
         >
           {error}
+        </div>
+      )}
+      {state === 'loading' && progress && (
+        <div
+          style={{
+            background: '#e8f0fe',
+            color: '#1a73e8',
+            padding: 8,
+            borderRadius: 4,
+            fontSize: 12,
+            marginBottom: 8,
+          }}
+        >
+          {progress}
         </div>
       )}
       <div>
@@ -123,7 +141,7 @@ function CapabilityCard({
 }
 
 export function SettingsPage({ onBack }: { onBack: () => void }) {
-  const { capabilityManager } = useFortemiContext()
+  const { capabilityManager, events } = useFortemiContext()
 
   const [gpuCaps, setGpuCaps] = useState<GpuCapabilities | null>(null)
   const [vramTier, setVramTier] = useState<VramTier>('unknown')
@@ -135,6 +153,17 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
       setVramTier(estimateVramTier(caps))
     })
   }, [])
+
+  const [progressMsg, setProgressMsg] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    const sub = events.on('capability.loading', (e) => {
+      const msg = capabilityManager.getProgress(e.name as CapabilityName)
+      if (msg) setProgressMsg(prev => ({ ...prev, [e.name]: msg }))
+      refresh()
+    })
+    return () => sub.dispose()
+  }, [events, capabilityManager])
 
   const refresh = () => setCapabilities([...capabilityManager.listAll()])
 
@@ -196,8 +225,12 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
             <span>{gpuCaps.architecture}</span>
             <span style={{ color: '#666' }}>VRAM Tier:</span>
             <span style={{ fontWeight: 500 }}>{vramTier}</span>
+            <span style={{ color: '#666' }}>Shader f16:</span>
+            <span style={{ fontWeight: 500, color: gpuCaps.supportsF16 ? '#34a853' : '#f5a623' }}>
+              {gpuCaps.supportsF16 ? 'Supported' : 'Not supported (using f32)'}
+            </span>
             <span style={{ color: '#666' }}>Recommended LLM:</span>
-            <span style={{ fontFamily: 'monospace', fontSize: 11 }}>{selectLlmModel(vramTier)}</span>
+            <span style={{ fontFamily: 'monospace', fontSize: 11 }}>{selectLlmModel(vramTier, gpuCaps.supportsF16)}</span>
           </div>
         ) : (
           <p style={{ color: '#999', fontSize: 12 }}>Detecting GPU capabilities...</p>
@@ -215,6 +248,7 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
         requires="Any browser (WASM fallback)"
         state={capabilities.find(c => c.name === 'semantic')?.state ?? 'unloaded'}
         error={capabilityManager.getError('semantic')}
+        progress={progressMsg['semantic']}
         onEnable={() => handleEnable('semantic')}
         onDisable={() => handleDisable('semantic')}
       />
@@ -222,14 +256,122 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
       <CapabilityCard
         name="llm"
         label="Local LLM"
-        description="Title generation, summarization (Llama-3.2-1B or SmolLM2-360M)"
-        size="~376-879 MB"
+        description="AI revision, concept tagging, title generation"
+        size="varies by model"
         requires="WebGPU"
         state={capabilities.find(c => c.name === 'llm')?.state ?? 'unloaded'}
         error={capabilityManager.getError('llm')}
+        progress={progressMsg['llm']}
         onEnable={() => handleEnable('llm')}
         onDisable={() => handleDisable('llm')}
       />
+
+      <LlmModelSelector
+        gpuCaps={gpuCaps}
+        llmState={capabilities.find(c => c.name === 'llm')?.state ?? 'unloaded'}
+      />
+    </div>
+  )
+}
+
+function LlmModelSelector({ gpuCaps, llmState }: { gpuCaps: GpuCapabilities | null; llmState: CapabilityState }) {
+  const [selected, setSelected] = useState(getSelectedLlmModel())
+  const [customModel, setCustomModel] = useState('')
+  const autoModel = gpuCaps
+    ? selectLlmModel(estimateVramTier(gpuCaps), gpuCaps.supportsF16)
+    : 'auto-detect'
+
+  const handleSelect = (modelId: string) => {
+    setSelectedLlmModel(modelId)
+    setSelected(modelId)
+  }
+
+  const handleCustomApply = () => {
+    const trimmed = customModel.trim()
+    if (trimmed) {
+      handleSelect(trimmed)
+      setCustomModel('')
+    }
+  }
+
+  const isActive = llmState === 'ready' || llmState === 'loading'
+
+  return (
+    <div style={{ border: '1px solid #e0e0e0', borderRadius: 8, padding: 16, marginBottom: 12 }}>
+      <h4 style={{ margin: '0 0 8px', fontSize: 13, color: '#666' }}>LLM Model Selection</h4>
+      {isActive && (
+        <p style={{ color: '#f5a623', fontSize: 11, margin: '0 0 8px' }}>
+          Disable and re-enable LLM to switch models.
+        </p>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
+        {/* Auto-detect option */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, cursor: 'pointer' }}>
+          <input
+            type="radio"
+            name="llm-model"
+            checked={!selected}
+            onChange={() => handleSelect('')}
+            disabled={isActive}
+          />
+          <span>
+            <strong>Auto-detect</strong>
+            <span style={{ color: '#999', marginLeft: 6 }}>({autoModel})</span>
+          </span>
+        </label>
+
+        {/* Preset models */}
+        {LLM_PRESETS.map((preset) => (
+          <label key={preset.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, cursor: 'pointer' }}>
+            <input
+              type="radio"
+              name="llm-model"
+              checked={selected === preset.id}
+              onChange={() => handleSelect(preset.id)}
+              disabled={isActive}
+            />
+            <span>
+              <strong>{preset.label}</strong>
+              <span style={{ color: '#999', marginLeft: 6 }}>{preset.size}</span>
+            </span>
+          </label>
+        ))}
+
+        {/* Custom model entry */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, cursor: 'pointer', marginTop: 4 }}>
+          <input
+            type="radio"
+            name="llm-model"
+            checked={!!selected && !LLM_PRESETS.some(p => p.id === selected)}
+            readOnly
+          />
+          <span><strong>Custom:</strong></span>
+        </label>
+        <div style={{ display: 'flex', gap: 4, marginLeft: 24 }}>
+          <input
+            type="text"
+            value={selected && !LLM_PRESETS.some(p => p.id === selected) && selected !== '' ? selected : customModel}
+            onChange={(e) => setCustomModel(e.target.value)}
+            placeholder="e.g. Llama-3.1-8B-Instruct-q4f32_1-MLC"
+            disabled={isActive}
+            style={{ flex: 1, padding: '4px 8px', fontSize: 11, border: '1px solid #ddd', borderRadius: 4, fontFamily: 'monospace' }}
+          />
+          <button
+            onClick={handleCustomApply}
+            disabled={isActive || !customModel.trim()}
+            style={{ padding: '4px 8px', fontSize: 11, borderRadius: 4, border: '1px solid #ccc', cursor: 'pointer', background: '#fff' }}
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+
+      {selected && (
+        <div style={{ fontSize: 11, color: '#666', fontFamily: 'monospace', background: '#f8f9fa', padding: 6, borderRadius: 4 }}>
+          Selected: {selected || `auto (${autoModel})`}
+        </div>
+      )}
     </div>
   )
 }

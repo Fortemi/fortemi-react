@@ -31,6 +31,8 @@ export function useNotes(options: NoteListOptions = {}) {
       events.on('note.updated', refresh),
       events.on('note.deleted', refresh),
       events.on('note.restored', refresh),
+      // Refresh when jobs complete — title generation, ai_revision, etc. modify note data
+      events.on('job.completed', refresh),
     ]
     return () => subs.forEach(s => s.dispose())
   }, [refresh, events])

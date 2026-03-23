@@ -156,6 +156,7 @@ describe('estimateVramTier', () => {
       webgpuAvailable: false,
       vendor: 'none',
       architecture: 'none',
+      supportsF16: false,
       maxBufferSizeBytes: 8192 * 1024 * 1024,
     }
     expect(estimateVramTier(caps)).toBe('unknown')
@@ -166,6 +167,7 @@ describe('estimateVramTier', () => {
       webgpuAvailable: true,
       vendor: 'test',
       architecture: 'test',
+      supportsF16: false,
       maxBufferSizeBytes: 256 * 1024 * 1024,
     }
     expect(estimateVramTier(caps)).toBe('low')
@@ -176,6 +178,7 @@ describe('estimateVramTier', () => {
       webgpuAvailable: true,
       vendor: 'test',
       architecture: 'test',
+      supportsF16: false,
       maxBufferSizeBytes: 128 * 1024 * 1024,
     }
     expect(estimateVramTier(caps)).toBe('low')
@@ -186,6 +189,7 @@ describe('estimateVramTier', () => {
       webgpuAvailable: true,
       vendor: 'test',
       architecture: 'test',
+      supportsF16: false,
       maxBufferSizeBytes: 257 * 1024 * 1024,
     }
     expect(estimateVramTier(caps)).toBe('medium')
@@ -196,6 +200,7 @@ describe('estimateVramTier', () => {
       webgpuAvailable: true,
       vendor: 'test',
       architecture: 'test',
+      supportsF16: false,
       maxBufferSizeBytes: 2048 * 1024 * 1024,
     }
     expect(estimateVramTier(caps)).toBe('medium')
@@ -206,6 +211,7 @@ describe('estimateVramTier', () => {
       webgpuAvailable: true,
       vendor: 'test',
       architecture: 'test',
+      supportsF16: false,
       maxBufferSizeBytes: 4096 * 1024 * 1024,
     }
     expect(estimateVramTier(caps)).toBe('high')
@@ -216,6 +222,7 @@ describe('estimateVramTier', () => {
       webgpuAvailable: true,
       vendor: 'test',
       architecture: 'test',
+      supportsF16: false,
       maxBufferSizeBytes: 0,
     }
     expect(estimateVramTier(caps)).toBe('low')
@@ -228,18 +235,18 @@ describe('estimateVramTier', () => {
 
 describe('selectLlmModel', () => {
   it('returns Llama model for "high" tier', () => {
-    expect(selectLlmModel('high')).toBe('Llama-3.2-1B-Instruct-q4f16_1-MLC')
+    expect(selectLlmModel('high')).toBe('Hermes-3-Llama-3.2-3B-q4f32_1-MLC')
   })
 
   it('returns Llama model for "medium" tier', () => {
-    expect(selectLlmModel('medium')).toBe('Llama-3.2-1B-Instruct-q4f16_1-MLC')
+    expect(selectLlmModel('medium')).toBe('Qwen3-1.7B-q4f32_1-MLC')
   })
 
   it('returns SmolLM2 model for "low" tier', () => {
-    expect(selectLlmModel('low')).toBe('SmolLM2-360M-Instruct-q4f16_1-MLC')
+    expect(selectLlmModel('low')).toBe('Qwen3-0.6B-q4f32_1-MLC')
   })
 
   it('returns SmolLM2 model for "unknown" tier', () => {
-    expect(selectLlmModel('unknown')).toBe('SmolLM2-360M-Instruct-q4f16_1-MLC')
+    expect(selectLlmModel('unknown')).toBe('Qwen3-0.6B-q4f32_1-MLC')
   })
 })
