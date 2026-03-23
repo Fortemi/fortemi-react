@@ -8,7 +8,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install --with-deps chromium firefox"
   },
   "dependencies": {
     "@fortemi/core": "workspace:*",
@@ -20,6 +22,7 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.5.0",
     "typescript": "^5.8.0",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "@playwright/test": "^1.52.0"
   }
 }

@@ -1,7 +1,8 @@
 /**
  * Migration 0001: Core tables.
  * Creates: archive, note, note_original, note_revised_current,
- *          note_revision, collection, job_queue.
+ *          note_revision, collection, job_queue, api_key, link,
+ *          provenance_edge.
  * All tables use UUIDv7 PKs, soft-delete (deleted_at), timestamps.
  */
 
@@ -33,7 +34,8 @@ export const migration0001: Migration = {
       is_pinned BOOLEAN NOT NULL DEFAULT false,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-      deleted_at TIMESTAMPTZ
+      deleted_at TIMESTAMPTZ,
+      tsv tsvector GENERATED ALWAYS AS (to_tsvector('english', coalesce(title, ''))) STORED
     );
 
     -- Note original content (immutable)
@@ -106,10 +108,47 @@ export const migration0001: Migration = {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
+    -- API key
+    CREATE TABLE IF NOT EXISTS api_key (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      key_hash TEXT NOT NULL,
+      permissions JSONB NOT NULL DEFAULT '[]',
+      expires_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      deleted_at TIMESTAMPTZ
+    );
+
+    -- Link (bidirectional note links)
+    CREATE TABLE IF NOT EXISTS link (
+      id TEXT PRIMARY KEY,
+      source_note_id TEXT NOT NULL REFERENCES note(id),
+      target_note_id TEXT NOT NULL REFERENCES note(id),
+      link_type TEXT NOT NULL DEFAULT 'related',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      deleted_at TIMESTAMPTZ
+    );
+
+    -- Provenance edge
+    CREATE TABLE IF NOT EXISTS provenance_edge (
+      id TEXT PRIMARY KEY,
+      entity_type TEXT NOT NULL,
+      entity_id TEXT NOT NULL,
+      activity TEXT NOT NULL,
+      agent TEXT NOT NULL,
+      started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      ended_at TIMESTAMPTZ,
+      attributes JSONB
+    );
+
     CREATE INDEX IF NOT EXISTS idx_note_deleted_at ON note(deleted_at);
     CREATE INDEX IF NOT EXISTS idx_note_created_at ON note(created_at);
+    CREATE INDEX IF NOT EXISTS idx_note_tsv ON note USING gin(tsv);
     CREATE INDEX IF NOT EXISTS idx_job_queue_status ON job_queue(status, priority DESC);
     CREATE INDEX IF NOT EXISTS idx_job_queue_note ON job_queue(note_id);
     CREATE INDEX IF NOT EXISTS idx_collection_parent ON collection(parent_id);
+    CREATE INDEX IF NOT EXISTS idx_link_source ON link(source_note_id);
+    CREATE INDEX IF NOT EXISTS idx_link_target ON link(target_note_id);
+    CREATE INDEX IF NOT EXISTS idx_provenance_entity ON provenance_edge(entity_type, entity_id);
   `,
 }
