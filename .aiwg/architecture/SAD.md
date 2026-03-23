@@ -1,10 +1,10 @@
 # Software Architecture Document — fortemi-browser
 
-**Version**: 2026.3.0 (Draft — Elaboration)
+**Version**: 2026.3.0
 **Author**: roctinam
 **Reviewers**: Architecture Designer (agent), Database Optimizer (agent)
-**Status**: Draft
-**Last Updated**: 2026-03-21
+**Status**: Baselined (updated for C3)
+**Last Updated**: 2026-03-23
 
 ---
 
@@ -22,7 +22,17 @@ fortemi-browser runs entirely in the browser (no server required after initial l
 - Provides a React 19 UI for direct user interaction
 - Maintains full data format parity with the Rust/PostgreSQL fortemi server
 
-### 1.3 References
+### 1.3 Monorepo Structure
+
+The project is organized as a pnpm workspace monorepo:
+
+| Package | Path | Purpose |
+|---|---|---|
+| `@fortemi/core` | `packages/core/` | Headless data layer: PGlite, repositories, migrations, workers, MCP tools, event bus, capabilities |
+| `@fortemi/react` | `packages/react/` | React 19 hooks (`useNotes`, `useSearch`, etc.) and `FortemiProvider` context |
+| `@fortemi/standalone` | `apps/standalone/` | Vite 7.3.1 application: UI components, pages, Service Worker registration, E2E tests |
+
+### 1.4 References
 
 | Document | Location |
 |---|---|
@@ -411,7 +421,7 @@ All operations work without network access. The only network-dependent features 
 | PDF Extraction | pdfjs-dist | 5.x (5.5.207) | `getTextContent` now async |
 | Testing (unit) | Vitest | **4.x (4.1.0)** | Supports Vite 6/7/8 |
 | Testing (E2E) | Playwright | 1.x (1.58.2) | |
-| Linting | ESLint | **10.x (10.1.0)** | Flat config mandatory; needs typescript-eslint v8+ |
+| Linting | ESLint | **9.x (^9.0.0)** | Flat config mandatory; needs typescript-eslint v8+ |
 | CI/CD | Gitea Actions | — | |
 | License | AGPL-3.0 | — | |
 

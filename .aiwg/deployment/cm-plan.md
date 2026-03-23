@@ -18,6 +18,18 @@
 - **Default branch**: `main`
 - **Remote**: `origin`
 
+### 1.1a Monorepo Structure
+
+fortemi-browser is a pnpm monorepo with three packages:
+
+| Package | Name | Contents |
+|---|---|---|
+| `packages/core` | `@fortemi/core` | Repositories, migrations, workers, tools, tests |
+| `packages/react` | `@fortemi/react` | Hooks, FortemiProvider |
+| `apps/standalone` | `@fortemi/standalone` | Vite 7.3.1 + React 19.2.4 application |
+
+The workspace root (`fortemi-browser`) holds the `pnpm-workspace.yaml`, root `package.json`, and shared tooling configuration. All workspace packages are managed via pnpm workspaces.
+
 ### 1.2 Branching Strategy
 
 **GitHub Flow** (simple, appropriate for solo developer):
@@ -68,11 +80,11 @@ Examples:
 - April release: `2026.4.0`
 
 **Enforced in**:
-- `package.json` version field
+- `package.json` version field (workspace root and all packages)
 - Git tags: `v2026.3.0` (with `v` prefix)
 
 **Version bump workflow**:
-1. Update `package.json` version
+1. Update `package.json` version in the workspace root and affected packages
 2. Commit: `chore: bump version to 2026.3.1`
 3. Tag: `git tag v2026.3.1`
 4. Push: `git push && git push --tags`
@@ -87,14 +99,14 @@ Location: `.gitea/workflows/`
 
 ### 3.2 CI Workflow (`.gitea/workflows/ci.yml`)
 
-Triggered on: push to `main`, pull request to `main`
+Triggered on: push to any branch, pull request to `main`
 
 ```yaml
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: ['*']
   pull_request:
     branches: [main]
 
@@ -103,111 +115,55 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '22' }
-      - run: npm ci
-      - run: npx tsc --noEmit
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
 
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '22' }
-      - run: npm ci
-      - run: npx eslint src/ tests/
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
 
-  unit-tests:
+  unit-test:
     runs-on: ubuntu-latest
-    needs: [typecheck, lint]
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '22' }
-      - run: npm ci
-      - run: npm run test:unit
-      - run: npm run test:format-parity
-      - run: npm run test:integration
-      - run: npm run test:coverage
-      - name: Upload coverage
-        uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
-          path: coverage/
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:core
 
   build:
     runs-on: ubuntu-latest
-    needs: [unit-tests]
+    needs: [typecheck, lint, unit-test]
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '22' }
-      - run: npm ci
-      - run: npm run build
-      - name: Check bundle size
-        run: |
-          BUNDLE_SIZE=$(du -sk dist/ | cut -f1)
-          echo "Bundle size: ${BUNDLE_SIZE}KB"
-          # Rough check — detailed analysis via bundle analyzer
-      - uses: actions/upload-artifact@v4
         with:
-          name: dist
-          path: dist/
-
-  e2e-chromium:
-    runs-on: ubuntu-latest
-    needs: [build]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '22' }
-      - run: npm ci
-      - run: npx playwright install chromium --with-deps
-      - uses: actions/download-artifact@v4
-        with: { name: dist, path: dist/ }
-      - run: npm run test:e2e -- --project=chromium
-
-  e2e-firefox:
-    runs-on: ubuntu-latest
-    needs: [build]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '22' }
-      - run: npm ci
-      - run: npx playwright install firefox --with-deps
-      - uses: actions/download-artifact@v4
-        with: { name: dist, path: dist/ }
-      - run: npm run test:e2e -- --project=firefox
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
 ```
 
 ### 3.3 Release Workflow (`.gitea/workflows/release.yml`)
 
-Triggered on: push of tag matching `v*`
-
-```yaml
-name: Release
-
-on:
-  push:
-    tags:
-      - 'v*'
-
-jobs:
-  release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '22' }
-      - run: npm ci
-      - run: npm run build
-      - name: Create Gitea Release
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          # Create release with dist/ artifact
-          # Using Gitea API or gh CLI equivalent
-```
+**Not yet implemented.** A release workflow triggered on `v*` tag pushes is planned but does not currently exist in `.gitea/workflows/`. Version releases are currently managed manually: build locally, tag, push, and attach the `apps/standalone/dist/` artifact to the Gitea release via the UI or API.
 
 ---
 
@@ -216,17 +172,20 @@ jobs:
 ### 4.1 Development
 
 ```bash
-npm run dev          # Vite dev server on :5173
+pnpm dev             # Vite dev server on :5173 (runs @fortemi/standalone)
+pnpm test:core       # Run @fortemi/core tests
+pnpm typecheck       # Type-check all packages
+pnpm lint            # ESLint across the workspace
 ```
 
-**Required for dev** (set in `.env.local`):
+**Required for dev** (set in `.env.local` under `apps/standalone`):
 ```
 VITE_APP_VERSION=2026.3.0-dev
 ```
 
 **Vite configuration** (required for PGlite):
 
-`vite.config.ts`:
+`apps/standalone/vite.config.ts`:
 ```typescript
 // Errata #4/#5: COOP/COEP headers NOT required (PGlite uses OPFS sync handles, not SharedArrayBuffer)
 {
@@ -238,11 +197,12 @@ VITE_APP_VERSION=2026.3.0-dev
 ### 4.2 Production Build
 
 ```bash
-npm run build        # Vite build → dist/
-npm run preview      # Preview production build on :4173
+pnpm build           # Builds all packages recursively (pnpm -r build)
 ```
 
-**Production environment** (set at build time):
+The standalone app output lands in `apps/standalone/dist/`.
+
+**Production environment** (set at build time in `apps/standalone`):
 ```
 VITE_APP_VERSION=2026.3.0
 ```
@@ -263,7 +223,7 @@ fortemi-browser is a static web application. It can be served by:
 
 ### 5.1 Lockfile
 
-`package-lock.json` committed. `npm ci` used in all CI steps (not `npm install`).
+`pnpm-lock.yaml` is committed. `pnpm install --frozen-lockfile` is used in all CI steps to guarantee reproducible installs. Do not commit `package-lock.json` or `yarn.lock`.
 
 ### 5.2 Dependency Update Policy
 
@@ -274,9 +234,9 @@ fortemi-browser is a static web application. It can be served by:
 
 ### 5.3 License Audit
 
-AGPL-3.0 license requires all production dependencies to be compatible. License check in CI:
+AGPL-3.0 license requires all production dependencies to be compatible. License check:
 ```bash
-npx license-checker --production --onlyAllow "MIT;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0"
+pnpm dlx license-checker --production --onlyAllow "MIT;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0"
 ```
 
 ---
@@ -303,8 +263,8 @@ migrations/0002_skos_tagging.sql
 
 | Artifact | Location | Retention |
 |---|---|---|
-| `dist/` | Gitea release asset | Per release tag |
+| `apps/standalone/dist/` | Gitea release asset | Per release tag |
 | Coverage reports | CI artifact | 30 days |
 | Playwright test reports | CI artifact | 30 days |
 | E2E screenshots (failure) | CI artifact | 30 days |
-| Server fixtures | `tests/fixtures/server/` | In repo |
+| Server fixtures | `packages/core/tests/fixtures/` | In repo |

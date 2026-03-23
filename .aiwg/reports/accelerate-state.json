@@ -1,15 +1,15 @@
 {
   "schema_version": "1.0",
   "project": "fortemi-browser",
-  "generated": "2026-03-21",
+  "generated": "2026-03-23",
   "command": "sdlc-accelerate --interactive",
   "guidance": "full data compatibility with fortemi server required",
 
-  "phase": "Elaboration",
-  "phase_status": "READY_TO_START",
+  "phase": "Construction",
+  "phase_status": "C3_COMPLETE",
   "gate_inception": "PASSED",
-  "gate_elaboration": "PENDING",
-  "gate_construction": "NOT_STARTED",
+  "gate_elaboration": "PASSED",
+  "gate_construction": "IN_PROGRESS",
   "gate_transition": "NOT_STARTED",
 
   "inception": {
@@ -37,12 +37,9 @@
   },
 
   "elaboration": {
-    "status": "READY_TO_START",
-    "started": null,
-    "completed": null,
-    "target_start": "2026-03-22",
-    "target_complete": "2026-05-16",
-    "weeks": 8,
+    "status": "COMPLETE",
+    "started": "2026-03-22",
+    "completed": "2026-03-22",
     "artifacts": [
       ".aiwg/planning/phase-plan-elaboration.md",
       ".aiwg/architecture/SAD.md",
@@ -61,33 +58,63 @@
       ".aiwg/gates/gate-elaboration.md"
     ],
     "key_risk_retirement": {
-      "R-001": "Retired by PGlite PoC in Elaboration Iteration 1 (target: 2026-04-18)"
+      "R-001": "Retired — PGlite PoC validates full stack (pgvector, tsvector, transactions, migrations)"
     }
   },
 
   "construction": {
-    "status": "NOT_STARTED",
-    "target_start": "2026-05-17",
+    "status": "IN_PROGRESS",
+    "started": "2026-03-22",
     "iterations": [
       {
         "id": "C1",
         "name": "Foundation Stack",
-        "target": "2026-05-17 to 2026-07-11",
-        "weeks": 8,
+        "status": "COMPLETE",
+        "completed": "2026-03-22",
         "plan": ".aiwg/planning/iteration-plan-construction-1.csv",
         "stories": 20,
-        "points": 104
+        "points": 104,
+        "issues": "#16-#35"
       },
       {
         "id": "C2",
         "name": "Core CRUD + FTS + SKOS + MCP (basic)",
-        "target": "2026-07-12 to 2026-09-05",
-        "weeks": 8,
+        "status": "COMPLETE",
+        "completed": "2026-03-22",
         "plan": ".aiwg/planning/iteration-plan-construction-2.csv",
         "stories": 20,
-        "points": 112
+        "points": 112,
+        "issues": "#36-#55"
+      },
+      {
+        "id": "C3",
+        "name": "Semantic Search + AI Capabilities + Settings UI",
+        "status": "COMPLETE",
+        "completed": "2026-03-23",
+        "plan": ".aiwg/planning/iteration-plan-construction-3.csv",
+        "stories": 13,
+        "points": 80,
+        "issues": "#61-#73",
+        "batches": [
+          "C3-A: GPU detection, tool functions, attachments, revision history, capability gating",
+          "C3-B: Embedding pipeline, semantic search, LLM title gen, auto-tagging",
+          "C3-C: Capability loaders, settings UI, PGlite Worker deferred"
+        ]
       }
     ]
+  },
+
+  "quality": {
+    "tests_passing": 603,
+    "test_files": 27,
+    "e2e_tests": 16,
+    "coverage_statements": 88.56,
+    "coverage_branches": 86.4,
+    "coverage_lines": 90.24,
+    "coverage_repository": 96.89,
+    "format_parity_tables": 10,
+    "lint_errors": 0,
+    "typecheck_errors": 0
   },
 
   "key_decisions": {
@@ -95,7 +122,10 @@
     "capability_system": "Opt-in WASM modules — ADR-002",
     "write_serialization": "Single-writer PGlite Worker — ADR-003",
     "api_surface": "Service Worker REST interception — ADR-004",
-    "browser_targets": "Chrome 102+, Firefox 111+, Safari 17+, iOS out of scope v1 — ADR-005"
+    "browser_targets": "Chrome 102+, Firefox 111+, Safari 17+, iOS out of scope v1 — ADR-005",
+    "api_first": "Public API-first design — ADR-006",
+    "deployment_modes": "Browser-only v1, sync v2, federated v3 — ADR-007",
+    "agent_discoverable": "MCP tool manifest — ADR-008"
   },
 
   "non_negotiables": [
@@ -108,8 +138,8 @@
   ],
 
   "top_risks": [
-    { "id": "R-001", "status": "Monitoring", "retirement": "Elaboration Iteration 1 PoC" },
-    { "id": "R-002", "status": "Mitigating", "mitigation": "Format parity test suite" },
-    { "id": "R-004", "status": "Mitigating", "mitigation": "Capability module opt-in system" }
+    { "id": "R-001", "status": "Retired", "evidence": "PGlite PoC + C1-C3 shipping; tiered persistence accepted" },
+    { "id": "R-002", "status": "Mitigated", "evidence": "Format parity tests (603 tests, 10 fixture tables)" },
+    { "id": "R-004", "status": "Mitigated", "evidence": "Capability module opt-in system (C3 Batch C)" }
   ]
 }

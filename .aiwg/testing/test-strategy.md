@@ -27,31 +27,48 @@ Test pyramid (priority order):
 
 **Scope**: Repository layer, business logic, utility functions, serializers
 
-**Location**: `src/**/__tests__/*.test.ts` or `src/**/*.test.ts`
+**Location**: `packages/core/src/__tests__/*.test.ts`
 
-**Coverage Target**: 60% overall; 80% for repository layer
+**Coverage Target**: 88% statements overall; 96% for repository layer (achieved)
 
-**Key test suites**:
+**Key test suites** (27 files, 603 tests):
 
-| Suite | Description | Priority |
-|---|---|---|
-| `notes.repository.test.ts` | CRUD, soft-delete, UUIDv7 generation | CRITICAL |
-| `search.repository.test.ts` | FTS query construction, RRF fusion logic | CRITICAL |
-| `migration.runner.test.ts` | Sequential migration application, rollback | CRITICAL |
-| `capability.manager.test.ts` | Module registration, state machine | HIGH |
-| `job.queue.test.ts` | Job insertion, priority ordering, retry logic | HIGH |
-| `uuidv7.test.ts` | UUIDv7 format validation | HIGH |
-| `hashing.test.ts` | BLAKE3 (@noble/hashes) → SHA-256 (Web Crypto) fallback chain | MEDIUM | <!-- Errata #2: renamed from blake3.fallback; uses @noble/hashes not blake3-wasm -->
-| `attachment.blob.test.ts` | Reference counting, GC trigger | HIGH |
+| Suite | File | Lines | Priority |
+|---|---|---|---|
+| `job-queue-worker.test.ts` | Job queue lifecycle, priority ordering, retry logic | 904 | CRITICAL |
+| `tools-extended.test.ts` | Extended MCP tool request/response shapes | 783 | CRITICAL |
+| `notes-repository.test.ts` | CRUD, soft-delete, UUIDv7 generation | 695 | CRITICAL |
+| `embedding-pipeline.test.ts` | Chunk splitting, embedding dispatch, deduplication | 626 | CRITICAL |
+| `tools.test.ts` | Core MCP tool shapes (all 38 tools) | 464 | CRITICAL |
+| `worker-client.test.ts` | PGlite Worker message protocol, postMessage round-trips | 385 | CRITICAL |
+| `search-repository.test.ts` | FTS query construction, RRF fusion logic | 379 | CRITICAL |
+| `capability-manager.test.ts` | Module registration, state machine | 350 | HIGH |
+| `sw-routes.test.ts` | Service Worker route handling, activation, update drain | 296 | HIGH |
+| `attachments-repository.test.ts` | Reference counting, GC trigger | 295 | HIGH |
+| `event-bus.test.ts` | Event subscription, dispatch, unsubscribe | 280 | HIGH |
+| `collections-repository.test.ts` | Collection CRUD, parent/child hierarchy | 276 | HIGH |
+| `tool-manifest.test.ts` | Tool manifest schema validation | 273 | HIGH |
+| `skos-repository.test.ts` | SKOS scheme/concept CRUD, relations | 268 | HIGH |
+| `migration-runner.test.ts` | Sequential migration application, rollback | 251 | CRITICAL |
+| `gpu-detect.test.ts` | GPU capability detection, fallback logic | 245 | HIGH |
+| `links-repository.test.ts` | Note link CRUD, bidirectional queries | 195 | HIGH |
+| `archive-manager.test.ts` | Archive switch, isolation, db_path management | 187 | HIGH |
+| `tags-repository.test.ts` | Tag CRUD, source tracking | 185 | HIGH |
+| `service-worker-register.test.ts` | SW registration lifecycle | 142 | MEDIUM |
+| `blob-store.test.ts` | Blob storage, content-hash keying | 97 | HIGH |
+| `create-fortemi.test.ts` | Top-level factory function | 96 | MEDIUM |
+| `db.test.ts` | Database initialization, connection lifecycle | 89 | MEDIUM |
+| `hash.test.ts` | BLAKE3 (@noble/hashes) → SHA-256 (Web Crypto) fallback chain | 67 | MEDIUM | <!-- Errata #2: renamed from blake3.fallback; uses @noble/hashes not blake3-wasm -->
+| `uuid.test.ts` | UUIDv7 format validation | 48 | HIGH |
 
 **Run command**:
 ```bash
-vitest run
+pnpm test:core
 ```
 
 **Watch mode** (dev):
 ```bash
-vitest
+pnpm vitest
 ```
 
 ---
@@ -60,7 +77,11 @@ vitest
 
 **Scope**: Every table's JSON serialization compared against server fixture files
 
-**Location**: `tests/format-parity/`
+**Location**: `packages/core/src/__tests__/format-parity/`
+
+**Files**:
+- `format-parity.test.ts` (186 lines) — one test per table, 21 tables total
+- `helpers.test.ts` (52 lines) — fixture loading and shape matching utilities
 
 **Test pattern**:
 ```typescript
@@ -103,11 +124,11 @@ test('note round-trip parity', async () => {
 | `api_key.json` | id, key_hash (never plain), scopes, expires_at |
 | `search_response.json` | notes (NoteSummary[]), semantic_available, mode |
 
-**Server fixtures location**: `tests/fixtures/server/` (exported from fortemi server)
+**Server fixtures location**: `packages/core/src/__tests__/format-parity/fixtures/` (exported from fortemi server)
 
 **Run command**:
 ```bash
-vitest run tests/format-parity/
+pnpm vitest run packages/core/src/__tests__/format-parity/
 ```
 
 ---
@@ -116,17 +137,17 @@ vitest run tests/format-parity/
 
 **Scope**: PGlite Worker message protocol; migration runner; multi-step database operations
 
-**Location**: `tests/integration/`
+**Location**: `packages/core/src/__tests__/` (co-located with unit tests; integration-focused suites listed below)
 
 **Key suites**:
 
 | Suite | Description |
 |---|---|
-| `pglite.worker.integration.test.ts` | Full Worker lifecycle; postMessage round-trips |
-| `migration.integration.test.ts` | 0001 → current migration sequence; schema validation |
-| `job.queue.integration.test.ts` | Job insertion → processing → completion cycle |
-| `hybrid.search.integration.test.ts` | FTS + vector + RRF on real PGlite instance |
-| `capability.integration.test.ts` | Capability enable → job requeue flow |
+| `worker-client.test.ts` | Full Worker lifecycle; postMessage round-trips |
+| `migration-runner.test.ts` | 0001 → current migration sequence; schema validation |
+| `job-queue-worker.test.ts` | Job insertion → processing → completion cycle |
+| `search-repository.test.ts` | FTS + vector + RRF on real PGlite instance |
+| `capability-manager.test.ts` | Capability enable → job requeue flow |
 
 **PGlite config for tests**: In-memory (not OPFS) to avoid test isolation issues:
 ```typescript
@@ -135,19 +156,21 @@ const db = new PGlite(); // no opfs:// prefix = in-memory
 
 ---
 
-### 2.4 Service Worker / MCP Tests (Vitest + MSW or SW test harness)
+### 2.4 Service Worker / MCP Tests (Vitest)
 
-**Scope**: MCP tool request/response format; REST endpoint correctness
+**Scope**: MCP tool request/response format; REST endpoint correctness; SW route handling
 
-**Location**: `tests/mcp/`
+**Location**: `packages/core/src/__tests__/` (co-located; SW/tool-focused suites listed below)
 
 **Key suites**:
 
-| Suite | Description |
-|---|---|
-| `mcp.tools.test.ts` | All 38 MCP tool request/response shapes |
-| `service.worker.lifecycle.test.ts` | SW registration, activation, update drain |
-| `rest.api.test.ts` | REST endpoint coverage (`/api/v1/notes`, `/api/v1/search`) |
+| Suite | File | Description |
+|---|---|---|
+| `tools.test.ts` | `packages/core/src/__tests__/tools.test.ts` | Core MCP tool request/response shapes |
+| `tools-extended.test.ts` | `packages/core/src/__tests__/tools-extended.test.ts` | Extended tool coverage |
+| `tool-manifest.test.ts` | `packages/core/src/__tests__/tool-manifest.test.ts` | Tool manifest schema |
+| `sw-routes.test.ts` | `packages/core/src/__tests__/sw-routes.test.ts` | SW route handling, activation |
+| `service-worker-register.test.ts` | `packages/core/src/__tests__/service-worker-register.test.ts` | SW registration lifecycle |
 
 ---
 
@@ -155,7 +178,14 @@ const db = new PGlite(); // no opfs:// prefix = in-memory
 
 **Scope**: Full user flows in real browsers; offline mode; capability module UX; browser compatibility matrix
 
-**Location**: `tests/e2e/`
+**Location**: `apps/standalone/e2e/`
+
+**Files** (16 tests, 4 tests × 2 browsers each):
+
+| File | Tests | Description |
+|---|---|---|
+| `smoke.test.ts` | 4 × 2 browsers | App loads, basic navigation, no JS errors |
+| `loading.test.ts` | 4 × 2 browsers | Loading states, initial data fetch, capability gate display |
 
 **Browser matrix**:
 ```javascript
@@ -189,6 +219,12 @@ test('FTS search < 500ms', async ({ page }) => {
 });
 ```
 
+**Run command**:
+```bash
+pnpm playwright test --project=chromium
+pnpm playwright test --project=firefox
+```
+
 ---
 
 ## 3. CI Pipeline (Gitea Actions)
@@ -200,63 +236,66 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: ['*']
   pull_request:
     branches: [main]
 
 jobs:
-  unit-and-integration:
+  typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '22' }
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run test:unit         # vitest run
-      - run: npm run test:format-parity # vitest run tests/format-parity/
-      - run: npm run test:integration   # vitest run tests/integration/
-      - run: npm run test:coverage      # vitest run --coverage
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
 
-  e2e-chromium:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '22' }
-      - run: npm ci
-      - run: npx playwright install chromium --with-deps
-      - run: npm run build
-      - run: npm run test:e2e -- --project=chromium
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
 
-  e2e-firefox:
+  unit-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '22' }
-      - run: npm ci
-      - run: npx playwright install firefox --with-deps
-      - run: npm run build
-      - run: npm run test:e2e -- --project=firefox
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:core
 
   build:
     runs-on: ubuntu-latest
-    needs: [unit-and-integration]
+    needs: [typecheck, lint, unit-test]
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '22' }
-      - run: npm ci
-      - run: npm run build
-      - run: npm run bundle:analyze    # fail if > 500KB gzip
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
 ```
 
 **Required checks to pass before merge**:
-1. `unit-and-integration` (includes format parity)
-2. `e2e-chromium`
-3. `build` (bundle size gate)
+1. `typecheck`
+2. `lint`
+3. `unit-test` (includes format parity)
+4. `build`
 
 ---
 
@@ -264,7 +303,7 @@ jobs:
 
 ### Server Fixtures
 
-Server fixture files are exported from the fortemi server and committed to `tests/fixtures/server/`. They represent canonical JSON shapes that browser output must match.
+Server fixture files are exported from the fortemi server and committed to `packages/core/src/__tests__/format-parity/fixtures/`. They represent canonical JSON shapes that browser output must match.
 
 **Fixture generation** (from server):
 ```bash
@@ -279,7 +318,7 @@ cargo run --bin export-fixtures -- tests/fixtures/ --all-tables
 
 Large test datasets (10k notes for performance tests) are generated programmatically, not committed:
 ```typescript
-// tests/helpers/seed.ts
+// packages/core/src/__tests__/helpers/seed.ts
 export async function seedNotes(db: PGlite, count: number) {
   // Batch insert using COPY protocol for speed
 }
@@ -289,27 +328,37 @@ export async function seedNotes(db: PGlite, count: number) {
 
 ## 5. Coverage Targets
 
-| Layer | Target | Tool |
-|---|---|---|
-| Repository layer | 80% | `@vitest/coverage-v8` |
-| Format parity | 100% (all 21 tables) | Vitest |
-| Worker communication | 70% | Vitest |
-| MCP tools | 90% (all 38 tools) | Vitest |
-| E2E critical paths | Manual checklist | Playwright |
+Actual coverage achieved as of C3 (vitest --coverage):
+
+| Layer | Achieved | Target | Tool |
+|---|---|---|---|
+| Overall statements | 88.56% | 85% | `@vitest/coverage-v8` |
+| Overall branches | 86.4% | 80% | `@vitest/coverage-v8` |
+| Overall functions | 85.82% | 80% | `@vitest/coverage-v8` |
+| Overall lines | 90.24% | 85% | `@vitest/coverage-v8` |
+| Repository layer (statements) | 96.89% | 90% | `@vitest/coverage-v8` |
+| Repository layer (branches) | 89.67% | 85% | `@vitest/coverage-v8` |
+| Migrations | 100% | 100% | `@vitest/coverage-v8` |
+| Tools | 96.61% | 90% | `@vitest/coverage-v8` |
+| Worker | 97.77% | 90% | `@vitest/coverage-v8` |
+| Service Worker | 100% | 95% | `@vitest/coverage-v8` |
+| Capabilities | 84.7% | 80% | `@vitest/coverage-v8` |
+| Format parity | 100% (all 21 tables) | 100% | Vitest |
+| E2E critical paths | Manual checklist | Manual checklist | Playwright |
 
 **Coverage command**:
 ```bash
-vitest run --coverage --reporter=text --reporter=lcov
+pnpm vitest run --coverage --reporter=text --reporter=lcov
 ```
 
 **Coverage threshold** (vitest.config.ts):
 ```typescript
 coverage: {
   thresholds: {
-    lines: 60,
-    functions: 60,
-    branches: 60,
-    statements: 60,
+    lines: 85,
+    functions: 80,
+    branches: 80,
+    statements: 85,
   }
 }
 ```

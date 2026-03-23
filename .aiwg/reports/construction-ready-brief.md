@@ -1,17 +1,23 @@
-# Construction Ready Brief — fortemi-browser
+# Construction Status Brief — fortemi-browser
 
-**Generated**: 2026-03-21
+**Updated**: 2026-03-23
 **Project**: fortemi-browser
 **Version**: 2026.3.0
-**Status**: Elaboration Ready (Construction begins after Elaboration gate: 2026-05-16)
+**Status**: Construction C3 Complete — QA/UAT ready
 
 ---
 
 ## Executive Summary
 
-fortemi-browser is a browser-only reimplementation of the fortemi knowledge management system (Rust/PostgreSQL server, v2026.2.13). The project is construction-ready in the sense that all design decisions have been made, all architecture decisions are documented, and the first two construction iterations are planned and estimated.
+fortemi-browser is a browser-only reimplementation of the fortemi knowledge management system. Construction has completed through three iterations (C1 Foundation, C2 Core CRUD, C3 Semantic + AI), delivering a fully functional knowledge management application with:
 
-**One prerequisite remains**: The Elaboration phase must complete (8 weeks, starting 2026-03-22). The primary deliverable is an executable PGlite + pgvector + OPFS proof-of-concept that retires the highest architectural risk (R-001). All other Inception artifacts are complete.
+- Full note CRUD with revision history
+- Full-text search (PostgreSQL tsvector) and hybrid semantic search (pgvector RRF)
+- SKOS taxonomy, tagging, collections, and links
+- 13 MCP tool functions for AI agent integration
+- Capability module system for opt-in WASM features (embedding, LLM, GPU detection)
+- React 19 UI with note list, search, settings, and capability management
+- 603 tests passing, 88.56% coverage, 16 E2E tests across Chromium + Firefox
 
 ---
 
@@ -20,121 +26,105 @@ fortemi-browser is a browser-only reimplementation of the fortemi knowledge mana
 | Attribute | Value |
 |---|---|
 | Type | Browser-only knowledge management PWA |
-| Tech Stack | React 19 + TypeScript + Vite + PGlite + pgvector |
-| Testing | Vitest + Playwright |
-| CI/CD | Gitea Actions |
+| Tech Stack | React 19.2.4 + TypeScript strict + Vite 7.3.1 + PGlite 0.4.1 + pgvector |
+| Package Manager | pnpm 10.6.5 (monorepo) |
+| Packages | @fortemi/core, @fortemi/react, @fortemi/standalone |
+| Testing | Vitest 4.1.0 (603 tests) + Playwright 1.58.2 (16 E2E tests) |
+| Coverage | 88.56% statements, 96.89% repository, 90.24% lines |
+| CI/CD | Gitea Actions (typecheck, lint, unit-test, build) |
 | License | AGPL-3.0 |
 | Versioning | CalVer 2026.3.0 |
 | Target Browsers | Chrome 102+, Firefox 111+, Safari 17+ |
-| Solo Developer | roctinam (30+ years systems engineering) |
+| Issues | 73 filed, 73 closed (5 errata + 10 elaboration + 20 C1 + 20 C2 + 18 C3) |
 
 ---
 
-## Architecture Decisions (Non-Negotiable)
+## Architecture Decisions
 
 | ADR | Decision | Status |
 |---|---|---|
-| ADR-001 | PGlite (PostgreSQL WASM) as storage engine | Baselined |
-| ADR-002 | Opt-in capability module system before any WASM | Baselined |
-| ADR-003 | Single-writer PGlite Worker via postMessage | Baselined |
-| ADR-004 | Service Worker intercepts localhost:3000 for MCP/REST | Baselined |
-| ADR-005 | Chrome 102+ / Firefox 111+ / Safari 17+; iOS out of scope v1 | Baselined |
+| ADR-001 | PGlite (PostgreSQL WASM) as storage engine | Validated |
+| ADR-002 | Opt-in capability module system before any WASM | Implemented |
+| ADR-003 | Single-writer PGlite Worker via postMessage | Implemented (main-thread init for now; Worker deferred) |
+| ADR-004 | Service Worker intercepts localhost:3000 for MCP/REST | Implemented |
+| ADR-005 | Chrome 102+ / Firefox 111+ / Safari 17+ | Validated (tiered persistence) |
+| ADR-006 | Public API-first design | Implemented |
+| ADR-007 | Browser-only v1, sync v2, federated v3 | v1 complete |
+| ADR-008 | Agent-discoverable capabilities via MCP tool manifest | Implemented |
 
 ---
 
-## Construction Readiness by Category
+## Construction Iterations Completed
 
-### Requirements
+| Iteration | Focus | Stories | Points | Issues | Status |
+|---|---|---|---|---|---|
+| C1 | Foundation Stack | 20 | 104 | #16-#35 | COMPLETE |
+| C2 | Core CRUD + FTS + SKOS + MCP basics | 20 | 112 | #36-#55 | COMPLETE |
+| C3 | Semantic Search + AI + Settings UI | 13 | 80 | #61-#73 | COMPLETE |
+| **Total** | | **53** | **296** | | |
 
-| Item | Status |
-|---|---|
-| 8 Architecturally Significant Use Cases (UC-001–UC-008) | Complete |
-| Supplementary Requirements (NFRs) | Complete |
-| Format Parity Requirement (JSON round-trip = server) | Documented + enforced by test strategy |
-| 38 MCP Tool Surface | Documented (Phase 6; Iterations C11–C12 target) |
-| Non-Negotiables (UUIDv7, soft-delete, JSON parity, AGPL) | Documented and enforced |
+### C3 Deliverables (latest iteration)
 
-### Architecture
+- GPU capability detection and VRAM-tier model selection
+- Semantic embedding pipeline (transformers.js + pgvector HNSW)
+- Hybrid BM25 + vector search with RRF fusion (k=60)
+- LLM capability module (WebLLM with Llama-3.2-1B)
+- AI title generation and auto-tagging via embeddings
+- Attachments repository with blob deduplication
+- Settings UI with capability management cards
+- Note revision history with comparison
+- Job queue capability gating
 
-| Item | Status |
-|---|---|
-| Software Architecture Document (SAD) | Draft — complete for construction start |
-| Data Model (21 tables mapped to server schema) | Complete |
-| C4 Context + Container Diagrams | Complete |
-| 8 Key Flow/Sequence Diagrams | Complete |
-| PGlite Single-Writer Pattern | Specified |
-| Service Worker REST Interception | Specified |
-| Capability Module System | Specified |
-| Hybrid Search (BM25 + pgvector RRF) | Specified |
+---
 
-### Planning
+## Quality Metrics
 
-| Iteration | Focus | Weeks | Stories | Points |
-|---|---|---|---|---|
-| Elaboration Iter 1 | PGlite PoC — retire R-001 | 4 | 10 | 50 |
-| Elaboration Iter 2 | SAD + UCs + plans | 4 | 8 | 42 |
-| Construction C1 | Foundation stack | 8 | 20 | 104 |
-| Construction C2 | Core CRUD + FTS + SKOS + MCP basics | 8 | 20 | 112 |
-| C3–C6 | Semantic, AI, Media, MCP polish | 24 | TBD | TBD |
+| Metric | Target | Actual | Status |
+|---|---|---|---|
+| Unit test count | — | 603 (27 files) | Passing |
+| E2E test count | — | 16 (2 files, Chromium + Firefox) | Passing |
+| Statement coverage | 60% | 88.56% | Exceeds |
+| Repository coverage | 80% | 96.89% | Exceeds |
+| Line coverage | 60% | 90.24% | Exceeds |
+| Branch coverage | — | 86.4% | Good |
+| Format parity tables | 21 | 10 | Partial (schema-only tables deferred) |
+| TypeScript strict | Clean | Clean | Passing |
+| ESLint | Clean | Clean | Passing |
 
-### Testing
+---
 
-| Item | Status |
-|---|---|
-| Test strategy (Vitest + Playwright) | Documented |
-| Format parity test framework | Scaffold planned for C1 |
-| CI pipeline (Gitea Actions) | Documented |
-| Coverage targets | 60% overall; 80% repository; 100% format parity |
-| Browser matrix | Chromium + Firefox in CI; Safari manual |
+## Risk Status
 
-### Risk
-
-| Risk | Status | Action |
+| Risk | Status | Evidence |
 |---|---|---|
-| R-001 (PGlite compatibility) | Monitoring → Retire in Elab Iter 1 | **Highest priority task in entire project** |
-| R-002 (Schema drift) | Mitigating | Format parity test suite |
-| R-003 (WebLLM quality) | Accepted | External API config documented |
-| R-004 (WASM downloads) | Mitigating | Capability module opt-in system |
+| R-001 (PGlite compatibility) | Retired | PoC + C1-C3 shipping; tiered persistence accepted |
+| R-002 (Schema drift) | Mitigated | Format parity test suite (10 tables) |
+| R-003 (WebLLM quality) | Accepted | External API config available |
+| R-004 (WASM downloads) | Mitigated | Capability module opt-in system |
 
 ---
 
-## Immediate Next Steps
+## Deployment
 
-### Week 1 (Starting 2026-03-22) — Elaboration Iteration 1
+fortemi-browser is a static web application. No server required.
 
-The single most important action: build the PGlite PoC.
+```bash
+# Development
+pnpm install
+pnpm dev              # Vite dev server on :5173
 
-1. **C1-1 equivalent: Vite project scaffolding** — TypeScript strict, React 19, PGlite optimizeDeps (no COOP/COEP needed per Errata #5)
-2. **E1-1: PGlite Worker** — Initialize with OPFS, verify persistence
-3. **E1-2: pgvector** — Load extension, create HNSW index, vector round-trip
-4. **E1-3: Message bus** — postMessage protocol, concurrent write safety
-5. **E1-4+5: Migration runner + 0001** — First schema in browser
+# Production build
+pnpm build            # Outputs to apps/standalone/dist/
+pnpm --filter @fortemi/standalone preview  # Preview on :4173
 
-This PoC should be a standalone proof in a `poc/` branch — minimum code to prove the stack, not production code.
+# Testing
+pnpm test:core        # 603 unit/integration tests
+pnpm test:e2e         # 16 Playwright E2E tests
+pnpm typecheck        # TypeScript strict
+pnpm lint             # ESLint
+```
 
-### After PoC (Weeks 3–4 of Elaboration)
-
-If PoC succeeds (expected):
-- R-001 retired
-- Begin production-quality C1 implementation alongside E2 documentation work
-
-If PoC fails (PGlite/pgvector/OPFS incompatibility found):
-- Escalate immediately
-- Evaluate fallback: origin-private SQLite + sqlite-vec, or IndexedDB with migration workaround
-- Revise architecture before any further construction
-
----
-
-## Build Phases Summary (Reminder)
-
-| Phase | Weeks | Primary Deliverable |
-|---|---|---|
-| 1 — Foundation | 1–8 | PGlite Worker, migrations, capability system, Service Worker, event bus |
-| 2 — Core | 9–18 | Note CRUD, FTS search, SKOS, collections, links, REST handlers |
-| 3 — Semantic | 19–26 | transformers.js embeddings, pgvector search, RRF hybrid |
-| 4 — AI | 27–34 | WebLLM + external API, revision pipeline, concept tagging |
-| 5 — Media | 35–42 | PDF, vision, audio, OPFS blobs |
-| 6 — MCP + Polish | 43–50 | 38 MCP tools complete, multi-archive, PWA, mobile |
+Deploy `apps/standalone/dist/` to any static host (Gitea Pages, Netlify, Cloudflare Pages, etc.). No special headers required.
 
 ---
 
@@ -145,16 +135,6 @@ If PoC fails (PGlite/pgvector/OPFS incompatibility found):
 3. Unit tests written (Vitest)
 4. Format parity test written (for repository-layer changes)
 5. Integration or E2E test for primary flow
-6. Coverage ≥ 60% overall maintained
+6. Coverage >= 60% overall maintained
 7. No regressions in existing test suite
-8. Code reviewed (self-review or Code Reviewer agent)
-9. CI passes on main
-
----
-
-## Contact and Governance
-
-**Owner**: roctinam (sole developer and architect)
-**Decisions**: roctinam makes all architectural and implementation decisions
-**Escalation**: ADR process for architectural changes; risk-list.md for risk changes
-**Agent support**: 12 AIWG agents assigned (see `.aiwg/team/agent-assignments.md`)
+8. CI passes on main

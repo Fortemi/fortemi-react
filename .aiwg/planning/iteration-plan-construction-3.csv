@@ -1,0 +1,14 @@
+iteration,id,title,type,priority,points,phase,owner,status,issue
+C3,C3-1,GPU capability detection and VRAM-tier model selection,story,HIGH,8,Construction 3,roctinam,COMPLETE,#61
+C3,C3-2,Semantic embedding capability — transformers.js worker with all-MiniLM-L6-v2,story,CRITICAL,13,Construction 3,roctinam,COMPLETE,#62
+C3,C3-3,Embedding generation job handler — auto-embed on note create/update,story,CRITICAL,8,Construction 3,roctinam,COMPLETE,#63
+C3,C3-4,Semantic search and hybrid BM25+vector ranking (RRF k=60),story,CRITICAL,13,Construction 3,roctinam,COMPLETE,#64
+C3,C3-5,LLM capability module — WebLLM worker with Llama-3.2-1B,story,HIGH,8,Construction 3,roctinam,COMPLETE,#65
+C3,C3-6,AI title generation job handler — replace string extraction with LLM,story,MEDIUM,5,Construction 3,roctinam,COMPLETE,#66
+C3,C3-7,Auto-tagging via embedding centroid matching,story,MEDIUM,5,Construction 3,roctinam,COMPLETE,#67
+C3,C3-8,Implement remaining 7 tool functions,story,HIGH,5,Construction 3,roctinam,COMPLETE,#68
+C3,C3-9,AttachmentsRepository — CRUD with blob deduplication,story,MEDIUM,5,Construction 3,roctinam,COMPLETE,#69
+C3,C3-10,Capability management UI — enable/disable AI features with progress,story,MEDIUM,8,Construction 3,roctinam,COMPLETE,#70
+C3,C3-11,Wire PGlite Worker in standalone app — deferred to main-thread init,story,MEDIUM,3,Construction 3,roctinam,DEFERRED,#71
+C3,C3-12,Note revision history — view and compare past versions,story,MEDIUM,5,Construction 3,roctinam,COMPLETE,#72
+C3,C3-13,Job queue capability gating — skip jobs when required capability not ready,story,HIGH,5,Construction 3,roctinam,COMPLETE,#73

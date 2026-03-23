@@ -20,7 +20,8 @@ export async function detectGpuCapabilities(): Promise<GpuCapabilities> {
   }
 
   try {
-    const adapter = await (navigator as any).gpu.requestAdapter()
+    const gpu = (navigator as unknown as { gpu: { requestAdapter(): Promise<{ info?: Record<string, string>; limits?: Record<string, number> } | null> } }).gpu
+    const adapter = await gpu.requestAdapter()
     if (!adapter) {
       return { webgpuAvailable: false, vendor: 'unavailable', architecture: 'unknown', maxBufferSizeBytes: 0 }
     }
