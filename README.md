@@ -118,6 +118,7 @@ Tool manifest available at runtime via `@fortemi/core` exports.
 | Guide | Description |
 |-------|-------------|
 | [Getting Started](docs/getting-started.md) | Installation, provider setup, first note, search |
+| [Search](docs/search.md) | Text, semantic, and hybrid search modes, filters, RRF fusion, snippets |
 | [Integration Guide](docs/integration.md) | Embedding in React apps, MCP tools, events, jobs, capabilities |
 | [API Reference](docs/api-reference.md) | Full API surface for @fortemi/core and @fortemi/react |
 | [Deployment](docs/deployment.md) | Static hosting, Vite config, browser compat, WebGPU, CI/CD |
