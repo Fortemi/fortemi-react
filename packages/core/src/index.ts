@@ -105,3 +105,7 @@ export { setLlmFunction, getLlmFunction } from './capabilities/llm-handler.js'
 export type { LlmCompleteFn } from './capabilities/llm-handler.js'
 
 export { cosineSimilarity, suggestTags } from './capabilities/auto-tag.js'
+
+export { registerSemanticCapability, unregisterSemanticCapability } from './capabilities/semantic-loader.js'
+export { registerLlmCapability, unregisterLlmCapability } from './capabilities/llm-loader.js'
+export type { LlmCapabilityOptions } from './capabilities/llm-loader.js'
