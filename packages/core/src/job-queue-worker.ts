@@ -7,6 +7,7 @@
 
 import type { PGlite } from '@electric-sql/pglite'
 import type { TypedEventBus } from './event-bus.js'
+import type { CapabilityManager, CapabilityName } from './capability-manager.js'
 
 export interface JobQueueOptions {
   /** How often to poll for new jobs (ms). Default: 5000 */
@@ -46,6 +47,7 @@ export class JobQueueWorker {
     private db: PGlite,
     private events?: TypedEventBus,
     options: JobQueueOptions = {},
+    private capabilityManager?: CapabilityManager,
   ) {
     this.options = {
       pollIntervalMs: options.pollIntervalMs ?? 5000,
@@ -106,6 +108,15 @@ export class JobQueueWorker {
     for (const job of result.rows) {
       const handler = this.handlers.get(job.job_type)
       if (!handler) continue
+
+      // Capability gating: skip jobs whose required capability is not ready
+      if (job.required_capability) {
+        const capName = job.required_capability as CapabilityName
+        if (!this.capabilityManager?.isReady(capName)) {
+          // Skip - capability not ready, leave job as pending
+          continue
+        }
+      }
 
       // Mark as processing
       await this.db.query(

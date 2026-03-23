@@ -18,6 +18,7 @@ import type {
   NoteCreateInput,
   NoteUpdateInput,
   NoteListOptions,
+  NoteRevision,
   PaginatedResult,
 } from './types.js'
 
@@ -427,5 +428,19 @@ export class NotesRepository {
       [archived, id],
     )
     this.events?.emit('note.updated', { id })
+  }
+
+  /**
+   * Get revision history for a note, ordered by revision_number descending.
+   */
+  async getRevisions(noteId: string): Promise<NoteRevision[]> {
+    const result = await this.db.query<NoteRevision>(
+      `SELECT id, note_id, revision_number, type, content, ai_metadata, model, created_at
+       FROM note_revision
+       WHERE note_id = $1
+       ORDER BY revision_number DESC`,
+      [noteId],
+    )
+    return result.rows
   }
 }

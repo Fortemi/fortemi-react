@@ -13,6 +13,7 @@ import { MigrationRunner } from '../migration-runner.js'
 import { TypedEventBus } from '../event-bus.js'
 import { allMigrations } from '../migrations/index.js'
 import { NotesRepository } from '../repositories/notes-repository.js'
+import type { NoteRevision } from '../repositories/types.js'
 
 // ---------------------------------------------------------------------------
 // Shared setup helpers
@@ -581,6 +582,94 @@ describe('NotesRepository', () => {
 
       await repo.archive(note.id, true)
       expect(handler).toHaveBeenCalledWith({ id: note.id })
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // getRevisions()
+  // -------------------------------------------------------------------------
+
+  describe('getRevisions()', () => {
+    it('returns an empty array for a newly created note with no updates', async () => {
+      const note = await repo.create({ content: 'Fresh note' })
+      const revisions = await repo.getRevisions(note.id)
+
+      expect(revisions).toEqual([])
+    })
+
+    it('returns one revision after a content update', async () => {
+      const note = await repo.create({ content: 'Original content' })
+      await repo.update(note.id, { content: 'Updated content' })
+
+      const revisions = await repo.getRevisions(note.id)
+
+      expect(revisions).toHaveLength(1)
+    })
+
+    it('returns revisions ordered by revision_number DESC', async () => {
+      const note = await repo.create({ content: 'v1' })
+      await repo.update(note.id, { content: 'v2' })
+      await repo.update(note.id, { content: 'v3' })
+      await repo.update(note.id, { content: 'v4' })
+
+      const revisions = await repo.getRevisions(note.id)
+
+      expect(revisions).toHaveLength(3)
+      expect(revisions[0].revision_number).toBe(3)
+      expect(revisions[1].revision_number).toBe(2)
+      expect(revisions[2].revision_number).toBe(1)
+    })
+
+    it('revision has type "user" for content updates via update()', async () => {
+      const note = await repo.create({ content: 'Original' })
+      await repo.update(note.id, { content: 'Edited' })
+
+      const revisions = await repo.getRevisions(note.id)
+
+      expect(revisions[0].type).toBe('user')
+    })
+
+    it('revision content matches the content before the update', async () => {
+      const note = await repo.create({ content: 'Before edit' })
+      await repo.update(note.id, { content: 'After edit' })
+
+      const revisions = await repo.getRevisions(note.id)
+
+      // The revision should capture the OLD content ('Before edit')
+      expect(revisions[0].content).toBe('Before edit')
+    })
+
+    it('returned revisions conform to the NoteRevision interface shape', async () => {
+      const note = await repo.create({ content: 'Shape test' })
+      await repo.update(note.id, { content: 'Shape v2' })
+
+      const revisions: NoteRevision[] = await repo.getRevisions(note.id)
+      const rev = revisions[0]
+
+      expect(typeof rev.id).toBe('string')
+      expect(rev.note_id).toBe(note.id)
+      expect(typeof rev.revision_number).toBe('number')
+      expect(typeof rev.type).toBe('string')
+      expect(typeof rev.content).toBe('string')
+      expect(rev.created_at).toBeInstanceOf(Date)
+      // ai_metadata and model are nullable — just assert they exist as keys
+      expect('ai_metadata' in rev).toBe(true)
+      expect('model' in rev).toBe(true)
+    })
+
+    it('does not return revisions for other notes', async () => {
+      const noteA = await repo.create({ content: 'Note A v1' })
+      const noteB = await repo.create({ content: 'Note B v1' })
+      await repo.update(noteA.id, { content: 'Note A v2' })
+      await repo.update(noteB.id, { content: 'Note B v2' })
+
+      const revisionsA = await repo.getRevisions(noteA.id)
+      const revisionsB = await repo.getRevisions(noteB.id)
+
+      expect(revisionsA).toHaveLength(1)
+      expect(revisionsA[0].note_id).toBe(noteA.id)
+      expect(revisionsB).toHaveLength(1)
+      expect(revisionsB[0].note_id).toBe(noteB.id)
     })
   })
 

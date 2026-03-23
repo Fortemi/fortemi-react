@@ -13,6 +13,7 @@ import { TypedEventBus } from '../event-bus.js'
 import { allMigrations } from '../migrations/index.js'
 import { JobQueueWorker, titleGenerationHandler } from '../job-queue-worker.js'
 import type { JobQueueOptions } from '../job-queue-worker.js'
+import { CapabilityManager } from '../capability-manager.js'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -47,12 +48,13 @@ async function insertJob(
     priority?: number
     maxRetries?: number
     retryCount?: number
+    requiredCapability?: string | null
   },
 ): Promise<string> {
   const id = opts.id ?? `job-${Date.now()}-${Math.random().toString(36).slice(2)}`
   await db.query(
-    `INSERT INTO job_queue (id, note_id, job_type, status, priority, max_retries, retry_count)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    `INSERT INTO job_queue (id, note_id, job_type, status, priority, max_retries, retry_count, required_capability)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
     [
       id,
       opts.noteId,
@@ -61,6 +63,7 @@ async function insertJob(
       opts.priority ?? 5,
       opts.maxRetries ?? 3,
       opts.retryCount ?? 0,
+      opts.requiredCapability ?? null,
     ],
   )
   return id
@@ -491,6 +494,156 @@ describe('JobQueueWorker', () => {
     const job = await getJob(db, jobId)
     expect(job.status).toBe('failed')
     expect(job.error).toBe('raw string error')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Capability gating (#73)
+// ---------------------------------------------------------------------------
+
+describe('JobQueueWorker — capability gating', () => {
+  let db: PGlite
+  let events: TypedEventBus
+  let capabilityManager: CapabilityManager
+
+  beforeEach(async () => {
+    db = await setupDb()
+    events = new TypedEventBus()
+    capabilityManager = new CapabilityManager(events)
+  })
+
+  afterEach(async () => {
+    await db.close()
+  })
+
+  it('job without required_capability always runs regardless of capabilityManager', async () => {
+    const worker = new JobQueueWorker(db, events, {}, capabilityManager)
+    const noteId = await insertNote(db)
+    const jobId = await insertJob(db, { noteId, jobType: 'no-cap', requiredCapability: null })
+    const handler = vi.fn().mockResolvedValue({ ok: true })
+    worker.registerHandler('no-cap', handler)
+
+    const count = await worker.processOnce()
+
+    expect(count).toBe(1)
+    expect(handler).toHaveBeenCalledOnce()
+    const job = await getJob(db, jobId)
+    expect(job.status).toBe('completed')
+  })
+
+  it('job with required_capability is skipped when capability not ready', async () => {
+    // llm capability is 'unloaded' — not ready
+    const worker = new JobQueueWorker(db, events, {}, capabilityManager)
+    const noteId = await insertNote(db)
+    const jobId = await insertJob(db, { noteId, jobType: 'needs-llm', requiredCapability: 'llm' })
+    const handler = vi.fn().mockResolvedValue({ ok: true })
+    worker.registerHandler('needs-llm', handler)
+
+    const count = await worker.processOnce()
+
+    expect(count).toBe(0)
+    expect(handler).not.toHaveBeenCalled()
+    const job = await getJob(db, jobId)
+    expect(job.status).toBe('pending')
+  })
+
+  it('job with required_capability runs when capability is ready', async () => {
+    // Mark llm as ready
+    await capabilityManager.enable('llm') // no loader registered → transitions directly to ready
+    expect(capabilityManager.isReady('llm')).toBe(true)
+
+    const worker = new JobQueueWorker(db, events, {}, capabilityManager)
+    const noteId = await insertNote(db)
+    const jobId = await insertJob(db, { noteId, jobType: 'needs-llm-ready', requiredCapability: 'llm' })
+    const handler = vi.fn().mockResolvedValue({ ok: true })
+    worker.registerHandler('needs-llm-ready', handler)
+
+    const count = await worker.processOnce()
+
+    expect(count).toBe(1)
+    expect(handler).toHaveBeenCalledOnce()
+    const job = await getJob(db, jobId)
+    expect(job.status).toBe('completed')
+  })
+
+  it('skipped job stays in pending status (not failed, not processing)', async () => {
+    const worker = new JobQueueWorker(db, events, {}, capabilityManager)
+    const noteId = await insertNote(db)
+    const jobId = await insertJob(db, {
+      noteId,
+      jobType: 'cap-gated',
+      requiredCapability: 'semantic',
+    })
+    worker.registerHandler('cap-gated', vi.fn().mockResolvedValue(null))
+
+    await worker.processOnce()
+
+    const job = await getJob(db, jobId)
+    expect(job.status).toBe('pending')
+    expect(job.retry_count).toBe(0)
+    expect(job.error).toBeNull()
+  })
+
+  it('multiple jobs: capability-gated ones skipped, others processed', async () => {
+    // semantic is NOT ready; llm IS ready
+    await capabilityManager.enable('llm') // no loader → ready
+    expect(capabilityManager.isReady('llm')).toBe(true)
+    expect(capabilityManager.isReady('semantic')).toBe(false)
+
+    const worker = new JobQueueWorker(db, events, {}, capabilityManager)
+
+    const noteId1 = await insertNote(db)
+    const noteId2 = await insertNote(db)
+    const noteId3 = await insertNote(db)
+
+    const gatedJobId = await insertJob(db, {
+      noteId: noteId1,
+      jobType: 'needs-semantic',
+      requiredCapability: 'semantic',
+    })
+    const readyJobId = await insertJob(db, {
+      noteId: noteId2,
+      jobType: 'needs-llm-multi',
+      requiredCapability: 'llm',
+    })
+    const freeJobId = await insertJob(db, {
+      noteId: noteId3,
+      jobType: 'no-cap-multi',
+      requiredCapability: null,
+    })
+
+    worker.registerHandler('needs-semantic', vi.fn().mockResolvedValue(null))
+    worker.registerHandler('needs-llm-multi', vi.fn().mockResolvedValue({ llm: true }))
+    worker.registerHandler('no-cap-multi', vi.fn().mockResolvedValue({ free: true }))
+
+    const count = await worker.processOnce()
+
+    // Only 2 jobs should complete (llm-ready and no-cap)
+    expect(count).toBe(2)
+
+    const gatedJob = await getJob(db, gatedJobId)
+    const readyJob = await getJob(db, readyJobId)
+    const freeJob = await getJob(db, freeJobId)
+
+    expect(gatedJob.status).toBe('pending')
+    expect(readyJob.status).toBe('completed')
+    expect(freeJob.status).toBe('completed')
+  })
+
+  it('worker without capabilityManager processes capability-tagged jobs (backward compat)', async () => {
+    // No capabilityManager passed — required_capability field exists but should be processed
+    const worker = new JobQueueWorker(db, events)
+    const noteId = await insertNote(db)
+    const jobId = await insertJob(db, { noteId, jobType: 'tagged', requiredCapability: 'llm' })
+    const handler = vi.fn().mockResolvedValue({ ok: true })
+    worker.registerHandler('tagged', handler)
+
+    const count = await worker.processOnce()
+
+    // Without capabilityManager, isReady returns undefined/falsy — job should be skipped
+    expect(count).toBe(0)
+    const job = await getJob(db, jobId)
+    expect(job.status).toBe('pending')
   })
 })
 

@@ -4,29 +4,35 @@ interface SearchResultsProps {
   data: SearchResponse | null
   loading: boolean
   query: string
+  onSelect: (id: string) => void
 }
 
-export function SearchResults({ data, loading, query }: SearchResultsProps) {
+export function SearchResults({ data, loading, query, onSelect }: SearchResultsProps) {
   if (loading) return <p style={{ color: '#999' }}>Searching...</p>
   if (!data) return null
   if (data.results.length === 0) {
-    return <p style={{ color: '#999' }}>No results for "{query}"</p>
+    return <p style={{ color: '#999' }}>No results for &ldquo;{query}&rdquo;</p>
   }
 
   return (
     <div>
       <p style={{ color: '#999', fontSize: 12, marginBottom: 8 }}>
-        {data.total} result{data.total !== 1 ? 's' : ''} for "{query}"
+        {data.total} result{data.total !== 1 ? 's' : ''} for &ldquo;{query}&rdquo;
       </p>
       {data.results.map((result) => (
         <div
           key={result.id}
+          onClick={() => onSelect(result.id)}
           style={{
             padding: 12,
             border: '1px solid #eee',
             borderRadius: 8,
             marginBottom: 8,
+            cursor: 'pointer',
+            transition: 'border-color 0.15s',
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#4a9eff' }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#eee' }}
         >
           <strong>{result.title ?? 'Untitled'}</strong>
           <div

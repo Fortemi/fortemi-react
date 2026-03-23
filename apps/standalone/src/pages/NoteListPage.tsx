@@ -1,17 +1,22 @@
 import { useState } from 'react'
-import { useNotes, useSearch, useCreateNote, useDeleteNote } from '@fortemi/react'
+import { useNotes, useSearch, useCreateNote, useDeleteNote, useJobQueue } from '@fortemi/react'
 import { NoteList } from '../components/NoteList'
 import { NoteCreateForm } from '../components/NoteCreateForm'
+import { NoteDetail } from '../components/NoteDetail'
 import { SearchBar } from '../components/SearchBar'
 import { SearchResults } from '../components/SearchResults'
 
 export function NoteListPage() {
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
   const { data: noteData, loading: notesLoading } = useNotes({ sort: 'created_at', order: 'desc' })
   const { data: searchData, loading: searchLoading, search, clear } = useSearch()
   const { createNote } = useCreateNote()
   const { deleteNote, restoreNote } = useDeleteNote()
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Start the job queue worker (title generation, etc.)
+  useJobQueue(2000)
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query)
@@ -25,6 +30,16 @@ export function NoteListPage() {
   const handleCreate = async (content: string, title?: string, tags?: string[]) => {
     await createNote({ content, title, tags })
     setShowCreateForm(false)
+  }
+
+  // Note detail view
+  if (selectedNoteId) {
+    return (
+      <NoteDetail
+        noteId={selectedNoteId}
+        onBack={() => setSelectedNoteId(null)}
+      />
+    )
   }
 
   const isSearching = searchQuery.trim().length > 0
@@ -54,9 +69,20 @@ export function NoteListPage() {
       )}
 
       {isSearching ? (
-        <SearchResults data={searchData} loading={searchLoading} query={searchQuery} />
+        <SearchResults
+          data={searchData}
+          loading={searchLoading}
+          query={searchQuery}
+          onSelect={setSelectedNoteId}
+        />
       ) : (
-        <NoteList data={noteData} loading={notesLoading} onDelete={deleteNote} onRestore={restoreNote} />
+        <NoteList
+          data={noteData}
+          loading={notesLoading}
+          onDelete={deleteNote}
+          onRestore={restoreNote}
+          onSelect={setSelectedNoteId}
+        />
       )}
     </div>
   )

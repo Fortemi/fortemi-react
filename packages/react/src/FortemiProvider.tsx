@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react'
 import { ArchiveManager, TypedEventBus, type PersistenceMode } from '@fortemi/core'
 
 type PGliteInstance = Awaited<ReturnType<ArchiveManager['open']>>
@@ -17,29 +17,39 @@ export interface FortemiProviderProps {
   children: ReactNode
 }
 
+// Module-level singleton to prevent double-init from React StrictMode.
+// PGlite WASM can only be instantiated once per Response — a second call
+// to WebAssembly.instantiateStreaming() with the same cached Response fails
+// with "Response already consumed".
+let globalInitPromise: Promise<{ db: PGliteInstance; events: TypedEventBus; manager: ArchiveManager }> | null = null
+
+function initFortemi(persistence: PersistenceMode, archiveName: string) {
+  if (!globalInitPromise) {
+    globalInitPromise = (async () => {
+      const events = new TypedEventBus()
+      const manager = new ArchiveManager(persistence, events)
+      const db = await manager.open(archiveName)
+      return { db, events, manager }
+    })()
+  }
+  return globalInitPromise
+}
+
 export function FortemiProvider({ persistence, archiveName = 'default', children }: FortemiProviderProps) {
   const [ctx, setCtx] = useState<FortemiContextValue | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const initRef = useRef(false)
 
   useEffect(() => {
-    let cancelled = false
-    const events = new TypedEventBus()
-    const manager = new ArchiveManager(persistence, events)
+    // Guard against StrictMode double-mount calling init twice
+    if (initRef.current) return
+    initRef.current = true
 
-    manager.open(archiveName).then((db) => {
-      if (!cancelled) {
-        setCtx({ db, events, archiveManager: manager })
-      }
+    initFortemi(persistence, archiveName).then(({ db, events, manager }) => {
+      setCtx({ db, events, archiveManager: manager })
     }).catch((err) => {
-      if (!cancelled) {
-        setError(err instanceof Error ? err.message : String(err))
-      }
+      setError(err instanceof Error ? err.message : String(err))
     })
-
-    return () => {
-      cancelled = true
-      manager.close()
-    }
   }, [persistence, archiveName])
 
   if (error) throw new Error(`FortemiProvider init failed: ${error}`)

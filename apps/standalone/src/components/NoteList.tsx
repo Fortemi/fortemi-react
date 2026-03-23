@@ -5,9 +5,10 @@ interface NoteListProps {
   loading: boolean
   onDelete: (id: string) => Promise<void>
   onRestore: (id: string) => Promise<unknown>
+  onSelect: (id: string) => void
 }
 
-export function NoteList({ data, loading, onDelete, onRestore }: NoteListProps) {
+export function NoteList({ data, loading, onDelete, onRestore, onSelect }: NoteListProps) {
   if (loading && !data) return <p style={{ color: '#999' }}>Loading notes...</p>
   if (!data || data.items.length === 0) {
     return (
@@ -25,21 +26,27 @@ export function NoteList({ data, loading, onDelete, onRestore }: NoteListProps) 
       {data.items.map((note) => (
         <div
           key={note.id}
+          onClick={() => onSelect(note.id)}
           style={{
             padding: 12,
             border: '1px solid #eee',
             borderRadius: 8,
             marginBottom: 8,
             opacity: note.deleted_at ? 0.5 : 1,
+            cursor: 'pointer',
+            transition: 'border-color 0.15s',
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#4a9eff' }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#eee' }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <strong>{note.title ?? 'Untitled'}</strong>
-              {note.is_starred && <span title="Starred" style={{ marginLeft: 4 }}>*</span>}
+              {note.is_starred && <span title="Starred" style={{ marginLeft: 4, color: '#f5a623' }}>&#9733;</span>}
+              {note.is_archived && <span style={{ marginLeft: 8, color: '#f5a623', fontSize: 12 }}>(archived)</span>}
               {note.deleted_at && <span style={{ marginLeft: 8, color: '#c00', fontSize: 12 }}>(deleted)</span>}
             </div>
-            <div style={{ display: 'flex', gap: 4 }}>
+            <div style={{ display: 'flex', gap: 4 }} onClick={(e) => e.stopPropagation()}>
               {note.deleted_at ? (
                 <button onClick={() => onRestore(note.id)} style={{ fontSize: 12, cursor: 'pointer' }}>
                   Restore
@@ -61,7 +68,7 @@ export function NoteList({ data, loading, onDelete, onRestore }: NoteListProps) 
             </div>
           )}
           <div style={{ color: '#999', fontSize: 11, marginTop: 4 }}>
-            {new Date(note.created_at).toLocaleDateString()}
+            {new Date(note.created_at).toLocaleString()}
           </div>
         </div>
       ))}

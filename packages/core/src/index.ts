@@ -47,6 +47,7 @@ export type {
   SearchResult,
   SearchResponse,
   SearchOptions,
+  NoteRevision,
 } from './repositories/types.js'
 
 export { JobQueueWorker, titleGenerationHandler } from './job-queue-worker.js'
@@ -70,3 +71,24 @@ export {
 export type { CaptureKnowledgeInput, ManageNoteInput, SearchInput } from './tools/index.js'
 export { FortemiToolManifest, fortemiManifest } from './tools/index.js'
 export type { FortemiToolDefinition, PlinyCapability } from './tools/index.js'
+
+export { getNote, GetNoteInputSchema } from './tools/index.js'
+export type { GetNoteInput } from './tools/index.js'
+export { listNotes, ListNotesInputSchema } from './tools/index.js'
+export type { ListNotesInput } from './tools/index.js'
+export { manageTags, ManageTagsInputSchema } from './tools/index.js'
+export type { ManageTagsInput, ManageTagsResult } from './tools/index.js'
+export { manageCollections, ManageCollectionsInputSchema } from './tools/index.js'
+export type { ManageCollectionsInput, ManageCollectionsResult } from './tools/index.js'
+export { manageLinks, ManageLinksInputSchema } from './tools/index.js'
+export type { ManageLinksInput, ManageLinksResult } from './tools/index.js'
+export { manageArchive, ManageArchiveInputSchema } from './tools/index.js'
+export type { ManageArchiveInput, ManageArchiveResult } from './tools/index.js'
+export { manageCapabilities, ManageCapabilitiesInputSchema } from './tools/index.js'
+export type { ManageCapabilitiesInput, ManageCapabilitiesResult, CapabilityInfo } from './tools/index.js'
+
+export { detectGpuCapabilities, estimateVramTier, selectLlmModel } from './capabilities/gpu-detect.js'
+export type { GpuCapabilities, VramTier } from './capabilities/gpu-detect.js'
+
+export { AttachmentsRepository } from './repositories/attachments-repository.js'
+export type { AttachmentRow, AttachmentBlobRow, AttachInput } from './repositories/attachments-repository.js'

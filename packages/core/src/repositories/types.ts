@@ -101,3 +101,14 @@ export interface SearchOptions {
   tags?: string[]
   collection_id?: string
 }
+
+export interface NoteRevision {
+  id: string
+  note_id: string
+  revision_number: number
+  type: string  // 'user' | 'ai'
+  content: string
+  ai_metadata: unknown | null
+  model: string | null
+  created_at: Date
+}
