@@ -27,5 +27,13 @@ export async function searchTool(db: PGlite, rawInput: unknown): Promise<SearchR
     offset: input.offset,
     tags: input.tags,
     collection_id: input.collection_id,
+    date_from: input.date_from,
+    date_to: input.date_to,
+    is_starred: input.is_starred,
+    is_archived: input.is_archived,
+    format: input.format,
+    source: input.source,
+    visibility: input.visibility,
+    include_facets: input.include_facets,
   })
 }

@@ -10,12 +10,21 @@
  *  - Empty / whitespace-only queries fall back to returning recent notes.
  *  - semanticSearch uses pgvector cosine distance (<=>).
  *  - hybridSearch combines BM25 and vector with Reciprocal Rank Fusion (k=60).
+ *  - Quoted phrases use phraseto_tsquery for exact phrase matching.
  *
  * @implements #64 semantic and hybrid search
+ * @implements #77 correct mode field
+ * @implements #79 date range filter
+ * @implements #80 starred/archived filters
+ * @implements #81 format/source/visibility filters
+ * @implements #82 collection filter on semantic/hybrid
+ * @implements #83 phrase search
+ * @implements #87 shared condition builder
  */
 
 import type { PGlite } from '@electric-sql/pglite'
-import type { SearchResponse, SearchOptions } from './types.js'
+import type { SearchResponse, SearchOptions, SearchFacets } from './types.js'
+import { buildNoteConditions } from './condition-builder.js'
 
 export class SearchRepository {
   constructor(
@@ -23,12 +32,17 @@ export class SearchRepository {
     private semanticAvailable = false,
   ) {}
 
+  /** Select tsquery function based on whether query contains quoted phrases */
+  private tsqueryFn(query: string): string {
+    return query.includes('"') ? 'phraseto_tsquery' : 'plainto_tsquery'
+  }
+
   async search(
     query: string,
     options: SearchOptions = {},
     queryEmbedding?: number[],
   ): Promise<SearchResponse> {
-    const { limit = 20, offset = 0, tags, collection_id } = options
+    const { limit = 20, offset = 0 } = options
 
     // Dispatch to semantic or hybrid if embedding is provided
     if (queryEmbedding && queryEmbedding.length > 0) {
@@ -39,29 +53,20 @@ export class SearchRepository {
     }
 
     if (!query.trim()) {
-      return this.recentNotes(limit, offset, tags, collection_id)
+      return this.recentNotes(options)
     }
 
-    const conditions: string[] = [
-      'n.deleted_at IS NULL',
-      `(n.tsv @@ plainto_tsquery('english', $1) OR
-        to_tsvector('english', coalesce(c.content, '')) @@ plainto_tsquery('english', $1))`,
-    ]
-    const params: unknown[] = [query]
-    let paramIdx = 2
+    const tsqFn = this.tsqueryFn(query)
 
-    if (tags?.length) {
-      conditions.push(
-        `EXISTS (SELECT 1 FROM note_tag nt WHERE nt.note_id = n.id AND nt.tag = ANY($${paramIdx++}))`,
-      )
-      params.push(tags)
-    }
-    if (collection_id) {
-      conditions.push(
-        `EXISTS (SELECT 1 FROM collection_note cn WHERE cn.note_id = n.id AND cn.collection_id = $${paramIdx++})`,
-      )
-      params.push(collection_id)
-    }
+    // $1 is always the query string
+    const { conditions, params, nextIdx } = buildNoteConditions(options, 2)
+    conditions.unshift(
+      `(n.tsv @@ ${tsqFn}('english', $1) OR
+        to_tsvector('english', coalesce(c.content, '')) @@ ${tsqFn}('english', $1))`,
+    )
+    // Prepend deleted_at check is already in buildNoteConditions
+    const allParams = [query, ...params]
+    let paramIdx = nextIdx
 
     const where = conditions.join(' AND ')
 
@@ -71,12 +76,12 @@ export class SearchRepository {
        FROM note n
        LEFT JOIN note_revised_current c ON c.note_id = n.id
        WHERE ${where}`,
-      params,
+      allParams,
     )
     const total = parseInt(countResult.rows[0].count, 10)
 
     // Search with ts_rank and ts_headline
-    const searchParams = [...params, limit, offset]
+    const searchParams = [...allParams, limit, offset]
     const result = await this.db.query<{
       id: string
       title: string | null
@@ -88,12 +93,12 @@ export class SearchRepository {
       `SELECT n.id, n.title, n.created_at, n.updated_at,
               ts_rank(
                 setweight(n.tsv, 'A') || setweight(to_tsvector('english', coalesce(c.content, '')), 'B'),
-                plainto_tsquery('english', $1)
+                ${tsqFn}('english', $1)
               ) as rank,
               ts_headline(
                 'english',
                 coalesce(c.content, ''),
-                plainto_tsquery('english', $1),
+                ${tsqFn}('english', $1),
                 'StartSel=<mark>, StopSel=</mark>, MaxWords=35, MinWords=15'
               ) as snippet
        FROM note n
@@ -105,6 +110,18 @@ export class SearchRepository {
     )
 
     const tagMap = await this.fetchTagMap(result.rows.map((r) => r.id))
+
+    // Facets use full (unpaginated) result set
+    let facets: SearchFacets | undefined
+    if (options.include_facets) {
+      const idsResult = await this.db.query<{ id: string }>(
+        `SELECT n.id FROM note n
+         LEFT JOIN note_revised_current c ON c.note_id = n.id
+         WHERE ${where}`,
+        allParams,
+      )
+      facets = await this.fetchFacets(idsResult.rows.map((r) => r.id))
+    }
 
     return {
       results: result.rows.map((r) => ({
@@ -122,6 +139,7 @@ export class SearchRepository {
       semantic_available: this.semanticAvailable,
       limit,
       offset,
+      facets,
     }
   }
 
@@ -136,14 +154,24 @@ export class SearchRepository {
     const { limit = 20, offset = 0 } = options
     const vectorStr = `[${queryEmbedding.join(',')}]`
 
+    // Filter conditions start at $1; vector/limit/offset appended after
+    const { conditions, params, nextIdx } = buildNoteConditions(options, 1)
+    let paramIdx = nextIdx
+
+    const where = conditions.join(' AND ')
+
     const countResult = await this.db.query<{ count: string }>(
       `SELECT COUNT(*) as count
        FROM embedding e
        JOIN note n ON n.id = e.note_id
-       WHERE n.deleted_at IS NULL`,
+       WHERE ${where}`,
+      params,
     )
     const total = parseInt(countResult.rows[0].count, 10)
 
+    const vecIdx = paramIdx++
+    const limIdx = paramIdx++
+    const offIdx = paramIdx++
     const result = await this.db.query<{
       id: string
       title: string | null
@@ -153,18 +181,27 @@ export class SearchRepository {
       snippet: string
     }>(
       `SELECT n.id, n.title, n.created_at, n.updated_at,
-              (e.vector <=> $1::vector) as distance,
+              (e.vector <=> $${vecIdx}::vector) as distance,
               LEFT(coalesce(c.content, ''), 200) as snippet
        FROM embedding e
        JOIN note n ON n.id = e.note_id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
-       WHERE n.deleted_at IS NULL
-       ORDER BY e.vector <=> $1::vector ASC
-       LIMIT $2 OFFSET $3`,
-      [vectorStr, limit, offset],
+       WHERE ${where}
+       ORDER BY e.vector <=> $${vecIdx}::vector ASC
+       LIMIT $${limIdx} OFFSET $${offIdx}`,
+      [...params, vectorStr, limit, offset],
     )
 
     const tagMap = await this.fetchTagMap(result.rows.map((r) => r.id))
+
+    let facets: SearchFacets | undefined
+    if (options.include_facets) {
+      const idsResult = await this.db.query<{ id: string }>(
+        `SELECT n.id FROM embedding e JOIN note n ON n.id = e.note_id WHERE ${where}`,
+        params,
+      )
+      facets = await this.fetchFacets(idsResult.rows.map((r) => r.id))
+    }
 
     return {
       results: result.rows.map((r) => ({
@@ -178,10 +215,11 @@ export class SearchRepository {
       })),
       total,
       query: '',
-      mode: 'text',
+      mode: 'semantic',
       semantic_available: this.semanticAvailable,
       limit,
       offset,
+      facets,
     }
   }
 
@@ -197,33 +235,47 @@ export class SearchRepository {
     const { limit = 20, offset = 0 } = options
     const vectorStr = `[${queryEmbedding.join(',')}]`
     const k = 60
+    const tsqFn = this.tsqueryFn(query)
+
+    // Build shared conditions for text sub-query ($1 = query)
+    const textCond = buildNoteConditions(options, 2)
+    const textConditions = [
+      ...textCond.conditions,
+      `(n.tsv @@ ${tsqFn}('english', $1) OR
+        to_tsvector('english', coalesce(c.content, '')) @@ ${tsqFn}('english', $1))`,
+    ]
+    const textWhere = textConditions.join(' AND ')
+    const textParams = [query, ...textCond.params]
 
     // BM25 ranked note IDs (full-text)
     const textResult = await this.db.query<{ id: string; rank: number }>(
       `SELECT n.id,
               ts_rank(
                 setweight(n.tsv, 'A') || setweight(to_tsvector('english', coalesce(c.content, '')), 'B'),
-                plainto_tsquery('english', $1)
+                ${tsqFn}('english', $1)
               ) as rank
        FROM note n
        LEFT JOIN note_revised_current c ON c.note_id = n.id
-       WHERE n.deleted_at IS NULL
-         AND (n.tsv @@ plainto_tsquery('english', $1) OR
-              to_tsvector('english', coalesce(c.content, '')) @@ plainto_tsquery('english', $1))
+       WHERE ${textWhere}
        ORDER BY rank DESC
        LIMIT 100`,
-      [query],
+      textParams,
     )
+
+    // Build shared conditions for vector sub-query; conditions start at $1, vector appended after
+    const vecCond = buildNoteConditions(options, 1)
+    const vecWhere = vecCond.conditions.join(' AND ')
+    const vecVecIdx = vecCond.nextIdx
 
     // Vector ranked note IDs
     const vectorResult = await this.db.query<{ id: string; distance: number }>(
-      `SELECT n.id, (e.vector <=> $1::vector) as distance
+      `SELECT n.id, (e.vector <=> $${vecVecIdx}::vector) as distance
        FROM embedding e
        JOIN note n ON n.id = e.note_id
-       WHERE n.deleted_at IS NULL
-       ORDER BY e.vector <=> $1::vector ASC
+       WHERE ${vecWhere}
+       ORDER BY e.vector <=> $${vecVecIdx}::vector ASC
        LIMIT 100`,
-      [vectorStr],
+      [...vecCond.params, vectorStr],
     )
 
     // Build RRF scores
@@ -252,7 +304,7 @@ export class SearchRepository {
         results: [],
         total,
         query,
-        mode: 'text',
+        mode: 'hybrid',
         semantic_available: this.semanticAvailable,
         limit,
         offset,
@@ -279,6 +331,8 @@ export class SearchRepository {
     const noteMap = new Map(noteResult.rows.map((r) => [r.id, r]))
     const tagMap = await this.fetchTagMap(pageIds)
 
+    const facets = options.include_facets ? await this.fetchFacets(sortedIds) : undefined
+
     return {
       results: pageIds
         .map((id) => {
@@ -297,35 +351,21 @@ export class SearchRepository {
         .filter((r): r is NonNullable<typeof r> => r !== null),
       total,
       query,
-      mode: 'text',
+      mode: 'hybrid',
       semantic_available: this.semanticAvailable,
       limit,
       offset,
+      facets,
     }
   }
 
   private async recentNotes(
-    limit: number,
-    offset: number,
-    tags?: string[],
-    collection_id?: string,
+    options: SearchOptions = {},
   ): Promise<SearchResponse> {
-    const conditions: string[] = ['n.deleted_at IS NULL']
-    const params: unknown[] = []
-    let paramIdx = 1
+    const { limit = 20, offset = 0 } = options
 
-    if (tags?.length) {
-      conditions.push(
-        `EXISTS (SELECT 1 FROM note_tag nt WHERE nt.note_id = n.id AND nt.tag = ANY($${paramIdx++}))`,
-      )
-      params.push(tags)
-    }
-    if (collection_id) {
-      conditions.push(
-        `EXISTS (SELECT 1 FROM collection_note cn WHERE cn.note_id = n.id AND cn.collection_id = $${paramIdx++})`,
-      )
-      params.push(collection_id)
-    }
+    const { conditions, params, nextIdx } = buildNoteConditions(options, 1)
+    let paramIdx = nextIdx
 
     const where = conditions.join(' AND ')
 
@@ -369,6 +409,35 @@ export class SearchRepository {
       semantic_available: this.semanticAvailable,
       limit,
       offset,
+    }
+  }
+
+  /**
+   * Fetch faceted aggregate counts for tags and collections across all matching note IDs.
+   * Uses the full (unpaginated) result set for accurate counts.
+   */
+  private async fetchFacets(noteIds: string[]): Promise<SearchFacets> {
+    if (noteIds.length === 0) {
+      return { tags: [], collections: [] }
+    }
+
+    const [tagResult, collResult] = await Promise.all([
+      this.db.query<{ tag: string; count: string }>(
+        `SELECT nt.tag, COUNT(*) as count FROM note_tag nt
+         WHERE nt.note_id = ANY($1) GROUP BY nt.tag ORDER BY count DESC LIMIT 20`,
+        [noteIds],
+      ),
+      this.db.query<{ id: string; name: string; count: string }>(
+        `SELECT col.id, col.name, COUNT(*) as count FROM collection_note cn
+         JOIN collection col ON col.id = cn.collection_id
+         WHERE cn.note_id = ANY($1) GROUP BY col.id, col.name ORDER BY count DESC LIMIT 20`,
+        [noteIds],
+      ),
+    ])
+
+    return {
+      tags: tagResult.rows.map((r) => ({ tag: r.tag, count: parseInt(r.count, 10) })),
+      collections: collResult.rows.map((r) => ({ id: r.id, name: r.name, count: parseInt(r.count, 10) })),
     }
   }
 

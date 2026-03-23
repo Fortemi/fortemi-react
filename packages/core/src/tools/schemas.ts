@@ -67,6 +67,14 @@ export const SearchInputSchema = z.object({
   offset: z.number().int().min(0).default(0),
   tags: z.array(z.string()).optional(),
   collection_id: z.string().optional(),
+  date_from: z.coerce.date().optional(),
+  date_to: z.coerce.date().optional(),
+  is_starred: z.boolean().optional(),
+  is_archived: z.boolean().optional(),
+  format: z.enum(['markdown', 'plain', 'html']).optional(),
+  source: z.string().optional(),
+  visibility: z.enum(['private', 'shared', 'public']).optional(),
+  include_facets: z.boolean().default(false),
 })
 
 export type SearchInput = z.infer<typeof SearchInputSchema>

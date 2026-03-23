@@ -85,14 +85,20 @@ export interface SearchResult {
   tags: string[]
 }
 
+export interface SearchFacets {
+  tags: { tag: string; count: number }[]
+  collections: { id: string; name: string; count: number }[]
+}
+
 export interface SearchResponse {
   results: SearchResult[]
   total: number
   query: string
-  mode: 'text'
+  mode: 'text' | 'semantic' | 'hybrid'
   semantic_available: boolean
   limit: number
   offset: number
+  facets?: SearchFacets
 }
 
 export interface SearchOptions {
@@ -100,6 +106,14 @@ export interface SearchOptions {
   offset?: number
   tags?: string[]
   collection_id?: string
+  date_from?: Date
+  date_to?: Date
+  is_starred?: boolean
+  is_archived?: boolean
+  format?: string
+  source?: string
+  visibility?: string
+  include_facets?: boolean
 }
 
 export interface NoteRevision {

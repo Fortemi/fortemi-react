@@ -37,6 +37,8 @@ export { PGliteWorkerClient, TransactionProxy } from './worker/worker-client.js'
 
 export { NotesRepository } from './repositories/notes-repository.js'
 export { SearchRepository } from './repositories/search-repository.js'
+export { buildNoteConditions } from './repositories/condition-builder.js'
+export type { ConditionResult } from './repositories/condition-builder.js'
 export type {
   NoteSummary,
   NoteFull,
@@ -46,6 +48,7 @@ export type {
   PaginatedResult,
   SearchResult,
   SearchResponse,
+  SearchFacets,
   SearchOptions,
   NoteRevision,
 } from './repositories/types.js'

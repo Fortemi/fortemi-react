@@ -4,6 +4,8 @@ export type { FortemiContextValue, FortemiProviderProps } from './FortemiProvide
 export { useNotes } from './hooks/useNotes.js'
 export { useNote } from './hooks/useNote.js'
 export { useSearch } from './hooks/useSearch.js'
+export { useSearchHistory } from './hooks/useSearchHistory.js'
+export { useSearchSuggestions } from './hooks/useSearchSuggestions.js'
 export { useCreateNote } from './hooks/useCreateNote.js'
 export { useUpdateNote } from './hooks/useUpdateNote.js'
 export { useDeleteNote } from './hooks/useDeleteNote.js'
