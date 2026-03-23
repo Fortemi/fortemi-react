@@ -394,9 +394,9 @@ describe('JobQueueWorker', () => {
       return null
     })
 
-    // Insert in reverse priority order to verify ordering
-    const lowId = await insertJob(db, { noteId: noteId1, jobType: 'ordered', priority: 1 })
-    const highId = await insertJob(db, { noteId: noteId2, jobType: 'ordered', priority: 10 })
+    // Server convention: lower number = higher priority (0=highest, 8=low)
+    const highId = await insertJob(db, { noteId: noteId1, jobType: 'ordered', priority: 1 })
+    const lowId = await insertJob(db, { noteId: noteId2, jobType: 'ordered', priority: 10 })
     const midId = await insertJob(db, { noteId: noteId3, jobType: 'ordered', priority: 5 })
 
     await worker.processOnce()

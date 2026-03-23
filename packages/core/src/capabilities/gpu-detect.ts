@@ -22,7 +22,7 @@ type AdapterLike = {
 }
 type GpuApi = { requestAdapter(options?: Record<string, string>): Promise<AdapterLike | null> }
 
-const NO_GPU: GpuCapabilities = { webgpuAvailable: false, vendor: 'none', architecture: 'none', maxBufferSizeBytes: 0, supportsF16: false }
+const NO_GPU: GpuCapabilities = { webgpuAvailable: false, vendor: 'none', architecture: 'unknown', maxBufferSizeBytes: 0, supportsF16: false }
 
 function capsFromAdapter(adapter: AdapterLike, archSuffix = ''): GpuCapabilities {
   const info = adapter.info ?? {}

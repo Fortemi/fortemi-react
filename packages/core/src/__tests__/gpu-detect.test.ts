@@ -29,7 +29,7 @@ describe('detectGpuCapabilities', () => {
 
     expect(caps.webgpuAvailable).toBe(false)
     expect(caps.vendor).toBe('none')
-    expect(caps.architecture).toBe('none')
+    expect(caps.architecture).toBe('unknown')
     expect(caps.maxBufferSizeBytes).toBe(0)
   })
 
@@ -40,7 +40,7 @@ describe('detectGpuCapabilities', () => {
 
     expect(caps.webgpuAvailable).toBe(false)
     expect(caps.vendor).toBe('none')
-    expect(caps.architecture).toBe('none')
+    expect(caps.architecture).toBe('unknown')
     expect(caps.maxBufferSizeBytes).toBe(0)
   })
 

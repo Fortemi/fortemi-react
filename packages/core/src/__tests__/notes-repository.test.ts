@@ -102,27 +102,32 @@ describe('NotesRepository', () => {
       expect(note.tags).toEqual([])
     })
 
-    it('queues a title_generation job when no title is provided', async () => {
+    it('queues the full server pipeline when no title is provided', async () => {
       const note = await repo.create({ content: 'Auto-title me' })
 
       const result = await db.query<{ job_type: string; status: string; priority: number }>(
-        `SELECT job_type, status, priority FROM job_queue WHERE note_id = $1`,
+        `SELECT job_type, status, priority FROM job_queue WHERE note_id = $1 ORDER BY priority ASC`,
         [note.id],
       )
-      expect(result.rows).toHaveLength(1)
+      // Server pipeline: title_generation (2), embedding (5, semantic), ai_revision (8, llm)
+      expect(result.rows).toHaveLength(3)
       expect(result.rows[0].job_type).toBe('title_generation')
-      expect(result.rows[0].status).toBe('pending')
-      expect(result.rows[0].priority).toBe(5)
+      expect(result.rows[0].priority).toBe(2)
+      expect(result.rows[1].job_type).toBe('embedding')
+      expect(result.rows[1].priority).toBe(5)
+      expect(result.rows[2].job_type).toBe('ai_revision')
+      expect(result.rows[2].priority).toBe(8)
     })
 
-    it('does NOT queue a title_generation job when a title is provided', async () => {
+    it('skips title_generation but still queues ai_revision and embedding when title is provided', async () => {
       const note = await repo.create({ content: 'Has title', title: 'Explicit Title' })
 
-      const result = await db.query<{ count: string | number }>(
-        `SELECT COUNT(*) AS count FROM job_queue WHERE note_id = $1`,
+      const result = await db.query<{ job_type: string }>(
+        `SELECT job_type FROM job_queue WHERE note_id = $1 ORDER BY priority ASC`,
         [note.id],
       )
-      expect(Number(result.rows[0].count)).toBe(0)
+      expect(result.rows).toHaveLength(2)
+      expect(result.rows.map(r => r.job_type)).toEqual(['embedding', 'ai_revision'])
     })
 
     it('computes a deterministic SHA-256 content hash', async () => {
