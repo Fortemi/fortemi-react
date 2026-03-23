@@ -8,9 +8,9 @@
 
 ## Context
 
-fortemi-browser was originally designed as a standalone PWA where a Service Worker intercepts HTTP requests to `localhost:3000`, providing drop-in compatibility with the fortemi server REST API (ADR-004). This assumed the primary consumers were external MCP clients and AI agents making HTTP calls from outside the browser.
+fortemi-react was originally designed as a standalone PWA where a Service Worker intercepts HTTP requests to `localhost:3000`, providing drop-in compatibility with the fortemi server REST API (ADR-004). This assumed the primary consumers were external MCP clients and AI agents making HTTP calls from outside the browser.
 
-We now know that fortemi-browser is the **MNEMOS organ** inside the Plinyverse platform. In this deployment:
+We now know that fortemi-react is the **MNEMOS organ** inside the Plinyverse platform. In this deployment:
 
 - It is loaded in a sandboxed iframe within the Plinyverse portal
 - Other organs and the host shell interact with it via a typed `postMessage` bridge protocol (`@plinyverse/bridge`)

@@ -8,7 +8,7 @@
 
 ## Context
 
-fortemi-browser was originally planned as a standalone PWA. Discovery that it will serve as the MNEMOS organ inside the Plinyverse platform (per Plinyverse ADR-019) shifts the primary deployment target to an embedded iframe within the Plinyverse portal. However, additional deployment modes remain valuable:
+fortemi-react was originally planned as a standalone PWA. Discovery that it will serve as the MNEMOS organ inside the Plinyverse platform (per Plinyverse ADR-019) shifts the primary deployment target to an embedded iframe within the Plinyverse portal. However, additional deployment modes remain valuable:
 
 - **Standalone mode** — for development, testing, demo, and external MCP client compatibility (Service Worker intercepts `localhost:3000` per ADR-004)
 - **Library mode** — for other projects that need Fortemi's data layer without a UI, for test harnesses, and for other Plinyverse organs that need direct memory access

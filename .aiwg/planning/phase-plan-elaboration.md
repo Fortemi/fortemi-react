@@ -1,6 +1,6 @@
 # Phase Plan — Elaboration
 
-**Project**: fortemi-browser
+**Project**: fortemi-react
 **Phase**: Elaboration
 **Version**: 2026.3.0
 **Planned Start**: 2026-03-22

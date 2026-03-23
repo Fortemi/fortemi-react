@@ -8,7 +8,7 @@
 
 ## Context
 
-fortemi-browser supports multiple WASM capability tiers:
+fortemi-react supports multiple WASM capability tiers:
 - Semantic search: transformers.js `nomic-embed-text` (~100MB)
 - AI revision: WebLLM (~1-4GB) or external LLM API
 - Audio transcription: Whisper.js (~100MB) or external API

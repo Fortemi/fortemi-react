@@ -1,7 +1,7 @@
-# Construction Status Brief — fortemi-browser
+# Construction Status Brief — fortemi-react
 
 **Updated**: 2026-03-23
-**Project**: fortemi-browser
+**Project**: fortemi-react
 **Version**: 2026.3.0
 **Status**: Construction C3 Complete — QA/UAT ready
 
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-fortemi-browser is a browser-only reimplementation of the fortemi knowledge management system. Construction has completed through three iterations (C1 Foundation, C2 Core CRUD, C3 Semantic + AI), delivering a fully functional knowledge management application with:
+fortemi-react is a browser-only reimplementation of the fortemi knowledge management system. Construction has completed through three iterations (C1 Foundation, C2 Core CRUD, C3 Semantic + AI), delivering a fully functional knowledge management application with:
 
 - Full note CRUD with revision history
 - Full-text search (PostgreSQL tsvector) and hybrid semantic search (pgvector RRF)
@@ -106,7 +106,7 @@ fortemi-browser is a browser-only reimplementation of the fortemi knowledge mana
 
 ## Deployment
 
-fortemi-browser is a static web application. No server required.
+fortemi-react is a static web application. No server required.
 
 ```bash
 # Development

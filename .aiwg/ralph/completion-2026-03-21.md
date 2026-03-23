@@ -60,7 +60,7 @@ $ curl -s ".../issues?state=open&limit=50" | python3 -c "..." | wc -l
 55
 ```
 
-All 55 issues confirmed open with correct labels on Gitea at git.integrolabs.net/Fortemi/fortemi-browser.
+All 55 issues confirmed open with correct labels on Gitea at git.integrolabs.net/Fortemi/fortemi-react.
 
 ## Plan Coverage Analysis
 

@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "project": "fortemi-browser",
+  "project": "fortemi-react",
   "generated": "2026-03-23",
   "command": "sdlc-accelerate --interactive",
   "guidance": "full data compatibility with fortemi server required",

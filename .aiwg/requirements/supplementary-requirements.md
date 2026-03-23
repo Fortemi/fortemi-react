@@ -1,4 +1,4 @@
-# Supplementary Requirements (NFRs) — fortemi-browser
+# Supplementary Requirements (NFRs) — fortemi-react
 
 **Version**: 2026.3.0
 **Author**: roctinam

@@ -1,6 +1,6 @@
 # Gate Report — Elaboration
 
-**Project**: fortemi-browser
+**Project**: fortemi-react
 **Gate**: Elaboration → Construction
 **Target Date**: 2026-05-16
 **Actual Date**: 2026-03-22

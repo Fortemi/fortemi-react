@@ -1,4 +1,4 @@
-# Option Matrix — fortemi-browser
+# Option Matrix — fortemi-react
 
 **Purpose**: Capture what this project IS — its nature, audience, constraints, and intent — to determine appropriate SDLC framework application.
 **Generated**: 2026-03-20
@@ -11,7 +11,7 @@
 
 **Project Description**:
 
-fortemi-browser is a browser-only reimplementation of the Fortemi intelligent memory server — a production Rust/PostgreSQL system at v2026.2.13 with ~85K lines of code. The browser version targets 100% data model parity (JSON import/export compatibility, mirrored IndexedDB schema, identical REST API surface via Service Worker) while running entirely client-side using IndexedDB and opt-in WASM capability modules (transformers.js for embeddings, WebLLM for AI revision, Whisper.js for audio, pdf.js for documents). No server required for any feature. AGPL-3.0, solo developer.
+fortemi-react is a browser-only reimplementation of the Fortemi intelligent memory server — a production Rust/PostgreSQL system at v2026.2.13 with ~85K lines of code. The browser version targets 100% data model parity (JSON import/export compatibility, mirrored IndexedDB schema, identical REST API surface via Service Worker) while running entirely client-side using IndexedDB and opt-in WASM capability modules (transformers.js for embeddings, WebLLM for AI revision, Whisper.js for audio, pdf.js for documents). No server required for any feature. AGPL-3.0, solo developer.
 
 ### Audience & Scale
 

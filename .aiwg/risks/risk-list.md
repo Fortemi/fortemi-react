@@ -1,4 +1,4 @@
-# Risk Register — fortemi-browser
+# Risk Register — fortemi-react
 
 **Version**: 2026.3.0
 **Last Updated**: 2026-03-21

@@ -1,4 +1,4 @@
-# Test Strategy — fortemi-browser
+# Test Strategy — fortemi-react
 
 **Version**: 2026.3.0
 **Author**: roctinam + Test Engineer (agent)
@@ -10,7 +10,7 @@
 
 ## 1. Testing Philosophy
 
-The most critical test category for fortemi-browser is **format parity** — ensuring that JSON serializations match the fortemi server exactly. A passing test suite that fails format parity is a failing test suite.
+The most critical test category for fortemi-react is **format parity** — ensuring that JSON serializations match the fortemi server exactly. A passing test suite that fails format parity is a failing test suite.
 
 Test pyramid (priority order):
 1. **Format parity round-trip tests** — critical path, blocks merge

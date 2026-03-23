@@ -1,4 +1,4 @@
-# Flows, Sequences & State Machines — fortemi-browser
+# Flows, Sequences & State Machines — fortemi-react
 
 **Version**: 2026.3.0
 
@@ -295,7 +295,7 @@ flowchart TD
 
     ServerMigration["Server adds new migration\n(e.g. 20260401_add_tenant_id.sql)"] --> BrowserMigration["Browser migration author\ncreates browser equivalent\n(same version number, adapted DDL)"]
     BrowserMigration --> Test["Format parity test:\nserver JSON fixture → import → re-export\nassert deep equality"]
-    Test --> Merge["Merge to fortemi-browser\n(same CalVer as server migration)"]
+    Test --> Merge["Merge to fortemi-react\n(same CalVer as server migration)"]
 ```
 
 **Browser migration file naming convention:**

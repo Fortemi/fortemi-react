@@ -8,7 +8,7 @@
 
 ## Context
 
-fortemi-browser exposes 38 MCP tools (see UC-004). Two distinct consumers discover and invoke these tools at runtime:
+fortemi-react exposes 38 MCP tools (see UC-004). Two distinct consumers discover and invoke these tools at runtime:
 
 1. **Plinyverse agents** (G0DM0D3 shell) discover tools via the `PlinyCapability` registry interface, which includes `inputSchema`/`outputSchema` (JSON Schema 7), `tags`, `sideEffects`, and rich `description` fields. Agents use this metadata to decide when and how to invoke tools without hardcoded tool knowledge.
 

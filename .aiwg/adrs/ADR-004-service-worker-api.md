@@ -8,7 +8,7 @@
 
 ## Context
 
-MCP tools, AI agents (Claude, Cursor), and external integrations target the fortemi server's REST API at `http://localhost:3000`. For fortemi-browser to be a drop-in replacement, those same HTTP calls must work unchanged against the browser backend.
+MCP tools, AI agents (Claude, Cursor), and external integrations target the fortemi server's REST API at `http://localhost:3000`. For fortemi-react to be a drop-in replacement, those same HTTP calls must work unchanged against the browser backend.
 
 Options:
 1. **Service Worker interception** — intercept `fetch()` to `localhost:3000`, serve from PGlite

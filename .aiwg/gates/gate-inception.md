@@ -1,6 +1,6 @@
 # Gate Report — Inception
 
-**Project**: fortemi-browser
+**Project**: fortemi-react
 **Gate**: Inception → Elaboration
 **Evaluated**: 2026-03-21
 **Evaluator**: roctinam + Architecture Designer (agent)
@@ -27,7 +27,7 @@
 
 ### Vision and Scope
 
-fortemi-browser is a browser-only reimplementation of the fortemi knowledge management system. It provides:
+fortemi-react is a browser-only reimplementation of the fortemi knowledge management system. It provides:
 - Full offline-first operation using PGlite (PostgreSQL WASM + OPFS)
 - Identical data model to the Rust/PostgreSQL server (format parity)
 - 38 MCP tools accessible via Service Worker REST API interception

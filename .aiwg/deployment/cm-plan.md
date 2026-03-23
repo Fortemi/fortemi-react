@@ -1,10 +1,10 @@
-# Configuration Management Plan — fortemi-browser
+# Configuration Management Plan — fortemi-react
 
 **Version**: 2026.3.0
 **Author**: roctinam
 **Status**: Baselined
 **CI/CD**: Gitea Actions
-**Repository**: `git.integrolabs.net:Fortemi/fortemi-browser.git`
+**Repository**: `git.integrolabs.net:Fortemi/fortemi-react.git`
 
 ---
 
@@ -14,13 +14,13 @@
 
 - **Platform**: Gitea at `git.integrolabs.net`
 - **Organization**: Fortemi
-- **Repository**: `fortemi-browser`
+- **Repository**: `fortemi-react`
 - **Default branch**: `main`
 - **Remote**: `origin`
 
 ### 1.1a Monorepo Structure
 
-fortemi-browser is a pnpm monorepo with three packages:
+fortemi-react is a pnpm monorepo with three packages:
 
 | Package | Name | Contents |
 |---|---|---|
@@ -28,7 +28,7 @@ fortemi-browser is a pnpm monorepo with three packages:
 | `packages/react` | `@fortemi/react` | Hooks, FortemiProvider |
 | `apps/standalone` | `@fortemi/standalone` | Vite 7.3.1 + React 19.2.4 application |
 
-The workspace root (`fortemi-browser`) holds the `pnpm-workspace.yaml`, root `package.json`, and shared tooling configuration. All workspace packages are managed via pnpm workspaces.
+The workspace root (`fortemi-react`) holds the `pnpm-workspace.yaml`, root `package.json`, and shared tooling configuration. All workspace packages are managed via pnpm workspaces.
 
 ### 1.2 Branching Strategy
 
@@ -209,7 +209,7 @@ VITE_APP_VERSION=2026.3.0
 
 ### 4.3 No Server Required
 
-fortemi-browser is a static web application. It can be served by:
+fortemi-react is a static web application. It can be served by:
 - Any static file server
 - GitHub/Gitea Pages
 - Netlify, Vercel, Cloudflare Pages

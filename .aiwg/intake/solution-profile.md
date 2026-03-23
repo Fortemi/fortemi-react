@@ -1,4 +1,4 @@
-# Solution Profile — fortemi-browser
+# Solution Profile — fortemi-react
 
 **Document Type**: Existing System Profile (Inception Stage)
 **Generated**: 2026-03-20
@@ -12,7 +12,7 @@
 
 ### Why Enterprise Profile
 
-fortemi-browser is not a prototype or MVP. It is a production-quality reimplementation of an existing production system (~85K lines, CalVer 2026.2.13) with:
+fortemi-react is not a prototype or MVP. It is a production-quality reimplementation of an existing production system (~85K lines, CalVer 2026.2.13) with:
 - Full data model parity requirement (40+ entities)
 - MCP tool parity (38+ tools — developer/agent integrations depend on this)
 - Multiple compliance-adjacent requirements (AGPL-3.0, data format standards, W3C SKOS, W3C PROV)

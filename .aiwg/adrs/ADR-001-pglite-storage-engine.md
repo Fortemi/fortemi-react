@@ -8,7 +8,7 @@
 
 ## Context
 
-fortemi-browser requires a browser-side storage engine that:
+fortemi-react requires a browser-side storage engine that:
 1. Supports schema evolution without data loss or manual store rebuilding
 2. Provides full-text search parity with PostgreSQL `tsvector`
 3. Provides vector search parity with `pgvector` (HNSW indexing, cosine similarity)

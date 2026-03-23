@@ -1,4 +1,4 @@
-# Project Intake Form — fortemi-browser
+# Project Intake Form — fortemi-react
 
 **Document Type**: Brownfield Inception (blank repo, spec-driven)
 **Generated**: 2026-03-20
@@ -9,8 +9,8 @@
 
 ## Metadata
 
-- **Project name**: fortemi-browser
-- **Repository**: fortemi/fortemi-browser (Gitea)
+- **Project name**: fortemi-react
+- **Repository**: fortemi/fortemi-react (Gitea)
 - **License**: AGPL-3.0
 - **Current version**: 0.0.0 (pre-inception, no source code yet)
 - **Companion version**: fortemi server v2026.2.13
@@ -37,7 +37,7 @@
 
 ## Problem and Outcomes
 
-**Problem Statement**: The Fortemi server (~85K lines of Rust, PostgreSQL 18 + pgvector, Ollama) is powerful but high-friction to deploy. Users who want intelligent memory features — SKOS tagging, semantic search, AI-enhanced notes, knowledge graph linking — currently must run the full server stack. fortemi-browser removes that barrier entirely by running the complete system in a browser tab.
+**Problem Statement**: The Fortemi server (~85K lines of Rust, PostgreSQL 18 + pgvector, Ollama) is powerful but high-friction to deploy. Users who want intelligent memory features — SKOS tagging, semantic search, AI-enhanced notes, knowledge graph linking — currently must run the full server stack. fortemi-react removes that barrier entirely by running the complete system in a browser tab.
 
 **Target Personas**:
 1. **Power user, offline** — researcher, writer, or developer who wants full Fortemi capability while traveling, in restricted networks, or air-gapped environments
@@ -97,7 +97,7 @@ Every server table has a 1:1 equivalent in PGlite with zero type adaptation requ
 
 ### JSON Interchange Format
 
-JSON exported from the fortemi server must import cleanly into fortemi-browser and vice versa:
+JSON exported from the fortemi server must import cleanly into fortemi-react and vice versa:
 - Field names: identical (PGlite uses same column names as server)
 - UUIDs: UUIDv7 strings (time-ordered)
 - Timestamps: ISO 8601 with UTC timezone (`2026-01-24T12:00:00.000Z`)
@@ -107,7 +107,7 @@ JSON exported from the fortemi server must import cleanly into fortemi-browser a
 
 ### REST API Surface (Service Worker)
 
-fortemi-browser registers a Service Worker that intercepts requests to `http://localhost:3000` (or a configurable base URL) and serves them from PGlite — making the browser backend **indistinguishable from the server** to MCP tools and integrations.
+fortemi-react registers a Service Worker that intercepts requests to `http://localhost:3000` (or a configurable base URL) and serves them from PGlite — making the browser backend **indistinguishable from the server** to MCP tools and integrations.
 
 Full endpoint compatibility:
 - `POST/GET/PATCH/DELETE /api/v1/notes`
@@ -296,7 +296,7 @@ The following server features are **deferred** (not v1):
 **Development style**: Parallel tracks, full scope, no feature scope reduction
 **Version scheme**: CalVer `YYYY.M.PATCH` (no leading zeros) — matching fortemi server convention
 **License**: AGPL-3.0
-**Repository**: Gitea (fortemi/fortemi-browser)
+**Repository**: Gitea (fortemi/fortemi-react)
 
 ---
 

@@ -1,4 +1,4 @@
-# fortemi-browser — Design & Intake Documents
+# fortemi-react — Design & Intake Documents
 
 **Generated**: 2026-03-20
 **Status**: Approved (inception phase)

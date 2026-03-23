@@ -3,3 +3,5 @@ dist/
 *.tsbuildinfo
 .vite/
 coverage/
+apps/standalone/playwright-report/
+apps/standalone/test-results/

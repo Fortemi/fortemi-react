@@ -1,4 +1,4 @@
-# Software Architecture Document — fortemi-browser
+# Software Architecture Document — fortemi-react
 
 **Version**: 2026.3.0
 **Author**: roctinam
@@ -12,11 +12,11 @@
 
 ### 1.1 Purpose
 
-This Software Architecture Document (SAD) describes the architecture of fortemi-browser: a browser-only reimplementation of the fortemi knowledge management system. It captures architectural decisions, component interactions, data flows, and quality attribute strategies.
+This Software Architecture Document (SAD) describes the architecture of fortemi-react: a browser-only reimplementation of the fortemi knowledge management system. It captures architectural decisions, component interactions, data flows, and quality attribute strategies.
 
 ### 1.2 Scope
 
-fortemi-browser runs entirely in the browser (no server required after initial load). It:
+fortemi-react runs entirely in the browser (no server required after initial load). It:
 - Persists data in PGlite (PostgreSQL WASM) via OPFS
 - Exposes 38 MCP tools via a Service Worker REST API
 - Provides a React 19 UI for direct user interaction
@@ -69,12 +69,12 @@ The following constraints are non-negotiable (from option-matrix.md):
 
 ```mermaid
 C4Context
-    title System Context — fortemi-browser
+    title System Context — fortemi-react
 
     Person(user, "Knowledge Worker", "Captures notes, searches, organizes knowledge")
     Person(developer, "Developer / AI Agent", "Uses MCP tools via Claude, Cursor, or other MCP-compatible agent")
 
-    System(browser_app, "fortemi-browser", "Browser-only knowledge management system. Offline-first. No server required.")
+    System(browser_app, "fortemi-react", "Browser-only knowledge management system. Offline-first. No server required.")
 
     System_Ext(fortemi_server, "fortemi Server", "Rust/PostgreSQL backend. Optional sync source. Canonical data model reference.")
     System_Ext(external_llm, "External LLM API", "OpenAI-compatible API endpoint. Optional AI revision capability.")
@@ -93,7 +93,7 @@ C4Context
 
 ```mermaid
 C4Container
-    title Container Diagram — fortemi-browser
+    title Container Diagram — fortemi-react
 
     Person(user, "User")
 

@@ -1,6 +1,6 @@
 # Phase Plan — Inception
 
-**Project**: fortemi-browser
+**Project**: fortemi-react
 **Phase**: Inception
 **Version**: 2026.3.0
 **Dates**: 2026-03-20 → 2026-03-21 (complete)
@@ -10,7 +10,7 @@
 
 ## Phase Objective
 
-Establish stakeholder alignment on vision, scope, architecture direction, and risk posture for the fortemi-browser project. Produce construction-ready design documentation sufficient to begin Phase 1 (Foundation) implementation.
+Establish stakeholder alignment on vision, scope, architecture direction, and risk posture for the fortemi-react project. Produce construction-ready design documentation sufficient to begin Phase 1 (Foundation) implementation.
 
 ---
 

@@ -8,7 +8,7 @@
 
 ## Context
 
-fortemi-browser depends on several modern browser APIs:
+fortemi-react depends on several modern browser APIs:
 - **OPFS** (`navigator.storage.getDirectory()`) — for PGlite persistence and blob storage
 - **OPFS synchronous access** (`createSyncAccessHandle()`) — required by PGlite in a Worker context
 - **Service Worker** — for REST API interception
@@ -60,6 +60,6 @@ Do NOT set these headers unless a specific feature requires them (e.g., `perform
 
 **Negative:**
 - Safari users limited to in-memory mode — no data persistence across sessions
-- iOS users cannot use fortemi-browser v1 (Apple forces WebKit on iOS)
+- iOS users cannot use fortemi-react v1 (Apple forces WebKit on iOS)
 - Firefox persistence (IndexedDB) may be slower than Chrome's OPFS for large databases
 - Must implement browser-specific adapter selection logic

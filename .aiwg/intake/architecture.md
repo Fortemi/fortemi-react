@@ -1,4 +1,4 @@
-# Software Architecture Document — fortemi-browser
+# Software Architecture Document — fortemi-react
 
 **Version**: 2026.3.0
 **Status**: Approved (intake phase)
@@ -7,14 +7,14 @@
 
 ## 1. System Context
 
-fortemi-browser is a browser-native reimplementation of the Fortemi intelligent memory server. It runs entirely client-side using PGlite (PostgreSQL WASM) for structured storage and OPFS for file blobs. A Service Worker intercepts HTTP requests on `localhost:3000`, making the browser backend indistinguishable from the server to MCP tools and external integrations.
+fortemi-react is a browser-native reimplementation of the Fortemi intelligent memory server. It runs entirely client-side using PGlite (PostgreSQL WASM) for structured storage and OPFS for file blobs. A Service Worker intercepts HTTP requests on `localhost:3000`, making the browser backend indistinguishable from the server to MCP tools and external integrations.
 
 ```mermaid
 C4Context
-    title System Context — fortemi-browser
+    title System Context — fortemi-react
 
     Person(user, "User", "Knowledge worker, researcher, developer")
-    System(browser, "fortemi-browser", "Browser-only Fortemi memory system\nPGlite + OPFS + Service Worker\nReact/TypeScript PWA")
+    System(browser, "fortemi-react", "Browser-only Fortemi memory system\nPGlite + OPFS + Service Worker\nReact/TypeScript PWA")
     System_Ext(server, "fortemi server", "Rust/PostgreSQL production server\nv2026.2.13\nOptional sync target")
     System_Ext(llm_api, "LLM API", "OpenAI / Anthropic / Ollama proxy\nOptional — user-configured")
     System_Ext(mcp_client, "MCP Client / AI Agent", "Claude, Cursor, or any MCP-compatible agent\ntargets localhost:3000")
@@ -31,11 +31,11 @@ C4Context
 
 ```mermaid
 C4Container
-    title Container Diagram — fortemi-browser
+    title Container Diagram — fortemi-react
 
     Person(user, "User")
 
-    Container_Boundary(pwa, "fortemi-browser PWA") {
+    Container_Boundary(pwa, "fortemi-react PWA") {
         Container(ui, "React UI", "React 19 / TypeScript", "Views, components, routing")
         Container(eventbus, "Event Bus", "TypeScript", "Typed SSE-compatible reactive events\nDecouples UI from data layer")
         Container(api_layer, "API Layer", "TypeScript", "Repository pattern\nMirrors server REST surface")

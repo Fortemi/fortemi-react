@@ -1,4 +1,4 @@
-# Data Model — fortemi-browser
+# Data Model — fortemi-react
 
 **Version**: 2026.3.0
 **Reference**: fortemi server `matric-core/src/models.rs` + `migrations/`

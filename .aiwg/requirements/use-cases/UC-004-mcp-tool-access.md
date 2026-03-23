@@ -10,7 +10,7 @@
 
 ## Brief Description
 
-An AI agent accesses the fortemi-browser MCP server via the Service Worker REST API interception layer. The agent calls any of the 38 core MCP tools and receives responses identical in format to those from the fortemi Rust server. No server deployment required — the browser itself is the MCP endpoint.
+An AI agent accesses the fortemi-react MCP server via the Service Worker REST API interception layer. The agent calls any of the 38 core MCP tools and receives responses identical in format to those from the fortemi Rust server. No server deployment required — the browser itself is the MCP endpoint.
 
 ---
 
@@ -110,7 +110,7 @@ PGlite Worker returns error. Tool handler returns JSON-RPC error with appropriat
 
 ### 3a — Service Worker not registered
 
-`fetch()` to `localhost:3000` fails (SW not active). MCP client receives connection refused. User must open fortemi-browser tab to activate Service Worker.
+`fetch()` to `localhost:3000` fails (SW not active). MCP client receives connection refused. User must open fortemi-react tab to activate Service Worker.
 
 ---
 

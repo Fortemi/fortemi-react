@@ -1,4 +1,4 @@
-# fortemi-browser
+# fortemi-react
 
 Browser-only knowledge management system with full PostgreSQL (PGlite WASM), semantic search (pgvector + transformers.js), SKOS tagging, and MCP tool integration. 100% JSON format parity with fortemi server. React 19 / TypeScript / AGPL-3.0.
 
@@ -58,7 +58,7 @@ pnpm --filter @fortemi/standalone preview            # Preview production build
 
 ## AI Capabilities
 
-fortemi-browser supports opt-in AI features through the capability system. Enable them in Settings.
+fortemi-react supports opt-in AI features through the capability system. Enable them in Settings.
 
 ### Semantic Search (all browsers)
 
@@ -107,7 +107,7 @@ Jobs that require unavailable capabilities stay queued as `pending` and run auto
 
 ## MCP Integration
 
-fortemi-browser exposes 13 tools via MCP JSON-RPC (Service Worker interception):
+fortemi-react exposes 13 tools via MCP JSON-RPC (Service Worker interception):
 
 `capture_knowledge`, `manage_note`, `search`, `get_note`, `list_notes`, `manage_tags`, `manage_collections`, `manage_links`, `manage_archive`, `manage_capabilities`
 

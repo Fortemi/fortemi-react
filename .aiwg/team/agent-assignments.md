@@ -1,4 +1,4 @@
-# Team Profile & Agent Assignments — fortemi-browser
+# Team Profile & Agent Assignments — fortemi-react
 
 **Version**: 2026.3.0
 **Updated**: 2026-03-21
