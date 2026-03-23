@@ -113,6 +113,16 @@ fortemi-react exposes 13 tools via MCP JSON-RPC (Service Worker interception):
 
 Tool manifest available at runtime via `@fortemi/core` exports.
 
+## Documentation
+
+| Guide | Description |
+|-------|-------------|
+| [Getting Started](docs/getting-started.md) | Installation, provider setup, first note, search |
+| [Integration Guide](docs/integration.md) | Embedding in React apps, MCP tools, events, jobs, capabilities |
+| [API Reference](docs/api-reference.md) | Full API surface for @fortemi/core and @fortemi/react |
+| [Deployment](docs/deployment.md) | Static hosting, Vite config, browser compat, WebGPU, CI/CD |
+| [Extending](docs/extending.md) | Custom tools, job handlers, capabilities, migrations, hooks |
+
 ## License
 
 AGPL-3.0-only
