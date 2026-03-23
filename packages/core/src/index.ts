@@ -31,3 +31,28 @@ export type { BlobStore } from './blob-store.js'
 
 export type { WorkerRequest, WorkerResponse } from './worker/protocol.js'
 export { PGliteWorkerClient, TransactionProxy } from './worker/worker-client.js'
+
+export { NotesRepository } from './repositories/notes-repository.js'
+export { SearchRepository } from './repositories/search-repository.js'
+export type {
+  NoteSummary,
+  NoteFull,
+  NoteCreateInput,
+  NoteUpdateInput,
+  NoteListOptions,
+  PaginatedResult,
+  SearchResult,
+  SearchResponse,
+  SearchOptions,
+} from './repositories/types.js'
+
+export { JobQueueWorker, titleGenerationHandler } from './job-queue-worker.js'
+export type { JobQueueOptions } from './job-queue-worker.js'
+
+export { TagsRepository } from './repositories/tags-repository.js'
+export { CollectionsRepository } from './repositories/collections-repository.js'
+export type { CollectionRow, CollectionCreateInput } from './repositories/collections-repository.js'
+export { LinksRepository } from './repositories/links-repository.js'
+export type { LinkRow } from './repositories/links-repository.js'
+export { SkosRepository } from './repositories/skos-repository.js'
+export type { SkosScheme, SkosConcept, SkosRelation } from './repositories/skos-repository.js'

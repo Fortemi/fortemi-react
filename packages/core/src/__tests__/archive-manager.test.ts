@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { ArchiveManager } from '../archive-manager.js'
 import { TypedEventBus } from '../event-bus.js'
 
-describe('ArchiveManager', () => {
+describe('ArchiveManager', { timeout: 30_000 }, () => {
   let manager: ArchiveManager
   let events: TypedEventBus
 

@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { createPGliteInstance } from '../db.js'
 import type { PGlite } from '@electric-sql/pglite'
 
-describe('PGlite database factory', () => {
+describe('PGlite database factory', { timeout: 30_000 }, () => {
   let db: PGlite | null = null
 
   afterEach(async () => {

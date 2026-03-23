@@ -32,6 +32,7 @@ export const migration0001: Migration = {
       revision_mode TEXT NOT NULL DEFAULT 'standard',
       is_starred BOOLEAN NOT NULL DEFAULT false,
       is_pinned BOOLEAN NOT NULL DEFAULT false,
+      is_archived BOOLEAN NOT NULL DEFAULT false,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       deleted_at TIMESTAMPTZ,
