@@ -92,3 +92,16 @@ export type { GpuCapabilities, VramTier } from './capabilities/gpu-detect.js'
 
 export { AttachmentsRepository } from './repositories/attachments-repository.js'
 export type { AttachmentRow, AttachmentBlobRow, AttachInput } from './repositories/attachments-repository.js'
+
+export { chunkText } from './capabilities/chunking.js'
+export {
+  setEmbedFunction,
+  getEmbedFunction,
+  embeddingGenerationHandler,
+} from './capabilities/embedding-handler.js'
+export type { EmbedFunction } from './capabilities/embedding-handler.js'
+
+export { setLlmFunction, getLlmFunction } from './capabilities/llm-handler.js'
+export type { LlmCompleteFn } from './capabilities/llm-handler.js'
+
+export { cosineSimilarity, suggestTags } from './capabilities/auto-tag.js'

@@ -8,6 +8,7 @@
 import type { PGlite } from '@electric-sql/pglite'
 import type { TypedEventBus } from './event-bus.js'
 import type { CapabilityManager, CapabilityName } from './capability-manager.js'
+import { getLlmFunction } from './capabilities/llm-handler.js'
 
 export interface JobQueueOptions {
   /** How often to poll for new jobs (ms). Default: 5000 */
@@ -177,7 +178,7 @@ export class JobQueueWorker {
   }
 }
 
-/** Built-in title generation handler — extracts title from note_revised_current */
+/** Built-in title generation handler — tries LLM first, falls back to string extraction */
 export function titleGenerationHandler(job: Job, db: PGlite): Promise<unknown> {
   return (async () => {
     // Get note content
@@ -191,8 +192,37 @@ export function titleGenerationHandler(job: Job, db: PGlite): Promise<unknown> {
     }
 
     const content = result.rows[0].content
+    const llmFn = getLlmFunction()
 
-    // Extract title: first line, strip markdown, truncate
+    // Try LLM title generation first
+    if (llmFn) {
+      const prompt =
+        `Generate a concise title (under 100 characters) for this note. ` +
+        `Respond with ONLY the title text, no quotes, no explanation.\n\nNote content:\n${content.slice(0, 1000)}`
+
+      const llmTitle = (await llmFn(prompt, { maxTokens: 60, temperature: 0.3 })).trim()
+
+      if (llmTitle) {
+        const title = llmTitle.length > 200 ? llmTitle.slice(0, 197) + '...' : llmTitle
+
+        // Update note_revised_current with model metadata
+        await db.query(
+          `UPDATE note_revised_current
+           SET model = $1, ai_metadata = $2, generation_count = generation_count + 1, updated_at = now()
+           WHERE note_id = $3`,
+          ['llm', JSON.stringify({ source: 'title_generation' }), job.note_id],
+        )
+
+        await db.query(`UPDATE note SET title = $1, updated_at = now() WHERE id = $2`, [
+          title,
+          job.note_id,
+        ])
+
+        return { title, model: 'llm' }
+      }
+    }
+
+    // Fallback: extract title from first line with markdown stripping
     let title = content.split('\n')[0] ?? ''
 
     // Strip markdown formatting
