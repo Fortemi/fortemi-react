@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { NotesRepository, type NoteRevision } from '@fortemi/core'
 import { useCreateNote, useNotes, useSearch, useSearchHistory, useSearchSuggestions, useJobQueue, useNote, useFortemiContext } from '@fortemi/react'
+import { ShardBackupSection } from '../components/ShardBackupSection'
 
 const APP_TAG = 'app:journal'
 
@@ -64,6 +65,8 @@ export function JournalApp() {
         Write entries. The job queue auto-generates titles and AI revisions. Compare original vs revised content.
         <span style={{ color: '#999', marginLeft: 8 }}>{entryCount} entries</span>
       </p>
+
+      <ShardBackupSection appTag={APP_TAG} appName="Journal Entries" />
 
       {entryCount === 0 && (
         <button onClick={handleSeed} disabled={seeding}

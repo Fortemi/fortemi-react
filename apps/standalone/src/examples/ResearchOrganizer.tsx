@@ -7,6 +7,7 @@
  */
 import { useState, useCallback } from 'react'
 import { useCreateNote, useSearch, useSearchHistory, useJobQueue, useNotes } from '@fortemi/react'
+import { ShardBackupSection } from '../components/ShardBackupSection'
 
 const APP_TAG = 'app:research'
 
@@ -63,6 +64,8 @@ export function ResearchOrganizer() {
         Paste paper abstracts, tag them, and search with faceted results. All data is scoped via the <code>app:research</code> tag.
         <span style={{ color: '#999', marginLeft: 8 }}>{noteCount} papers</span>
       </p>
+
+      <ShardBackupSection appTag={APP_TAG} appName="Research Papers" />
 
       {noteCount === 0 && (
         <button onClick={handleSeed} disabled={seeding}

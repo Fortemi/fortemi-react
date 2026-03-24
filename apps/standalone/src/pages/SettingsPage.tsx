@@ -15,6 +15,8 @@ import {
   type CapabilityState,
 } from '@fortemi/core'
 import { LLM_PRESETS, getSelectedLlmModel, setSelectedLlmModel, saveEnabledCapabilities } from '../capabilities/setup'
+import { ShardExportDialog } from '../components/ShardExportDialog'
+import { ShardImportDialog } from '../components/ShardImportDialog'
 
 interface CapabilityCardProps {
   name: CapabilityName
@@ -279,6 +281,12 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
         gpuCaps={gpuCaps}
         llmState={capabilities.find(c => c.name === 'llm')?.state ?? 'unloaded'}
       />
+
+      {/* Data Management */}
+      <h3 style={{ margin: '16px 0 12px', fontSize: 14 }}>Data Management</h3>
+
+      <ShardExportDialog />
+      <ShardImportDialog />
     </div>
   )
 }

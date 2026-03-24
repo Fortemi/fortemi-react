@@ -126,3 +126,45 @@ export { cosineSimilarity, suggestTags } from './capabilities/auto-tag.js'
 export { registerSemanticCapability, unregisterSemanticCapability } from './capabilities/semantic-loader.js'
 export { registerLlmCapability, unregisterLlmCapability } from './capabilities/llm-loader.js'
 export type { LlmCapabilityOptions } from './capabilities/llm-loader.js'
+
+// Shard import/export
+export {
+  CURRENT_SHARD_VERSION,
+  SHARD_FORMAT,
+  packTarGz,
+  unpackTarGz,
+  sha256Hex,
+  validateChecksums,
+  noteToShard,
+  noteFromShard,
+  linkToShard,
+  linkFromShard,
+  collectionToShard,
+  collectionFromShard,
+  tagsToShard,
+  tagsFromShard,
+  embeddingSetToShard,
+  embeddingSetFromShard,
+  embeddingSetMemberToShard,
+  embeddingToShard,
+  embeddingFromShard,
+  exportShard,
+  importShard,
+} from './shard/index.js'
+export type {
+  ShardManifest,
+  ShardComponent,
+  ExportOptions,
+  ImportOptions,
+  ImportResult,
+  ImportCounts,
+  ConflictStrategy,
+  ShardNote,
+  ShardCollection,
+  ShardTag,
+  ShardLink,
+  ShardEmbeddingSet,
+  ShardEmbeddingSetMember,
+  ShardEmbedding,
+  BrowserNoteExport,
+} from './shard/index.js'

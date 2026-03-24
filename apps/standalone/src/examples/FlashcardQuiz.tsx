@@ -12,6 +12,7 @@
 import { useState, useCallback } from 'react'
 import { enqueueFullWorkflow } from '@fortemi/core'
 import { useCreateNote, useSearch, useNotes, useNote, useRelatedNotes, useJobQueue, useFortemiContext } from '@fortemi/react'
+import { ShardBackupSection } from '../components/ShardBackupSection'
 
 const APP_TAG = 'app:flashcard'
 
@@ -85,6 +86,8 @@ export function FlashcardQuiz() {
         Q&A flashcards powered by fortemi. Search finds cards by topic; semantic linking suggests related cards.
         <span style={{ color: '#999', marginLeft: 8 }}>{cardCount} cards</span>
       </p>
+
+      <ShardBackupSection appTag={APP_TAG} appName="Flashcards" />
 
       {cardCount === 0 && (
         <button onClick={handleSeed} disabled={seeding}

@@ -12,6 +12,7 @@
 import { useState, useCallback } from 'react'
 import { enqueueFullWorkflow } from '@fortemi/core'
 import { useCreateNote, useSearch, useNotes, useJobQueue, useFortemiContext } from '@fortemi/react'
+import { ShardBackupSection } from '../components/ShardBackupSection'
 
 const APP_TAG = 'app:prompts'
 
@@ -73,6 +74,8 @@ export function WritingPrompts() {
         Type a theme, mood, or genre and discover matching prompts. Semantic search finds prompts by meaning, not just keywords.
         <span style={{ color: '#999', marginLeft: 8 }}>{promptCount} prompts</span>
       </p>
+
+      <ShardBackupSection appTag={APP_TAG} appName="Writing Prompts" />
 
       {promptCount === 0 && (
         <button onClick={handleSeed} disabled={seeding}
