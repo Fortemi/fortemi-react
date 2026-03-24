@@ -38,12 +38,12 @@ describe('ArchiveManager', { timeout: 30_000 }, () => {
     expect(result.rows).toHaveLength(1)
   })
 
-  it('runs migrations on open — version is 4 after open', async () => {
+  it('runs migrations on open — version is 5 after open', async () => {
     const db = await manager.open()
     const result = await db.query<{ version: number }>(
       'SELECT COALESCE(MAX(version), 0) AS version FROM schema_version',
     )
-    expect(result.rows[0].version).toBe(4)
+    expect(result.rows[0].version).toBe(5)
   })
 
   it('opens a named archive', async () => {

@@ -109,14 +109,14 @@ describe('NotesRepository', () => {
         `SELECT job_type, status, priority FROM job_queue WHERE note_id = $1 ORDER BY priority ASC`,
         [note.id],
       )
-      // Server pipeline: title_generation (2), embedding (5, semantic), ai_revision (8, llm)
+      // Pipeline: ai_revision (1), title_generation (2), embedding (3)
       expect(result.rows).toHaveLength(3)
-      expect(result.rows[0].job_type).toBe('title_generation')
-      expect(result.rows[0].priority).toBe(2)
-      expect(result.rows[1].job_type).toBe('embedding')
-      expect(result.rows[1].priority).toBe(5)
-      expect(result.rows[2].job_type).toBe('ai_revision')
-      expect(result.rows[2].priority).toBe(8)
+      expect(result.rows[0].job_type).toBe('ai_revision')
+      expect(result.rows[0].priority).toBe(1)
+      expect(result.rows[1].job_type).toBe('title_generation')
+      expect(result.rows[1].priority).toBe(2)
+      expect(result.rows[2].job_type).toBe('embedding')
+      expect(result.rows[2].priority).toBe(3)
     })
 
     it('skips title_generation but still queues ai_revision and embedding when title is provided', async () => {
@@ -127,7 +127,7 @@ describe('NotesRepository', () => {
         [note.id],
       )
       expect(result.rows).toHaveLength(2)
-      expect(result.rows.map(r => r.job_type)).toEqual(['embedding', 'ai_revision'])
+      expect(result.rows.map(r => r.job_type)).toEqual(['ai_revision', 'embedding'])
     })
 
     it('computes a deterministic SHA-256 content hash', async () => {

@@ -52,6 +52,7 @@ export const LLM_PRESETS = [
 ]
 
 const LLM_MODEL_KEY = 'fortemi:llm-model'
+const ENABLED_CAPS_KEY = 'fortemi:enabled-capabilities'
 
 export function getSelectedLlmModel(): string {
   return localStorage.getItem(LLM_MODEL_KEY) ?? ''
@@ -59,6 +60,21 @@ export function getSelectedLlmModel(): string {
 
 export function setSelectedLlmModel(modelId: string): void {
   localStorage.setItem(LLM_MODEL_KEY, modelId)
+}
+
+/** Persist which capabilities are enabled so they auto-start on next visit */
+export function saveEnabledCapabilities(caps: string[]): void {
+  localStorage.setItem(ENABLED_CAPS_KEY, JSON.stringify(caps))
+}
+
+/** Get previously enabled capabilities, or default to both enabled */
+export function getEnabledCapabilities(): string[] {
+  const stored = localStorage.getItem(ENABLED_CAPS_KEY)
+  if (stored) {
+    try { return JSON.parse(stored) } catch { /* fall through */ }
+  }
+  // Default: enable both on first visit
+  return ['semantic', 'llm']
 }
 
 /** Load WebLLM engine and return an LLM completion function */

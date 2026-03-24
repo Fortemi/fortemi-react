@@ -14,7 +14,7 @@ import {
   type CapabilityName,
   type CapabilityState,
 } from '@fortemi/core'
-import { LLM_PRESETS, getSelectedLlmModel, setSelectedLlmModel } from '../capabilities/setup'
+import { LLM_PRESETS, getSelectedLlmModel, setSelectedLlmModel, saveEnabledCapabilities } from '../capabilities/setup'
 
 interface CapabilityCardProps {
   name: CapabilityName
@@ -167,6 +167,13 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
 
   const refresh = () => setCapabilities([...capabilityManager.listAll()])
 
+  const persistEnabledCaps = () => {
+    const enabled = capabilityManager.listAll()
+      .filter(c => c.state === 'ready' || c.state === 'loading')
+      .map(c => c.name)
+    saveEnabledCapabilities(enabled)
+  }
+
   const handleEnable = async (name: CapabilityName) => {
     try {
       await capabilityManager.enable(name)
@@ -174,11 +181,13 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
       // Error captured in capability state
     }
     refresh()
+    persistEnabledCaps()
   }
 
   const handleDisable = (name: CapabilityName) => {
     capabilityManager.disable(name)
     refresh()
+    persistEnabledCaps()
   }
 
   return (

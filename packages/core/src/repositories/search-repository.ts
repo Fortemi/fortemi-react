@@ -20,10 +20,12 @@
  * @implements #82 collection filter on semantic/hybrid
  * @implements #83 phrase search
  * @implements #87 shared condition builder
+ * @implements #89 search mode selector
+ * @implements #94 per-result embedding status
  */
 
 import type { PGlite } from '@electric-sql/pglite'
-import type { SearchResponse, SearchOptions, SearchFacets } from './types.js'
+import type { SearchResponse, SearchOptions, SearchFacets, SearchResult } from './types.js'
 import { buildNoteConditions } from './condition-builder.js'
 
 export class SearchRepository {
@@ -37,21 +39,65 @@ export class SearchRepository {
     return query.includes('"') ? 'phraseto_tsquery' : 'plainto_tsquery'
   }
 
+  /** Returns a Set of note IDs that have an embedding record */
+  private async fetchEmbeddingSet(noteIds: string[]): Promise<Set<string>> {
+    if (noteIds.length === 0) return new Set()
+    const result = await this.db.query<{ note_id: string }>(
+      `SELECT note_id FROM embedding WHERE note_id = ANY($1)`,
+      [noteIds],
+    )
+    return new Set(result.rows.map((r) => r.note_id))
+  }
+
+  /** Attach has_embedding to each SearchResult using the provided embedding set */
+  private attachEmbeddingStatus(
+    results: Omit<SearchResult, 'has_embedding'>[],
+    embeddingSet: Set<string>,
+  ): SearchResult[] {
+    return results.map((r) => ({ ...r, has_embedding: embeddingSet.has(r.id) }))
+  }
+
   async search(
     query: string,
     options: SearchOptions = {},
     queryEmbedding?: number[],
   ): Promise<SearchResponse> {
     const { limit = 20, offset = 0 } = options
+    const mode = options.mode ?? 'auto'
 
-    // Dispatch to semantic or hybrid if embedding is provided
-    if (queryEmbedding && queryEmbedding.length > 0) {
-      if (query.trim()) {
-        return this.hybridSearch(query, queryEmbedding, options)
+    // mode='text': force text path, ignore any provided embedding
+    if (mode === 'text') {
+      if (!query.trim()) {
+        return this.recentNotes(options)
+      }
+      // Fall through to text search below
+    } else if (mode === 'semantic') {
+      // mode='semantic': require embedding
+      if (!queryEmbedding || queryEmbedding.length === 0) {
+        throw new Error('mode=semantic requires a query embedding')
       }
       return this.semanticSearch(queryEmbedding, options)
+    } else if (mode === 'hybrid') {
+      // mode='hybrid': require embedding
+      if (!queryEmbedding || queryEmbedding.length === 0) {
+        throw new Error('mode=hybrid requires a query embedding')
+      }
+      return this.hybridSearch(query, queryEmbedding, options)
+    } else {
+      // mode='auto' (default): existing auto-detect behavior
+      if (queryEmbedding && queryEmbedding.length > 0) {
+        if (query.trim()) {
+          return this.hybridSearch(query, queryEmbedding, options)
+        }
+        return this.semanticSearch(queryEmbedding, options)
+      }
+
+      if (!query.trim()) {
+        return this.recentNotes(options)
+      }
     }
 
+    // Text search path (mode='text' with non-empty query, or auto without embedding)
     if (!query.trim()) {
       return this.recentNotes(options)
     }
@@ -109,7 +155,11 @@ export class SearchRepository {
       searchParams,
     )
 
-    const tagMap = await this.fetchTagMap(result.rows.map((r) => r.id))
+    const resultIds = result.rows.map((r) => r.id)
+    const [tagMap, embeddingSet] = await Promise.all([
+      this.fetchTagMap(resultIds),
+      this.fetchEmbeddingSet(resultIds),
+    ])
 
     // Facets use full (unpaginated) result set
     let facets: SearchFacets | undefined
@@ -123,16 +173,18 @@ export class SearchRepository {
       facets = await this.fetchFacets(idsResult.rows.map((r) => r.id))
     }
 
+    const baseResults = result.rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      snippet: r.snippet ?? '',
+      rank: r.rank,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+      tags: tagMap.get(r.id) ?? [],
+    }))
+
     return {
-      results: result.rows.map((r) => ({
-        id: r.id,
-        title: r.title,
-        snippet: r.snippet ?? '',
-        rank: r.rank,
-        created_at: r.created_at,
-        updated_at: r.updated_at,
-        tags: tagMap.get(r.id) ?? [],
-      })),
+      results: this.attachEmbeddingStatus(baseResults, embeddingSet),
       total,
       query,
       mode: 'text',
@@ -212,6 +264,7 @@ export class SearchRepository {
         created_at: r.created_at,
         updated_at: r.updated_at,
         tags: tagMap.get(r.id) ?? [],
+        has_embedding: true, // Semantic results always have embeddings (JOIN on embedding table)
       })),
       total,
       query: '',
@@ -329,7 +382,10 @@ export class SearchRepository {
 
     // Re-sort by RRF order
     const noteMap = new Map(noteResult.rows.map((r) => [r.id, r]))
-    const tagMap = await this.fetchTagMap(pageIds)
+    const [tagMap, embeddingSet] = await Promise.all([
+      this.fetchTagMap(pageIds),
+      this.fetchEmbeddingSet(pageIds),
+    ])
 
     const facets = options.include_facets ? await this.fetchFacets(sortedIds) : undefined
 
@@ -346,6 +402,7 @@ export class SearchRepository {
             created_at: r.created_at,
             updated_at: r.updated_at,
             tags: tagMap.get(id) ?? [],
+            has_embedding: embeddingSet.has(id),
           }
         })
         .filter((r): r is NonNullable<typeof r> => r !== null),
@@ -393,6 +450,9 @@ export class SearchRepository {
       listParams,
     )
 
+    const resultIds = result.rows.map((r) => r.id)
+    const embeddingSet = await this.fetchEmbeddingSet(resultIds)
+
     return {
       results: result.rows.map((r) => ({
         id: r.id,
@@ -402,6 +462,7 @@ export class SearchRepository {
         created_at: r.created_at,
         updated_at: r.updated_at,
         tags: [],
+        has_embedding: embeddingSet.has(r.id),
       })),
       total,
       query: '',

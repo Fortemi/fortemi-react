@@ -15,7 +15,9 @@ export interface LinkRow {
   source_note_id: string
   target_note_id: string
   link_type: string
+  confidence: number | null
   created_at: Date
+  updated_at: Date | null
   deleted_at: Date | null
 }
 

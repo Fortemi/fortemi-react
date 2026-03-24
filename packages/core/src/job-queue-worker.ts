@@ -2,12 +2,12 @@
  * Job queue worker — polls job_queue for pending jobs, dispatches to registered
  * handlers, manages status transitions and exponential backoff retries.
  *
- * Job types and priorities mirror the Rust fortemi server:
- *   title_generation:   2  (fast, high value)
- *   linking:            3  (moderate cost, requires embeddings)
- *   embedding:          5  (default, requires semantic capability)
- *   concept_tagging:    5  (chains from ai_revision, requires llm)
- *   ai_revision:        8  (expensive, requires llm)
+ * Job types and priorities (lower = runs first):
+ *   ai_revision:        1  (LLM enriches content first, requires llm)
+ *   title_generation:   2  (generate title from enriched content)
+ *   embedding:          3  (vectorize final content, requires semantic)
+ *   concept_tagging:    4  (extract concepts from enriched content, requires llm)
+ *   linking:            5  (find related notes, requires embeddings to exist)
  */
 
 import type { PGlite } from '@electric-sql/pglite'
@@ -44,20 +44,29 @@ interface Job {
 
 type JobHandler = (job: Job, db: PGlite) => Promise<unknown>
 
-/** Server-compatible job types with their default priorities */
+/** Job types listed in execution priority order (lower number = runs first) */
 export type JobType =
-  | 'title_generation'    // priority 2
-  | 'ai_revision'         // priority 8, requires llm
-  | 'embedding'           // priority 5, requires semantic
-  | 'concept_tagging'     // priority 5, requires llm
-  | 'linking'             // priority 3, requires embeddings to exist
+  | 'ai_revision'         // priority 1, requires llm — enriches content first
+  | 'title_generation'    // priority 2, generates title from enriched content
+  | 'embedding'           // priority 3, requires semantic
+  | 'concept_tagging'     // priority 4, requires llm
+  | 'linking'             // priority 5, requires embeddings to exist
 
+/**
+ * Job priorities — lower number = runs first.
+ * Correct dependency order:
+ *   1. ai_revision — LLM enriches content first
+ *   2. title_generation — generate title from enriched content
+ *   3. embedding — vectorize final content
+ *   4. concept_tagging — extract concepts from enriched content
+ *   5. linking — find related notes (requires embeddings to exist)
+ */
 export const JOB_PRIORITIES: Record<JobType, number> = {
+  ai_revision: 1,
   title_generation: 2,
-  linking: 3,
-  embedding: 5,
-  concept_tagging: 5,
-  ai_revision: 8,
+  embedding: 3,
+  concept_tagging: 4,
+  linking: 5,
 }
 
 export const JOB_CAPABILITIES: Partial<Record<JobType, string>> = {
@@ -88,15 +97,26 @@ export async function enqueueJob(db: PGlite, input: EnqueueJobInput): Promise<st
   return id
 }
 
-/** Enqueue the full note creation pipeline matching the server's behavior. */
+/** Enqueue the note creation pipeline: revision → title → embedding. */
 export async function enqueueNoteCreationJobs(db: PGlite, noteId: string, hasTitle: boolean): Promise<void> {
-  // Phase 1: fast independent jobs
+  await enqueueJob(db, { noteId, jobType: 'ai_revision' })
   if (!hasTitle) {
     await enqueueJob(db, { noteId, jobType: 'title_generation' })
   }
-  await enqueueJob(db, { noteId, jobType: 'ai_revision' })
-  // Phase 2: runs after content settles (embedding doesn't depend on ai_revision)
   await enqueueJob(db, { noteId, jobType: 'embedding' })
+}
+
+/**
+ * Enqueue the complete workflow for a note.
+ * Order: revision → title → embedding → concepts → linking.
+ * Jobs run in priority order so each step has the richest content available.
+ */
+export async function enqueueFullWorkflow(db: PGlite, noteId: string): Promise<void> {
+  await enqueueJob(db, { noteId, jobType: 'ai_revision' })
+  await enqueueJob(db, { noteId, jobType: 'title_generation' })
+  await enqueueJob(db, { noteId, jobType: 'embedding' })
+  await enqueueJob(db, { noteId, jobType: 'concept_tagging' })
+  await enqueueJob(db, { noteId, jobType: 'linking' })
 }
 
 export interface JobStatus {

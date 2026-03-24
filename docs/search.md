@@ -56,6 +56,19 @@ When semantic capability is enabled, `useSearch` automatically:
 
 When semantic is not enabled, only text search is used.
 
+### Search Mode Override
+
+By default, `useSearch` auto-detects the best mode. You can force a specific mode:
+
+```typescript
+await search('query', { mode: 'text' })      // Force text-only (BM25), ignore embeddings
+await search('query', { mode: 'semantic' })   // Force semantic-only (requires capability)
+await search('query', { mode: 'hybrid' })     // Force hybrid RRF (requires capability)
+await search('query', { mode: 'auto' })       // Auto-detect (default)
+```
+
+When `mode` is `'semantic'` or `'hybrid'` and the semantic capability is not enabled, the hook throws an error. This allows UIs to disable these options when the capability isn't ready.
+
 ### Search with Filters
 
 ```typescript
@@ -216,6 +229,7 @@ interface SearchResult {
   created_at: Date
   updated_at: Date
   tags: string[]         // note's tags included for display
+  has_embedding?: boolean // true if note has a vector embedding (semantic search ready)
 }
 ```
 

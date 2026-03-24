@@ -40,15 +40,15 @@ describe('MigrationRunner', () => {
     expect(version).toBe(0)
   })
 
-  it('applies all 4 migrations successfully', async () => {
+  it('applies all 5 migrations successfully', async () => {
     const applied = await runner.apply(allMigrations)
 
-    expect(applied).toBe(4)
+    expect(applied).toBe(5)
     const version = await runner.getCurrentVersion()
-    expect(version).toBe(4)
+    expect(version).toBe(5)
   })
 
-  it('creates all core tables from migrations 0001–0004', async () => {
+  it('creates all core tables from migrations 0001–0005', async () => {
     await runner.apply(allMigrations)
 
     const tables = await db.query<{ tablename: string }>(
@@ -91,16 +91,16 @@ describe('MigrationRunner', () => {
     const first = await runner.apply(allMigrations)
     const second = await runner.apply(allMigrations)
 
-    expect(first).toBe(4)
+    expect(first).toBe(5)
     expect(second).toBe(0) // no new migrations
-    expect(await runner.getCurrentVersion()).toBe(4)
+    expect(await runner.getCurrentVersion()).toBe(5)
   })
 
   it('records all applied migrations in schema_version', async () => {
     await runner.apply(allMigrations)
 
     const applied = await runner.getAppliedMigrations()
-    expect(applied).toHaveLength(4)
+    expect(applied).toHaveLength(5)
     expect(applied[0].version).toBe(1)
     expect(applied[0].name).toBe('0001_initial_schema')
     expect(applied[1].version).toBe(2)
@@ -109,6 +109,8 @@ describe('MigrationRunner', () => {
     expect(applied[2].name).toBe('0003_attachments')
     expect(applied[3].version).toBe(4)
     expect(applied[3].name).toBe('0004_embeddings')
+    expect(applied[4].version).toBe(5)
+    expect(applied[4].name).toBe('0005_link_confidence')
   })
 
   it('emits migration.applied event for each migration', async () => {
@@ -117,11 +119,12 @@ describe('MigrationRunner', () => {
 
     await runner.apply(allMigrations)
 
-    expect(handler).toHaveBeenCalledTimes(4)
+    expect(handler).toHaveBeenCalledTimes(5)
     expect(handler).toHaveBeenNthCalledWith(1, { version: 1 })
     expect(handler).toHaveBeenNthCalledWith(2, { version: 2 })
     expect(handler).toHaveBeenNthCalledWith(3, { version: 3 })
     expect(handler).toHaveBeenNthCalledWith(4, { version: 4 })
+    expect(handler).toHaveBeenNthCalledWith(5, { version: 5 })
   })
 
   it('rolls back failed migration', async () => {
@@ -173,10 +176,10 @@ describe('MigrationRunner', () => {
     expect(after0003).toBe(1)
     expect(await runner.getCurrentVersion()).toBe(3)
 
-    // Apply migration 0004 on top
-    const after0004 = await runner.apply(allMigrations)
-    expect(after0004).toBe(1)
-    expect(await runner.getCurrentVersion()).toBe(4)
+    // Apply remaining migrations on top
+    const afterRest = await runner.apply(allMigrations)
+    expect(afterRest).toBe(2)
+    expect(await runner.getCurrentVersion()).toBe(5)
   })
 
   it('note_tag enforces unique constraint on (note_id, tag)', async () => {

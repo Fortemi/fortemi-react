@@ -79,8 +79,13 @@ export class NotesRepository {
         }
       }
 
-      // Queue the full note creation pipeline matching the server:
-      // title_generation (priority 2), ai_revision (priority 8, requires llm), embedding (priority 5, requires semantic)
+      // Queue the note creation pipeline:
+      // ai_revision (1, requires llm), title_generation (2), embedding (3, requires semantic)
+      await tx.query(
+        `INSERT INTO job_queue (id, note_id, job_type, status, priority, required_capability)
+         VALUES ($1, $2, 'ai_revision', 'pending', 1, 'llm')`,
+        [generateId(), noteId],
+      )
       if (!input.title) {
         await tx.query(
           `INSERT INTO job_queue (id, note_id, job_type, status, priority)
@@ -90,12 +95,7 @@ export class NotesRepository {
       }
       await tx.query(
         `INSERT INTO job_queue (id, note_id, job_type, status, priority, required_capability)
-         VALUES ($1, $2, 'ai_revision', 'pending', 8, 'llm')`,
-        [generateId(), noteId],
-      )
-      await tx.query(
-        `INSERT INTO job_queue (id, note_id, job_type, status, priority, required_capability)
-         VALUES ($1, $2, 'embedding', 'pending', 5, 'semantic')`,
+         VALUES ($1, $2, 'embedding', 'pending', 3, 'semantic')`,
         [generateId(), noteId],
       )
     })

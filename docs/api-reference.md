@@ -631,6 +631,7 @@ interface SearchResult {
   note: NoteSummary
   score: number
   highlights?: string[]
+  has_embedding?: boolean  // whether the note has a vector embedding (for semantic search readiness)
 }
 ```
 
@@ -684,6 +685,7 @@ interface SearchOptions {
   source?: string          // filter: 'user' | 'mcp' | 'import' | 'api'
   visibility?: string      // filter: 'private' | 'shared' | 'public'
   include_facets?: boolean // include tag/collection aggregate counts (default: false)
+  mode?: 'text' | 'semantic' | 'hybrid' | 'auto'  // override search mode (default: 'auto')
 }
 ```
 
@@ -730,6 +732,8 @@ interface LinkRow {
   sourceId: string
   targetId: string
   relation: string | null
+  confidence: number | null   // similarity score (1 - cosine distance) for semantic links
+  updated_at: Date | null     // last modification timestamp
   createdAt: string
 }
 ```
@@ -1000,6 +1004,16 @@ Convenience function that enqueues the standard set of post-creation jobs: embed
 
 ---
 
+#### `enqueueFullWorkflow(db, noteId)`
+
+```typescript
+async function enqueueFullWorkflow(db: PGlite, noteId: string): Promise<void>
+```
+
+Enqueues the complete 5-job pipeline for a note in correct dependency order: AI revision (1) → title generation (2) → embedding (3) → concept tagging (4) → linking (5).
+
+---
+
 #### `getJobQueueStatus(db, noteId?)`
 
 ```typescript
@@ -1049,6 +1063,14 @@ const JOB_PRIORITIES: Record<JobType, number>
 ```
 
 Default numeric priority values for each job type. Lower numbers run first.
+
+| Job Type | Priority |
+|----------|----------|
+| `ai_revision` | 1 |
+| `title_generation` | 2 |
+| `embedding` | 3 |
+| `concept_tagging` | 4 |
+| `linking` | 5 |
 
 ---
 
@@ -1552,3 +1574,79 @@ Polls `getJobQueueStatus` at the specified interval (default: 2000 ms) and expos
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `pollMs` | `number` | `2000` | Polling interval in milliseconds |
+
+---
+
+#### `useRelatedNotes(noteId, limit?)`
+
+```typescript
+function useRelatedNotes(noteId: string, limit?: number): {
+  links: RelatedNote[]
+  loading: boolean
+}
+
+interface RelatedNote {
+  noteId: string
+  title: string | null
+  confidence: number | null
+  linkType: string
+  direction: 'outbound' | 'inbound'
+}
+```
+
+Returns semantically linked notes for the given note. Merges outbound and inbound links, deduplicates, and sorts by confidence descending. Auto-refreshes when a `linking` job completes for this note.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `noteId` | `string` | required | Note to find related notes for |
+| `limit` | `number` | `3` | Maximum number of related notes to return |
+
+---
+
+#### `useNoteConcepts(noteId)`
+
+```typescript
+function useNoteConcepts(noteId: string): {
+  concepts: NoteConcept[]
+  loading: boolean
+}
+
+interface NoteConcept {
+  conceptId: string
+  prefLabel: string
+  schemeName: string
+  schemeId: string
+}
+```
+
+Returns SKOS concepts assigned to a note via the `note_skos_tag` table. Joins through `skos_concept` and `skos_scheme` to provide full label and scheme context. Auto-refreshes when a `concept_tagging` job completes for this note.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `noteId` | `string` | required | Note to retrieve concepts for |
+
+---
+
+#### `useNoteProvenance(noteId)`
+
+```typescript
+function useNoteProvenance(noteId: string): {
+  events: ProvenanceEvent[]
+  loading: boolean
+}
+
+interface ProvenanceEvent {
+  timestamp: Date
+  type: 'created' | 'job' | 'revision'
+  label: string
+  detail?: string
+}
+```
+
+Aggregates a chronological provenance timeline from existing data: note creation timestamp, completed job queue entries, and user/AI revisions. No schema changes required — uses `job_queue` and `note_revision` tables. Auto-refreshes when any job completes for this note.
+
+Job results are summarized (e.g., `"3 links found"`, `"384-dim vector"`).
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `noteId` | `string` | required | Note to retrieve provenance timeline for |

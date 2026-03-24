@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { NotesRepository, type NoteFull, type NoteRevision, enqueueJob, getJobQueueStatus, type JobStatus, type JobType, JOB_CAPABILITIES } from '@fortemi/core'
-import { useNote, useUpdateNote, useDeleteNote, useFortemiContext } from '@fortemi/react'
+import { NotesRepository, type NoteFull, type NoteRevision, enqueueJob, enqueueFullWorkflow, getJobQueueStatus, type JobStatus, type JobType, JOB_CAPABILITIES } from '@fortemi/core'
+import { useNote, useUpdateNote, useDeleteNote, useFortemiContext, useRelatedNotes, useNoteConcepts, useNoteProvenance } from '@fortemi/react'
 
 interface NoteDetailProps {
   noteId: string
@@ -84,20 +84,14 @@ function NoteView({ note }: { note: NoteFull }) {
 
   return (
     <div>
-      {/* Title + metadata */}
-      <h2 style={{ margin: '0 0 4px', fontSize: 22 }}>
+      {/* Title */}
+      <h2 style={{ margin: '0 0 12px', fontSize: 22 }}>
         {note.title ?? 'Untitled'}
         {note.is_starred && <span title="Starred" style={{ marginLeft: 8, color: '#f5a623' }}>&#9733;</span>}
       </h2>
 
-      <div style={{ color: '#999', fontSize: 12, marginBottom: 16, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <span>Created {new Date(note.created_at).toLocaleString()}</span>
-        <span>Updated {new Date(note.updated_at).toLocaleString()}</span>
-        <span>Format: {note.format}</span>
-        <span>Source: {note.source}</span>
-        {note.is_archived && <span style={{ color: '#f5a623' }}>Archived</span>}
-        {note.deleted_at && <span style={{ color: '#c00' }}>Deleted</span>}
-      </div>
+      {/* Metadata panel (#91) */}
+      <MetadataPanel note={note} />
 
       {/* Tags */}
       {note.tags.length > 0 && (
@@ -110,10 +104,16 @@ function NoteView({ note }: { note: NoteFull }) {
         </div>
       )}
 
+      {/* Concepts panel (#92) */}
+      <ConceptsPanel noteId={note.id} />
+
       {/* Current content */}
       <div style={{ background: '#fafafa', border: '1px solid #eee', borderRadius: 8, padding: 16, marginBottom: 16, whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: 14, lineHeight: 1.6 }}>
         {note.current.content}
       </div>
+
+      {/* Related notes panel (#90) */}
+      <RelatedNotesPanel noteId={note.id} />
 
       {/* Revision info panel */}
       <div style={{ border: '1px solid #e0e0e0', borderRadius: 8, padding: 12, marginBottom: 16, background: '#f8f9fa' }}>
@@ -144,6 +144,9 @@ function NoteView({ note }: { note: NoteFull }) {
       {/* AI Actions + per-note job status */}
       <NoteAIActions noteId={note.id} />
 
+      {/* Provenance panel (#93) */}
+      <ProvenancePanel noteId={note.id} />
+
       {/* Original content toggle */}
       <div style={{ marginBottom: 16 }}>
         <button
@@ -170,6 +173,144 @@ function NoteView({ note }: { note: NoteFull }) {
         ID: {note.id}
       </div>
     </div>
+  )
+}
+
+function MetadataPanel({ note }: { note: NoteFull }) {
+  const [expanded, setExpanded] = useState(true)
+  const [copied, setCopied] = useState(false)
+
+  const copyId = () => {
+    navigator.clipboard.writeText(note.id)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+
+  return (
+    <details open={expanded} style={{ marginBottom: 12 }} onToggle={(e) => setExpanded((e.target as HTMLDetailsElement).open)}>
+      <summary style={{ cursor: 'pointer', fontSize: 13, color: '#666', fontWeight: 500, marginBottom: 8 }}>
+        Metadata
+      </summary>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 24px', fontSize: 12, color: '#666', background: '#f8f9fa', border: '1px solid #e0e0e0', borderRadius: 8, padding: 12 }}>
+        <span>Format:</span><span style={{ fontWeight: 500 }}>{note.format}</span>
+        <span>Visibility:</span><span style={{ fontWeight: 500 }}>{note.visibility}</span>
+        <span>Source:</span><span style={{ fontWeight: 500 }}>{note.source}</span>
+        <span>Archive:</span><span style={{ fontWeight: 500 }}>{note.archive_id ?? 'default'}</span>
+        <span>Revision mode:</span><span style={{ fontWeight: 500 }}>{note.revision_mode}</span>
+        <span>Starred:</span><span style={{ fontWeight: 500 }}>{note.is_starred ? 'Yes' : 'No'}</span>
+        <span>Archived:</span><span style={{ fontWeight: 500 }}>{note.is_archived ? 'Yes' : 'No'}</span>
+        <span>Pinned:</span><span style={{ fontWeight: 500 }}>{note.is_pinned ? 'Yes' : 'No'}</span>
+        <span>Created:</span><span style={{ fontWeight: 500 }}>{new Date(note.created_at).toLocaleString()}</span>
+        <span>Updated:</span><span style={{ fontWeight: 500 }}>{new Date(note.updated_at).toLocaleString()}</span>
+        <span>ID:</span>
+        <span style={{ fontWeight: 500, fontFamily: 'monospace', fontSize: 11 }}>
+          {note.id.slice(0, 18)}...
+          <button onClick={copyId} style={{ marginLeft: 4, fontSize: 10, cursor: 'pointer', background: 'none', border: '1px solid #ccc', borderRadius: 3, padding: '1px 4px' }}>
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+        </span>
+      </div>
+    </details>
+  )
+}
+
+function ConceptsPanel({ noteId }: { noteId: string }) {
+  const { concepts, loading } = useNoteConcepts(noteId)
+
+  if (loading) return null
+  if (concepts.length === 0) return null
+
+  return (
+    <details open style={{ marginBottom: 12 }}>
+      <summary style={{ cursor: 'pointer', fontSize: 13, color: '#666', fontWeight: 500, marginBottom: 8 }}>
+        Concepts ({concepts.length})
+      </summary>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {concepts.map((c) => (
+          <div key={c.conceptId} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, padding: '4px 8px', background: '#f0f4ff', borderRadius: 4 }}>
+            <span style={{ color: '#999', fontSize: 10, minWidth: 60 }}>[{c.schemeName}]</span>
+            <span style={{ fontWeight: 500 }}>{c.prefLabel}</span>
+          </div>
+        ))}
+      </div>
+    </details>
+  )
+}
+
+function RelatedNotesPanel({ noteId, onNavigate }: { noteId: string; onNavigate?: (id: string) => void }) {
+  const { links, loading } = useRelatedNotes(noteId)
+
+  if (loading) return null
+
+  return (
+    <details open style={{ marginBottom: 16 }}>
+      <summary style={{ cursor: 'pointer', fontSize: 13, color: '#666', fontWeight: 500, marginBottom: 8 }}>
+        Related Notes ({links.length})
+      </summary>
+      {links.length === 0 ? (
+        <p style={{ color: '#999', fontSize: 12, margin: 0 }}>
+          No related notes yet. Click &ldquo;Find Links&rdquo; to discover connections.
+        </p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {links.map((link) => (
+            <div
+              key={link.noteId}
+              onClick={() => onNavigate?.(link.noteId)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', border: '1px solid #eee', borderRadius: 6, cursor: onNavigate ? 'pointer' : 'default', transition: 'border-color 0.15s' }}
+              onMouseEnter={(e) => { if (onNavigate) e.currentTarget.style.borderColor = '#4a9eff' }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#eee' }}
+            >
+              {link.confidence != null && (
+                <span style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 600, color: '#666', minWidth: 36 }}>
+                  {link.confidence.toFixed(2)}
+                </span>
+              )}
+              <span style={{ flex: 1, fontWeight: 500, fontSize: 13 }}>{link.title ?? 'Untitled'}</span>
+              <span style={{ fontSize: 10, color: '#999', background: '#f0f0f0', borderRadius: 3, padding: '1px 5px' }}>
+                {link.linkType}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </details>
+  )
+}
+
+function ProvenancePanel({ noteId }: { noteId: string }) {
+  const { events: provEvents, loading } = useNoteProvenance(noteId)
+
+  if (loading) return null
+  if (provEvents.length === 0) return null
+
+  const typeColors: Record<string, string> = {
+    created: '#34a853',
+    job: '#4a9eff',
+    revision: '#f5a623',
+  }
+
+  return (
+    <details style={{ marginBottom: 16 }}>
+      <summary style={{ cursor: 'pointer', fontSize: 13, color: '#666', fontWeight: 500, marginBottom: 8 }}>
+        Provenance ({provEvents.length} events)
+      </summary>
+      <div style={{ borderLeft: '2px solid #e0e0e0', paddingLeft: 12 }}>
+        {provEvents.map((evt, i) => (
+          <div key={i} style={{ fontSize: 12, marginBottom: 6, display: 'flex', gap: 8 }}>
+            <span style={{ color: '#999', fontFamily: 'monospace', fontSize: 11, minWidth: 50, flexShrink: 0 }}>
+              {new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+            <span style={{ color: typeColors[evt.type] ?? '#666', fontWeight: 500 }}>
+              {evt.label}
+            </span>
+            {evt.detail && (
+              <span style={{ color: '#999' }}>&mdash; {evt.detail}</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </details>
   )
 }
 
@@ -349,6 +490,16 @@ function NoteAIActions({ noteId }: { noteId: string }) {
     }
   }
 
+  const triggerFullWorkflow = async () => {
+    setEnqueueing('full_workflow')
+    try {
+      await enqueueFullWorkflow(db, noteId)
+      refresh()
+    } finally {
+      setEnqueueing(null)
+    }
+  }
+
   const semanticReady = capabilityManager.isReady('semantic')
   const llmReady = capabilityManager.isReady('llm')
 
@@ -361,6 +512,19 @@ function NoteAIActions({ noteId }: { noteId: string }) {
       <h4 style={{ margin: '0 0 8px', fontSize: 13, color: '#444' }}>AI Actions</h4>
 
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+        <button
+          onClick={triggerFullWorkflow}
+          disabled={enqueueing === 'full_workflow'}
+          style={{
+            padding: '4px 12px', fontSize: 12, fontWeight: 600, borderRadius: 4,
+            border: 'none', cursor: 'pointer',
+            background: '#34a853', color: 'white',
+          }}
+          title="Run all 5 jobs in order: Revision → Title → Embedding → Concepts → Links"
+        >
+          {enqueueing === 'full_workflow' ? 'Queuing...' : 'Full Workflow'}
+        </button>
+        <span style={{ borderLeft: '1px solid #ccc', margin: '0 2px' }} />
         <AIJobButton
           label="Generate Title"
           jobType="title_generation"

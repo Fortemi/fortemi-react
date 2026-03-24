@@ -13,13 +13,38 @@ export function useSearch() {
       setLoading(true)
       const semanticReady = capabilityManager.isReady('semantic')
       const repo = new SearchRepository(db, semanticReady)
+      const mode = options?.mode ?? 'auto'
 
       let queryEmbedding: number[] | undefined
-      if (semanticReady && query.trim()) {
+
+      if (mode === 'text') {
+        // text mode: never generate or use an embedding
+        queryEmbedding = undefined
+      } else if (mode === 'semantic' || mode === 'hybrid') {
+        // semantic/hybrid: require embedding capability
+        if (!semanticReady) {
+          throw new Error(
+            `mode=${mode} requires semantic capability to be enabled`,
+          )
+        }
         const embedFn = getEmbedFunction()
-        if (embedFn) {
+        if (!embedFn) {
+          throw new Error(
+            `mode=${mode} requires an embed function but none is registered`,
+          )
+        }
+        if (query.trim()) {
           const [embedding] = await embedFn([query])
           queryEmbedding = embedding
+        }
+      } else {
+        // auto (default): generate embedding only when semantic is ready
+        if (semanticReady && query.trim()) {
+          const embedFn = getEmbedFunction()
+          if (embedFn) {
+            const [embedding] = await embedFn([query])
+            queryEmbedding = embedding
+          }
         }
       }
 

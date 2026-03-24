@@ -143,9 +143,9 @@ describe('Format Parity', () => {
 
   it('link table shape matches server', async () => {
     await db.query(
-      `INSERT INTO link (id, source_note_id, target_note_id, link_type, created_at, deleted_at)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      ['019577b4-a7c0-7000-8000-000000000050', '019577b4-a7c0-7000-8000-000000000002', '019577b4-a7c0-7000-8000-000000000002', 'related', '2026-03-22T10:00:00.000Z', null],
+      `INSERT INTO link (id, source_note_id, target_note_id, link_type, confidence, created_at, updated_at, deleted_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      ['019577b4-a7c0-7000-8000-000000000050', '019577b4-a7c0-7000-8000-000000000002', '019577b4-a7c0-7000-8000-000000000002', 'related', null, '2026-03-22T10:00:00.000Z', '2026-03-22T10:00:00.000Z', null],
     )
 
     const result = await db.query<Record<string, unknown>>(

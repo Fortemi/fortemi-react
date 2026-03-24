@@ -83,6 +83,7 @@ export interface SearchResult {
   created_at: Date
   updated_at: Date
   tags: string[]
+  has_embedding?: boolean
 }
 
 export interface SearchFacets {
@@ -114,6 +115,7 @@ export interface SearchOptions {
   source?: string
   visibility?: string
   include_facets?: boolean
+  mode?: 'text' | 'semantic' | 'hybrid' | 'auto'
 }
 
 export interface NoteRevision {

@@ -61,6 +61,7 @@ export {
   linkingHandler,
   enqueueJob,
   enqueueNoteCreationJobs,
+  enqueueFullWorkflow,
   getJobQueueStatus,
   JOB_PRIORITIES,
   JOB_CAPABILITIES,
