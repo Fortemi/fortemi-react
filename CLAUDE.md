@@ -87,8 +87,8 @@ Test parallelism is capped at half available CPUs (PGlite WASM is CPU-heavy). Ov
 
 ## Git Remotes
 
-- `origin` — GitHub (public, publish target): `https://github.com/Fortemi/fortemi-react.git`
-- `gitea` — Gitea (internal): `git@git.integrolabs.net:Fortemi/fortemi-react.git`
+- `origin` — Gitea (internal, primary): `git@git.integrolabs.net:Fortemi/fortemi-react.git`
+- `github` — GitHub (public, publish target): `https://github.com/Fortemi/fortemi-react.git`
 
 <!--
   USER NOTES
