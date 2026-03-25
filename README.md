@@ -9,6 +9,20 @@ pnpm install
 pnpm dev          # http://localhost:5173
 ```
 
+### Opening Chrome (Linux)
+
+The app works in any browser, but **WebGPU features (local LLM) require a Chrome flag on Linux**:
+
+```bash
+# Basic — PGlite, search, shard import/export all work without flags
+google-chrome http://localhost:5173
+
+# With WebGPU — needed for local LLM (AI revision, concept tagging)
+google-chrome --enable-features=Vulkan --enable-unsafe-webgpu http://localhost:5173
+```
+
+Without `--enable-unsafe-webgpu`, `navigator.gpu.requestAdapter()` returns null even when `chrome://gpu` shows WebGPU as hardware accelerated. This is a known Chrome/Linux limitation.
+
 ## Architecture
 
 pnpm monorepo with three packages:
