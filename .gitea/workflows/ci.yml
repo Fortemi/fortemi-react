@@ -9,49 +9,60 @@ on:
 jobs:
   typecheck:
     runs-on: ubuntu-latest
+    container: node:22
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
 
   lint:
     runs-on: ubuntu-latest
+    container: node:22
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
 
   unit-test:
     runs-on: ubuntu-latest
+    container: node:22
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:core
+        env:
+          VITEST_MAX_WORKERS: 2
+
+  e2e:
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.58.2-noble
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test:core
+      - run: pnpm build
+      - run: pnpm test:e2e
+        env:
+          CI: true
+          HOME: /root
 
   build:
     runs-on: ubuntu-latest
+    container: node:22
+    timeout-minutes: 10
     needs: [typecheck, lint, unit-test]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
