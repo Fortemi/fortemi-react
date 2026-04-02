@@ -27,6 +27,11 @@ export interface EventMap {
   'job.failed': { id: string; noteId: string; type: string; error: string }
   'archive.switched': { name: string }
   'migration.applied': { version: number }
+  'provider.added': { id: string; name: string }
+  'provider.removed': { id: string }
+  'provider.active': { id: string; name: string }
+  'provider.fallback': { fromProvider: string; toProvider: string; errorCategory: string; error: string }
+  'provider.cooldown': { providerId: string; errorCategory: string; cooldownMs: number; expiresAt: number }
 }
 
 type EventHandler<T> = (payload: T) => void

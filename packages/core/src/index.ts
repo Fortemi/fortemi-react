@@ -107,6 +107,17 @@ export type { ManageAttachmentsInput, ManageAttachmentsResult } from './tools/in
 export { detectGpuCapabilities, estimateVramTier, selectLlmModel } from './capabilities/gpu-detect.js'
 export type { GpuCapabilities, VramTier } from './capabilities/gpu-detect.js'
 
+export {
+  detectInferenceCapabilities,
+  estimateVramMB,
+  estimateModelFit,
+} from './capabilities/inference-detect.js'
+export type {
+  InferenceCapabilities,
+  RecommendedTier,
+  ModelFitResult,
+} from './capabilities/inference-detect.js'
+
 export { AttachmentsRepository } from './repositories/attachments-repository.js'
 export type { AttachmentRow, AttachmentBlobRow, AttachInput } from './repositories/attachments-repository.js'
 
@@ -126,6 +137,45 @@ export { cosineSimilarity, suggestTags } from './capabilities/auto-tag.js'
 export { registerSemanticCapability, unregisterSemanticCapability } from './capabilities/semantic-loader.js'
 export { registerLlmCapability, unregisterLlmCapability } from './capabilities/llm-loader.js'
 export type { LlmCapabilityOptions } from './capabilities/llm-loader.js'
+
+export { ProviderRegistry, createLegacyProvider } from './capabilities/provider-registry.js'
+export { OpenAICompatibleProvider } from './capabilities/openai-provider.js'
+export type { OpenAIProviderConfig } from './capabilities/openai-provider.js'
+
+export {
+  discoverLocalProviders,
+  classifyModel,
+  LOCAL_ENDPOINTS,
+} from './capabilities/local-discovery.js'
+export { FallbackRouter, classifyError } from './capabilities/fallback-router.js'
+export type {
+  FallbackRouterConfig,
+  CooldownConfig,
+  ErrorCategory,
+  FallbackEvent,
+  CooldownEvent,
+} from './capabilities/fallback-router.js'
+
+export type {
+  DiscoveredProvider,
+  DiscoveryOptions,
+  LocalEndpoint,
+  ModelCategory,
+} from './capabilities/local-discovery.js'
+
+export type {
+  InferenceProvider,
+  ProviderCapabilities,
+  ProviderTier,
+  EmbedRequest,
+  EmbedResponse,
+  CompletionRequest,
+  CompletionResponse,
+  StreamChunk,
+  ModelInfo,
+  ProbeResult,
+  ProbeStatus,
+} from './capabilities/inference-provider.js'
 
 // Shard import/export
 export {
