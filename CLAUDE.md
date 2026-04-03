@@ -13,9 +13,9 @@ fortemi-react is the React port of the fortemi knowledge management server (Rust
 - **UI**: React 19.2.4
 - **Database**: PGlite 0.4.1 (PostgreSQL WASM) with pgvector
 - **Build**: Vite 7.3.1, pnpm 10.6.5 workspaces
-- **Test**: Vitest 4.1.0 (618+ tests), Playwright 1.58.2 (16 E2E tests)
+- **Test**: Vitest 4.1.0 (813+ tests), Playwright 1.58.2 (16 E2E tests)
 - **Lint**: ESLint 9.x (flat config) + typescript-eslint v8
-- **AI**: transformers.js (embeddings), WebLLM (local LLM)
+- **AI**: transformers.js (embeddings), WebLLM (local LLM), InferenceProvider system (remote + local + fallback)
 - **License**: AGPL-3.0-only
 - **Versioning**: CalVer YYYY.M.PATCH (no leading zeros)
 
@@ -32,7 +32,7 @@ apps/standalone/     @fortemi/standalone — Vite demo app (private, not publish
 ```bash
 pnpm dev              # Vite dev server on :5173
 pnpm build            # Build all packages
-pnpm test:core        # 618+ unit/integration tests (Vitest)
+pnpm test:core        # 813+ unit/integration tests (Vitest)
 pnpm test:e2e         # 16 E2E tests (Playwright, Chromium + Firefox)
 pnpm typecheck        # TypeScript strict across all packages
 pnpm lint             # ESLint
@@ -45,6 +45,7 @@ Test parallelism is capped at half available CPUs (PGlite WASM is CPU-heavy). Ov
 - **Single-writer PGlite Worker** — all DB writes serialized via postMessage (ADR-003)
 - **Service Worker REST interception** — intercepts localhost:3000 for MCP tools (ADR-004)
 - **Capability module system** — opt-in WASM loading, no downloads by default (ADR-002)
+- **Inference provider system** — formal `InferenceProvider` interface, `ProviderRegistry` for runtime swapping, `OpenAICompatibleProvider` for remote/local APIs, `FallbackRouter` with cooldown and capability-aware routing, local server auto-discovery (Ollama, LM Studio, llama.cpp, vLLM, Jan)
 - **Job queue** — server-compatible pipeline: ai_revision (1), title_generation (2), embedding (3), concept_tagging (4), linking (5). Lower number = higher priority.
 - **Format parity** — JSON output must match fortemi server exactly. Format parity tests enforce this.
 - **Tiered persistence** — Chrome: OPFS, Firefox: IndexedDB, Safari: in-memory
@@ -65,9 +66,11 @@ Test parallelism is capped at half available CPUs (PGlite WASM is CPU-heavy). Ov
 | `packages/core/src/index.ts` | All public exports from @fortemi/core |
 | `packages/core/src/job-queue-worker.ts` | Job queue with all server-compatible handlers |
 | `packages/core/src/migrations/` | 5 numbered migrations (schema must match server) |
-| `packages/core/src/tools/` | 14 MCP tool functions |
-| `packages/core/src/repositories/` | 8 data access repositories |
+| `packages/core/src/tools/` | 11 MCP tool functions |
+| `packages/core/src/repositories/` | 9 data access repositories |
+| `packages/core/src/capabilities/` | Inference provider system: InferenceProvider, ProviderRegistry, OpenAICompatibleProvider, FallbackRouter, local discovery, hardware detection |
 | `packages/react/src/FortemiProvider.tsx` | React context (db, events, archiveManager, capabilityManager, blobStore) |
+| `packages/react/src/hooks/` | 21 React hooks (notes, search, capabilities, job queue, import/export) |
 | `apps/standalone/src/capabilities/setup.ts` | Real transformers.js + WebLLM wiring |
 | `.aiwg/` | SDLC documentation (SAD, ADRs, gates, plans, requirements) |
 
