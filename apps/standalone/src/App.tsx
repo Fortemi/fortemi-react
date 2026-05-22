@@ -1,5 +1,5 @@
 import { Suspense, useState, useEffect, useRef } from 'react'
-import { VERSION } from '@fortemi/core'
+import { VERSION, detectGpuCapabilities } from '@fortemi/core'
 import { FortemiProvider, useFortemiContext } from '@fortemi/react'
 import { LoadingScreen } from './components/LoadingScreen'
 import { NoteListPage } from './pages/NoteListPage'
@@ -9,6 +9,34 @@ import { ResearchOrganizer } from './examples/ResearchOrganizer'
 import { FlashcardQuiz } from './examples/FlashcardQuiz'
 import { WritingPrompts } from './examples/WritingPrompts'
 import { JournalApp } from './examples/JournalApp'
+
+declare global {
+  interface Window {
+    __FORTEMI_E2E__?: {
+      persistence: 'idb'
+      query: (sql: string, params?: unknown[]) => Promise<unknown>
+      detectGpuCapabilities: typeof detectGpuCapabilities
+    }
+  }
+}
+
+function E2EDiagnostics() {
+  const { db } = useFortemiContext()
+
+  useEffect(() => {
+    window.__FORTEMI_E2E__ = {
+      persistence: 'idb',
+      query: (sql: string, params: unknown[] = []) => db.query(sql, params),
+      detectGpuCapabilities,
+    }
+
+    return () => {
+      delete window.__FORTEMI_E2E__
+    }
+  }, [db])
+
+  return null
+}
 
 /** Register real capability loaders and auto-enable previously active capabilities */
 function CapabilitySetup() {
@@ -217,6 +245,7 @@ export function App() {
     <Suspense fallback={<LoadingScreen message="Starting database..." />}>
       <FortemiProvider persistence="idb">
         <CapabilitySetup />
+        {import.meta.env.DEV ? <E2EDiagnostics /> : null}
         <AppShell />
       </FortemiProvider>
     </Suspense>

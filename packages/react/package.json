@@ -1,26 +1,62 @@
 {
   "name": "@fortemi/react",
   "version": "2026.3.0",
+  "description": "React 19 hooks and FortemiProvider for the @fortemi/core browser-only knowledge management system. 21 hooks covering notes, hybrid search, tags, collections, SKOS concepts, job queue, capability setup, embeddings, and Knowledge Shard import/export.",
+  "keywords": [
+    "fortemi",
+    "react",
+    "react-hooks",
+    "knowledge-management",
+    "pglite",
+    "semantic-search",
+    "agent-memory",
+    "skos"
+  ],
   "type": "module",
   "license": "AGPL-3.0-only",
+  "author": "Joseph Magly <joe@magly.net>",
+  "homepage": "https://github.com/Fortemi/fortemi-react",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Fortemi/fortemi-react.git",
+    "directory": "packages/react"
+  },
+  "bugs": {
+    "url": "https://github.com/Fortemi/fortemi-react/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./src/index.ts",
-      "types": "./src/index.ts"
-    }
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "prepack": "pnpm build"
   },
   "dependencies": {
-    "@fortemi/core": "workspace:*",
-    "react": "^19.2.4"
-  },
-  "devDependencies": {
-    "@types/react": "^19.0.0",
-    "typescript": "^5.8.0"
+    "@fortemi/core": "workspace:*"
   },
   "peerDependencies": {
     "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "react": "^19.2.4",
+    "tsup": "^8.3.5",
+    "typescript": "^5.8.0"
   }
 }

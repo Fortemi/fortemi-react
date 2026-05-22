@@ -6,3 +6,5 @@ coverage/
 apps/standalone/playwright-report/
 apps/standalone/test-results/
 .claude/
+.agents/
+.codex/

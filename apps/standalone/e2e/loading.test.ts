@@ -8,8 +8,8 @@ test('shows fortemi title during and after load', async ({ page }) => {
   await page.goto('/')
 
   // The header h1 "fortemi" should appear (either loading screen or ready state)
-  // Allow extra time for Vite dev server initial module load and React hydration
-  await expect(page.locator('h1')).toContainText('fortemi', { timeout: 10000 })
+  // Allow extra time for Vite dev server initial module load, React hydration, and WebKit PGlite init
+  await expect(page.locator('h1')).toContainText('fortemi', { timeout: PGLITE_TIMEOUT })
 })
 
 test('transitions to note list UI after initialization', async ({ page }) => {
