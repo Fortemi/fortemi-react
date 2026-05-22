@@ -177,6 +177,26 @@ export type {
   ProbeStatus,
 } from './capabilities/inference-provider.js'
 
+export {
+  buildPluginCsp,
+  computeSri,
+  verifySri,
+  isPluginScriptAllowed,
+  fetchPluginScript,
+  appendPluginScript,
+  parseCspReport,
+  createCspReportHandler,
+} from './security/plugin-content.js'
+export type {
+  CspDirectiveName,
+  CspDirectives,
+  PluginCspOptions,
+  PluginScriptPolicy,
+  PluginScriptDescriptor,
+  LoadedPluginScript,
+  CspViolationReport,
+} from './security/plugin-content.js'
+
 // Shard import/export
 export {
   CURRENT_SHARD_VERSION,

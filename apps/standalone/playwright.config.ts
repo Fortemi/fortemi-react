@@ -31,7 +31,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm dev -- --host 127.0.0.1 --port ' + e2ePort + ' --strictPort',
+    command: 'pnpm dev --host 127.0.0.1 --port ' + e2ePort + ' --strictPort',
     url: baseURL,
     reuseExistingServer: !process.env.CI,
   },
