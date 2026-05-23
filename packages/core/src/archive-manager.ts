@@ -4,11 +4,11 @@
  * Migrations are applied automatically on open.
  */
 
-import type { PGlite } from '@electric-sql/pglite'
-import { createPGliteInstance, type PersistenceMode } from './db.js'
+import type { PersistenceMode } from './db.js'
 import { MigrationRunner } from './migration-runner.js'
 import { allMigrations } from './migrations/index.js'
 import type { TypedEventBus } from './event-bus.js'
+import { defaultStorageBackendFactory, type StorageBackend, type StorageBackendFactory } from './storage-backend.js'
 
 export interface ArchiveInfo {
   name: string
@@ -17,13 +17,23 @@ export interface ArchiveInfo {
 
 export class ArchiveManager {
   private currentArchive: string = 'default'
-  private db: PGlite | null = null
+  private db: StorageBackend | null = null
   private archives = new Map<string, ArchiveInfo>()
+  private persistence: PersistenceMode
+  private backendFactory: StorageBackendFactory
 
   constructor(
-    private persistence: PersistenceMode,
+    persistenceOrFactory: PersistenceMode | StorageBackendFactory,
     private events?: TypedEventBus,
   ) {
+    if (typeof persistenceOrFactory === 'string') {
+      this.persistence = persistenceOrFactory
+      this.backendFactory = defaultStorageBackendFactory
+    } else {
+      this.persistence = 'memory'
+      this.backendFactory = persistenceOrFactory
+    }
+
     // Default archive always exists
     this.archives.set('default', {
       name: 'default',
@@ -35,16 +45,19 @@ export class ArchiveManager {
     return this.currentArchive
   }
 
-  getDb(): PGlite | null {
+  getDb(): StorageBackend | null {
     return this.db
   }
 
-  async open(archiveName: string = 'default'): Promise<PGlite> {
+  async open(archiveName: string = 'default'): Promise<StorageBackend> {
     if (this.db) {
       await this.db.close()
     }
 
-    this.db = await createPGliteInstance(this.persistence, archiveName)
+    this.db = await this.backendFactory.open({
+      archiveName,
+      persistence: this.persistence,
+    })
 
     // Run migrations
     const runner = new MigrationRunner(this.db, this.events)
@@ -64,14 +77,14 @@ export class ArchiveManager {
     return this.db
   }
 
-  async create(archiveName: string): Promise<PGlite> {
+  async create(archiveName: string): Promise<StorageBackend> {
     if (this.archives.has(archiveName)) {
       throw new Error(`Archive '${archiveName}' already exists`)
     }
     return this.open(archiveName)
   }
 
-  async switchTo(archiveName: string): Promise<PGlite> {
+  async switchTo(archiveName: string): Promise<StorageBackend> {
     return this.open(archiveName)
   }
 

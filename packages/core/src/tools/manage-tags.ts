@@ -1,4 +1,4 @@
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import { z } from 'zod'
 import { TagsRepository } from '../repositories/tags-repository.js'
 
@@ -15,7 +15,7 @@ export interface ManageTagsResult {
   all_tags?: Array<{ tag: string; count: number }>
 }
 
-export async function manageTags(db: PGlite, rawInput: unknown): Promise<ManageTagsResult> {
+export async function manageTags(db: DatabaseClient, rawInput: unknown): Promise<ManageTagsResult> {
   const input = ManageTagsInputSchema.parse(rawInput)
   const repo = new TagsRepository(db)
 

@@ -1202,6 +1202,27 @@ import type {
 
 When using `persistence: 'opfs'` on a browser that does not support OPFS, PGlite will throw during initialization. `FortemiProvider` will catch this and re-throw, so your error boundary will surface it. Prefer `'idb'` as the production default unless you have confirmed OPFS support in your target environment.
 
+### Custom storage backends
+
+`ArchiveManager` can also be constructed with a `StorageBackendFactory` when an embedding application needs to own the physical storage layer:
+
+```typescript
+import { ArchiveManager, type StorageBackendFactory } from '@fortemi/core'
+
+const factory: StorageBackendFactory = {
+  async open({ archiveName }) {
+    return openDesktopVaultBackend(archiveName)
+  },
+}
+
+const manager = new ArchiveManager(factory)
+const db = await manager.open('workspace')
+```
+
+Custom backends must preserve the `DatabaseClient` contract: `query()`, `exec()`, and `transaction()` should behave like the default PGlite client and return `{ rows }` query results. The repository layer assumes PostgreSQL-compatible SQL semantics.
+
+Dual-backend desktop topologies should use an explicit coordinator policy such as `primary-only`, `read-through-secondary`, or `explicit-replication`. Repositories should still see one active database client, and writes must be serialized through one writer per physical backend to preserve ADR-003.
+
 ### WebGPU for local LLM
 
 WebGPU is required for the `llm` capability. The `detectGpuCapabilities()` function handles the detection and surfaces the result clearly:

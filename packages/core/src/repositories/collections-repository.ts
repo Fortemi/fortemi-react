@@ -8,7 +8,7 @@
  * - Return flat list and shallow tree views
  */
 
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
 
 export interface CollectionRow {
@@ -29,7 +29,7 @@ export interface CollectionCreateInput {
 }
 
 export class CollectionsRepository {
-  constructor(private db: PGlite) {}
+  constructor(private db: DatabaseClient) {}
 
   async create(input: CollectionCreateInput): Promise<CollectionRow> {
     const id = generateId()

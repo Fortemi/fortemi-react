@@ -1,10 +1,10 @@
 /**
- * Sequential SQL migration runner for PGlite.
+ * Sequential SQL migration runner for DatabaseClient.
  * Tracks applied migrations in a schema_version table.
  * Each migration runs in a transaction; version updated atomically.
  */
 
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from './storage-backend.js'
 import type { TypedEventBus } from './event-bus.js'
 
 export interface Migration {
@@ -15,7 +15,7 @@ export interface Migration {
 
 export class MigrationRunner {
   constructor(
-    private db: PGlite,
+    private db: DatabaseClient,
     private events?: TypedEventBus,
   ) {}
 

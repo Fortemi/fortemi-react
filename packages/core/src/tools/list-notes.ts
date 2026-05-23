@@ -1,4 +1,4 @@
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import type { TypedEventBus } from '../event-bus.js'
 import { z } from 'zod'
 import { NotesRepository } from '../repositories/notes-repository.js'
@@ -17,7 +17,7 @@ export const ListNotesInputSchema = z.object({
 })
 export type ListNotesInput = z.infer<typeof ListNotesInputSchema>
 
-export async function listNotes(db: PGlite, rawInput: unknown, events?: TypedEventBus): Promise<PaginatedResult<NoteSummary>> {
+export async function listNotes(db: DatabaseClient, rawInput: unknown, events?: TypedEventBus): Promise<PaginatedResult<NoteSummary>> {
   const input = ListNotesInputSchema.parse(rawInput)
   const repo = new NotesRepository(db, events)
   return repo.list(input)

@@ -10,7 +10,7 @@
  *   linking:            5  (find related notes, requires embeddings to exist)
  */
 
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from './storage-backend.js'
 import type { TypedEventBus } from './event-bus.js'
 import type { CapabilityManager, CapabilityName } from './capability-manager.js'
 import { getLlmFunction } from './capabilities/llm-handler.js'
@@ -42,7 +42,7 @@ interface Job {
   updated_at: Date
 }
 
-type JobHandler = (job: Job, db: PGlite) => Promise<unknown>
+type JobHandler = (job: Job, db: DatabaseClient) => Promise<unknown>
 
 /** Job types listed in execution priority order (lower number = runs first) */
 export type JobType =
@@ -83,7 +83,7 @@ export interface EnqueueJobInput {
 }
 
 /** Enqueue a job into the job_queue table. Returns the new job ID. */
-export async function enqueueJob(db: PGlite, input: EnqueueJobInput): Promise<string> {
+export async function enqueueJob(db: DatabaseClient, input: EnqueueJobInput): Promise<string> {
   const id = generateId()
   const priority = input.priority ?? JOB_PRIORITIES[input.jobType] ?? 5
   const capability = input.requiredCapability !== undefined
@@ -98,7 +98,7 @@ export async function enqueueJob(db: PGlite, input: EnqueueJobInput): Promise<st
 }
 
 /** Enqueue the note creation pipeline: revision → title → embedding. */
-export async function enqueueNoteCreationJobs(db: PGlite, noteId: string, hasTitle: boolean): Promise<void> {
+export async function enqueueNoteCreationJobs(db: DatabaseClient, noteId: string, hasTitle: boolean): Promise<void> {
   await enqueueJob(db, { noteId, jobType: 'ai_revision' })
   if (!hasTitle) {
     await enqueueJob(db, { noteId, jobType: 'title_generation' })
@@ -111,7 +111,7 @@ export async function enqueueNoteCreationJobs(db: PGlite, noteId: string, hasTit
  * Order: revision → title → embedding → concepts → linking.
  * Jobs run in priority order so each step has the richest content available.
  */
-export async function enqueueFullWorkflow(db: PGlite, noteId: string): Promise<void> {
+export async function enqueueFullWorkflow(db: DatabaseClient, noteId: string): Promise<void> {
   await enqueueJob(db, { noteId, jobType: 'ai_revision' })
   await enqueueJob(db, { noteId, jobType: 'title_generation' })
   await enqueueJob(db, { noteId, jobType: 'embedding' })
@@ -135,7 +135,7 @@ export interface JobStatus {
 }
 
 /** Query job queue status. Optionally filter by note_id. */
-export async function getJobQueueStatus(db: PGlite, noteId?: string): Promise<JobStatus[]> {
+export async function getJobQueueStatus(db: DatabaseClient, noteId?: string): Promise<JobStatus[]> {
   const query = noteId
     ? `SELECT * FROM job_queue WHERE note_id = $1 ORDER BY created_at DESC LIMIT 50`
     : `SELECT * FROM job_queue ORDER BY created_at DESC LIMIT 50`
@@ -151,7 +151,7 @@ export class JobQueueWorker {
   private options: Required<JobQueueOptions>
 
   constructor(
-    private db: PGlite,
+    private db: DatabaseClient,
     private events?: TypedEventBus,
     options: JobQueueOptions = {},
     private capabilityManager?: CapabilityManager,
@@ -307,7 +307,7 @@ export class JobQueueWorker {
 // ---- Built-in job handlers ----
 
 /** Title generation: LLM first, fallback to first-line extraction */
-export function titleGenerationHandler(job: Job, db: PGlite): Promise<unknown> {
+export function titleGenerationHandler(job: Job, db: DatabaseClient): Promise<unknown> {
   return (async () => {
     const result = await db.query<{ content: string }>(
       `SELECT content FROM note_revised_current WHERE note_id = $1`,
@@ -357,7 +357,7 @@ export function titleGenerationHandler(job: Job, db: PGlite): Promise<unknown> {
 }
 
 /** AI revision: LLM enhances note content, creates a revision record */
-export function aiRevisionHandler(job: Job, db: PGlite): Promise<unknown> {
+export function aiRevisionHandler(job: Job, db: DatabaseClient): Promise<unknown> {
   return (async () => {
     const llmFn = getLlmFunction()
     if (!llmFn) return { skipped: true, reason: 'no LLM function registered' }
@@ -413,7 +413,7 @@ export function aiRevisionHandler(job: Job, db: PGlite): Promise<unknown> {
 }
 
 /** Concept tagging: LLM extracts SKOS concepts from revised content */
-export function conceptTaggingHandler(job: Job, db: PGlite): Promise<unknown> {
+export function conceptTaggingHandler(job: Job, db: DatabaseClient): Promise<unknown> {
   return (async () => {
     const llmFn = getLlmFunction()
     if (!llmFn) return { skipped: true, reason: 'no LLM function registered' }
@@ -471,7 +471,7 @@ export function conceptTaggingHandler(job: Job, db: PGlite): Promise<unknown> {
 }
 
 /** Linking: find semantically related notes using FTS + vector RRF */
-export function linkingHandler(job: Job, db: PGlite): Promise<unknown> {
+export function linkingHandler(job: Job, db: DatabaseClient): Promise<unknown> {
   return (async () => {
     // Check if this note has embeddings
     const embResult = await db.query<{ id: string }>(

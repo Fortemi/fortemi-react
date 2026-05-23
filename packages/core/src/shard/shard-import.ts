@@ -5,7 +5,7 @@
  *           parse components → field-map → BEGIN transaction → INSERT all → COMMIT
  */
 
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import { unpackTarGz } from './shard-tar.js'
 import { validateChecksums } from './checksum.js'
 import {
@@ -40,13 +40,13 @@ const decoder = new TextDecoder()
  * The entire import is wrapped in a single transaction — if anything fails,
  * all changes are rolled back.
  *
- * @param db PGlite database instance
+ * @param db DatabaseClient database instance
  * @param data Raw archive bytes (from File API or fetch)
  * @param options Import options (conflict strategy)
  * @returns Import result with counts, warnings, and errors
  */
 export async function importShard(
-  db: PGlite,
+  db: DatabaseClient,
   data: Uint8Array | ArrayBuffer,
   options?: ImportOptions,
 ): Promise<ImportResult> {

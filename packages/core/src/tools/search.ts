@@ -7,12 +7,12 @@
  * Input is Zod-validated at entry.
  */
 
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import { SearchRepository } from '../repositories/search-repository.js'
 import { SearchInputSchema } from './schemas.js'
 import type { SearchResponse } from '../repositories/types.js'
 
-export async function searchTool(db: PGlite, rawInput: unknown): Promise<SearchResponse> {
+export async function searchTool(db: DatabaseClient, rawInput: unknown): Promise<SearchResponse> {
   const input = SearchInputSchema.parse(rawInput)
 
   if (input.mode !== 'text') {

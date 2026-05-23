@@ -7,7 +7,7 @@
  * - Create and query broader/narrower/related concept relations
  */
 
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
 
 export interface SkosScheme {
@@ -39,7 +39,7 @@ export interface SkosRelation {
 }
 
 export class SkosRepository {
-  constructor(private db: PGlite) {}
+  constructor(private db: DatabaseClient) {}
 
   // ── Schemes ──────────────────────────────────────────────────────────────
 

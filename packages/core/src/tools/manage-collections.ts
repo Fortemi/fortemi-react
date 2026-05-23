@@ -1,4 +1,4 @@
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import { z } from 'zod'
 import { CollectionsRepository } from '../repositories/collections-repository.js'
 import type { CollectionRow } from '../repositories/collections-repository.js'
@@ -22,7 +22,7 @@ export interface ManageCollectionsResult {
   note_id?: string
 }
 
-export async function manageCollections(db: PGlite, rawInput: unknown): Promise<ManageCollectionsResult> {
+export async function manageCollections(db: DatabaseClient, rawInput: unknown): Promise<ManageCollectionsResult> {
   const input = ManageCollectionsInputSchema.parse(rawInput)
   const repo = new CollectionsRepository(db)
 

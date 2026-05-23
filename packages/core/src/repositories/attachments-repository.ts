@@ -3,13 +3,13 @@
  *
  * Responsibilities:
  * - Content-addressed blob deduplication via SHA-256 hash
- * - Store blob metadata in PGlite (attachment_blob table)
+ * - Store blob metadata in DatabaseClient (attachment_blob table)
  * - Store binary data in a BlobStore implementation
  * - Create/soft-delete attachment records linked to notes
  * - List active attachments for a note
  */
 
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import type { BlobStore } from '../blob-store.js'
 import { generateId } from '../uuid.js'
 import { computeHash } from '../hash.js'
@@ -48,7 +48,7 @@ export interface AttachInput {
 
 export class AttachmentsRepository {
   constructor(
-    private db: PGlite,
+    private db: DatabaseClient,
     private blobStore: BlobStore,
   ) {}
 

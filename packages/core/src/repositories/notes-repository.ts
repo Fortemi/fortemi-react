@@ -8,7 +8,7 @@
  * - Emit domain events via TypedEventBus on every mutation
  */
 
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
 import { computeHash } from '../hash.js'
 import type { TypedEventBus } from '../event-bus.js'
@@ -24,7 +24,7 @@ import type {
 
 export class NotesRepository {
   constructor(
-    private db: PGlite,
+    private db: DatabaseClient,
     private events?: TypedEventBus,
   ) {}
 

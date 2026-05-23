@@ -1,4 +1,4 @@
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import { z } from 'zod'
 import { LinksRepository } from '../repositories/links-repository.js'
 import type { LinkRow } from '../repositories/links-repository.js'
@@ -22,7 +22,7 @@ export interface ManageLinksResult {
   link_id?: string
 }
 
-export async function manageLinks(db: PGlite, rawInput: unknown): Promise<ManageLinksResult> {
+export async function manageLinks(db: DatabaseClient, rawInput: unknown): Promise<ManageLinksResult> {
   const input = ManageLinksInputSchema.parse(rawInput)
   const repo = new LinksRepository(db)
 

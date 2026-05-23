@@ -6,7 +6,7 @@
  * Input is Zod-validated at entry. All mutations delegate to NotesRepository.
  */
 
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import type { TypedEventBus } from '../event-bus.js'
 import { NotesRepository } from '../repositories/notes-repository.js'
 import { ManageNoteInputSchema } from './schemas.js'
@@ -19,7 +19,7 @@ export interface ManageNoteResult {
 }
 
 export async function manageNote(
-  db: PGlite,
+  db: DatabaseClient,
   rawInput: unknown,
   events?: TypedEventBus,
 ): Promise<ManageNoteResult> {

@@ -1,4 +1,4 @@
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import { z } from 'zod'
 import { AttachmentsRepository } from '../repositories/attachments-repository.js'
 import type { AttachmentRow } from '../repositories/attachments-repository.js'
@@ -27,7 +27,7 @@ export interface ManageAttachmentsResult {
 }
 
 export async function manageAttachments(
-  db: PGlite,
+  db: DatabaseClient,
   blobStore: BlobStore,
   rawInput: unknown,
 ): Promise<ManageAttachmentsResult> {

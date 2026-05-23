@@ -4,7 +4,7 @@
  * Pipeline: query DB → field-map → serialize (JSONL/JSON) → compute checksums → build manifest → tar.gz
  */
 
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import { VERSION } from '../index.js'
 import { packTarGz } from './shard-tar.js'
 import { sha256Hex } from './checksum.js'
@@ -35,12 +35,12 @@ const encoder = new TextEncoder()
 /**
  * Export knowledge data from the database as a .shard archive (Uint8Array).
  *
- * @param db PGlite database instance
+ * @param db DatabaseClient database instance
  * @param options Export options (includeEmbeddings, collectionId filter)
  * @returns Compressed shard archive bytes
  */
 export async function exportShard(
-  db: PGlite,
+  db: DatabaseClient,
   options?: ExportOptions,
 ): Promise<Uint8Array> {
   const files = new Map<string, Uint8Array>()

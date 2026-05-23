@@ -1,5 +1,5 @@
 /**
- * SearchRepository — full-text search using PGlite tsvector/tsquery,
+ * SearchRepository — full-text search using DatabaseClient tsvector/tsquery,
  * with optional semantic search (pgvector) and hybrid (BM25 + vector RRF).
  *
  * Search strategy:
@@ -24,13 +24,13 @@
  * @implements #94 per-result embedding status
  */
 
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import type { SearchResponse, SearchOptions, SearchFacets, SearchResult } from './types.js'
 import { buildNoteConditions } from './condition-builder.js'
 
 export class SearchRepository {
   constructor(
-    private db: PGlite,
+    private db: DatabaseClient,
     private semanticAvailable = false,
   ) {}
 

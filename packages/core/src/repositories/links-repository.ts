@@ -7,7 +7,7 @@
  * - Query outbound, inbound, and backlinks for a note
  */
 
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
 
 export interface LinkRow {
@@ -22,7 +22,7 @@ export interface LinkRow {
 }
 
 export class LinksRepository {
-  constructor(private db: PGlite) {}
+  constructor(private db: DatabaseClient) {}
 
   async create(
     sourceNoteId: string,

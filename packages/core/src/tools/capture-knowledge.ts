@@ -9,7 +9,7 @@
  * Input is Zod-validated at entry. All writes delegate to NotesRepository.
  */
 
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import type { TypedEventBus } from '../event-bus.js'
 import { NotesRepository } from '../repositories/notes-repository.js'
 import { CaptureKnowledgeInputSchema } from './schemas.js'
@@ -21,7 +21,7 @@ export interface CaptureKnowledgeResult {
 }
 
 export async function captureKnowledge(
-  db: PGlite,
+  db: DatabaseClient,
   rawInput: unknown,
   events?: TypedEventBus,
 ): Promise<CaptureKnowledgeResult> {

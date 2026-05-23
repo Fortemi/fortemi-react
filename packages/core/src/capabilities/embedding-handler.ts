@@ -6,7 +6,7 @@
  * @implements #63 embedding generation
  */
 
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
 import { chunkText } from './chunking.js'
 
@@ -24,7 +24,7 @@ export function getEmbedFunction(): EmbedFunction | null {
 }
 
 /** Ensure a default embedding set exists and return its ID */
-async function ensureEmbeddingSet(db: PGlite): Promise<string> {
+async function ensureEmbeddingSet(db: DatabaseClient): Promise<string> {
   const result = await db.query<{ id: string }>(
     `SELECT id FROM embedding_set WHERE model_name = $1`,
     ['all-MiniLM-L6-v2']
@@ -63,7 +63,7 @@ function averageEmbeddings(embeddings: number[][]): number[] {
 /** Job handler for embedding generation. Registered in JobQueueWorker. */
 export async function embeddingGenerationHandler(
   job: { note_id: string },
-  db: PGlite,
+  db: DatabaseClient,
 ): Promise<unknown> {
   const fn = embedFn
   if (!fn) return { skipped: true, reason: 'no embed function registered' }

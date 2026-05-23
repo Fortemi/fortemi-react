@@ -7,11 +7,11 @@
  * - List all tags with usage counts
  */
 
-import type { PGlite } from '@electric-sql/pglite'
+import type { DatabaseClient } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
 export class TagsRepository {
   constructor(
-    private db: PGlite,
+    private db: DatabaseClient,
   ) {}
 
   async addTag(noteId: string, tag: string): Promise<void> {
