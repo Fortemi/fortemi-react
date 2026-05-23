@@ -30,12 +30,12 @@ jobs:
   unit-test:
     runs-on: ubuntu-latest
     container: node:22
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test:core
+      - run: pnpm --filter @fortemi/core exec vitest run --coverage
         env:
           VITEST_MAX_WORKERS: 2
 
