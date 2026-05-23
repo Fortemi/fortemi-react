@@ -1,0 +1,177 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_to_publish:
+        description: 'Signed v* tag to publish'
+        required: true
+        type: string
+
+concurrency:
+  group: npm-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    container: node:22@sha256:62e4daa6819762bbd3072af77cc282ab72c631c4aed30dd7980192babaf385b3
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Resolve release tag
+        id: release
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag_to_publish }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+
+          case "$TAG" in
+            v*) ;;
+            *)
+              echo "Release tag must start with v: $TAG" >&2
+              exit 1
+              ;;
+          esac
+
+          echo "release_tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "GITHUB_REF=refs/tags/$TAG" >> "$GITHUB_ENV"
+
+      - name: Fetch release tag object
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.release.outputs.release_tag }}"
+          git fetch origin "+refs/tags/${TAG}:refs/tags/${TAG}" --depth=1
+          git checkout --detach "refs/tags/${TAG}"
+
+      - name: Verify signed release tag
+        run: bash tools/ci/verify-signed-tag.sh
+
+      - name: Verify pnpm supply-chain gates
+        run: |
+          set -euo pipefail
+          node - <<'CHECK'
+          const fs = require('node:fs');
+          const text = fs.readFileSync('pnpm-workspace.yaml', 'utf8');
+          const age = text.match(/^minimumReleaseAge:\s*(\d+)\s*$/m);
+          const exotic = text.match(/^blockExoticSubdeps:\s*(true|false)\s*$/m);
+          if (!age || Number(age[1]) < 10080) {
+            throw new Error('pnpm minimumReleaseAge must be at least 10080 minutes');
+          }
+          if (!exotic || exotic[1] !== 'true') {
+            throw new Error('pnpm blockExoticSubdeps must be true');
+          }
+          CHECK
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        run: pnpm build
+
+      - name: Verify package versions
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${RELEASE_TAG#v}"
+          export TAG_VERSION
+          node - <<'CHECK'
+          const fs = require('node:fs');
+          const expected = process.env.TAG_VERSION;
+          for (const dir of ['packages/core', 'packages/react']) {
+            const pkg = JSON.parse(fs.readFileSync(dir + '/package.json', 'utf8'));
+            if (pkg.version !== expected) {
+              throw new Error(pkg.name + ' version ' + pkg.version + ' does not match release tag ' + expected);
+            }
+          }
+          CHECK
+
+      - name: Pack and inspect artifacts
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${RELEASE_TAG#v}"
+          export TAG_VERSION
+          PACK_DIR="/tmp/fortemi-publish-check"
+          rm -rf "$PACK_DIR"
+          mkdir -p "$PACK_DIR"
+
+          (cd packages/core && pnpm pack --pack-destination "$PACK_DIR")
+          (cd packages/react && pnpm pack --pack-destination "$PACK_DIR")
+
+          CORE_TGZ="$PACK_DIR/fortemi-core-${TAG_VERSION}.tgz"
+          REACT_TGZ="$PACK_DIR/fortemi-react-${TAG_VERSION}.tgz"
+          test -s "$CORE_TGZ"
+          test -s "$REACT_TGZ"
+
+          tar -tzf "$CORE_TGZ" > "$PACK_DIR/core-files.txt"
+          tar -tzf "$REACT_TGZ" > "$PACK_DIR/react-files.txt"
+
+          if grep -E 'package/(\.aiwg|\.agents|\.codex)/' "$PACK_DIR/core-files.txt" "$PACK_DIR/react-files.txt"; then
+            echo "Packed artifact contains local AI/operator metadata" >&2
+            exit 1
+          fi
+
+          tar -xOf "$REACT_TGZ" package/package.json > "$PACK_DIR/react-package.json"
+          node - <<'CHECK'
+          const fs = require('node:fs');
+          const pkg = JSON.parse(fs.readFileSync('/tmp/fortemi-publish-check/react-package.json', 'utf8'));
+          const dep = pkg.dependencies && pkg.dependencies['@fortemi/core'];
+          if (dep !== process.env.TAG_VERSION) {
+            throw new Error('@fortemi/react artifact depends on @fortemi/core ' + dep + ', expected ' + process.env.TAG_VERSION);
+          }
+          CHECK
+
+      - name: Publish packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          printf '//registry.npmjs.org/:_authToken=%s\n' "$NODE_AUTH_TOKEN" > ~/.npmrc
+          npm whoami
+
+          publish_package() {
+            package_dir="$1"
+            package_name="$(node -p "require('./${package_dir}/package.json').name")"
+            package_version="$(node -p "require('./${package_dir}/package.json').version")"
+
+            if npm view "${package_name}@${package_version}" version >/dev/null 2>&1; then
+              echo "${package_name}@${package_version} already exists; skipping"
+              return 0
+            fi
+
+            echo "Publishing ${package_name}@${package_version}"
+            (cd "$package_dir" && pnpm publish --access public --no-git-checks)
+            npm view "${package_name}@${package_version}" version --prefer-online --no-update-notifier
+          }
+
+          publish_package packages/core
+          publish_package packages/react

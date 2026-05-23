@@ -1,0 +1,14 @@
+# Fortemi CI Pin Manifest
+#
+# Tracks immutable action SHAs and container digests used by release-sensitive
+# workflows. This mirrors the AIWG supply-chain control: pinned references are
+# reviewable source changes instead of mutable upstream tags.
+#
+# Format:
+#   <kind>  <name>  <pin>  <resolved-version>  <date-pinned>  <rationale>
+
+container  node:22  sha256:62e4daa6819762bbd3072af77cc282ab72c631c4aed30dd7980192babaf385b3  22.22.2-bookworm  2026-05-23  publish workflow baseline; inherited from AIWG supply-chain pin set
+
+action  actions/checkout    34e114876b0b11c390a56381ad16ebd13914f8d5  v4.3.1  2026-05-23  publish workflow checkout; inherited from AIWG supply-chain pin set
+action  actions/setup-node  a0853c24544627f65ddf259abe73b1d18a591444  v5.0.0  2026-05-23  npm registry setup for publish workflow
+action  pnpm/action-setup   f40ffcd9367d9f12939873eb1018b921a783ffaa  v4      2026-05-23  pnpm install support for publish workflow
