@@ -165,12 +165,30 @@ jobs:
 
             if npm view "${package_name}@${package_version}" version >/dev/null 2>&1; then
               echo "${package_name}@${package_version} already exists; skipping"
-              return 0
+            else
+              echo "Publishing ${package_name}@${package_version}"
+              (cd "$package_dir" && pnpm publish --access public --no-git-checks) 2>&1 | tee publish-output.txt || {
+                if grep -qE "cannot publish over|EPUBLISHCONFLICT|409|previously published" publish-output.txt; then
+                  echo "${package_name}@${package_version} already published; continuing"
+                else
+                  cat publish-output.txt
+                  exit 1
+                fi
+              }
             fi
 
-            echo "Publishing ${package_name}@${package_version}"
-            (cd "$package_dir" && pnpm publish --access public --no-git-checks)
-            npm view "${package_name}@${package_version}" version --prefer-online --no-update-notifier
+            for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+              published="$(npm view "${package_name}@${package_version}" version --prefer-online --no-update-notifier 2>/dev/null || echo "")"
+              if [ "$published" = "$package_version" ]; then
+                echo "${package_name}@${package_version} is visible on npmjs.org"
+                return 0
+              fi
+              echo "Attempt ${attempt}/12: ${package_name}@${package_version} is not visible yet; retrying in 15s..."
+              sleep 15
+            done
+
+            echo "${package_name}@${package_version} did not become visible on npmjs.org before timeout" >&2
+            exit 1
           }
 
           publish_package packages/core
