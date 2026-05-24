@@ -99,8 +99,6 @@ function makeNoHostStub<T>(label: string): T {
   // looks like an object — eliminating "X is not a function" and
   // "Cannot read .foo of undefined" entirely.
 
-  let proxy: T
-
   // events.on() returns either a plain unsubscribe fn OR a Subscription
   // object with .dispose()/.unsubscribe(). Return something that satisfies
   // both shapes: a callable function with dispose/unsubscribe properties.
@@ -122,7 +120,11 @@ function makeNoHostStub<T>(label: string): T {
       if (prop === 'then') {
         // Make awaiting the proxy resolve to undefined without recursing
         return (onFulfilled?: (v: unknown) => unknown) => {
-          try { onFulfilled?.(undefined) } catch {}
+          try {
+            onFulfilled?.(undefined)
+          } catch {
+            return proxy
+          }
           return proxy
         }
       }
@@ -148,7 +150,7 @@ function makeNoHostStub<T>(label: string): T {
     set() { return true },
   }
 
-  proxy = new Proxy(target, handler) as T
+  const proxy = new Proxy(target, handler) as T
   return proxy
 }
 
