@@ -259,7 +259,8 @@ jobs:
           const tag = process.env.RELEASE_TAG;
           const version = tag.replace(/^v/, '');
           const prerelease = version.includes('-');
-          const body = [
+          const fs = await import('node:fs/promises');
+          let body = [
             `Fortemi React release ${tag}.`,
             '',
             'Published npm packages:',
@@ -268,6 +269,11 @@ jobs:
             '',
             'This release is backed by the signed release tag verified by CI before publication.'
           ].join('\n');
+          try {
+            body = await fs.readFile(`docs/releases/${tag}.md`, 'utf8');
+          } catch (error) {
+            if (error?.code !== 'ENOENT') throw error;
+          }
 
           async function request(url, options = {}) {
             const response = await fetch(url, options);
