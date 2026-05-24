@@ -246,6 +246,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
           GT_PUBLISH_TOKEN: ${{ secrets.GT_PUBLISH_TOKEN }}
+          GH_PUBLISH_TOKEN: ${{ secrets.GH_PUBLISH_TOKEN }}
           GITEA_ACTION_TOKEN: ${{ github.token }}
           GITEA_SERVER_URL: ${{ github.server_url }}
           GITEA_REPOSITORY: ${{ github.repository }}
@@ -290,9 +291,9 @@ jobs:
           }
 
           async function upsertGitHubRelease() {
-            const token = process.env.GT_PUBLISH_TOKEN;
+            const token = process.env.GH_PUBLISH_TOKEN;
             if (!token) {
-              throw new Error('GT_PUBLISH_TOKEN is required to publish the GitHub release.');
+              throw new Error('GH_PUBLISH_TOKEN is required to publish the GitHub release.');
             }
 
             const repo = process.env.GITHUB_REPOSITORY || 'Fortemi/fortemi-react';
