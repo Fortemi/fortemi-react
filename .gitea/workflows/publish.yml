@@ -77,6 +77,8 @@ jobs:
         # Hard gate: the tag must verify against the release-only public key
         # committed under .gitea/keys/maintainers.asc, matching AIWG's
         # two-key model. A personal commit-signing key must not pass here.
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
         run: bash tools/ci/verify-signed-tag.sh
 
       - name: Verify pnpm supply-chain gates
