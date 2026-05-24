@@ -5,12 +5,17 @@
 set -euo pipefail
 
 GH_REF="${GITHUB_REF:-}"
-TAG="${GH_REF#refs/tags/}"
+TAG="${RELEASE_TAG:-}"
+
+if [ -z "$TAG" ]; then
+  TAG="${GH_REF#refs/tags/}"
+fi
 
 if [ -z "$TAG" ] || [ "$TAG" = "$GH_REF" ]; then
   cat <<EOF >&2
 Signed-tag verify: not a tag push.
   GITHUB_REF=$GH_REF
+  RELEASE_TAG=${RELEASE_TAG:-}
 
 Release publishing must run against a signed v* tag.
 EOF
