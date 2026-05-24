@@ -1,145 +1,165 @@
+<div align="center">
+
 # fortemi-react
 
-Browser-only knowledge management system with full PostgreSQL (PGlite WASM), semantic search (pgvector + transformers.js), SKOS tagging, and MCP tool integration. 100% JSON format parity with fortemi server. React 19 / TypeScript / AGPL-3.0.
+**Browser-only knowledge management packages for React, PGlite, semantic search, and agent tool integration**
+
+Full PostgreSQL in the browser with PGlite WASM, typed React 19 hooks, SKOS tagging, Knowledge Shard import/export, local AI capability wiring, and JSON format parity with the Fortemi server.
+
+```bash
+pnpm add @fortemi/core @fortemi/react
+pnpm dev
+```
+
+[![core npm version](https://img.shields.io/npm/v/@fortemi/core/latest?label=@fortemi/core&color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/@fortemi/core)
+[![react npm version](https://img.shields.io/npm/v/@fortemi/react/latest?label=@fortemi/react&color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/@fortemi/react)
+[![License: AGPL-3.0-only](https://img.shields.io/badge/License-AGPL--3.0--only-blue.svg?style=flat-square)](LICENSE)
+[![Node Version](https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen?style=flat-square&logo=node.js)](https://nodejs.org)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
+
+[**Get Started**](#quick-start) · [**Packages**](#packages) · [**Features**](#what-you-get) · [**AI Capabilities**](#ai-capabilities) · [**Documentation**](#documentation) · [**License**](#license)
+
+</div>
+
+---
+
+## What fortemi-react Is
+
+fortemi-react is a browser-only knowledge management toolkit. It gives React applications a local PostgreSQL-compatible archive using PGlite, repository APIs for notes and knowledge structures, optional local AI capability wiring, and typed hooks for building production UI without a server.
+
+Use it when you need local-first note storage, semantic retrieval, agent-readable tool functions, or portable Knowledge Shard archives inside a web application.
 
 ## Quick Start
+
+Install the published packages:
+
+```bash
+pnpm add @fortemi/core @fortemi/react
+# or
+npm install @fortemi/core @fortemi/react
+```
+
+Run the standalone app from this repository:
 
 ```bash
 pnpm install
 pnpm dev          # http://localhost:5173
 ```
 
-### Opening Chrome (Linux)
+Minimal React setup:
 
-The app works in any browser, but **WebGPU features (local LLM) require a Chrome flag on Linux**:
+```tsx
+import { FortemiProvider, useCreateNote, useSearch } from '@fortemi/react'
 
-```bash
-# Basic — PGlite, search, shard import/export all work without flags
-google-chrome http://localhost:5173
+export function App() {
+  return (
+    <FortemiProvider persistence="opfs" archiveName="default">
+      <Notebook />
+    </FortemiProvider>
+  )
+}
 
-# With WebGPU — needed for local LLM (AI revision, concept tagging)
-google-chrome --enable-features=Vulkan --enable-unsafe-webgpu http://localhost:5173
+function Notebook() {
+  const { createNote } = useCreateNote()
+  const { data, search } = useSearch()
+
+  return (
+    <main>
+      <button onClick={() => void createNote({ title: 'Hello', content: 'First note.' })}>
+        Add note
+      </button>
+      <input onChange={(event) => void search(event.target.value)} />
+      <ul>
+        {data?.items.map((item) => <li key={item.id}>{item.title}</li>)}
+      </ul>
+    </main>
+  )
+}
 ```
 
-Without `--enable-unsafe-webgpu`, `navigator.gpu.requestAdapter()` returns null even when `chrome://gpu` shows WebGPU as hardware accelerated. This is a known Chrome/Linux limitation.
+## Packages
 
-## Architecture
+| Package | Published | Purpose |
+|---|---|---|
+| `@fortemi/core` | npm | Headless data layer: PGlite repositories, migrations, workers, tool helpers, event bus, capability system |
+| `@fortemi/react` | npm | React 19 provider and hooks for notes, search, tags, collections, jobs, capabilities, and shards |
+| `@fortemi/standalone` | workspace app | Vite application for local development and static deployment |
 
-pnpm monorepo with three packages:
+All packages are versioned together. The current release is `2026.5.0`.
 
-| Package | Description |
-|---|---|
-| `@fortemi/core` | Headless data layer: PGlite repositories, migrations, workers, MCP tools, event bus, capability system |
-| `@fortemi/react` | React 19 hooks and FortemiProvider for UI consumers |
-| `@fortemi/standalone` | Vite 7 application with note list, search, settings UI |
+## What You Get
 
-All data stays in-browser via PGlite (PostgreSQL compiled to WASM):
-- **Chrome 113+** (tested: 146): OPFS persistence (fastest), WebGPU for LLM
-- **Firefox 111+** (tested: 148): IndexedDB adapter, WASM embedding (no WebGPU production support yet)
-- **Safari 17+**: In-memory (no persistent storage)
+- Full note CRUD with revision history, soft delete, starring, pinning, and archiving
+- PGlite-backed local storage with `opfs`, `idb`, and `memory` persistence modes
+- Full-text search with PostgreSQL `tsvector` / `tsquery`, phrase search, filters, facets, and snippets
+- Hybrid semantic search with pgvector HNSW and BM25 reciprocal-rank fusion
+- Tags, collections, inter-note links, SKOS schemes, concepts, and relations
+- Knowledge Shard tar.gz import/export with checksums and JSON format parity
+- 10 manifest-backed Mnemos tools plus 11 exported direct tool helper functions
+- Optional embeddings, LLM, local-provider discovery, WebGPU detection, and fallback routing
+- React 19 hooks for common UI workflows and direct context access for lower-level integration
 
-No server required. Deploy `apps/standalone/dist/` to any static host.
+## Runtime Support
 
-## Features
+| Runtime | Storage | AI capability notes |
+|---|---|---|
+| Chrome 113+ / Edge 113+ | OPFS recommended | WebGPU available when enabled; Linux Chrome may require flags |
+| Firefox 111+ | IndexedDB fallback | WASM embeddings work; WebGPU production support is limited |
+| Safari 17+ | Memory or IndexedDB depending context | Use `memory` for previews and tests when persistence is restricted |
 
-- Full note CRUD with revision history and soft-delete
-- Full-text search (PostgreSQL tsvector/tsquery) with phrase search
-- Hybrid semantic search (pgvector HNSW + BM25 RRF fusion) with automatic mode selection
-- 12 search filters (date range, starred, archived, format, source, visibility, tags, collection, facets)
-- Search history and autocomplete suggestions
-- SKOS taxonomy management (schemes, concepts, relations)
-- Tags, collections, and inter-note links
-- 10 MCP manifest tools and 11 exported tool helpers for AI agent integration
-- Opt-in capability modules: embeddings (transformers.js), LLM (WebLLM), GPU detection
-- Multi-archive support (separate PGlite instances)
-- Job queue with retry logic (title generation, embedding, auto-tagging)
-
-## Testing
-
-```bash
-pnpm test:core    # 603 unit/integration tests (Vitest)
-pnpm test:e2e     # 16 E2E tests across Chromium + Firefox (Playwright)
-pnpm typecheck    # TypeScript strict
-pnpm lint         # ESLint
-```
-
-Coverage: 88.56% statements, 96.89% repository layer, 90.24% lines.
-
-## Build
-
-```bash
-pnpm build                                          # Build all packages
-pnpm --filter @fortemi/standalone preview            # Preview production build
-```
+No backend is required. Deploy `apps/standalone/dist/` to any static host.
 
 ## AI Capabilities
 
-fortemi-react supports opt-in AI features through the capability system. Enable them in Settings.
+fortemi-react supports opt-in capabilities through the runtime capability manager:
 
-### Semantic Search (all browsers)
+| Capability | Runtime | Enables |
+|---|---|---|
+| Semantic embeddings | transformers.js WASM | Hybrid search, related notes, link discovery |
+| Local LLM | WebLLM / compatible provider | AI revision, concept tagging, title generation |
+| GPU detection | WebGPU adapter probing | Hardware tier and model-fit guidance |
+| Local provider discovery | Ollama, LM Studio, llama.cpp, vLLM, Jan | Remote/local provider fallback routing |
 
-Downloads the `all-MiniLM-L6-v2` embedding model (~23MB) via transformers.js (WASM). No GPU needed.
-
-Enables: Generate Embedding, Find Links, hybrid semantic search.
-
-### Local LLM (Chrome/Edge with WebGPU)
-
-Downloads a local language model via WebLLM. Requires WebGPU.
-
-Enables: AI Revision, Concept Tagging, LLM-powered title generation.
-
-### GPU Setup (Linux)
-
-WebGPU requires proper GPU driver setup. Check `chrome://gpu` — look for `WebGPU: Hardware accelerated`.
-
-If WebGPU shows as disabled:
+On Linux Chrome, local WebGPU inference commonly needs:
 
 ```bash
-# Ensure Vulkan is available
-vulkaninfo | head -20
-
-# Launch Chrome with Vulkan backend (if not auto-detected)
-google-chrome --enable-features=Vulkan --enable-unsafe-webgpu
-
-# NVIDIA users: ensure proprietary drivers are installed
-nvidia-smi
+google-chrome --enable-features=Vulkan --enable-unsafe-webgpu http://localhost:5173
 ```
 
-For Intel integrated GPUs, Mesa drivers (25.x+) provide Vulkan support automatically. The NVIDIA discrete GPU can be selected in Chrome via `chrome://flags/#enable-webgpu-developer-features`.
+## Tool Integration
 
-### Job Queue
+`@fortemi/core` exports `fortemiManifest` for bridge registration and direct helper functions for application code. The manifest currently includes:
 
-All AI operations run through a background job queue matching the fortemi server's pipeline:
+`capture_knowledge`, `manage_note`, `search`, `get_note`, `list_notes`, `manage_tags`, `manage_collections`, `manage_links`, `manage_archive`, `manage_capabilities`.
 
-| Job Type | Priority | Requires | Description |
-|---|---|---|---|
-| `title_generation` | 2 | none (LLM optional) | Extract or generate title from content |
-| `linking` | 3 | embeddings exist | Discover semantically related notes |
-| `embedding` | 5 | Semantic capability | Generate vector embedding for search |
-| `concept_tagging` | 5 | LLM capability | Extract topic tags via LLM |
-| `ai_revision` | 8 | LLM capability | LLM-based content enhancement |
+Direct helper exports also include `manageAttachments` for attachment metadata and blob operations.
 
-Jobs that require unavailable capabilities stay queued as `pending` and run automatically when the capability is enabled.
+## Development
 
-## MCP Integration
+```bash
+pnpm install
+pnpm typecheck
+pnpm lint
+pnpm test:core
+pnpm test:e2e
+pnpm build
+```
 
-fortemi-react exposes 10 manifest-backed Mnemos tools for bridge registration via `fortemiManifest`. It also exports 11 direct tool helper functions from `@fortemi/core`:
-
-`capture_knowledge`, `manage_note`, `search`, `get_note`, `list_notes`, `manage_tags`, `manage_collections`, `manage_links`, `manage_archive`, `manage_capabilities`. Direct helper exports also include `manageAttachments` for attachment metadata and blob operations.
-
-Tool manifest available at runtime via `@fortemi/core` exports.
+The repository uses Node.js 22, pnpm 10, TypeScript, Vitest, Playwright, and Vite.
 
 ## Documentation
 
 | Guide | Description |
-|-------|-------------|
+|---|---|
 | [Getting Started](docs/getting-started.md) | Installation, provider setup, first note, search |
 | [Search](docs/search.md) | Text, semantic, and hybrid search modes, filters, RRF fusion, snippets |
-| [Integration Guide](docs/integration.md) | Embedding in React apps, MCP tools, events, jobs, capabilities |
-| [API Reference](docs/api-reference.md) | Full API surface for @fortemi/core and @fortemi/react |
-| [Deployment](docs/deployment.md) | Static hosting, Vite config, browser compat, WebGPU, CI/CD |
+| [Integration Guide](docs/integration.md) | Embedding in React apps, tool helpers, events, jobs, capabilities |
+| [API Reference](docs/api-reference.md) | Full API surface for `@fortemi/core` and `@fortemi/react` |
+| [Deployment](docs/deployment.md) | Static hosting, Vite config, browser compatibility, WebGPU, CI/CD |
 | [Extending](docs/extending.md) | Custom tools, job handlers, capabilities, migrations, hooks |
+| [Supply Chain](docs/security/supply-chain.md) | Release signing, workflow pinning, and publishing controls |
 
 ## License
 
-AGPL-3.0-only
+AGPL-3.0-only. See [LICENSE](https://github.com/Fortemi/fortemi-react/blob/main/LICENSE).
