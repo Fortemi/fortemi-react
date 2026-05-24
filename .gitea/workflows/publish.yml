@@ -4,8 +4,7 @@
 # - Commits may be signed by a personal maintainer key.
 # - Release tags must be signed by the project release key published in
 #   .gitea/keys/maintainers.asc; tools/release/cut-tag.sh forces that key.
-# - npmjs.org publishing uses a dedicated npm release token (NPMJS_TOKEN),
-#   not the Gitea/repository token (NPM_TOKEN).
+# - npmjs.org publishing uses the repository secret NPM_TOKEN, which must be an npmjs.org automation token.
 
 name: Publish
 
@@ -165,12 +164,12 @@ jobs:
 
       - name: Publish packages
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
         run: |
           set -euo pipefail
           if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "NPMJS_TOKEN is required for npmjs.org publishing" >&2
+            echo "NPM_TOKEN is required for npmjs.org publishing" >&2
             exit 1
           fi
           printf '//registry.npmjs.org/:_authToken=%s\n' "$NODE_AUTH_TOKEN" > ~/.npmrc
