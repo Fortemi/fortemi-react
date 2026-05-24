@@ -1009,7 +1009,7 @@ await manageArchive({ action: 'switch', name: 'fieldwork-notes' }, archiveManage
 
 ## 11. Service Worker Setup
 
-The service worker exposes a REST API at `/api/v1/*` that proxies requests to the in-browser PGlite database. This is the primary integration point for tools and agents that communicate via HTTP rather than direct function calls.
+The service worker registers REST route shapes under `/api/v1/*`. The current route handlers return 503 until standalone-mode database wiring injects a live PGlite connection, so direct tool functions remain the primary integration point for code running inside the app.
 
 ### Registering the service worker
 

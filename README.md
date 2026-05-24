@@ -49,7 +49,7 @@ No server required. Deploy `apps/standalone/dist/` to any static host.
 - Search history and autocomplete suggestions
 - SKOS taxonomy management (schemes, concepts, relations)
 - Tags, collections, and inter-note links
-- 13 MCP tool functions for AI agent integration
+- 10 MCP manifest tools and 11 exported tool helpers for AI agent integration
 - Opt-in capability modules: embeddings (transformers.js), LLM (WebLLM), GPU detection
 - Multi-archive support (separate PGlite instances)
 - Job queue with retry logic (title generation, embedding, auto-tagging)
@@ -123,9 +123,9 @@ Jobs that require unavailable capabilities stay queued as `pending` and run auto
 
 ## MCP Integration
 
-fortemi-react exposes 13 tools via MCP JSON-RPC (Service Worker interception):
+fortemi-react exposes 10 manifest-backed Mnemos tools for bridge registration via `fortemiManifest`. It also exports 11 direct tool helper functions from `@fortemi/core`:
 
-`capture_knowledge`, `manage_note`, `search`, `get_note`, `list_notes`, `manage_tags`, `manage_collections`, `manage_links`, `manage_archive`, `manage_capabilities`
+`capture_knowledge`, `manage_note`, `search`, `get_note`, `list_notes`, `manage_tags`, `manage_collections`, `manage_links`, `manage_archive`, `manage_capabilities`. Direct helper exports also include `manageAttachments` for attachment metadata and blob operations.
 
 Tool manifest available at runtime via `@fortemi/core` exports.
 

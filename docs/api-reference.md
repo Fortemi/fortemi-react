@@ -27,7 +27,7 @@
   - [Migrations and Archive](#migrations-and-archive)
   - [Service Worker](#service-worker)
   - [Worker Utilities](#worker-utilities)
-- [@fortemi/react](#fortemiреасt)
+- [@fortemi/react](#fortemireact)
   - [Provider](#provider)
   - [Hooks](#hooks)
 
@@ -98,16 +98,16 @@ Creates and initializes a PGlite database instance using the specified storage b
 #### `createFortemi(config)`
 
 ```typescript
-function createFortemi(config: FortemiConfig): Promise<FortemiCore>
+function createFortemi(config: FortemiConfig): FortemiCore
 ```
 
-Primary factory function. Assembles a fully initialized `FortemiCore` instance including database, repositories, event bus, capability manager, blob store, and archive manager.
+Lightweight factory for the non-React runtime shell. It creates the shared `TypedEventBus`, stores the provided config, and exposes a `destroy()` cleanup hook. Use `ArchiveManager.open()` to create the PGlite database before constructing repositories.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `config` | `FortemiConfig` | Configuration object (see [FortemiConfig](#fortemiconfig)) |
 
-**Returns:** A `Promise` that resolves to a `FortemiCore` instance.
+**Returns:** A `FortemiCore` instance.
 
 ---
 
@@ -197,15 +197,13 @@ Configuration passed to `createFortemi`.
 
 ```typescript
 interface FortemiCore {
-  db: PGlite
   events: TypedEventBus
-  archiveManager: ArchiveManager
-  capabilityManager: CapabilityManager
-  blobStore: BlobStore
+  config: FortemiConfig
+  destroy(): void
 }
 ```
 
-The assembled runtime surface returned by `createFortemi`. All repositories are constructed on demand using `db` and `events`.
+The runtime shell returned by `createFortemi`. React apps usually get the richer `{ db, events, archiveManager, capabilityManager, blobStore }` surface from `FortemiProvider` instead.
 
 ---
 
@@ -767,7 +765,7 @@ interface AttachmentBlobRow extends AttachmentRow {
 
 ### Tool Functions
 
-Tool functions follow the MCP (Model Context Protocol) calling convention: they accept a plain `input` object and return a structured result. They are suitable for use both from UI code and from LLM tool-call dispatch.
+Tool functions accept plain input objects, validate them with Zod, and return structured results. `FortemiToolManifest` currently registers 10 bridge-visible Mnemos tools; `@fortemi/core` also exports `manageAttachments` as a direct helper because it requires both `db` and `blobStore`.
 
 ---
 
@@ -1497,7 +1495,7 @@ function useCreateNote(): {
 }
 ```
 
-Returns a `createNote` function that calls `captureKnowledge` with `action: 'create'` and enqueues post-creation jobs.
+Returns a `createNote` function that constructs a `NotesRepository` from context and calls `NotesRepository.create()`. The repository emits `note.created` and queues post-creation jobs.
 
 ---
 

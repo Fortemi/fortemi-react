@@ -19,7 +19,7 @@ import { FortemiProvider, useSearch, useCreateNote } from '@fortemi/react';
 
 function App() {
   return (
-    <FortemiProvider archive="default" persistence="auto">
+    <FortemiProvider archiveName="default" persistence="opfs">
       <Notebook />
     </FortemiProvider>
   );
@@ -33,13 +33,13 @@ function Notebook() {
     <>
       <input
         placeholder="search"
-        onChange={(e) => search.run({ text: e.target.value })}
+        onChange={(e) => void search.search(e.target.value)}
       />
-      <button onClick={() => create.mutate({ title: 'New', body: 'Body' })}>
+      <button onClick={() => void create.createNote({ title: 'New', content: 'Body' })}>
         Add note
       </button>
       <ul>
-        {search.results?.items.map((r) => (
+        {search.data?.items.map((r) => (
           <li key={r.id}>
             <strong>{r.title}</strong> — {r.snippet}
           </li>
