@@ -1,3 +1,12 @@
+# Publish @fortemi packages to npmjs.org.
+#
+# Release model mirrors AIWG v2026.5.10/current:
+# - Commits may be signed by a personal maintainer key.
+# - Release tags must be signed by the project release key published in
+#   .gitea/keys/maintainers.asc; tools/release/cut-tag.sh forces that key.
+# - npmjs.org publishing uses a dedicated npm release token (NPMJS_TOKEN),
+#   not the Gitea/repository token (NPM_TOKEN).
+
 name: Publish
 
 on:
@@ -60,13 +69,15 @@ jobs:
       - name: Fetch release tag object
         run: |
           set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           TAG="${{ steps.release.outputs.release_tag }}"
           git fetch origin "+refs/tags/${TAG}:refs/tags/${TAG}" --depth=1
           git checkout --detach "refs/tags/${TAG}"
 
       - name: Verify signed release tag
-        env:
-          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+        # Hard gate: the tag must verify against the release-only public key
+        # committed under .gitea/keys/maintainers.asc, matching AIWG's
+        # two-key model. A personal commit-signing key must not pass here.
         run: bash tools/ci/verify-signed-tag.sh
 
       - name: Verify pnpm supply-chain gates
@@ -154,11 +165,26 @@ jobs:
 
       - name: Publish packages
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
         run: |
           set -euo pipefail
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "NPMJS_TOKEN is required for npmjs.org publishing" >&2
+            exit 1
+          fi
           printf '//registry.npmjs.org/:_authToken=%s\n' "$NODE_AUTH_TOKEN" > ~/.npmrc
           npm whoami
+
+          TAG_VERSION="${RELEASE_TAG#v}"
+          NPM_TAG="latest"
+          if [ "$TAG_VERSION" != "${TAG_VERSION%%-*}" ]; then
+            NPM_TAG="next"
+            if echo "$TAG_VERSION" | grep -qiE -- '-nightly\.'; then
+              NPM_TAG="nightly"
+            fi
+          fi
+          echo "Publishing npm dist-tag: $NPM_TAG"
 
           publish_package() {
             package_dir="$1"
@@ -166,32 +192,185 @@ jobs:
             package_version="$(node -p "require('./${package_dir}/package.json').version")"
 
             if npm view "${package_name}@${package_version}" version >/dev/null 2>&1; then
-              echo "${package_name}@${package_version} already exists; skipping"
+              echo "${package_name}@${package_version} already exists; skipping publish"
             else
               echo "Publishing ${package_name}@${package_version}"
-              (cd "$package_dir" && pnpm publish --access public --no-git-checks) 2>&1 | tee publish-output.txt || {
-                if grep -qE "cannot publish over|EPUBLISHCONFLICT|409|previously published" publish-output.txt; then
-                  echo "${package_name}@${package_version} already published; continuing"
-                else
-                  cat publish-output.txt
-                  exit 1
-                fi
-              }
+              (cd "$package_dir" && pnpm publish --access public --no-git-checks --tag "$NPM_TAG")
             fi
 
-            for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+            for attempt in 1 2 3 4 5; do
               published="$(npm view "${package_name}@${package_version}" version --prefer-online --no-update-notifier 2>/dev/null || echo "")"
               if [ "$published" = "$package_version" ]; then
-                echo "${package_name}@${package_version} is visible on npmjs.org"
+                break
+              fi
+              echo "Attempt ${attempt}: ${package_name}@${package_version} not visible yet; retrying in 10s..."
+              sleep 10
+              if [ "$attempt" = "5" ]; then
+                echo "${package_name}@${package_version} did not become visible on npmjs.org" >&2
+                exit 1
+              fi
+            done
+
+            # Re-write the requested dist-tag even on reruns where publish was
+            # skipped because the version already exists. This mirrors AIWG's
+            # idempotent latest/next promotion guard.
+            for attempt in 1 2 3 4 5; do
+              if npm dist-tag add "${package_name}@${package_version}" "$NPM_TAG"; then
+                break
+              fi
+              echo "Attempt ${attempt}: dist-tag promotion failed; retrying in 10s..."
+              sleep 10
+              if [ "$attempt" = "5" ]; then
+                echo "dist-tag promotion exhausted retries for ${package_name}@${package_version}" >&2
+                exit 1
+              fi
+            done
+
+            for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+              current="$(npm view "${package_name}@${NPM_TAG}" version --prefer-online --no-update-notifier 2>/dev/null || echo "")"
+              if [ "$current" = "$package_version" ]; then
+                echo "${package_name}@${NPM_TAG} = ${package_version}"
                 return 0
               fi
-              echo "Attempt ${attempt}/12: ${package_name}@${package_version} is not visible yet; retrying in 15s..."
+              echo "Attempt ${attempt}/12: ${package_name}@${NPM_TAG} = ${current:-<missing>}, expected ${package_version}"
               sleep 15
             done
 
-            echo "${package_name}@${package_version} did not become visible on npmjs.org before timeout" >&2
+            echo "${package_name}@${NPM_TAG} did not resolve to ${package_version} before timeout" >&2
             exit 1
           }
 
           publish_package packages/core
           publish_package packages/react
+
+      - name: Publish GitHub and Gitea releases
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+          GITEA_RELEASE_TOKEN: ${{ secrets.GITEA_RELEASE_TOKEN }}
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITHUB_RELEASE_TOKEN: ${{ secrets.GITHUB_RELEASE_TOKEN }}
+          GITEA_SERVER_URL: ${{ github.server_url }}
+          GITEA_REPOSITORY: ${{ github.repository }}
+          GITHUB_REPOSITORY: Fortemi/fortemi-react
+        run: |
+          set -euo pipefail
+          node - <<'RELEASE'
+          const tag = process.env.RELEASE_TAG;
+          const version = tag.replace(/^v/, '');
+          const prerelease = version.includes('-');
+          const body = [
+            `Fortemi React release ${tag}.`,
+            '',
+            'Published npm packages:',
+            `- @fortemi/core@${version}: https://www.npmjs.com/package/@fortemi/core/v/${version}`,
+            `- @fortemi/react@${version}: https://www.npmjs.com/package/@fortemi/react/v/${version}`,
+            '',
+            'This release is backed by the signed release tag verified by CI before publication.'
+          ].join('\n');
+
+          async function request(url, options = {}) {
+            const response = await fetch(url, options);
+            const text = await response.text();
+            let data = null;
+            if (text) {
+              try {
+                data = JSON.parse(text);
+              } catch {
+                data = text;
+              }
+            }
+            return { response, data };
+          }
+
+          async function requestJson(url, options = {}) {
+            const { response, data } = await request(url, options);
+            if (!response.ok) {
+              const detail = typeof data === 'string' ? data : JSON.stringify(data);
+              throw new Error(`${options.method || 'GET'} ${url} failed: ${response.status} ${detail}`);
+            }
+            return data;
+          }
+
+          async function upsertGitHubRelease() {
+            const token = process.env.GITHUB_RELEASE_TOKEN;
+            if (!token) {
+              throw new Error('GITHUB_RELEASE_TOKEN is required to publish the GitHub release.');
+            }
+
+            const repo = process.env.GITHUB_REPOSITORY || 'Fortemi/fortemi-react';
+            const api = `https://api.github.com/repos/${repo}`;
+            const headers = {
+              authorization: `Bearer ${token}`,
+              accept: 'application/vnd.github+json',
+              'content-type': 'application/json',
+              'x-github-api-version': '2022-11-28'
+            };
+
+            await requestJson(`${api}/git/ref/tags/${encodeURIComponent(tag)}`, { headers });
+
+            const existing = await request(`${api}/releases/tags/${encodeURIComponent(tag)}`, { headers });
+            const payload = JSON.stringify({
+              tag_name: tag,
+              name: tag,
+              body,
+              draft: false,
+              prerelease
+            });
+
+            if (existing.response.status === 404) {
+              await requestJson(`${api}/releases`, { method: 'POST', headers, body: payload });
+              console.log(`Created GitHub release ${tag}.`);
+              return;
+            }
+            if (!existing.response.ok) {
+              throw new Error(`GET ${api}/releases/tags/${tag} failed: ${existing.response.status}`);
+            }
+            await requestJson(`${api}/releases/${existing.data.id}`, { method: 'PATCH', headers, body: payload });
+            console.log(`Updated GitHub release ${tag}.`);
+          }
+
+          async function upsertGiteaRelease() {
+            const token = process.env.GITEA_RELEASE_TOKEN || process.env.GITEA_TOKEN || process.env.GITHUB_TOKEN;
+            if (!token) {
+              throw new Error('GITEA_RELEASE_TOKEN, GITEA_TOKEN, or the runner GITHUB_TOKEN is required to publish the Gitea release.');
+            }
+
+            const server = (process.env.GITEA_SERVER_URL || '').replace(/\/+$/, '');
+            const repo = process.env.GITEA_REPOSITORY;
+            if (!server || !repo) {
+              throw new Error('GITEA_SERVER_URL and GITEA_REPOSITORY are required to publish the Gitea release.');
+            }
+
+            const api = `${server}/api/v1/repos/${repo}`;
+            const headers = {
+              authorization: `token ${token}`,
+              accept: 'application/json',
+              'content-type': 'application/json'
+            };
+
+            await requestJson(`${api}/git/refs/tags/${encodeURIComponent(tag)}`, { headers });
+
+            const existing = await request(`${api}/releases/tags/${encodeURIComponent(tag)}`, { headers });
+            const payload = JSON.stringify({
+              tag_name: tag,
+              title: tag,
+              body,
+              draft: false,
+              prerelease
+            });
+
+            if (existing.response.status === 404) {
+              await requestJson(`${api}/releases`, { method: 'POST', headers, body: payload });
+              console.log(`Created Gitea release ${tag}.`);
+              return;
+            }
+            if (!existing.response.ok) {
+              throw new Error(`GET ${api}/releases/tags/${tag} failed: ${existing.response.status}`);
+            }
+            await requestJson(`${api}/releases/${existing.data.id}`, { method: 'PATCH', headers, body: payload });
+            console.log(`Updated Gitea release ${tag}.`);
+          }
+
+          await upsertGiteaRelease();
+          await upsertGitHubRelease();
+          RELEASE
