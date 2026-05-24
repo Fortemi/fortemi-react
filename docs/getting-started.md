@@ -1,6 +1,6 @@
 # Getting Started with Fortemi React
 
-This guide walks you through adding Fortemi knowledge management to a React application. By the end you will have a working integration that can create, list, and search notes stored locally in the browser — no server required.
+This guide walks you through adding Fortemi knowledge management to a React application. By the end you will have a working local-first archive that can create, list, and search notes stored in the browser with PGlite, using the same foundation Fortemi exposes for hybrid retrieval, tags, collections, jobs, capabilities, and Knowledge Shard portability. No server is required for the archive path.
 
 ---
 
