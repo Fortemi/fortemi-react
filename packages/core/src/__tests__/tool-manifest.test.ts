@@ -1,7 +1,7 @@
 /**
  * FortemiToolManifest — unit tests.
  *
- * Tests the manifest registry, filtering, search, and PlinyCapability projection.
+ * Tests the manifest registry, filtering, search, and BridgeCapability projection.
  * No database required — all logic is pure.
  */
 
@@ -33,13 +33,13 @@ describe('FortemiToolManifest', () => {
 
   describe('get()', () => {
     it('returns a tool definition by exact id', () => {
-      const tool = manifest.get('mnemos.capture_knowledge')
+      const tool = manifest.get('fortemi.capture_knowledge')
       expect(tool).toBeDefined()
-      expect(tool?.id).toBe('mnemos.capture_knowledge')
+      expect(tool?.id).toBe('fortemi.capture_knowledge')
     })
 
     it('returns undefined for an unknown id', () => {
-      const tool = manifest.get('mnemos.does_not_exist')
+      const tool = manifest.get('fortemi.does_not_exist')
       expect(tool).toBeUndefined()
     })
   })
@@ -115,7 +115,7 @@ describe('FortemiToolManifest', () => {
 
     it('matches against tags', () => {
       const results = manifest.search('search')
-      expect(results.some(t => t.id === 'mnemos.search')).toBe(true)
+      expect(results.some(t => t.id === 'fortemi.search')).toBe(true)
     })
 
     it('returns empty array when no tools match', () => {
@@ -125,17 +125,17 @@ describe('FortemiToolManifest', () => {
   })
 
   // -------------------------------------------------------------------------
-  // Coverage: toPlinyCapabilities()
+  // Coverage: toBridgeCapabilities()
   // -------------------------------------------------------------------------
 
-  describe('toPlinyCapabilities()', () => {
+  describe('toBridgeCapabilities()', () => {
     it('returns an array with at least one entry per tool', () => {
-      const caps = manifest.toPlinyCapabilities()
+      const caps = manifest.toBridgeCapabilities()
       expect(caps.length).toBe(manifest.list().length)
     })
 
-    it('each capability has the required PlinyCapability fields', () => {
-      const caps = manifest.toPlinyCapabilities()
+    it('each capability has the required BridgeCapability fields', () => {
+      const caps = manifest.toBridgeCapabilities()
       for (const cap of caps) {
         expect(typeof cap.id).toBe('string')
         expect(typeof cap.name).toBe('string')
@@ -147,7 +147,7 @@ describe('FortemiToolManifest', () => {
     })
 
     it('each capability inputSchema is a valid JSON Schema object with a "type" field', () => {
-      const caps = manifest.toPlinyCapabilities()
+      const caps = manifest.toBridgeCapabilities()
       for (const cap of caps) {
         expect(cap.inputSchema).toHaveProperty('type')
         expect(typeof cap.inputSchema['type']).toBe('string')
@@ -156,7 +156,7 @@ describe('FortemiToolManifest', () => {
 
     it('capability id matches the source tool id', () => {
       const tools = manifest.list()
-      const caps = manifest.toPlinyCapabilities()
+      const caps = manifest.toBridgeCapabilities()
       const capIds = caps.map(c => c.id).sort()
       const toolIds = tools.map(t => t.id).sort()
       expect(capIds).toEqual(toolIds)
@@ -182,10 +182,10 @@ describe('FortemiToolManifest', () => {
       }
     })
 
-    it('all tool ids follow the "mnemos.<name>" prefix convention', () => {
+    it('all tool ids follow the "fortemi.<name>" prefix convention', () => {
       const tools = manifest.list()
       for (const tool of tools) {
-        expect(tool.id).toMatch(/^mnemos\./)
+        expect(tool.id).toMatch(/^fortemi\./)
       }
     })
 

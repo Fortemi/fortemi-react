@@ -1,6 +1,6 @@
 # Integrating fortemi-react into an Existing React Application
 
-This guide covers embedding `@fortemi/react` as a component in a larger application — for example, a host like Plinyverse that mounts fortemi as a panel or organ within its own React tree. The patterns here assume you are a senior React developer who needs direct access to the database, event bus, repositories, and capability pipeline — not just the convenience hooks.
+This guide covers embedding `@fortemi/react` as a component in a larger application. For example, a host application can mount Fortemi as a panel inside its own React tree. The patterns here assume you are a senior React developer who needs direct access to the database, event bus, repositories, and capability pipeline, not just the convenience hooks.
 
 ## Table of Contents
 
@@ -70,10 +70,10 @@ If you are consuming published packages rather than a local checkout, replace `w
 import { Suspense } from 'react'
 import { FortemiProvider } from '@fortemi/react'
 
-export function PlinyverseApp() {
+export function HostApp() {
   return (
     <Suspense fallback={<DatabaseLoading />}>
-      <FortemiProvider persistence="opfs" archiveName="plinyverse-main">
+      <FortemiProvider persistence="opfs" archiveName="host-main">
         <YourApplicationContent />
       </FortemiProvider>
     </Suspense>
@@ -120,11 +120,11 @@ class FortemiErrorBoundary extends Component<{ children: ReactNode }, State> {
   }
 }
 
-export function PlinyverseApp() {
+export function HostApp() {
   return (
     <FortemiErrorBoundary>
       <Suspense fallback={<DatabaseLoading />}>
-        <FortemiProvider persistence="opfs" archiveName="plinyverse-main">
+        <FortemiProvider persistence="opfs" archiveName="host-main">
           <YourApplicationContent />
         </FortemiProvider>
       </Suspense>
@@ -274,7 +274,7 @@ Tool functions are the boundary between the MCP protocol layer and the repositor
 import { captureKnowledge } from '@fortemi/core'
 import { useFortemiContext } from '@fortemi/react'
 
-// Called from an MCP bridge handler or a Plinyverse organ message
+// Called from an MCP bridge handler or a host bridge message
 async function handleCaptureMessage(rawPayload: unknown) {
   const { db, events } = useFortemiContext() // or extract from a ref
 
@@ -404,14 +404,14 @@ const blobResult = await manageAttachments(db, blobStore, {
 import { useFortemiContext } from '@fortemi/react'
 import { useEffect } from 'react'
 
-function PlinyverseActivityFeed() {
+function HostActivityFeed() {
   const { events } = useFortemiContext()
 
   useEffect(() => {
     // Exact subscription — typed payload
     const onCreated = events.on('note.created', ({ id }) => {
       console.log('New note captured:', id)
-      // Notify a Plinyverse panel, update a badge count, etc.
+      // Notify a host panel, update a badge count, etc.
     })
 
     const onJobCompleted = events.on('job.completed', ({ id, noteId, type }) => {
@@ -548,7 +548,7 @@ import { useFortemiContext } from '@fortemi/react'
 import { useEffect, useRef } from 'react'
 
 // Custom handler signature: (job, db) => Promise<unknown>
-async function exportToPlinyverseHandler(
+async function exportToHostHandler(
   job: { note_id: string; id: string },
   db: PGlite,
 ): Promise<unknown> {
@@ -561,7 +561,7 @@ async function exportToPlinyverseHandler(
   if (result.rows.length === 0) return { skipped: true, reason: 'note not found' }
 
   const { content, title } = result.rows[0]
-  // ... call your Plinyverse export API
+  // ... call your host export API
   return { exported: true, title }
 }
 
@@ -580,7 +580,7 @@ function CustomJobQueueMount() {
     worker.registerHandler('linking', linkingHandler)
 
     // Your application-specific handlers
-    worker.registerHandler('plinyverse_export', exportToPlinyverseHandler)
+    worker.registerHandler('host_export', exportToHostHandler)
 
     worker.start()
     workerRef.current = worker
@@ -609,7 +609,7 @@ const jobId = await enqueueJob(db, {
 // Enqueue a custom type with explicit priority (lower = higher priority)
 const exportJobId = await enqueueJob(db, {
   noteId: 'note-uuid-here',
-  jobType: 'plinyverse_export',
+  jobType: 'host_export',
   priority: 3,
   requiredCapability: null, // no capability gate for this job type
 })
@@ -1059,7 +1059,7 @@ const fortemiRoutes = createRoutes()
 const appRoutes: RouteHandler[] = [
   {
     method: 'POST',
-    pattern: /^\/api\/v1\/plinyverse\/export\/?$/,
+    pattern: /^\/api\/v1\/host\/export\/?$/,
     handler: async (request) => {
       const body = await request.json()
       // handle export
@@ -1233,7 +1233,7 @@ WebGPU is required for the `llm` capability. The `detectGpuCapabilities()` funct
 
 **Linux note:** Chrome on Linux requires launching with `--enable-unsafe-webgpu` for hardware-accelerated WebGPU. Without the flag, `detectGpuCapabilities()` will return a SwiftShader (software rasterizer) adapter, which `estimateVramTier()` will classify as `low` VRAM tier and `selectLlmModel()` will map to the smallest available model (`Qwen3-0.6B`). The `supportsF16` field will be `false` for SwiftShader, so the `q4f32_1` quantization variant is selected automatically.
 
-If your Plinyverse deployment targets Linux workstations, document the Chrome launch flag requirement for users who want local LLM inference.
+If your host deployment targets Linux workstations, document the Chrome launch flag requirement for users who want local LLM inference.
 
 ### Cross-origin isolation
 

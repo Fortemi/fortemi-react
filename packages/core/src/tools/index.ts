@@ -10,7 +10,7 @@ export {
   type SearchInput,
 } from './schemas.js'
 export { FortemiToolManifest, fortemiManifest } from './manifest.js'
-export type { FortemiToolDefinition, PlinyCapability } from './manifest.js'
+export type { FortemiToolDefinition, BridgeCapability } from './manifest.js'
 
 export { getNote, GetNoteInputSchema } from './get-note.js'
 export type { GetNoteInput } from './get-note.js'

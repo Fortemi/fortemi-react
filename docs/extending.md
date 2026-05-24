@@ -12,7 +12,7 @@ This guide covers the primary extension points in `@fortemi/react` and `@fortemi
 
 ## 1. Custom Tool Functions
 
-Tool functions are the boundary between external callers (the Plinyverse bridge, MCP hosts, or your own UI code) and the repository layer. Every tool validates its input with a Zod schema before touching the database.
+Tool functions are the boundary between external callers (the host platform bridge, MCP hosts, or your own UI code) and the repository layer. Every tool validates its input with a Zod schema before touching the database.
 
 **Pattern:** define a Zod schema, export the inferred type, write an async function that parses raw input and delegates to a repository.
 

@@ -69,8 +69,8 @@ export function FortemiProvider({ persistence, archiveName = 'default', children
 /**
  * "No-host" context — returned when `useFortemiContext()` is called without
  * a `<FortemiProvider>` ancestor. Lets Fortemi-React (and any white-label
- * brand built on it, including MNEMOS) render in arbitrary host shells per
- * the BT6 frame contract direction (BT6-ARSENAL#39).
+ * brand built on it) render in arbitrary host shells per
+ * the portable host contract (standalone-host regression).
  *
  * Each field is a JS Proxy that intercepts every property access and
  * returns a sensible default — typically a no-op function. The shape of

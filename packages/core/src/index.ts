@@ -88,7 +88,7 @@ export {
 } from './tools/index.js'
 export type { CaptureKnowledgeInput, ManageNoteInput, SearchInput } from './tools/index.js'
 export { FortemiToolManifest, fortemiManifest } from './tools/index.js'
-export type { FortemiToolDefinition, PlinyCapability } from './tools/index.js'
+export type { FortemiToolDefinition, BridgeCapability } from './tools/index.js'
 
 export { getNote, GetNoteInputSchema } from './tools/index.js'
 export type { GetNoteInput } from './tools/index.js'

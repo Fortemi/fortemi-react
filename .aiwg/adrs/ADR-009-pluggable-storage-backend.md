@@ -57,9 +57,9 @@ Repositories depend on the query/transaction surface only. They do not choose ph
 
 ## Alternatives Considered
 
-### Keep Waiting for BT6 Scope
+### Keep Waiting for External Host Scope
 
-Rejected. BT6 remains an important consumer, but the abstraction is broadly reusable across Fortemi deployment modes and tests.
+Rejected. External hosts remain important consumers, but the abstraction is broadly reusable across Fortemi deployment modes and tests.
 
 ### Repository-Level Backend Injection
 

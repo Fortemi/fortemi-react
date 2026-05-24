@@ -1,11 +1,11 @@
 /**
- * FortemiToolManifest — registry of all Mnemos tool definitions.
+ * FortemiToolManifest — registry of all Fortemi tool definitions.
  *
- * Defines the full set of tool schemas and provides PlinyCapability
+ * Defines the full set of tool schemas and provides BridgeCapability
  * projection for bridge registration. Each tool definition follows the
  * WHEN/WHAT/HOW/OUT description pattern so consumers understand call sites.
  *
- * The 10 tools defined here are the initial subset covering core Mnemos
+ * The 10 tools defined here are the initial subset covering core Fortemi
  * operations. Additional tools will be added incrementally as repositories
  * are implemented.
  */
@@ -32,7 +32,7 @@ export interface FortemiToolDefinition {
   requiredCapability?: string
 }
 
-export interface PlinyCapability {
+export interface BridgeCapability {
   id: string
   name: string
   description: string
@@ -45,8 +45,8 @@ export interface PlinyCapability {
 // Zod → JSON Schema conversion (simplified)
 //
 // A full implementation would delegate to `zod-to-json-schema`. This version
-// handles the concrete shapes used by Mnemos tools and is sufficient for
-// PlinyCapability projection until the dependency is added.
+// handles the concrete shapes used by Fortemi tools and is sufficient for
+// BridgeCapability projection until the dependency is added.
 // ---------------------------------------------------------------------------
 
 function zodToJsonSchema(schema: ZodType): Record<string, unknown> {
@@ -93,7 +93,7 @@ function resolvePropertySchema(value: ZodType): Record<string, unknown> {
 
 const TOOL_DEFINITIONS: FortemiToolDefinition[] = [
   {
-    id: 'mnemos.capture_knowledge',
+    id: 'fortemi.capture_knowledge',
     name: 'Capture Knowledge',
     description:
       'WHEN you have text, ideas, or information to save. WHAT creates one or more notes in Fortemi. HOW accepts content, optional title/tags, supports create/bulk_create/from_template. OUT returns the created note(s) with full metadata.',
@@ -103,7 +103,7 @@ const TOOL_DEFINITIONS: FortemiToolDefinition[] = [
     sideEffects: true,
   },
   {
-    id: 'mnemos.manage_note',
+    id: 'fortemi.manage_note',
     name: 'Manage Note',
     description:
       'WHEN you need to modify an existing note. WHAT updates, deletes, restores, archives, or stars a note. HOW accepts note_id and action (update/delete/restore/archive/star). OUT returns the updated note.',
@@ -113,7 +113,7 @@ const TOOL_DEFINITIONS: FortemiToolDefinition[] = [
     sideEffects: true,
   },
   {
-    id: 'mnemos.search',
+    id: 'fortemi.search',
     name: 'Search Notes',
     description:
       'WHEN you need to find notes by content or metadata. WHAT performs full-text search across all notes. HOW accepts query string with optional tag/collection filters. OUT returns ranked results with highlighted snippets.',
@@ -123,7 +123,7 @@ const TOOL_DEFINITIONS: FortemiToolDefinition[] = [
     sideEffects: false,
   },
   {
-    id: 'mnemos.get_note',
+    id: 'fortemi.get_note',
     name: 'Get Note',
     description:
       'WHEN you need the full content of a specific note. WHAT retrieves a single note by ID. HOW accepts note_id. OUT returns complete note with content, metadata, tags, and revision info.',
@@ -133,7 +133,7 @@ const TOOL_DEFINITIONS: FortemiToolDefinition[] = [
     sideEffects: false,
   },
   {
-    id: 'mnemos.list_notes',
+    id: 'fortemi.list_notes',
     name: 'List Notes',
     description:
       'WHEN you need to browse or filter notes. WHAT lists notes with pagination and filtering. HOW accepts optional filters (starred, archived, tags, collection). OUT returns paginated note summaries.',
@@ -152,7 +152,7 @@ const TOOL_DEFINITIONS: FortemiToolDefinition[] = [
     sideEffects: false,
   },
   {
-    id: 'mnemos.manage_tags',
+    id: 'fortemi.manage_tags',
     name: 'Manage Tags',
     description:
       'WHEN you need to organize notes with tags. WHAT adds or removes tags from notes. HOW accepts note_id, action (add/remove), and tag string. OUT confirms the tag operation.',
@@ -166,7 +166,7 @@ const TOOL_DEFINITIONS: FortemiToolDefinition[] = [
     sideEffects: true,
   },
   {
-    id: 'mnemos.manage_collections',
+    id: 'fortemi.manage_collections',
     name: 'Manage Collections',
     description:
       'WHEN you need to organize notes into folders. WHAT creates, updates, or manages collections. HOW accepts collection operations (create/list/assign/delete). OUT returns collection data.',
@@ -181,7 +181,7 @@ const TOOL_DEFINITIONS: FortemiToolDefinition[] = [
     sideEffects: true,
   },
   {
-    id: 'mnemos.manage_links',
+    id: 'fortemi.manage_links',
     name: 'Manage Links',
     description:
       'WHEN you need to connect related notes. WHAT creates bidirectional links between notes. HOW accepts source/target note IDs and link type. OUT returns the link data.',
@@ -197,7 +197,7 @@ const TOOL_DEFINITIONS: FortemiToolDefinition[] = [
     sideEffects: true,
   },
   {
-    id: 'mnemos.manage_archive',
+    id: 'fortemi.manage_archive',
     name: 'Manage Archive',
     description:
       'WHEN you need to switch between or manage knowledge archives. WHAT creates, lists, switches, or deletes archives. HOW accepts archive name and operation. OUT returns archive info.',
@@ -210,7 +210,7 @@ const TOOL_DEFINITIONS: FortemiToolDefinition[] = [
     sideEffects: true,
   },
   {
-    id: 'mnemos.manage_capabilities',
+    id: 'fortemi.manage_capabilities',
     name: 'Manage Capabilities',
     description:
       'WHEN you need to enable optional features like vector search or LLM. WHAT enables, disables, or queries WASM capability modules. HOW accepts capability name and action. OUT returns capability status.',
@@ -272,8 +272,8 @@ export class FortemiToolManifest {
     )
   }
 
-  /** Project all tools as PlinyCapability entries for bridge registration. */
-  toPlinyCapabilities(): PlinyCapability[] {
+  /** Project all tools as BridgeCapability entries for bridge registration. */
+  toBridgeCapabilities(): BridgeCapability[] {
     return this.list().map(tool => ({
       id: tool.id,
       name: tool.name,

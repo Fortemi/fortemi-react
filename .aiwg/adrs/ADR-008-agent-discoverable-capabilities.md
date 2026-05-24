@@ -10,7 +10,7 @@
 
 fortemi-react exposes 38 MCP tools (see UC-004). Two distinct consumers discover and invoke these tools at runtime:
 
-1. **Plinyverse agents** (G0DM0D3 shell) discover tools via the `PlinyCapability` registry interface, which includes `inputSchema`/`outputSchema` (JSON Schema 7), `tags`, `sideEffects`, and rich `description` fields. Agents use this metadata to decide when and how to invoke tools without hardcoded tool knowledge.
+1. **Host agents** (G0DM0D3 shell) discover tools via the `BridgeCapability` registry interface, which includes `inputSchema`/`outputSchema` (JSON Schema 7), `tags`, `sideEffects`, and rich `description` fields. Agents use this metadata to decide when and how to invoke tools without hardcoded tool knowledge.
 
 2. **External MCP clients** (Claude Desktop, Cursor) discover tools via the `tools/list` JSON-RPC method, which returns tool definitions with JSON Schema parameter descriptions per the MCP specification.
 
@@ -24,7 +24,7 @@ Define a **FortemiToolManifest** as the single source of truth for all 38 tool d
 
 ```typescript
 interface FortemiToolDefinition {
-  id: string                      // Namespaced: 'mnemos.<tool_name>'
+  id: string                      // Namespaced: 'fortemi.<tool_name>'
   name: string                    // Human-readable display name
   description: string             // Agent-readable: WHEN/WHAT/HOW/OUT pattern
   category: ToolCategory
@@ -69,10 +69,10 @@ The manifest generates four outputs from the single source:
                │                  │                  │
                ▼                  ▼                  ▼
      ┌───────────────┐  ┌───────────────┐  ┌────────────────┐
-     │ PlinyCapab-   │  │  MCP tools/   │  │  TypeScript    │
+     │ BridgeCapab-  │  │  MCP tools/   │  │  TypeScript    │
      │ ility[]       │  │  list resp    │  │  interfaces    │
      └───────────────┘  └───────────────┘  └────────────────┘
-     Plinyverse          External MCP       Type-safe tool
+     Host bridge            External MCP       Type-safe tool
      bridge reg.         clients            invocation
 ```
 
@@ -105,7 +105,7 @@ OUT:  <output shape + edge cases — what to expect>
 
 ```typescript
 {
-  id: 'mnemos.capture_knowledge',
+  id: 'fortemi.capture_knowledge',
   name: 'Capture Knowledge',
   description: `WHEN: User provides content to remember — text, ideas, notes, meeting summaries, code snippets.
 WHAT: Creates a new note with optional AI revision, auto-tagging, and embedding generation.
@@ -126,7 +126,7 @@ OUT: Returns full NoteFull object with id, timestamps, job queue status. Jobs fo
   outputSchema: { $ref: '#/definitions/NoteFull' },
   tags: ['notes', 'write', 'primary'],
   sideEffects: true,
-  relatedTools: ['mnemos.search', 'mnemos.manage_tags', 'mnemos.get_job_status'],
+  relatedTools: ['fortemi.search', 'fortemi.manage_tags', 'fortemi.get_job_status'],
   examples: [{
     description: 'Capture a simple note',
     input: { content: 'Rust ownership model prevents data races at compile time', tags: ['rust', 'programming'] },
@@ -139,7 +139,7 @@ OUT: Returns full NoteFull object with id, timestamps, job queue status. Jobs fo
 
 ```typescript
 {
-  id: 'mnemos.search',
+  id: 'fortemi.search',
   name: 'Search Memory',
   description: `WHEN: User asks to find, recall, or look up previously captured knowledge.
 WHAT: Hybrid search combining BM25 full-text and vector similarity (if semantic capability enabled). Results ranked by Reciprocal Rank Fusion (k=60).
@@ -161,7 +161,7 @@ OUT: Returns SearchResponse with ranked notes (NoteSummary[]), mode used, and wh
   tags: ['search', 'read', 'primary'],
   sideEffects: false,
   requiredCapability: undefined, // fts always available; semantic mode gracefully degrades
-  relatedTools: ['mnemos.find_similar', 'mnemos.get_note', 'mnemos.explore_graph'],
+  relatedTools: ['fortemi.find_similar', 'fortemi.get_note', 'fortemi.explore_graph'],
   examples: [{
     description: 'Search for Rust notes',
     input: { q: 'rust memory safety', mode: 'hybrid', limit: 5 },
@@ -173,15 +173,15 @@ OUT: Returns SearchResponse with ranked notes (NoteSummary[]), mode used, and wh
 ### Discovery Protocol
 
 ```typescript
-// Plinyverse bridge: register capabilities on organ mount
-bridge.capability.register(manifest.toPlinyCapabilities())
+// host bridge: register capabilities on organ mount
+bridge.capability.register(manifest.toBridgeCapabilities())
 
 // MCP JSON-RPC: respond to tools/list
 handler('tools/list', () => ({ tools: manifest.toMCPTools() }))
 
 // Programmatic: direct access
 const tools = manifest.list()
-const tool = manifest.get('mnemos.capture_knowledge')
+const tool = manifest.get('fortemi.capture_knowledge')
 const searchTools = manifest.listByCategory('search')
 const writeTools = manifest.listByTag('write')
 ```
@@ -189,11 +189,11 @@ const writeTools = manifest.listByTag('write')
 ### Projection Implementations
 
 ```typescript
-// PlinyCapability projection
-function toPlinyCapability(tool: FortemiToolDefinition): PlinyCapability {
+// BridgeCapability projection
+function toBridgeCapability(tool: FortemiToolDefinition): BridgeCapability {
   return {
     id: tool.id,
-    organId: 'mnemos',
+    organId: 'fortemi',
     name: tool.name,
     description: tool.description,
     inputSchema: tool.inputSchema,
@@ -206,7 +206,7 @@ function toPlinyCapability(tool: FortemiToolDefinition): PlinyCapability {
 // MCP tool projection (input-only per MCP spec, no namespace prefix)
 function toMCPTool(tool: FortemiToolDefinition): MCPToolDefinition {
   return {
-    name: tool.id.replace('mnemos.', ''),
+    name: tool.id.replace('fortemi.', ''),
     description: tool.description,
     inputSchema: tool.inputSchema,
   }
@@ -239,7 +239,7 @@ type CaptureKnowledgeArgs = z.infer<typeof CaptureKnowledgeInput>
 ## Consequences
 
 **Positive:**
-- Single source of truth for all tool metadata — Plinyverse and MCP consumers always agree
+- Single source of truth for all tool metadata — host and MCP consumers always agree
 - Agents can self-guide using structured descriptions + examples without hardcoded prompts
 - Category/tag system enables filtered discovery for different agent contexts
 - `relatedTools` enables agent tool-chaining (capture → search → organize)

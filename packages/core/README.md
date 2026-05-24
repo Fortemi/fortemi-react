@@ -122,7 +122,7 @@ That gives product teams a foundation for features users already expect from ser
 
 ## Tool Surface
 
-`FortemiToolManifest` registers 10 bridge-visible Mnemos tools:
+`FortemiToolManifest` registers 10 bridge-visible Fortemi tools:
 
 `capture_knowledge`, `manage_note`, `search`, `get_note`, `list_notes`, `manage_tags`, `manage_collections`, `manage_links`, `manage_archive`, `manage_capabilities`.
 
@@ -131,7 +131,7 @@ The package also exports 11 direct helper functions from `@fortemi/core`, includ
 ```ts
 import { fortemiManifest } from '@fortemi/core'
 
-const capabilities = fortemiManifest.toPlinyCapabilities()
+const capabilities = fortemiManifest.toBridgeCapabilities()
 ```
 
 Use the manifest when a host needs to advertise Fortemi operations to an agent runtime. Use the direct helper functions when your own code needs the same validated operations without going through a bridge layer.

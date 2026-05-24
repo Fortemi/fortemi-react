@@ -6,7 +6,7 @@ This file provides guidance to Claude Code when working with this codebase.
 
 ## Repository Purpose
 
-fortemi-react is the React port of the fortemi knowledge management server (Rust/PostgreSQL). It runs entirely in-browser using PGlite (PostgreSQL WASM), maintains 100% JSON format parity with the server, and is designed to be embedded in React applications (primary consumer: Plinyverse MNEMOS organ).
+fortemi-react is the React port of the fortemi knowledge management server (Rust/PostgreSQL). It runs entirely in-browser using PGlite (PostgreSQL WASM), maintains 100% JSON format parity with the server, and is designed to be embedded in React applications (primary consumer: host platform Fortemi embedded app).
 
 ## Tech Stack
 

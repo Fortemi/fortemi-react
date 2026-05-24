@@ -1,7 +1,7 @@
 /**
  * Zod schemas for tool function inputs.
  *
- * These schemas are the contract between callers (e.g. Plinyverse bridge) and
+ * These schemas are the contract between callers (e.g. host platform bridge) and
  * the tool functions. All inputs are validated at the tool boundary so that
  * repository methods only receive well-typed data.
  */

@@ -765,7 +765,7 @@ interface AttachmentBlobRow extends AttachmentRow {
 
 ### Tool Functions
 
-Tool functions accept plain input objects, validate them with Zod, and return structured results. `FortemiToolManifest` currently registers 10 bridge-visible Mnemos tools; `@fortemi/core` also exports `manageAttachments` as a direct helper because it requires both `db` and `blobStore`.
+Tool functions accept plain input objects, validate them with Zod, and return structured results. `FortemiToolManifest` currently registers 10 bridge-visible Fortemi tools; `@fortemi/core` also exports `manageAttachments` as a direct helper because it requires both `db` and `blobStore`.
 
 ---
 

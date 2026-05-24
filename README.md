@@ -96,7 +96,7 @@ All packages are versioned together. The current release is `2026.5.2`.
 - Hybrid semantic search with pgvector HNSW and BM25 reciprocal-rank fusion
 - Tags, collections, inter-note links, SKOS schemes, concepts, and relations
 - Knowledge Shard tar.gz import/export with checksums and JSON format parity
-- 10 manifest-backed Mnemos tools plus 11 exported direct tool helper functions
+- 10 manifest-backed Fortemi tools plus 11 exported direct tool helper functions
 - Optional embeddings, LLM, local-provider discovery, WebGPU detection, and fallback routing
 - React 19 hooks for common UI workflows and direct context access for lower-level integration
 
