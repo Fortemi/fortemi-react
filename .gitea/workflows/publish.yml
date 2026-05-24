@@ -259,6 +259,7 @@ jobs:
           const tag = process.env.RELEASE_TAG;
           const version = tag.replace(/^v/, '');
           const prerelease = version.includes('-');
+          const releaseTitle = `fortemi-react ${tag}`;
           const fs = await import('node:fs/promises');
           let body = [
             `Fortemi React release ${tag}.`,
@@ -318,7 +319,7 @@ jobs:
             const existing = await request(`${api}/releases/tags/${encodeURIComponent(tag)}`, { headers });
             const payload = JSON.stringify({
               tag_name: tag,
-              name: tag,
+              name: releaseTitle,
               body,
               draft: false,
               prerelease
@@ -360,7 +361,8 @@ jobs:
             const existing = await request(`${api}/releases/tags/${encodeURIComponent(tag)}`, { headers });
             const payload = JSON.stringify({
               tag_name: tag,
-              title: tag,
+              name: releaseTitle,
+              title: releaseTitle,
               body,
               draft: false,
               prerelease

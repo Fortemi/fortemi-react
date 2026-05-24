@@ -18,7 +18,7 @@ fortemi-react is the React port of the fortemi knowledge management server (Rust
 - **AI**: transformers.js (embeddings), WebLLM (local LLM), InferenceProvider system (remote + local + fallback)
 - **License**: AGPL-3.0-only
 - **Versioning**: CalVer YYYY.M.PATCH (no leading zeros)
-- **Current version**: 2026.5.2
+- **Current version**: 2026.5.3
 
 ## Monorepo Structure
 

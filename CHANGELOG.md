@@ -2,6 +2,34 @@
 
 All notable changes to fortemi-react are documented here.
 
+## v2026.5.3 - 2026-05-24
+
+### Package Documentation
+
+- Expanded the `@fortemi/core` README with the project value proposition, architecture overview, use cases, search/knowledge model, tool surface details, and storage/privacy positioning for npm readers.
+- Expanded the `@fortemi/react` README so React consumers can understand the local-first archive, retrieval, Knowledge Shard, capability, and bridge-tool value without needing to read the core README first.
+- Updated getting-started and integration documentation to use host-neutral Fortemi language.
+
+### Host-Neutral API Cleanup
+
+- Removed legacy downstream host references from docs, ADRs, code comments, and tests.
+- Standardized bridge-visible tool IDs on the `fortemi.*` namespace.
+- Standardized bridge projection naming on `BridgeCapability` and `toBridgeCapabilities()`.
+
+### Release Infrastructure
+
+- Fixed Gitea release publishing by sending a versioned release `name` field so repository release lists show a proper release title instead of an empty title with only the Latest badge.
+- Kept repository release `tag_name` tied to the signed `v*` tag for both Gitea and GitHub.
+
+### Published Packages
+
+- `@fortemi/core@2026.5.3`
+- `@fortemi/react@2026.5.3`
+
+### Upgrade Notes
+
+Most consumers can upgrade directly from `2026.5.2`. Integrations that inspect bridge tool IDs should use the `fortemi.<tool>` namespace. Integrations using the bridge projection helper should use `toBridgeCapabilities()` and `BridgeCapability`.
+
 ## v2026.5.2 - 2026-05-24
 
 ### Release Infrastructure
