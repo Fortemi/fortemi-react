@@ -1,11 +1,12 @@
 /**
- * SearchRepository — full-text search using DatabaseClient tsvector/tsquery,
+ * SearchRepository - full-text search using DatabaseClient tsvector/tsquery,
  * with optional semantic search (pgvector) and hybrid (BM25 + vector RRF).
  */
 
 import type { DatabaseClient } from '../storage-backend.js'
 import type { SearchResponse, SearchOptions, SearchFacets, SearchResult } from './types.js'
 import { buildNoteConditions } from './condition-builder.js'
+import { EmbeddingSetsRepository, type EmbeddingSetSelector, type ResolvedEmbeddingSet } from './embedding-sets-repository.js'
 
 export class SearchRepository {
   constructor(
@@ -29,18 +30,57 @@ export class SearchRepository {
     return new Set(result.rows.map((r) => r.note_id))
   }
 
-  private scopeToEmbeddingSet(
+  private selectorFromOptions(options: SearchOptions): EmbeddingSetSelector | null {
+    if (options.embeddingSetSelector) return options.embeddingSetSelector
+    if (options.embeddingSetId) return { kind: 'embedding-set', embeddingSetId: options.embeddingSetId }
+    return null
+  }
+
+  private async resolveEmbeddingSet(options: SearchOptions): Promise<ResolvedEmbeddingSet | null> {
+    const selector = this.selectorFromOptions(options)
+    if (!selector) return null
+    return new EmbeddingSetsRepository(this.db).resolveSelector(selector)
+  }
+
+  private scopeToResolvedEmbeddingSet(
     conditions: string[],
     params: unknown[],
     paramIdx: number,
-    embeddingSetId?: string,
+    resolved: ResolvedEmbeddingSet | null,
   ): number {
-    if (!embeddingSetId) return paramIdx
-    conditions.push(
-      'EXISTS (SELECT 1 FROM embedding e_scope WHERE e_scope.note_id = n.id AND e_scope.embedding_set_id = $' + paramIdx + ')',
-    )
-    params.push(embeddingSetId)
+    if (!resolved) return paramIdx
+    if (resolved.noteIds.length === 0) {
+      conditions.push('FALSE')
+      return paramIdx
+    }
+    conditions.push('n.id = ANY($' + paramIdx + ')')
+    params.push(resolved.noteIds)
     return paramIdx + 1
+  }
+
+  private scopeToResolvedEmbeddingRows(
+    conditions: string[],
+    params: unknown[],
+    paramIdx: number,
+    resolved: ResolvedEmbeddingSet | null,
+  ): number {
+    if (!resolved) return paramIdx
+    if (resolved.embeddingIds.length === 0) {
+      conditions.push('FALSE')
+      return paramIdx
+    }
+    conditions.push('e.id = ANY($' + paramIdx + ')')
+    params.push(resolved.embeddingIds)
+    return paramIdx + 1
+  }
+
+  private async fetchEmbeddingStatus(
+    noteIds: string[],
+    resolved: ResolvedEmbeddingSet | null,
+    embeddingSetId?: string,
+  ): Promise<Set<string>> {
+    if (resolved) return new Set(noteIds.filter((id) => resolved.noteIds.includes(id)))
+    return this.fetchEmbeddingSet(noteIds, embeddingSetId)
   }
 
   private attachEmbeddingStatus(
@@ -80,13 +120,14 @@ export class SearchRepository {
 
     if (!query.trim()) return this.recentNotes(options)
 
+    const resolvedEmbeddingSet = await this.resolveEmbeddingSet(options)
     const tsqFn = this.tsqueryFn(query)
     const { conditions, params, nextIdx } = buildNoteConditions(options, 2)
     conditions.unshift(
       `(n.tsv @@ ${tsqFn}('english', $1) OR
         to_tsvector('english', coalesce(c.content, '')) @@ ${tsqFn}('english', $1))`,
     )
-    let paramIdx = this.scopeToEmbeddingSet(conditions, params, nextIdx, options.embeddingSetId)
+    let paramIdx = this.scopeToResolvedEmbeddingSet(conditions, params, nextIdx, resolvedEmbeddingSet)
     const allParams = [query, ...params]
     const where = conditions.join(' AND ')
 
@@ -130,7 +171,7 @@ export class SearchRepository {
     const resultIds = result.rows.map((r) => r.id)
     const [tagMap, embeddingSet] = await Promise.all([
       this.fetchTagMap(resultIds),
-      this.fetchEmbeddingSet(resultIds, options.embeddingSetId),
+      this.fetchEmbeddingStatus(resultIds, resolvedEmbeddingSet, options.embeddingSetId),
     ])
 
     let facets: SearchFacets | undefined
@@ -169,12 +210,9 @@ export class SearchRepository {
   async semanticSearch(queryEmbedding: number[], options: SearchOptions = {}): Promise<SearchResponse> {
     const { limit = 20, offset = 0 } = options
     const vectorStr = `[${queryEmbedding.join(',')}]`
+    const resolvedEmbeddingSet = await this.resolveEmbeddingSet(options)
     const { conditions, params, nextIdx } = buildNoteConditions(options, 1)
-    let paramIdx = nextIdx
-    if (options.embeddingSetId) {
-      conditions.push(`e.embedding_set_id = $${paramIdx++}`)
-      params.push(options.embeddingSetId)
-    }
+    let paramIdx = this.scopeToResolvedEmbeddingRows(conditions, params, nextIdx, resolvedEmbeddingSet)
     const where = conditions.join(' AND ')
 
     const countResult = await this.db.query<{ count: string }>(
@@ -247,6 +285,7 @@ export class SearchRepository {
     const vectorStr = `[${queryEmbedding.join(',')}]`
     const k = 60
     const tsqFn = this.tsqueryFn(query)
+    const resolvedEmbeddingSet = await this.resolveEmbeddingSet(options)
 
     const textCond = buildNoteConditions(options, 2)
     const textConditions = [
@@ -254,7 +293,7 @@ export class SearchRepository {
       `(n.tsv @@ ${tsqFn}('english', $1) OR
         to_tsvector('english', coalesce(c.content, '')) @@ ${tsqFn}('english', $1))`,
     ]
-    this.scopeToEmbeddingSet(textConditions, textCond.params, textCond.nextIdx, options.embeddingSetId)
+    this.scopeToResolvedEmbeddingSet(textConditions, textCond.params, textCond.nextIdx, resolvedEmbeddingSet)
     const textWhere = textConditions.join(' AND ')
     const textParams = [query, ...textCond.params]
 
@@ -273,11 +312,7 @@ export class SearchRepository {
     )
 
     const vecCond = buildNoteConditions(options, 1)
-    if (options.embeddingSetId) {
-      vecCond.conditions.push('e.embedding_set_id = $' + vecCond.nextIdx)
-      vecCond.params.push(options.embeddingSetId)
-      vecCond.nextIdx += 1
-    }
+    vecCond.nextIdx = this.scopeToResolvedEmbeddingRows(vecCond.conditions, vecCond.params, vecCond.nextIdx, resolvedEmbeddingSet)
     const vecWhere = vecCond.conditions.join(' AND ')
     const vecVecIdx = vecCond.nextIdx
 
@@ -325,7 +360,7 @@ export class SearchRepository {
     const noteMap = new Map(noteResult.rows.map((r) => [r.id, r]))
     const [tagMap, embeddingSet] = await Promise.all([
       this.fetchTagMap(pageIds),
-      this.fetchEmbeddingSet(pageIds, options.embeddingSetId),
+      this.fetchEmbeddingStatus(pageIds, resolvedEmbeddingSet, options.embeddingSetId),
     ])
     const facets = options.include_facets ? await this.fetchFacets(sortedIds) : undefined
 
@@ -358,8 +393,9 @@ export class SearchRepository {
 
   private async recentNotes(options: SearchOptions = {}): Promise<SearchResponse> {
     const { limit = 20, offset = 0 } = options
+    const resolvedEmbeddingSet = await this.resolveEmbeddingSet(options)
     const { conditions, params, nextIdx } = buildNoteConditions(options, 1)
-    let paramIdx = this.scopeToEmbeddingSet(conditions, params, nextIdx, options.embeddingSetId)
+    let paramIdx = this.scopeToResolvedEmbeddingSet(conditions, params, nextIdx, resolvedEmbeddingSet)
     const where = conditions.join(' AND ')
 
     const countResult = await this.db.query<{ count: string }>(
@@ -387,7 +423,7 @@ export class SearchRepository {
     )
 
     const resultIds = result.rows.map((r) => r.id)
-    const embeddingSet = await this.fetchEmbeddingSet(resultIds, options.embeddingSetId)
+    const embeddingSet = await this.fetchEmbeddingStatus(resultIds, resolvedEmbeddingSet, options.embeddingSetId)
 
     return {
       results: result.rows.map((r) => ({

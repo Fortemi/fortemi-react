@@ -1,4 +1,5 @@
 import type { QueryExecutor } from '../storage-backend.js'
+import { EmbeddingSetsRepository, type EmbeddingSetSelector } from './embedding-sets-repository.js'
 
 export interface GraphNode {
   id: string
@@ -25,6 +26,7 @@ export interface CommunityGraph {
 export interface SimilarityGraphOptions {
   k?: number
   minSimilarity?: number
+  threshold?: number
 }
 
 export interface CommunityOptions {
@@ -91,29 +93,27 @@ export class GraphRepository {
   constructor(private db: QueryExecutor) {}
 
   async buildSimilarityGraph(
-    embeddingSetId: string,
+    embeddingSet: string | EmbeddingSetSelector,
     options: SimilarityGraphOptions = {},
   ): Promise<CommunityGraph> {
     const k = options.k ?? 5
-    const minSimilarity = options.minSimilarity ?? -1
-    const embeddings = await this.db.query<{ note_id: string; vector: string }>(
-      `SELECT note_id, vector::text as vector
-       FROM embedding
-       WHERE embedding_set_id = $1
-       ORDER BY note_id`,
-      [embeddingSetId],
-    )
+    const minSimilarity = options.minSimilarity ?? options.threshold ?? -1
+    const selector = typeof embeddingSet === 'string'
+      ? { kind: 'embedding-set' as const, embeddingSetId: embeddingSet }
+      : embeddingSet
+    const resolved = await new EmbeddingSetsRepository(this.db).resolveSelector(selector)
+    const embeddings = resolved.rows
 
-    const nodes = embeddings.rows.map((row) => ({ id: row.note_id }))
+    const nodes = embeddings.map((row) => ({ id: row.note_id }))
     const edgeMap = new Map<string, GraphEdge>()
-    for (const row of embeddings.rows) {
+    for (const row of embeddings) {
       const neighbors = await this.db.query<{ note_id: string; similarity: number }>(
         `SELECT note_id, 1 - (vector <=> $2::vector) as similarity
          FROM embedding
-         WHERE embedding_set_id = $1 AND note_id != $3
+         WHERE id = ANY($1) AND note_id != $3
          ORDER BY vector <=> $2::vector ASC
          LIMIT $4`,
-        [embeddingSetId, row.vector, row.note_id, k],
+        [resolved.embeddingIds, row.vector, row.note_id, k],
       )
       for (const neighbor of neighbors.rows) {
         if (neighbor.similarity < minSimilarity) continue

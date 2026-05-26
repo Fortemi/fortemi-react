@@ -1,3 +1,5 @@
+import type { EmbeddingSetSelector } from './embedding-sets-repository.js'
+
 /**
  * Shared types for repository layer.
  * All repository methods use these types as inputs and outputs.
@@ -117,6 +119,7 @@ export interface SearchOptions {
   include_facets?: boolean
   mode?: 'text' | 'semantic' | 'hybrid' | 'auto'
   embeddingSetId?: string
+  embeddingSetSelector?: EmbeddingSetSelector
 }
 
 export interface NoteRevision {

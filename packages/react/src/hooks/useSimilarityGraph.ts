@@ -1,25 +1,26 @@
-import { useCallback, useEffect, useState } from 'react'
-import { GraphRepository, type CommunityGraph, type SimilarityGraphOptions } from '@fortemi/core'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { GraphRepository, type CommunityGraph, type EmbeddingSetSelector, type SimilarityGraphOptions } from '@fortemi/core'
 import { useFortemiContext } from '../FortemiProvider.js'
 
 export function useSimilarityGraph(
-  embeddingSetId: string | null | undefined,
+  embeddingSet: string | EmbeddingSetSelector | null | undefined,
   options: SimilarityGraphOptions = {},
 ) {
   const { db } = useFortemiContext()
   const [graph, setGraph] = useState<CommunityGraph | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const selectorKey = useMemo(() => JSON.stringify(embeddingSet ?? null), [embeddingSet])
 
   const refresh = useCallback(async () => {
-    if (!embeddingSetId) {
+    if (!embeddingSet) {
       setGraph(null)
       return null
     }
     try {
       setLoading(true)
       const repo = new GraphRepository(db)
-      const next = await repo.buildSimilarityGraph(embeddingSetId, options)
+      const next = await repo.buildSimilarityGraph(embeddingSet, options)
       setGraph(next)
       setError(null)
       return next
@@ -30,7 +31,7 @@ export function useSimilarityGraph(
     } finally {
       setLoading(false)
     }
-  }, [db, embeddingSetId, options.k, options.minSimilarity])
+  }, [db, selectorKey, options.k, options.minSimilarity, options.threshold])
 
   useEffect(() => { void refresh() }, [refresh])
 

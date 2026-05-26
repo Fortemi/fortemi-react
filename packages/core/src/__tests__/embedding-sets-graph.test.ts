@@ -88,6 +88,69 @@ describe('embedding sets and graph APIs', () => {
     expect(arbitrary.map((c) => c.nodes.sort())).toEqual([['a', 'b'], ['c', 'd']])
   })
 
+
+  it('resolves criteria virtual embedding sets for search and graph construction', async () => {
+    const sets = new EmbeddingSetsRepository(db)
+    const base = await sets.create({ name: 'Full content', purpose: 'Full note vectors' })
+    await db.query('INSERT INTO note_tag (id, note_id, tag) VALUES ($1, $2, $3)', ['tag-note-a-alpha', 'note-a', 'alpha'])
+    await sets.putEmbedding({ note_id: 'note-a', embedding_set_id: base.id, vector: vec(1, 0) })
+    await sets.putEmbedding({ note_id: 'note-b', embedding_set_id: base.id, vector: vec(0.9, 0.1) })
+
+    const virtual = await sets.createVirtualDefinition({
+      id: 'virtual-alpha',
+      name: 'Tagged alpha',
+      purpose: 'Alpha-tagged notes from the base set',
+      source: { type: 'criteria', baseSetId: base.id, criteria: { tags: ['alpha'] } },
+      compatibility: {
+        model: 'require-same',
+        dimension: 'require-same',
+        duplicateVectors: 'prefer-set-order',
+        missingVectors: 'omit',
+      },
+    })
+
+    const descriptors = await sets.listDescriptors()
+    expect(descriptors.find((set) => set.id === virtual.id)).toMatchObject({
+      kind: 'virtual',
+      name: 'Tagged alpha',
+      freshness: { status: 'unknown' },
+    })
+
+    const selector = { kind: 'embedding-set' as const, embeddingSetId: virtual.id }
+    const search = await new SearchRepository(db, true).search('', { embeddingSetSelector: selector })
+    expect(search.results.map((r) => r.id)).toEqual(['note-a'])
+
+    const graph = await new GraphRepository(db).buildSimilarityGraph(selector, { k: 1, threshold: 0.5 })
+    expect(graph.nodes.map((n) => n.id)).toEqual(['note-a'])
+    expect(graph.edges).toEqual([])
+  })
+
+  it('resolves set-operation virtual definitions over compatible physical sets', async () => {
+    const sets = new EmbeddingSetsRepository(db)
+    const first = await sets.create({ name: 'First' })
+    const second = await sets.create({ name: 'Second' })
+    await sets.putEmbedding({ note_id: 'note-a', embedding_set_id: first.id, vector: vec(1, 0) })
+    await sets.putEmbedding({ note_id: 'note-b', embedding_set_id: second.id, vector: vec(0.9, 0.1) })
+
+    const resolved = await sets.resolveSelector({
+      kind: 'virtual-definition',
+      definition: {
+        id: 'combined',
+        name: 'Combined',
+        source: { type: 'set-operation', operation: 'union', setIds: [first.id, second.id] },
+        compatibility: {
+          model: 'require-same',
+          dimension: 'require-same',
+          duplicateVectors: 'prefer-set-order',
+          missingVectors: 'omit',
+        },
+      },
+    })
+
+    expect(resolved.errors).toEqual([])
+    expect(resolved.noteIds).toEqual(['note-a', 'note-b'])
+  })
+
   it('round-trips embedding set name and purpose through shards', async () => {
     const sets = new EmbeddingSetsRepository(db)
     const set = await sets.create({ name: 'AI summaries', purpose: 'Generated summary embeddings' })

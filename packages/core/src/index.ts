@@ -57,7 +57,24 @@ export type {
   SearchOptions,
   NoteRevision,
 } from './repositories/types.js'
-export type { EmbeddingSetRow, EmbeddingSetCreateInput, EmbeddingSetEmbeddingInput } from './repositories/embedding-sets-repository.js'
+export type {
+  EmbeddingSetRow,
+  EmbeddingSetCreateInput,
+  EmbeddingSetEmbeddingInput,
+  EmbeddingSetKind,
+  EmbeddingSetMode,
+  EmbeddingSetCriteria,
+  EmbeddingSetFreshness,
+  EmbeddingCompatibilityPolicy,
+  VirtualMaterializationPolicy,
+  VirtualEmbeddingSetSource,
+  VirtualEmbeddingSetDefinition,
+  EmbeddingSetSelector,
+  EmbeddingSetDescriptor,
+  VirtualEmbeddingSetValidationError,
+  ResolvedEmbeddingSet,
+  ResolvedEmbeddingRow,
+} from './repositories/embedding-sets-repository.js'
 export type { GraphNode, GraphEdge, GraphCommunity, CommunityGraph, SimilarityGraphOptions, CommunityOptions } from './repositories/graph-repository.js'
 
 export {
