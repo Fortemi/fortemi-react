@@ -175,7 +175,16 @@ export function embeddingSetToShard(set: {
   purpose?: string | null
   model_name: string
   dimensions: number
+  kind?: 'physical' | 'filter' | 'virtual'
+  mode?: 'auto' | 'manual' | 'mixed' | null
+  truncate_dimension?: number | null
+  criteria_json?: unknown | null
+  source_json?: unknown | null
+  compatibility_json?: unknown | null
+  materialization_json?: unknown | null
+  freshness_json?: unknown | null
   created_at: Date | string
+  updated_at?: Date | string
 }): ShardEmbeddingSet {
   return {
     id: set.id,
@@ -183,7 +192,16 @@ export function embeddingSetToShard(set: {
     purpose: set.purpose ?? null,
     model: set.model_name,
     dimension: set.dimensions,
+    kind: set.kind ?? 'physical',
+    mode: set.mode ?? null,
+    truncate_dimension: set.truncate_dimension ?? null,
+    criteria: jsonObject(set.criteria_json),
+    source: jsonObject(set.source_json),
+    compatibility: jsonObject(set.compatibility_json),
+    materialization: jsonObject(set.materialization_json),
+    freshness: jsonObject(set.freshness_json) as ShardEmbeddingSet['freshness'],
     created_at: toISOString(set.created_at),
+    updated_at: set.updated_at ? toISOString(set.updated_at) : undefined,
   }
 }
 
@@ -194,7 +212,16 @@ export function embeddingSetFromShard(shard: ShardEmbeddingSet): {
   purpose: string | null
   model_name: string
   dimensions: number
+  kind: 'physical' | 'filter' | 'virtual'
+  mode: 'auto' | 'manual' | 'mixed' | null
+  truncate_dimension: number | null
+  criteria_json: string | null
+  source_json: string | null
+  compatibility_json: string | null
+  materialization_json: string | null
+  freshness_json: string | null
   created_at: string
+  updated_at: string | null
 } {
   return {
     id: shard.id,
@@ -202,7 +229,16 @@ export function embeddingSetFromShard(shard: ShardEmbeddingSet): {
     purpose: shard.purpose ?? null,
     model_name: shard.model,
     dimensions: shard.dimension,
+    kind: shard.kind ?? 'physical',
+    mode: shard.mode ?? null,
+    truncate_dimension: shard.truncate_dimension ?? null,
+    criteria_json: jsonString(shard.criteria),
+    source_json: jsonString(shard.source),
+    compatibility_json: jsonString(shard.compatibility),
+    materialization_json: jsonString(shard.materialization),
+    freshness_json: jsonString(shard.freshness),
     created_at: shard.created_at,
+    updated_at: shard.updated_at ?? null,
   }
 }
 
@@ -371,4 +407,14 @@ function parseJsonObjectField(value: Record<string, unknown> | string | null): R
   if (typeof value !== 'string') return value
   const parsed = JSON.parse(value)
   return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : null
+}
+
+function jsonObject(value: unknown): Record<string, unknown> | null {
+  if (value == null) return null
+  if (typeof value === 'string') return JSON.parse(value) as Record<string, unknown>
+  return value as Record<string, unknown>
+}
+
+function jsonString(value: unknown): string | null {
+  return value == null ? null : JSON.stringify(value)
 }

@@ -151,6 +151,75 @@ describe('embedding sets and graph APIs', () => {
     expect(resolved.noteIds).toEqual(['note-a', 'note-b'])
   })
 
+
+  it('round-trips virtual embedding definitions and graph community artifacts through shards', async () => {
+    const sets = new EmbeddingSetsRepository(db)
+    const base = await sets.create({ id: 'base-set', name: 'Base vectors' })
+    await sets.putEmbedding({ note_id: 'note-a', embedding_set_id: base.id, vector: vec(1, 0) })
+    await sets.createVirtualDefinition({
+      id: 'virtual-notes',
+      name: 'Virtual notes',
+      source: { type: 'criteria', baseSetId: base.id, criteria: { noteIds: ['note-a'] } },
+      compatibility: {
+        model: 'require-same',
+        dimension: 'require-same',
+        duplicateVectors: 'prefer-set-order',
+        missingVectors: 'omit',
+      },
+    })
+
+    await db.query(
+      `INSERT INTO graph_source (id, name, kind, source_table, embedding_set_id, virtual_set_id, metric, algorithm, parameters_json, input_hash, freshness_json)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11::jsonb)`,
+      ['graph-1', 'Topic graph', 'similarity', 'embedding', base.id, 'virtual-notes', 'cosine', 'knn', '{"k":1}', 'sha256:test', '{"status":"fresh"}'],
+    )
+    await db.query(
+      `INSERT INTO graph_edge_artifact (graph_source_id, from_note_id, to_note_id, weight, kind, rank)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      ['graph-1', 'note-a', 'note-b', 0.91, 'similarity', 1],
+    )
+    await db.query(
+      `INSERT INTO community_set (id, graph_source_id, name, source_type, algorithm, input_hash, freshness_json)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)`,
+      ['communities-1', 'graph-1', 'Topic communities', 'precomputed', 'label-propagation', 'sha256:test', '{"status":"fresh"}'],
+    )
+    await db.query(
+      `INSERT INTO community (community_set_id, id, label, rank, size, representative_note_ids)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      ['communities-1', 'community-a', 'Alpha', 1, 2, ['note-a']],
+    )
+    await db.query(
+      `INSERT INTO community_assignment (community_set_id, community_id, note_id, confidence, source_type)
+       VALUES ($1, $2, $3, $4, $5)`,
+      ['communities-1', 'community-a', 'note-a', 0.99, 'precomputed'],
+    )
+
+    const shard = await exportShard(db, { includeEmbeddings: true })
+    const files = unpackTarGz(shard)
+    const manifest = JSON.parse(new TextDecoder().decode(files.get('manifest.json')))
+    expect(manifest.components).toEqual(expect.arrayContaining(['graph_sources', 'graph_edges', 'communities', 'community_assignments']))
+    expect(manifest.counts).toMatchObject({ graph_sources: 1, graph_edges: 1, community_sets: 1, communities: 1, community_assignments: 1 })
+
+    const exportedSets = JSON.parse(new TextDecoder().decode(files.get('embedding_sets.json')))
+    expect(exportedSets.find((set: { id: string }) => set.id === 'virtual-notes')).toMatchObject({
+      kind: 'virtual',
+      source: { type: 'criteria' },
+    })
+
+    const imported = await setupDb()
+    try {
+      const result = await importShard(imported, shard)
+      expect(result.errors).toEqual([])
+      expect(result.counts).toMatchObject({ graph_sources: 1, graph_edges: 1, community_sets: 1, communities: 1, community_assignments: 1 })
+      const importedSources = await imported.query<{ id: string; virtual_set_id: string | null; freshness_json: { status: string } }>('SELECT id, virtual_set_id, freshness_json FROM graph_source')
+      expect(importedSources.rows).toEqual([{ id: 'graph-1', virtual_set_id: 'virtual-notes', freshness_json: { status: 'unknown' } }])
+      const importedVirtual = await new EmbeddingSetsRepository(imported).get('virtual-notes')
+      expect(importedVirtual.kind).toBe('virtual')
+    } finally {
+      await imported.close()
+    }
+  }, 30000)
+
   it('round-trips embedding set name and purpose through shards', async () => {
     const sets = new EmbeddingSetsRepository(db)
     const set = await sets.create({ name: 'AI summaries', purpose: 'Generated summary embeddings' })

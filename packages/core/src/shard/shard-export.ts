@@ -37,6 +37,16 @@ import type {
 
 const encoder = new TextEncoder()
 
+function jsonObject(value: unknown): Record<string, unknown> | undefined {
+  if (value == null) return undefined
+  if (typeof value === 'string') return JSON.parse(value) as Record<string, unknown>
+  return value as Record<string, unknown>
+}
+
+function iso(value: Date | string): string {
+  return value instanceof Date ? value.toISOString() : value
+}
+
 /**
  * Export knowledge data from the database as a .shard archive (Uint8Array).
  *
@@ -50,7 +60,7 @@ export async function exportShard(
 ): Promise<Uint8Array> {
   const files = new Map<string, Uint8Array>()
   const components: ShardComponent[] = []
-  const counts: Partial<Record<ShardComponent, number>> = {}
+  const counts: ShardManifest['counts'] = {}
 
   // ── Query notes ─────────────────────────────────────────────────────
   let noteQuery: string
@@ -317,6 +327,149 @@ export async function exportShard(
     files.set('embeddings.jsonl', encoder.encode(embJsonl))
     components.push('embeddings')
     counts.embeddings = embRows.rows.length
+  }
+
+
+
+  // -- Query graph/community artifacts (optional) ----------------------
+  const graphSourceRows = await db.query<{
+    id: string
+    name: string
+    kind: 'link' | 'similarity' | 'search' | 'manual' | 'imported'
+    source_table: 'link' | 'embedding' | 'manual' | null
+    embedding_set_id: string | null
+    virtual_set_id: string | null
+    model: string | null
+    dimension: number | null
+    truncate_dimension: number | null
+    metric: 'cosine' | 'inner_product' | 'l2' | null
+    algorithm: string | null
+    parameters_json: unknown | null
+    input_hash: string
+    freshness_json: unknown
+    created_at: Date
+  }>(`SELECT * FROM graph_source ORDER BY created_at, id`)
+  if (graphSourceRows.rows.length > 0) {
+    const shardGraphSources = graphSourceRows.rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      kind: row.kind,
+      source_table: row.source_table,
+      embedding_set_id: row.embedding_set_id,
+      virtual_set_id: row.virtual_set_id,
+      model: row.model,
+      dimension: row.dimension,
+      truncate_dimension: row.truncate_dimension,
+      metric: row.metric,
+      algorithm: row.algorithm,
+      parameters: jsonObject(row.parameters_json),
+      input_hash: row.input_hash,
+      freshness: jsonObject(row.freshness_json) ?? { status: 'unknown' },
+      created_at: iso(row.created_at),
+    }))
+    files.set('graph_sources.json', encoder.encode(JSON.stringify(shardGraphSources)))
+    components.push('graph_sources')
+    counts.graph_sources = shardGraphSources.length
+  }
+
+  const graphEdgeRows = await db.query<{
+    graph_source_id: string
+    from_note_id: string
+    to_note_id: string
+    weight: number
+    kind: 'link' | 'similarity' | 'manual'
+    rank: number | null
+    metadata_json: unknown | null
+  }>(`SELECT * FROM graph_edge_artifact ORDER BY graph_source_id, from_note_id, to_note_id, kind`)
+  if (graphEdgeRows.rows.length > 0) {
+    const graphEdgesJsonl = graphEdgeRows.rows.map((row) => JSON.stringify({
+      graph_source_id: row.graph_source_id,
+      from_note_id: row.from_note_id,
+      to_note_id: row.to_note_id,
+      weight: row.weight,
+      kind: row.kind,
+      rank: row.rank,
+      metadata: jsonObject(row.metadata_json),
+    })).join('\n')
+    files.set('graph_edges.jsonl', encoder.encode(graphEdgesJsonl))
+    components.push('graph_edges')
+    counts.graph_edges = graphEdgeRows.rows.length
+  }
+
+  const communitySetRows = await db.query<{
+    id: string
+    graph_source_id: string
+    name: string
+    source_type: 'precomputed' | 'dynamic-snapshot' | 'user-authored' | 'imported'
+    algorithm: string | null
+    parameters_json: unknown | null
+    input_hash: string
+    freshness_json: unknown
+    created_at: Date
+  }>(`SELECT * FROM community_set ORDER BY created_at, id`)
+  const communityRows = await db.query<{
+    id: string
+    community_set_id: string
+    label: string | null
+    rank: number | null
+    size: number | null
+    confidence: number | null
+    representative_note_ids: string[] | null
+    metadata_json: unknown | null
+  }>(`SELECT * FROM community ORDER BY community_set_id, rank NULLS LAST, id`)
+  if (communitySetRows.rows.length > 0) {
+    const communitiesBySet = new Map<string, typeof communityRows.rows>()
+    for (const row of communityRows.rows) {
+      const rows = communitiesBySet.get(row.community_set_id) ?? []
+      rows.push(row)
+      communitiesBySet.set(row.community_set_id, rows)
+    }
+    const shardCommunitySets = communitySetRows.rows.map((row) => ({
+      id: row.id,
+      graph_source_id: row.graph_source_id,
+      name: row.name,
+      source_type: row.source_type,
+      algorithm: row.algorithm,
+      parameters: jsonObject(row.parameters_json),
+      input_hash: row.input_hash,
+      freshness: jsonObject(row.freshness_json) ?? { status: 'unknown' },
+      communities: (communitiesBySet.get(row.id) ?? []).map((community) => ({
+        id: community.id,
+        label: community.label,
+        rank: community.rank,
+        size: community.size,
+        confidence: community.confidence,
+        representative_note_ids: community.representative_note_ids ?? [],
+        metadata: jsonObject(community.metadata_json),
+      })),
+      created_at: iso(row.created_at),
+    }))
+    files.set('communities.json', encoder.encode(JSON.stringify(shardCommunitySets)))
+    components.push('communities')
+    counts.community_sets = shardCommunitySets.length
+    counts.communities = communityRows.rows.length
+  }
+
+  const assignmentRows = await db.query<{
+    community_set_id: string
+    community_id: string
+    note_id: string
+    confidence: number | null
+    source_type: 'precomputed' | 'dynamic-snapshot' | 'user-authored' | 'imported'
+    metadata_json: unknown | null
+  }>(`SELECT * FROM community_assignment ORDER BY community_set_id, community_id, note_id`)
+  if (assignmentRows.rows.length > 0) {
+    const assignmentsJsonl = assignmentRows.rows.map((row) => JSON.stringify({
+      community_set_id: row.community_set_id,
+      community_id: row.community_id,
+      note_id: row.note_id,
+      confidence: row.confidence,
+      source_type: row.source_type,
+      metadata: jsonObject(row.metadata_json),
+    })).join('\n')
+    files.set('community_assignments.jsonl', encoder.encode(assignmentsJsonl))
+    components.push('community_assignments')
+    counts.community_assignments = assignmentRows.rows.length
   }
 
   // ── Compute checksums ───────────────────────────────────────────────

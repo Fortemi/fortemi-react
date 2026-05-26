@@ -35,6 +35,10 @@ import type {
   ShardSkosRelation,
   ShardNoteSkosTag,
   ShardProvenanceEdge,
+  ShardGraphSource,
+  ShardGraphEdge,
+  ShardCommunitySet,
+  ShardCommunityAssignment,
 } from './types.js'
 
 const decoder = new TextDecoder()
@@ -72,6 +76,11 @@ export async function importShard(
     skos_relations: 0,
     note_skos_tags: 0,
     provenance_edges: 0,
+    graph_sources: 0,
+    graph_edges: 0,
+    community_sets: 0,
+    communities: 0,
+    community_assignments: 0,
   }
   const skipped: Partial<ImportCounts> = {}
 
@@ -163,6 +172,10 @@ export async function importShard(
   const parsedSkosRelations = parseJsonl<ShardSkosRelation>(files.get('skos_relations.jsonl'))
   const parsedNoteSkosTags = parseJsonl<ShardNoteSkosTag>(files.get('note_skos_tags.jsonl'))
   const parsedProvenanceEdges = parseJsonl<ShardProvenanceEdge>(files.get('provenance_edges.jsonl'))
+  const parsedGraphSources = parseJsonArray<ShardGraphSource>(files.get('graph_sources.json'))
+  const parsedGraphEdges = parseJsonl<ShardGraphEdge>(files.get('graph_edges.jsonl'))
+  const parsedCommunitySets = parseJsonArray<ShardCommunitySet>(files.get('communities.json'))
+  const parsedCommunityAssignments = parseJsonl<ShardCommunityAssignment>(files.get('community_assignments.jsonl'))
 
   // Warn about unknown components
   const knownFiles = new Set([
@@ -181,6 +194,10 @@ export async function importShard(
     'skos_relations.jsonl',
     'note_skos_tags.jsonl',
     'provenance_edges.jsonl',
+    'graph_sources.json',
+    'graph_edges.jsonl',
+    'communities.json',
+    'community_assignments.jsonl',
   ])
   for (const filename of files.keys()) {
     if (!knownFiles.has(filename)) {
@@ -406,16 +423,22 @@ export async function importShard(
         const set = embeddingSetFromShard(shardSet)
         if (strategy === 'replace') {
           await tx.query(
-            `INSERT INTO embedding_set (id, name, purpose, model_name, dimensions, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6)
-             ON CONFLICT (id) DO UPDATE SET name = $2, purpose = $3, model_name = $4, dimensions = $5`,
-            [set.id, set.name, set.purpose, set.model_name, set.dimensions, set.created_at],
+            `INSERT INTO embedding_set (
+               id, name, purpose, model_name, dimensions, kind, mode, truncate_dimension,
+               criteria_json, source_json, compatibility_json, materialization_json, freshness_json, created_at, updated_at
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14, COALESCE($15::timestamptz, $14::timestamptz))
+             ON CONFLICT (id) DO UPDATE SET name = $2, purpose = $3, model_name = $4, dimensions = $5,
+               kind = $6, mode = $7, truncate_dimension = $8, criteria_json = $9::jsonb, source_json = $10::jsonb,
+               compatibility_json = $11::jsonb, materialization_json = $12::jsonb, freshness_json = $13::jsonb, updated_at = COALESCE($15::timestamptz, $14::timestamptz)`,
+            [set.id, set.name, set.purpose, set.model_name, set.dimensions, set.kind, set.mode, set.truncate_dimension, set.criteria_json, set.source_json, set.compatibility_json, set.materialization_json, set.freshness_json, set.created_at, set.updated_at],
           )
         } else {
           await tx.query(
-            `INSERT INTO embedding_set (id, name, purpose, model_name, dimensions, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6) ${conflictClause}`,
-            [set.id, set.name, set.purpose, set.model_name, set.dimensions, set.created_at],
+            `INSERT INTO embedding_set (
+               id, name, purpose, model_name, dimensions, kind, mode, truncate_dimension,
+               criteria_json, source_json, compatibility_json, materialization_json, freshness_json, created_at, updated_at
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14, COALESCE($15::timestamptz, $14::timestamptz)) ${conflictClause}`,
+            [set.id, set.name, set.purpose, set.model_name, set.dimensions, set.kind, set.mode, set.truncate_dimension, set.criteria_json, set.source_json, set.compatibility_json, set.materialization_json, set.freshness_json, set.created_at, set.updated_at],
           )
         }
         counts.embedding_sets++
@@ -439,6 +462,78 @@ export async function importShard(
           )
         }
         counts.embeddings++
+      }
+
+
+
+      // Import graph/community artifacts after primary graph inputs exist.
+      for (const source of parsedGraphSources) {
+        const parameters = source.parameters == null ? null : JSON.stringify(source.parameters)
+        const freshness = JSON.stringify({ ...(source.freshness ?? {}), status: 'unknown' })
+        await tx.query(
+          `INSERT INTO graph_source (
+             id, name, kind, source_table, embedding_set_id, virtual_set_id, model, dimension,
+             truncate_dimension, metric, algorithm, parameters_json, input_hash, freshness_json, created_at
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13, $14::jsonb, $15)
+           ${strategy === 'replace'
+             ? 'ON CONFLICT (id) DO UPDATE SET name = $2, kind = $3, source_table = $4, embedding_set_id = $5, virtual_set_id = $6, model = $7, dimension = $8, truncate_dimension = $9, metric = $10, algorithm = $11, parameters_json = $12::jsonb, input_hash = $13, freshness_json = $14::jsonb, created_at = $15'
+             : conflictClause}`,
+          [source.id, source.name, source.kind, source.source_table ?? null, source.embedding_set_id ?? null, source.virtual_set_id ?? null, source.model ?? null, source.dimension ?? null, source.truncate_dimension ?? null, source.metric ?? null, source.algorithm ?? null, parameters, source.input_hash, freshness, source.created_at],
+        )
+        counts.graph_sources++
+      }
+
+      for (const edge of parsedGraphEdges) {
+        const metadata = edge.metadata == null ? null : JSON.stringify(edge.metadata)
+        await tx.query(
+          `INSERT INTO graph_edge_artifact (graph_source_id, from_note_id, to_note_id, weight, kind, rank, metadata_json)
+           VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
+           ${strategy === 'replace'
+             ? 'ON CONFLICT (graph_source_id, from_note_id, to_note_id, kind) DO UPDATE SET weight = $4, rank = $6, metadata_json = $7::jsonb'
+             : conflictClause}`,
+          [edge.graph_source_id, edge.from_note_id, edge.to_note_id, edge.weight, edge.kind, edge.rank ?? null, metadata],
+        )
+        counts.graph_edges++
+      }
+
+      for (const set of parsedCommunitySets) {
+        const parameters = set.parameters == null ? null : JSON.stringify(set.parameters)
+        const freshness = JSON.stringify({ ...(set.freshness ?? {}), status: 'unknown' })
+        await tx.query(
+          `INSERT INTO community_set (id, graph_source_id, name, source_type, algorithm, parameters_json, input_hash, freshness_json, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8::jsonb, $9)
+           ${strategy === 'replace'
+             ? 'ON CONFLICT (id) DO UPDATE SET graph_source_id = $2, name = $3, source_type = $4, algorithm = $5, parameters_json = $6::jsonb, input_hash = $7, freshness_json = $8::jsonb, created_at = $9'
+             : conflictClause}`,
+          [set.id, set.graph_source_id, set.name, set.source_type, set.algorithm ?? null, parameters, set.input_hash, freshness, set.created_at],
+        )
+        counts.community_sets++
+
+        for (const community of set.communities ?? []) {
+          const metadata = community.metadata == null ? null : JSON.stringify(community.metadata)
+          await tx.query(
+            `INSERT INTO community (community_set_id, id, label, rank, size, confidence, representative_note_ids, metadata_json)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)
+             ${strategy === 'replace'
+               ? 'ON CONFLICT (community_set_id, id) DO UPDATE SET label = $3, rank = $4, size = $5, confidence = $6, representative_note_ids = $7, metadata_json = $8::jsonb'
+               : conflictClause}`,
+            [set.id, community.id, community.label ?? null, community.rank ?? null, community.size ?? null, community.confidence ?? null, community.representative_note_ids ?? [], metadata],
+          )
+          counts.communities++
+        }
+      }
+
+      for (const assignment of parsedCommunityAssignments) {
+        const metadata = assignment.metadata == null ? null : JSON.stringify(assignment.metadata)
+        await tx.query(
+          `INSERT INTO community_assignment (community_set_id, community_id, note_id, confidence, source_type, metadata_json)
+           VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+           ${strategy === 'replace'
+             ? 'ON CONFLICT (community_set_id, note_id) DO UPDATE SET community_id = $2, confidence = $4, source_type = $5, metadata_json = $6::jsonb'
+             : conflictClause}`,
+          [assignment.community_set_id, assignment.community_id, assignment.note_id, assignment.confidence ?? null, assignment.source_type, metadata],
+        )
+        counts.community_assignments++
       }
 
       // Import embedding set members

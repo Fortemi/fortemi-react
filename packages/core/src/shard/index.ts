@@ -30,6 +30,12 @@ export type {
   ShardSkosRelation,
   ShardNoteSkosTag,
   ShardProvenanceEdge,
+  ShardArtifactFreshness,
+  ShardGraphSource,
+  ShardGraphEdge,
+  ShardCommunitySet,
+  ShardCommunity,
+  ShardCommunityAssignment,
 } from './types.js'
 
 // Tar + gzip

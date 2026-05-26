@@ -23,6 +23,10 @@ export type ShardComponent =
   | 'skos_relations'
   | 'note_skos_tags'
   | 'provenance_edges'
+  | 'community_assignments'
+  | 'communities'
+  | 'graph_edges'
+  | 'graph_sources'
 
 /** Manifest included in every shard as manifest.json. */
 export interface ShardManifest {
@@ -31,7 +35,7 @@ export interface ShardManifest {
   format: typeof SHARD_FORMAT
   created_at: string // ISO 8601
   components: ShardComponent[]
-  counts: Partial<Record<ShardComponent, number>>
+  counts: Partial<Record<ShardComponent | 'community_sets', number>>
   checksums: Record<string, string> // filename → sha256 hex
   min_reader_version: string
 }
@@ -67,6 +71,11 @@ export interface ImportCounts {
   skos_relations: number
   note_skos_tags: number
   provenance_edges: number
+  graph_sources: number
+  graph_edges: number
+  community_sets: number
+  communities: number
+  community_assignments: number
 }
 
 /** Result of a shard import operation. */
@@ -131,7 +140,16 @@ export interface ShardEmbeddingSet {
   purpose?: string | null
   model: string
   dimension: number
+  kind?: 'physical' | 'filter' | 'virtual'
+  mode?: 'auto' | 'manual' | 'mixed' | null
+  truncate_dimension?: number | null
+  criteria?: Record<string, unknown> | null
+  source?: Record<string, unknown> | null
+  compatibility?: Record<string, unknown> | null
+  materialization?: Record<string, unknown> | null
+  freshness?: ShardArtifactFreshness | null
   created_at: string
+  updated_at?: string
 }
 
 /** Embedding set member as serialized in the shard JSONL. */
@@ -198,4 +216,81 @@ export interface ShardProvenanceEdge {
   started_at: string
   ended_at: string | null
   attributes: Record<string, unknown> | null
+}
+
+
+// - Graph/community derived artifacts ---------------------------------------
+
+export interface ShardArtifactFreshness {
+  status: 'fresh' | 'stale' | 'unknown'
+  checked_at?: string
+  stale_reason?: string
+  source_hashes?: {
+    notes?: string
+    links?: string
+    embeddings?: string
+    embedding_set_members?: string
+    virtual_set_definition?: string
+    parameters?: string
+  }
+}
+
+export interface ShardGraphSource {
+  id: string
+  name: string
+  kind: 'link' | 'similarity' | 'search' | 'manual' | 'imported'
+  source_table?: 'link' | 'embedding' | 'manual' | null
+  embedding_set_id?: string | null
+  virtual_set_id?: string | null
+  model?: string | null
+  dimension?: number | null
+  truncate_dimension?: number | null
+  metric?: 'cosine' | 'inner_product' | 'l2' | null
+  algorithm?: string | null
+  parameters?: Record<string, unknown>
+  input_hash: string
+  freshness: ShardArtifactFreshness
+  created_at: string
+}
+
+export interface ShardGraphEdge {
+  graph_source_id: string
+  from_note_id: string
+  to_note_id: string
+  weight: number
+  kind: 'link' | 'similarity' | 'manual'
+  rank?: number | null
+  metadata?: Record<string, unknown>
+}
+
+export interface ShardCommunitySet {
+  id: string
+  graph_source_id: string
+  name: string
+  source_type: 'precomputed' | 'dynamic-snapshot' | 'user-authored' | 'imported'
+  algorithm?: string | null
+  parameters?: Record<string, unknown>
+  input_hash: string
+  freshness: ShardArtifactFreshness
+  communities: ShardCommunity[]
+  created_at: string
+}
+
+export interface ShardCommunity {
+  id: string
+  label?: string | null
+  rank?: number | null
+  size?: number | null
+  confidence?: number | null
+  representative_note_ids?: string[]
+  metadata?: Record<string, unknown>
+}
+
+export interface ShardCommunityAssignment {
+  community_set_id: string
+  community_id: string
+  note_id: string
+  confidence?: number | null
+  source_type: 'precomputed' | 'dynamic-snapshot' | 'user-authored' | 'imported'
+  metadata?: Record<string, unknown>
 }
