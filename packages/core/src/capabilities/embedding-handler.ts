@@ -7,7 +7,7 @@
  */
 
 import type { DatabaseClient } from '../storage-backend.js'
-import { generateId } from '../uuid.js'
+import { EmbeddingSetsRepository } from '../repositories/embedding-sets-repository.js'
 import { chunkText } from './chunking.js'
 
 /** Type for the embed function — injected by the semantic capability module */
@@ -21,22 +21,6 @@ export function setEmbedFunction(fn: EmbedFunction | null): void {
 
 export function getEmbedFunction(): EmbedFunction | null {
   return embedFn
-}
-
-/** Ensure a default embedding set exists and return its ID */
-async function ensureEmbeddingSet(db: DatabaseClient): Promise<string> {
-  const result = await db.query<{ id: string }>(
-    `SELECT id FROM embedding_set WHERE model_name = $1`,
-    ['all-MiniLM-L6-v2']
-  )
-  if (result.rows.length > 0) return result.rows[0].id
-
-  const id = generateId()
-  await db.query(
-    `INSERT INTO embedding_set (id, model_name, dimensions) VALUES ($1, $2, $3)`,
-    [id, 'all-MiniLM-L6-v2', 384]
-  )
-  return id
 }
 
 /**
@@ -71,7 +55,7 @@ export async function embeddingGenerationHandler(
   // Get note content
   const noteResult = await db.query<{ content: string }>(
     `SELECT content FROM note_revised_current WHERE note_id = $1`,
-    [job.note_id]
+    [job.note_id],
   )
   if (noteResult.rows.length === 0) throw new Error(`No content for note ${job.note_id}`)
 
@@ -84,31 +68,13 @@ export async function embeddingGenerationHandler(
   // Average all chunk embeddings into one vector for storage
   const vector = averageEmbeddings(embeddings)
 
-  // Get or create embedding set
-  const setId = await ensureEmbeddingSet(db)
+  const embeddingSets = new EmbeddingSetsRepository(db)
+  const set = await embeddingSets.ensureDefault()
+  await embeddingSets.putEmbedding({
+    note_id: job.note_id,
+    embedding_set_id: set.id,
+    vector,
+  })
 
-  // Delete old embeddings for this note in this set (member first due to FK)
-  await db.query(
-    `DELETE FROM embedding_set_member WHERE note_id = $1 AND embedding_set_id = $2`,
-    [job.note_id, setId]
-  )
-  await db.query(
-    `DELETE FROM embedding WHERE note_id = $1 AND embedding_set_id = $2`,
-    [job.note_id, setId]
-  )
-
-  // Insert new embedding (one averaged vector per note per set)
-  const embId = generateId()
-  const vectorStr = `[${vector.join(',')}]`
-  await db.query(
-    `INSERT INTO embedding (id, note_id, embedding_set_id, vector) VALUES ($1, $2, $3, $4::vector)`,
-    [embId, job.note_id, setId, vectorStr]
-  )
-  await db.query(
-    `INSERT INTO embedding_set_member (embedding_set_id, note_id, embedding_id) VALUES ($1, $2, $3)
-     ON CONFLICT (embedding_set_id, note_id) DO UPDATE SET embedding_id = $3`,
-    [setId, job.note_id, embId]
-  )
-
-  return { chunks: chunks.length, embeddings: embeddings.length, setId }
+  return { chunks: chunks.length, embeddings: embeddings.length, setId: set.id }
 }

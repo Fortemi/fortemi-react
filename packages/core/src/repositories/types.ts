@@ -116,6 +116,7 @@ export interface SearchOptions {
   visibility?: string
   include_facets?: boolean
   mode?: 'text' | 'semantic' | 'hybrid' | 'auto'
+  embeddingSetId?: string
 }
 
 export interface NoteRevision {

@@ -16,6 +16,11 @@ import {
   embeddingSetToShard,
   embeddingSetMemberToShard,
   embeddingToShard,
+  skosSchemeToShard,
+  skosConceptToShard,
+  skosRelationToShard,
+  noteSkosTagToShard,
+  provenanceEdgeToShard,
 } from './field-mapper.js'
 import type { BrowserNoteExport } from './field-mapper.js'
 import type { LinkRow } from '../repositories/links-repository.js'
@@ -180,10 +185,103 @@ export async function exportShard(
   components.push('links')
   counts.links = filteredLinks.length
 
+
+  // ── Query SKOS (scoped to exported notes when filtered) ─────────────
+  const allNoteSkosRows = await db.query<{
+    id: string
+    note_id: string
+    concept_id: string
+    created_at: Date
+  }>(`SELECT * FROM note_skos_tag ORDER BY created_at`)
+  const filteredNoteSkosRows = isFiltered
+    ? allNoteSkosRows.rows.filter((row) => exportedNoteIds.has(row.note_id))
+    : allNoteSkosRows.rows
+  const referencedConceptIds = new Set(filteredNoteSkosRows.map((row) => row.concept_id))
+
+  const allConceptRows = await db.query<{
+    id: string
+    scheme_id: string
+    pref_label: string
+    alt_labels: string[] | string | null
+    definition: string | null
+    created_at: Date
+    updated_at: Date
+  }>(`SELECT * FROM skos_concept WHERE deleted_at IS NULL ORDER BY pref_label`)
+  const filteredConceptRows = isFiltered
+    ? allConceptRows.rows.filter((row) => referencedConceptIds.has(row.id))
+    : allConceptRows.rows
+  const exportedConceptIds = new Set(filteredConceptRows.map((row) => row.id))
+  const exportedSchemeIds = new Set(filteredConceptRows.map((row) => row.scheme_id))
+
+  const allSchemeRows = await db.query<{
+    id: string
+    title: string
+    description: string | null
+    created_at: Date
+    updated_at: Date
+  }>(`SELECT * FROM skos_scheme WHERE deleted_at IS NULL ORDER BY title`)
+  const filteredSchemeRows = isFiltered
+    ? allSchemeRows.rows.filter((row) => exportedSchemeIds.has(row.id))
+    : allSchemeRows.rows
+
+  const allRelationRows = await db.query<{
+    id: string
+    source_concept_id: string
+    target_concept_id: string
+    relation_type: 'broader' | 'narrower' | 'related'
+    created_at: Date
+  }>(`SELECT * FROM skos_concept_relation ORDER BY created_at`)
+  const filteredRelationRows = isFiltered
+    ? allRelationRows.rows.filter((row) =>
+        exportedConceptIds.has(row.source_concept_id) && exportedConceptIds.has(row.target_concept_id),
+      )
+    : allRelationRows.rows
+
+  const shardSkosSchemes = filteredSchemeRows.map(skosSchemeToShard)
+  files.set('skos_schemes.json', encoder.encode(JSON.stringify(shardSkosSchemes)))
+  components.push('skos_schemes')
+  counts.skos_schemes = shardSkosSchemes.length
+
+  const shardSkosConcepts = filteredConceptRows.map(skosConceptToShard)
+  files.set('skos_concepts.json', encoder.encode(JSON.stringify(shardSkosConcepts)))
+  components.push('skos_concepts')
+  counts.skos_concepts = shardSkosConcepts.length
+
+  const skosRelationsJsonl = filteredRelationRows.map((row) => JSON.stringify(skosRelationToShard(row))).join('\n')
+  files.set('skos_relations.jsonl', encoder.encode(skosRelationsJsonl))
+  components.push('skos_relations')
+  counts.skos_relations = filteredRelationRows.length
+
+  const noteSkosJsonl = filteredNoteSkosRows.map((row) => JSON.stringify(noteSkosTagToShard(row))).join('\n')
+  files.set('note_skos_tags.jsonl', encoder.encode(noteSkosJsonl))
+  components.push('note_skos_tags')
+  counts.note_skos_tags = filteredNoteSkosRows.length
+
+  // ── Query provenance (scoped to exported notes when filtered) ───────
+  const provenanceRows = await db.query<{
+    id: string
+    entity_type: string
+    entity_id: string
+    activity: string
+    agent: string
+    started_at: Date
+    ended_at: Date | null
+    attributes: Record<string, unknown> | string | null
+  }>(`SELECT * FROM provenance_edge ORDER BY started_at`)
+  const filteredProvenanceRows = isFiltered
+    ? provenanceRows.rows.filter((row) => row.entity_type !== 'note' || exportedNoteIds.has(row.entity_id))
+    : provenanceRows.rows
+  const provenanceJsonl = filteredProvenanceRows.map((row) => JSON.stringify(provenanceEdgeToShard(row))).join('\n')
+  files.set('provenance_edges.jsonl', encoder.encode(provenanceJsonl))
+  components.push('provenance_edges')
+  counts.provenance_edges = filteredProvenanceRows.length
+
   // ── Query embeddings (optional) ─────────────────────────────────────
   if (options?.includeEmbeddings) {
     const embSetRows = await db.query<{
       id: string
+      name: string
+      purpose: string | null
       model_name: string
       dimensions: number
       created_at: Date

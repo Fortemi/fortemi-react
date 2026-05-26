@@ -1,27 +1,6 @@
 /**
  * SearchRepository — full-text search using DatabaseClient tsvector/tsquery,
  * with optional semantic search (pgvector) and hybrid (BM25 + vector RRF).
- *
- * Search strategy:
- *  - Title match uses the STORED tsvector column (weight A).
- *  - Content match uses an ad-hoc to_tsvector on note_revised_current.content (weight B).
- *  - ts_rank combines both weighted vectors to rank title matches higher.
- *  - ts_headline generates highlighted snippets from content.
- *  - Empty / whitespace-only queries fall back to returning recent notes.
- *  - semanticSearch uses pgvector cosine distance (<=>).
- *  - hybridSearch combines BM25 and vector with Reciprocal Rank Fusion (k=60).
- *  - Quoted phrases use phraseto_tsquery for exact phrase matching.
- *
- * @implements #64 semantic and hybrid search
- * @implements #77 correct mode field
- * @implements #79 date range filter
- * @implements #80 starred/archived filters
- * @implements #81 format/source/visibility filters
- * @implements #82 collection filter on semantic/hybrid
- * @implements #83 phrase search
- * @implements #87 shared condition builder
- * @implements #89 search mode selector
- * @implements #94 per-result embedding status
  */
 
 import type { DatabaseClient } from '../storage-backend.js'
@@ -34,22 +13,36 @@ export class SearchRepository {
     private semanticAvailable = false,
   ) {}
 
-  /** Select tsquery function based on whether query contains quoted phrases */
   private tsqueryFn(query: string): string {
     return query.includes('"') ? 'phraseto_tsquery' : 'plainto_tsquery'
   }
 
-  /** Returns a Set of note IDs that have an embedding record */
-  private async fetchEmbeddingSet(noteIds: string[]): Promise<Set<string>> {
+  private async fetchEmbeddingSet(noteIds: string[], embeddingSetId?: string): Promise<Set<string>> {
     if (noteIds.length === 0) return new Set()
+    const params: unknown[] = [noteIds]
+    const setFilter = embeddingSetId ? ' AND embedding_set_id = $2' : ''
+    if (embeddingSetId) params.push(embeddingSetId)
     const result = await this.db.query<{ note_id: string }>(
-      `SELECT note_id FROM embedding WHERE note_id = ANY($1)`,
-      [noteIds],
+      'SELECT note_id FROM embedding WHERE note_id = ANY($1)' + setFilter,
+      params,
     )
     return new Set(result.rows.map((r) => r.note_id))
   }
 
-  /** Attach has_embedding to each SearchResult using the provided embedding set */
+  private scopeToEmbeddingSet(
+    conditions: string[],
+    params: unknown[],
+    paramIdx: number,
+    embeddingSetId?: string,
+  ): number {
+    if (!embeddingSetId) return paramIdx
+    conditions.push(
+      'EXISTS (SELECT 1 FROM embedding e_scope WHERE e_scope.note_id = n.id AND e_scope.embedding_set_id = $' + paramIdx + ')',
+    )
+    params.push(embeddingSetId)
+    return paramIdx + 1
+  }
+
   private attachEmbeddingStatus(
     results: Omit<SearchResult, 'has_embedding'>[],
     embeddingSet: Set<string>,
@@ -65,58 +58,38 @@ export class SearchRepository {
     const { limit = 20, offset = 0 } = options
     const mode = options.mode ?? 'auto'
 
-    // mode='text': force text path, ignore any provided embedding
     if (mode === 'text') {
-      if (!query.trim()) {
-        return this.recentNotes(options)
-      }
-      // Fall through to text search below
+      if (!query.trim()) return this.recentNotes(options)
     } else if (mode === 'semantic') {
-      // mode='semantic': require embedding
       if (!queryEmbedding || queryEmbedding.length === 0) {
         throw new Error('mode=semantic requires a query embedding')
       }
       return this.semanticSearch(queryEmbedding, options)
     } else if (mode === 'hybrid') {
-      // mode='hybrid': require embedding
       if (!queryEmbedding || queryEmbedding.length === 0) {
         throw new Error('mode=hybrid requires a query embedding')
       }
       return this.hybridSearch(query, queryEmbedding, options)
     } else {
-      // mode='auto' (default): existing auto-detect behavior
       if (queryEmbedding && queryEmbedding.length > 0) {
-        if (query.trim()) {
-          return this.hybridSearch(query, queryEmbedding, options)
-        }
+        if (query.trim()) return this.hybridSearch(query, queryEmbedding, options)
         return this.semanticSearch(queryEmbedding, options)
       }
-
-      if (!query.trim()) {
-        return this.recentNotes(options)
-      }
+      if (!query.trim()) return this.recentNotes(options)
     }
 
-    // Text search path (mode='text' with non-empty query, or auto without embedding)
-    if (!query.trim()) {
-      return this.recentNotes(options)
-    }
+    if (!query.trim()) return this.recentNotes(options)
 
     const tsqFn = this.tsqueryFn(query)
-
-    // $1 is always the query string
     const { conditions, params, nextIdx } = buildNoteConditions(options, 2)
     conditions.unshift(
       `(n.tsv @@ ${tsqFn}('english', $1) OR
         to_tsvector('english', coalesce(c.content, '')) @@ ${tsqFn}('english', $1))`,
     )
-    // Prepend deleted_at check is already in buildNoteConditions
+    let paramIdx = this.scopeToEmbeddingSet(conditions, params, nextIdx, options.embeddingSetId)
     const allParams = [query, ...params]
-    let paramIdx = nextIdx
-
     const where = conditions.join(' AND ')
 
-    // Total count
     const countResult = await this.db.query<{ count: string }>(
       `SELECT COUNT(*) as count
        FROM note n
@@ -126,7 +99,6 @@ export class SearchRepository {
     )
     const total = parseInt(countResult.rows[0].count, 10)
 
-    // Search with ts_rank and ts_headline
     const searchParams = [...allParams, limit, offset]
     const result = await this.db.query<{
       id: string
@@ -158,10 +130,9 @@ export class SearchRepository {
     const resultIds = result.rows.map((r) => r.id)
     const [tagMap, embeddingSet] = await Promise.all([
       this.fetchTagMap(resultIds),
-      this.fetchEmbeddingSet(resultIds),
+      this.fetchEmbeddingSet(resultIds, options.embeddingSetId),
     ])
 
-    // Facets use full (unpaginated) result set
     let facets: SearchFacets | undefined
     if (options.include_facets) {
       const idsResult = await this.db.query<{ id: string }>(
@@ -195,21 +166,15 @@ export class SearchRepository {
     }
   }
 
-  /**
-   * Semantic search using pgvector cosine distance.
-   * Returns notes ranked by vector similarity to the query embedding.
-   */
-  async semanticSearch(
-    queryEmbedding: number[],
-    options: SearchOptions = {},
-  ): Promise<SearchResponse> {
+  async semanticSearch(queryEmbedding: number[], options: SearchOptions = {}): Promise<SearchResponse> {
     const { limit = 20, offset = 0 } = options
     const vectorStr = `[${queryEmbedding.join(',')}]`
-
-    // Filter conditions start at $1; vector/limit/offset appended after
     const { conditions, params, nextIdx } = buildNoteConditions(options, 1)
     let paramIdx = nextIdx
-
+    if (options.embeddingSetId) {
+      conditions.push(`e.embedding_set_id = $${paramIdx++}`)
+      params.push(options.embeddingSetId)
+    }
     const where = conditions.join(' AND ')
 
     const countResult = await this.db.query<{ count: string }>(
@@ -245,26 +210,23 @@ export class SearchRepository {
     )
 
     const tagMap = await this.fetchTagMap(result.rows.map((r) => r.id))
-
-    let facets: SearchFacets | undefined
-    if (options.include_facets) {
-      const idsResult = await this.db.query<{ id: string }>(
-        `SELECT n.id FROM embedding e JOIN note n ON n.id = e.note_id WHERE ${where}`,
-        params,
-      )
-      facets = await this.fetchFacets(idsResult.rows.map((r) => r.id))
-    }
+    const facets = options.include_facets
+      ? await this.fetchFacets((await this.db.query<{ id: string }>(
+          `SELECT n.id FROM embedding e JOIN note n ON n.id = e.note_id WHERE ${where}`,
+          params,
+        )).rows.map((r) => r.id))
+      : undefined
 
     return {
       results: result.rows.map((r) => ({
         id: r.id,
         title: r.title,
         snippet: r.snippet ?? '',
-        rank: 1 - r.distance, // Convert distance to similarity score
+        rank: 1 - r.distance,
         created_at: r.created_at,
         updated_at: r.updated_at,
         tags: tagMap.get(r.id) ?? [],
-        has_embedding: true, // Semantic results always have embeddings (JOIN on embedding table)
+        has_embedding: true,
       })),
       total,
       query: '',
@@ -276,10 +238,6 @@ export class SearchRepository {
     }
   }
 
-  /**
-   * Hybrid search combining BM25 (full-text) and vector similarity using
-   * Reciprocal Rank Fusion (RRF, k=60).
-   */
   async hybridSearch(
     query: string,
     queryEmbedding: number[],
@@ -290,17 +248,16 @@ export class SearchRepository {
     const k = 60
     const tsqFn = this.tsqueryFn(query)
 
-    // Build shared conditions for text sub-query ($1 = query)
     const textCond = buildNoteConditions(options, 2)
     const textConditions = [
       ...textCond.conditions,
       `(n.tsv @@ ${tsqFn}('english', $1) OR
         to_tsvector('english', coalesce(c.content, '')) @@ ${tsqFn}('english', $1))`,
     ]
+    this.scopeToEmbeddingSet(textConditions, textCond.params, textCond.nextIdx, options.embeddingSetId)
     const textWhere = textConditions.join(' AND ')
     const textParams = [query, ...textCond.params]
 
-    // BM25 ranked note IDs (full-text)
     const textResult = await this.db.query<{ id: string; rank: number }>(
       `SELECT n.id,
               ts_rank(
@@ -315,12 +272,15 @@ export class SearchRepository {
       textParams,
     )
 
-    // Build shared conditions for vector sub-query; conditions start at $1, vector appended after
     const vecCond = buildNoteConditions(options, 1)
+    if (options.embeddingSetId) {
+      vecCond.conditions.push('e.embedding_set_id = $' + vecCond.nextIdx)
+      vecCond.params.push(options.embeddingSetId)
+      vecCond.nextIdx += 1
+    }
     const vecWhere = vecCond.conditions.join(' AND ')
     const vecVecIdx = vecCond.nextIdx
 
-    // Vector ranked note IDs
     const vectorResult = await this.db.query<{ id: string; distance: number }>(
       `SELECT n.id, (e.vector <=> $${vecVecIdx}::vector) as distance
        FROM embedding e
@@ -331,40 +291,22 @@ export class SearchRepository {
       [...vecCond.params, vectorStr],
     )
 
-    // Build RRF scores
     const rrfScores = new Map<string, number>()
-
     textResult.rows.forEach((row, idx) => {
-      const score = 1 / (k + idx + 1)
-      rrfScores.set(row.id, (rrfScores.get(row.id) ?? 0) + score)
+      rrfScores.set(row.id, (rrfScores.get(row.id) ?? 0) + 1 / (k + idx + 1))
     })
-
     vectorResult.rows.forEach((row, idx) => {
-      const score = 1 / (k + idx + 1)
-      rrfScores.set(row.id, (rrfScores.get(row.id) ?? 0) + score)
+      rrfScores.set(row.id, (rrfScores.get(row.id) ?? 0) + 1 / (k + idx + 1))
     })
 
-    // Sort by RRF score descending
-    const sortedIds = Array.from(rrfScores.entries())
-      .sort((a, b) => b[1] - a[1])
-      .map(([id]) => id)
-
+    const sortedIds = Array.from(rrfScores.entries()).sort((a, b) => b[1] - a[1]).map(([id]) => id)
     const total = sortedIds.length
     const pageIds = sortedIds.slice(offset, offset + limit)
 
     if (pageIds.length === 0) {
-      return {
-        results: [],
-        total,
-        query,
-        mode: 'hybrid',
-        semantic_available: this.semanticAvailable,
-        limit,
-        offset,
-      }
+      return { results: [], total, query, mode: 'hybrid', semantic_available: this.semanticAvailable, limit, offset }
     }
 
-    // Fetch full note data for the page
     const noteResult = await this.db.query<{
       id: string
       title: string | null
@@ -380,13 +322,11 @@ export class SearchRepository {
       [pageIds],
     )
 
-    // Re-sort by RRF order
     const noteMap = new Map(noteResult.rows.map((r) => [r.id, r]))
     const [tagMap, embeddingSet] = await Promise.all([
       this.fetchTagMap(pageIds),
-      this.fetchEmbeddingSet(pageIds),
+      this.fetchEmbeddingSet(pageIds, options.embeddingSetId),
     ])
-
     const facets = options.include_facets ? await this.fetchFacets(sortedIds) : undefined
 
     return {
@@ -416,14 +356,10 @@ export class SearchRepository {
     }
   }
 
-  private async recentNotes(
-    options: SearchOptions = {},
-  ): Promise<SearchResponse> {
+  private async recentNotes(options: SearchOptions = {}): Promise<SearchResponse> {
     const { limit = 20, offset = 0 } = options
-
     const { conditions, params, nextIdx } = buildNoteConditions(options, 1)
-    let paramIdx = nextIdx
-
+    let paramIdx = this.scopeToEmbeddingSet(conditions, params, nextIdx, options.embeddingSetId)
     const where = conditions.join(' AND ')
 
     const countResult = await this.db.query<{ count: string }>(
@@ -451,7 +387,7 @@ export class SearchRepository {
     )
 
     const resultIds = result.rows.map((r) => r.id)
-    const embeddingSet = await this.fetchEmbeddingSet(resultIds)
+    const embeddingSet = await this.fetchEmbeddingSet(resultIds, options.embeddingSetId)
 
     return {
       results: result.rows.map((r) => ({
@@ -473,14 +409,8 @@ export class SearchRepository {
     }
   }
 
-  /**
-   * Fetch faceted aggregate counts for tags and collections across all matching note IDs.
-   * Uses the full (unpaginated) result set for accurate counts.
-   */
   private async fetchFacets(noteIds: string[]): Promise<SearchFacets> {
-    if (noteIds.length === 0) {
-      return { tags: [], collections: [] }
-    }
+    if (noteIds.length === 0) return { tags: [], collections: [] }
 
     const [tagResult, collResult] = await Promise.all([
       this.db.query<{ tag: string; count: string }>(

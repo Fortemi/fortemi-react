@@ -25,6 +25,11 @@ export type {
   ShardEmbeddingSet,
   ShardEmbeddingSetMember,
   ShardEmbedding,
+  ShardSkosScheme,
+  ShardSkosConcept,
+  ShardSkosRelation,
+  ShardNoteSkosTag,
+  ShardProvenanceEdge,
 } from './types.js'
 
 // Tar + gzip
@@ -48,6 +53,11 @@ export {
   embeddingSetMemberToShard,
   embeddingToShard,
   embeddingFromShard,
+  skosSchemeToShard,
+  skosConceptToShard,
+  skosRelationToShard,
+  noteSkosTagToShard,
+  provenanceEdgeToShard,
 } from './field-mapper.js'
 export type { BrowserNoteExport } from './field-mapper.js'
 

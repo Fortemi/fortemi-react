@@ -29,6 +29,8 @@ export type { UseInferenceCapabilitiesReturn } from './hooks/useInferenceCapabil
 export { useLocalDiscovery } from './hooks/useLocalDiscovery.js'
 export type { UseLocalDiscoveryReturn, UseLocalDiscoveryOptions } from './hooks/useLocalDiscovery.js'
 export { useEmbeddingPipeline } from './hooks/useEmbeddingPipeline.js'
+export { useEmbeddingSets } from './hooks/useEmbeddingSets.js'
+export { useSimilarityGraph } from './hooks/useSimilarityGraph.js'
 export type { UseEmbeddingPipelineReturn, EmbeddingPipelineStatus, EmbedFunctionLoader } from './hooks/useEmbeddingPipeline.js'
 export { useCapabilitySetup } from './hooks/useCapabilitySetup.js'
 export type { UseCapabilitySetupReturn, UseCapabilitySetupOptions, SetupCapabilitiesFn } from './hooks/useCapabilitySetup.js'

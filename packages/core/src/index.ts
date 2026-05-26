@@ -40,6 +40,8 @@ export { PGliteWorkerClient, TransactionProxy } from './worker/worker-client.js'
 
 export { NotesRepository } from './repositories/notes-repository.js'
 export { SearchRepository } from './repositories/search-repository.js'
+export { EmbeddingSetsRepository } from './repositories/embedding-sets-repository.js'
+export { GraphRepository, detectCommunities } from './repositories/graph-repository.js'
 export { buildNoteConditions } from './repositories/condition-builder.js'
 export type { ConditionResult } from './repositories/condition-builder.js'
 export type {
@@ -55,6 +57,8 @@ export type {
   SearchOptions,
   NoteRevision,
 } from './repositories/types.js'
+export type { EmbeddingSetRow, EmbeddingSetCreateInput, EmbeddingSetEmbeddingInput } from './repositories/embedding-sets-repository.js'
+export type { GraphNode, GraphEdge, GraphCommunity, CommunityGraph, SimilarityGraphOptions, CommunityOptions } from './repositories/graph-repository.js'
 
 export {
   JobQueueWorker,
@@ -221,6 +225,11 @@ export {
   embeddingSetMemberToShard,
   embeddingToShard,
   embeddingFromShard,
+  skosSchemeToShard,
+  skosConceptToShard,
+  skosRelationToShard,
+  noteSkosTagToShard,
+  provenanceEdgeToShard,
   exportShard,
   importShard,
 } from './shard/index.js'
@@ -239,5 +248,10 @@ export type {
   ShardEmbeddingSet,
   ShardEmbeddingSetMember,
   ShardEmbedding,
+  ShardSkosScheme,
+  ShardSkosConcept,
+  ShardSkosRelation,
+  ShardNoteSkosTag,
+  ShardProvenanceEdge,
   BrowserNoteExport,
 } from './shard/index.js'

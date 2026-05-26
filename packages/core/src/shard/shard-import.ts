@@ -30,6 +30,11 @@ import type {
   ShardEmbeddingSet,
   ShardEmbeddingSetMember,
   ShardEmbedding,
+  ShardSkosScheme,
+  ShardSkosConcept,
+  ShardSkosRelation,
+  ShardNoteSkosTag,
+  ShardProvenanceEdge,
 } from './types.js'
 
 const decoder = new TextDecoder()
@@ -62,6 +67,11 @@ export async function importShard(
     embedding_sets: 0,
     embedding_set_members: 0,
     embeddings: 0,
+    skos_schemes: 0,
+    skos_concepts: 0,
+    skos_relations: 0,
+    note_skos_tags: 0,
+    provenance_edges: 0,
   }
   const skipped: Partial<ImportCounts> = {}
 
@@ -148,6 +158,11 @@ export async function importShard(
     files.get('embedding_set_members.jsonl'),
   )
   const parsedEmbeddings = parseJsonl<ShardEmbedding>(files.get('embeddings.jsonl'))
+  const parsedSkosSchemes = parseJsonArray<ShardSkosScheme>(files.get('skos_schemes.json'))
+  const parsedSkosConcepts = parseJsonArray<ShardSkosConcept>(files.get('skos_concepts.json'))
+  const parsedSkosRelations = parseJsonl<ShardSkosRelation>(files.get('skos_relations.jsonl'))
+  const parsedNoteSkosTags = parseJsonl<ShardNoteSkosTag>(files.get('note_skos_tags.jsonl'))
+  const parsedProvenanceEdges = parseJsonl<ShardProvenanceEdge>(files.get('provenance_edges.jsonl'))
 
   // Warn about unknown components
   const knownFiles = new Set([
@@ -161,6 +176,11 @@ export async function importShard(
     'embedding_configs.json',
     'embeddings.jsonl',
     'templates.json',
+    'skos_schemes.json',
+    'skos_concepts.json',
+    'skos_relations.jsonl',
+    'note_skos_tags.jsonl',
+    'provenance_edges.jsonl',
   ])
   for (const filename of files.keys()) {
     if (!knownFiles.has(filename)) {
@@ -274,6 +294,44 @@ export async function importShard(
         counts.notes++
       }
 
+      // Import SKOS schemes and concepts before note concept assignments.
+      for (const scheme of parsedSkosSchemes) {
+        if (strategy === 'replace') {
+          await tx.query(
+            `INSERT INTO skos_scheme (id, title, description, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT (id) DO UPDATE SET title = $2, description = $3, updated_at = $5`,
+            [scheme.id, scheme.title, scheme.description, scheme.created_at, scheme.updated_at],
+          )
+        } else {
+          await tx.query(
+            `INSERT INTO skos_scheme (id, title, description, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5) ${conflictClause}`,
+            [scheme.id, scheme.title, scheme.description, scheme.created_at, scheme.updated_at],
+          )
+        }
+        counts.skos_schemes++
+      }
+
+      for (const concept of parsedSkosConcepts) {
+        const altLabels = JSON.stringify(concept.alt_labels ?? [])
+        if (strategy === 'replace') {
+          await tx.query(
+            `INSERT INTO skos_concept (id, scheme_id, pref_label, alt_labels, definition, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (id) DO UPDATE SET scheme_id = $2, pref_label = $3, alt_labels = $4, definition = $5, updated_at = $7`,
+            [concept.id, concept.scheme_id, concept.pref_label, altLabels, concept.definition, concept.created_at, concept.updated_at],
+          )
+        } else {
+          await tx.query(
+            `INSERT INTO skos_concept (id, scheme_id, pref_label, alt_labels, definition, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7) ${conflictClause}`,
+            [concept.id, concept.scheme_id, concept.pref_label, altLabels, concept.definition, concept.created_at, concept.updated_at],
+          )
+        }
+        counts.skos_concepts++
+      }
+
       // Import links
       for (const shardLink of parsedLinks) {
         const link = linkFromShard(shardLink)
@@ -294,21 +352,70 @@ export async function importShard(
         counts.links++
       }
 
+      // Import SKOS relations and note assignments after concepts and notes.
+      for (const relation of parsedSkosRelations) {
+        if (strategy === 'replace') {
+          await tx.query(
+            `INSERT INTO skos_concept_relation (id, source_concept_id, target_concept_id, relation_type, created_at)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT (id) DO UPDATE SET source_concept_id = $2, target_concept_id = $3, relation_type = $4`,
+            [relation.id, relation.source_concept_id, relation.target_concept_id, relation.relation_type, relation.created_at],
+          )
+        } else {
+          await tx.query(
+            `INSERT INTO skos_concept_relation (id, source_concept_id, target_concept_id, relation_type, created_at)
+             VALUES ($1, $2, $3, $4, $5) ${conflictClause}`,
+            [relation.id, relation.source_concept_id, relation.target_concept_id, relation.relation_type, relation.created_at],
+          )
+        }
+        counts.skos_relations++
+      }
+
+      for (const tag of parsedNoteSkosTags) {
+        await tx.query(
+          `INSERT INTO note_skos_tag (id, note_id, concept_id, created_at)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (note_id, concept_id) DO NOTHING`,
+          [tag.id, tag.note_id, tag.concept_id, tag.created_at],
+        )
+        counts.note_skos_tags++
+      }
+
+      // Import provenance edges.
+      for (const edge of parsedProvenanceEdges) {
+        const attributes = edge.attributes === null ? null : JSON.stringify(edge.attributes)
+        if (strategy === 'replace') {
+          await tx.query(
+            `INSERT INTO provenance_edge (id, entity_type, entity_id, activity, agent, started_at, ended_at, attributes)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             ON CONFLICT (id) DO UPDATE SET entity_type = $2, entity_id = $3, activity = $4, agent = $5, started_at = $6, ended_at = $7, attributes = $8`,
+            [edge.id, edge.entity_type, edge.entity_id, edge.activity, edge.agent, edge.started_at, edge.ended_at, attributes],
+          )
+        } else {
+          await tx.query(
+            `INSERT INTO provenance_edge (id, entity_type, entity_id, activity, agent, started_at, ended_at, attributes)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ${conflictClause}`,
+            [edge.id, edge.entity_type, edge.entity_id, edge.activity, edge.agent, edge.started_at, edge.ended_at, attributes],
+          )
+        }
+        counts.provenance_edges++
+      }
+
       // Import embedding sets
       for (const shardSet of parsedEmbSets) {
         const set = embeddingSetFromShard(shardSet)
         if (strategy === 'replace') {
           await tx.query(
-            `INSERT INTO embedding_set (id, model_name, dimensions, created_at)
-             VALUES ($1, $2, $3, $4)
-             ON CONFLICT (id) DO UPDATE SET model_name = $2, dimensions = $3`,
-            [set.id, set.model_name, set.dimensions, set.created_at],
+            `INSERT INTO embedding_set (id, name, purpose, model_name, dimensions, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             ON CONFLICT (id) DO UPDATE SET name = $2, purpose = $3, model_name = $4, dimensions = $5`,
+            [set.id, set.name, set.purpose, set.model_name, set.dimensions, set.created_at],
           )
         } else {
           await tx.query(
-            `INSERT INTO embedding_set (id, model_name, dimensions, created_at)
-             VALUES ($1, $2, $3, $4) ${conflictClause}`,
-            [set.id, set.model_name, set.dimensions, set.created_at],
+            `INSERT INTO embedding_set (id, name, purpose, model_name, dimensions, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6) ${conflictClause}`,
+            [set.id, set.name, set.purpose, set.model_name, set.dimensions, set.created_at],
           )
         }
         counts.embedding_sets++

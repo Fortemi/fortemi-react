@@ -143,6 +143,8 @@ Use `useFortemiContext()` when you need direct access to `db`, `events`, `archiv
 | `useInferenceCapabilities` | Hardware inference tier detection |
 | `useLocalDiscovery` | Local LLM server discovery |
 | `useEmbeddingPipeline` | Embedding pipeline lifecycle |
+| `useEmbeddingSets` | Named embedding set selection and creation |
+| `useSimilarityGraph` | Embedding-set scoped similarity graph construction |
 | `useCapabilitySetup` | Unified capability wiring |
 
 ## When to Use Core Directly

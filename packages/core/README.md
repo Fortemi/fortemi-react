@@ -107,7 +107,7 @@ await registerServiceWorker()
 | Surface | Description |
 |---|---|
 | PGlite archive | `opfs`, `idb`, and `memory` persistence modes with migrations on open |
-| Repositories | Notes, search, tags, collections, links, SKOS concepts, attachments, jobs, and provenance |
+| Repositories | Notes, search, tags, collections, links, SKOS concepts, attachments, embedding sets, graph helpers, jobs, and provenance |
 | Event bus | Typed subscriptions for note, job, archive, and capability events |
 | Capability system | Embeddings, local LLM, GPU detection, local-provider discovery, fallback routing |
 | Job queue | Server-compatible background workflow for revisions, titles, embeddings, concepts, and links |

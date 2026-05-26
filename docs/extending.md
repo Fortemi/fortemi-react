@@ -365,7 +365,7 @@ Migrations are plain objects with a `version` number, a `name` string, and a `sq
 - Never modify an existing migration file. It has already run in production databases.
 - Never reuse a version number.
 - Append only: the next migration is always `current_max + 1`.
-- The current highest version is `0004_embeddings` (version 4). Your first custom migration is version 5.
+- The current highest version is `0006_embedding_set_metadata` (version 6). Your first custom migration is version 7.
 
 ### Writing a migration
 

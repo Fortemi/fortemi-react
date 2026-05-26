@@ -1,11 +1,11 @@
-# Internal package publication for the local Gitea registry.
+# Public npmjs.org publication for the GitHub mirror.
 #
-# Public npmjs.org distribution is intentionally handled by the GitHub mirror
-# in .github/workflows/npm-publish.yml so npm provenance is attached from a
-# supported GitHub Actions environment. This Gitea workflow keeps the internal
-# registry current without using npmjs.org credentials.
+# Gitea remains the primary CI/internal-registry release path. This workflow is
+# the final public distribution leg: it runs only from signed v* release tags,
+# attaches npm provenance from GitHub Actions OIDC, and authenticates with the
+# NPMJS_TOKEN secret configured on the GitHub mirror.
 
-name: Publish Internal Packages
+name: Publish to npmjs.org
 
 on:
   push:
@@ -14,19 +14,23 @@ on:
   workflow_dispatch:
     inputs:
       tag_to_publish:
-        description: 'Signed v* tag to publish internally'
+        description: 'Signed v* tag to publish'
         required: true
         type: string
 
 concurrency:
-  group: internal-npm-publish-${{ github.ref }}
+  group: npmjs-publish-${{ github.ref }}
   cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   publish:
-    name: Publish to Gitea npm registry
+    name: Publish public npm packages with provenance
     runs-on: ubuntu-latest
-    container: node:22@sha256:62e4daa6819762bbd3072af77cc282ab72c631c4aed30dd7980192babaf385b3
+    container: node:24@sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb
     timeout-minutes: 20
     defaults:
       run:
@@ -38,6 +42,12 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+
+      - name: Setup Node for npmjs.org
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Resolve release tag
         id: release
@@ -156,21 +166,16 @@ jobs:
           }
           CHECK
 
-      - name: Publish packages to Gitea registry
+      - name: Publish packages to npmjs.org
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
           RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
         run: |
           set -euo pipefail
           if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "NPM_TOKEN is required for internal Gitea package publishing" >&2
+            echo "NPMJS_TOKEN is required on the GitHub mirror" >&2
             exit 1
           fi
-
-          REGISTRY="${GITHUB_SERVER_URL%/}/api/packages/${GITHUB_REPOSITORY_OWNER}/npm/"
-          AUTH_HOST="${REGISTRY#https://}"
-          AUTH_HOST="${AUTH_HOST#http://}"
-          printf '//%s:_authToken=%s\n' "$AUTH_HOST" "$NODE_AUTH_TOKEN" > ~/.npmrc
 
           TAG_VERSION="${RELEASE_TAG#v}"
           NPM_TAG="latest"
@@ -180,41 +185,41 @@ jobs:
               NPM_TAG="nightly"
             fi
           fi
-          echo "Publishing internal npm dist-tag: $NPM_TAG"
+          echo "Publishing npm dist-tag: $NPM_TAG"
 
           publish_package() {
             package_dir="$1"
             package_name="$(node -p "require('./${package_dir}/package.json').name")"
             package_version="$(node -p "require('./${package_dir}/package.json').version")"
 
-            if npm view "${package_name}@${package_version}" version --registry "$REGISTRY" >/dev/null 2>&1; then
-              echo "${package_name}@${package_version} already exists in Gitea; skipping publish"
+            if npm view "${package_name}@${package_version}" version >/dev/null 2>&1; then
+              echo "${package_name}@${package_version} already exists on npmjs.org; skipping publish"
             else
-              echo "Publishing ${package_name}@${package_version} to Gitea"
-              (cd "$package_dir" && pnpm publish --registry "$REGISTRY" --access public --no-git-checks --tag "$NPM_TAG")
+              echo "Publishing ${package_name}@${package_version} to npmjs.org"
+              (cd "$package_dir" && pnpm publish --provenance --access public --no-git-checks --tag "$NPM_TAG")
             fi
 
             for attempt in 1 2 3 4 5; do
-              published="$(npm view "${package_name}@${package_version}" version --registry "$REGISTRY" --prefer-online --no-update-notifier 2>/dev/null || echo "")"
+              published="$(npm view "${package_name}@${package_version}" version --prefer-online --no-update-notifier 2>/dev/null || echo "")"
               if [ "$published" = "$package_version" ]; then
                 break
               fi
-              echo "Attempt ${attempt}: ${package_name}@${package_version} not visible internally yet; retrying in 10s..."
+              echo "Attempt ${attempt}: ${package_name}@${package_version} not visible yet; retrying in 10s..."
               sleep 10
               if [ "$attempt" = "5" ]; then
-                echo "${package_name}@${package_version} did not become visible in Gitea" >&2
+                echo "${package_name}@${package_version} did not become visible on npmjs.org" >&2
                 exit 1
               fi
             done
 
             for attempt in 1 2 3 4 5; do
-              if npm dist-tag add "${package_name}@${package_version}" "$NPM_TAG" --registry "$REGISTRY"; then
+              if npm dist-tag add "${package_name}@${package_version}" "$NPM_TAG"; then
                 break
               fi
-              echo "Attempt ${attempt}: internal dist-tag promotion failed; retrying in 10s..."
+              echo "Attempt ${attempt}: dist-tag promotion failed; retrying in 10s..."
               sleep 10
               if [ "$attempt" = "5" ]; then
-                echo "internal dist-tag promotion exhausted retries for ${package_name}@${package_version}" >&2
+                echo "dist-tag promotion exhausted retries for ${package_name}@${package_version}" >&2
                 exit 1
               fi
             done

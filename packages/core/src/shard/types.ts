@@ -18,6 +18,11 @@ export type ShardComponent =
   | 'embedding_set_members'
   | 'embedding_configs'
   | 'embeddings'
+  | 'skos_schemes'
+  | 'skos_concepts'
+  | 'skos_relations'
+  | 'note_skos_tags'
+  | 'provenance_edges'
 
 /** Manifest included in every shard as manifest.json. */
 export interface ShardManifest {
@@ -57,6 +62,11 @@ export interface ImportCounts {
   embedding_sets: number
   embedding_set_members: number
   embeddings: number
+  skos_schemes: number
+  skos_concepts: number
+  skos_relations: number
+  note_skos_tags: number
+  provenance_edges: number
 }
 
 /** Result of a shard import operation. */
@@ -117,6 +127,8 @@ export interface ShardLink {
 /** Embedding set as serialized in the shard JSON array. */
 export interface ShardEmbeddingSet {
   id: string
+  name?: string
+  purpose?: string | null
   model: string
   dimension: number
   created_at: string
@@ -136,4 +148,54 @@ export interface ShardEmbedding {
   embedding_set_id: string
   vector: number[]
   created_at: string
+}
+
+
+/** SKOS scheme as serialized in the shard JSON array. */
+export interface ShardSkosScheme {
+  id: string
+  title: string
+  description: string | null
+  created_at: string
+  updated_at: string
+}
+
+/** SKOS concept as serialized in the shard JSON array. */
+export interface ShardSkosConcept {
+  id: string
+  scheme_id: string
+  pref_label: string
+  alt_labels: string[]
+  definition: string | null
+  created_at: string
+  updated_at: string
+}
+
+/** SKOS concept relation as serialized in the shard JSONL. */
+export interface ShardSkosRelation {
+  id: string
+  source_concept_id: string
+  target_concept_id: string
+  relation_type: 'broader' | 'narrower' | 'related'
+  created_at: string
+}
+
+/** Note-to-SKOS-concept assignment as serialized in the shard JSONL. */
+export interface ShardNoteSkosTag {
+  id: string
+  note_id: string
+  concept_id: string
+  created_at: string
+}
+
+/** Provenance edge as serialized in the shard JSONL. */
+export interface ShardProvenanceEdge {
+  id: string
+  entity_type: string
+  entity_id: string
+  activity: string
+  agent: string
+  started_at: string
+  ended_at: string | null
+  attributes: Record<string, unknown> | null
 }

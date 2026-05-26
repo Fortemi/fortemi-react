@@ -13,6 +13,11 @@ import type {
   ShardEmbeddingSet,
   ShardEmbeddingSetMember,
   ShardEmbedding,
+  ShardSkosScheme,
+  ShardSkosConcept,
+  ShardSkosRelation,
+  ShardNoteSkosTag,
+  ShardProvenanceEdge,
 } from './types.js'
 import type { LinkRow } from '../repositories/links-repository.js'
 import type { CollectionRow } from '../repositories/collections-repository.js'
@@ -166,12 +171,16 @@ export function tagsFromShard(shardTags: ShardTag[]): string[] {
 /** Convert a browser embedding_set to shard format. */
 export function embeddingSetToShard(set: {
   id: string
+  name?: string
+  purpose?: string | null
   model_name: string
   dimensions: number
   created_at: Date | string
 }): ShardEmbeddingSet {
   return {
     id: set.id,
+    name: set.name ?? set.model_name,
+    purpose: set.purpose ?? null,
     model: set.model_name,
     dimension: set.dimensions,
     created_at: toISOString(set.created_at),
@@ -181,12 +190,16 @@ export function embeddingSetToShard(set: {
 /** Convert a shard embedding set back to browser format. */
 export function embeddingSetFromShard(shard: ShardEmbeddingSet): {
   id: string
+  name: string
+  purpose: string | null
   model_name: string
   dimensions: number
   created_at: string
 } {
   return {
     id: shard.id,
+    name: shard.name ?? shard.model,
+    purpose: shard.purpose ?? null,
     model_name: shard.model,
     dimensions: shard.dimension,
     created_at: shard.created_at,
@@ -240,6 +253,99 @@ export function embeddingFromShard(shard: ShardEmbedding): {
   }
 }
 
+
+// ── SKOS ─────────────────────────────────────────────────────────────────
+
+export function skosSchemeToShard(scheme: {
+  id: string
+  title: string
+  description: string | null
+  created_at: Date | string
+  updated_at: Date | string
+}): ShardSkosScheme {
+  return {
+    id: scheme.id,
+    title: scheme.title,
+    description: scheme.description,
+    created_at: toISOString(scheme.created_at),
+    updated_at: toISOString(scheme.updated_at),
+  }
+}
+
+export function skosConceptToShard(concept: {
+  id: string
+  scheme_id: string
+  pref_label: string
+  alt_labels: string[] | string | null
+  definition: string | null
+  created_at: Date | string
+  updated_at: Date | string
+}): ShardSkosConcept {
+  return {
+    id: concept.id,
+    scheme_id: concept.scheme_id,
+    pref_label: concept.pref_label,
+    alt_labels: parseJsonArrayField(concept.alt_labels),
+    definition: concept.definition,
+    created_at: toISOString(concept.created_at),
+    updated_at: toISOString(concept.updated_at),
+  }
+}
+
+export function skosRelationToShard(relation: {
+  id: string
+  source_concept_id: string
+  target_concept_id: string
+  relation_type: 'broader' | 'narrower' | 'related'
+  created_at: Date | string
+}): ShardSkosRelation {
+  return {
+    id: relation.id,
+    source_concept_id: relation.source_concept_id,
+    target_concept_id: relation.target_concept_id,
+    relation_type: relation.relation_type,
+    created_at: toISOString(relation.created_at),
+  }
+}
+
+export function noteSkosTagToShard(tag: {
+  id: string
+  note_id: string
+  concept_id: string
+  created_at: Date | string
+}): ShardNoteSkosTag {
+  return {
+    id: tag.id,
+    note_id: tag.note_id,
+    concept_id: tag.concept_id,
+    created_at: toISOString(tag.created_at),
+  }
+}
+
+// ── Provenance ───────────────────────────────────────────────────────────
+
+export function provenanceEdgeToShard(edge: {
+  id: string
+  entity_type: string
+  entity_id: string
+  activity: string
+  agent: string
+  started_at: Date | string
+  ended_at: Date | string | null
+  attributes: Record<string, unknown> | string | null
+}): ShardProvenanceEdge {
+  return {
+    id: edge.id,
+    entity_type: edge.entity_type,
+    entity_id: edge.entity_id,
+    activity: edge.activity,
+    agent: edge.agent,
+    started_at: toISOString(edge.started_at),
+    ended_at: edge.ended_at ? toISOString(edge.ended_at) : null,
+    attributes: parseJsonObjectField(edge.attributes),
+  }
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────
 
 function toISOString(date: Date | string): string {
@@ -251,4 +357,18 @@ function toISOString(date: Date | string): string {
 function parseVector(vectorStr: string): number[] {
   const inner = vectorStr.replace(/^\[/, '').replace(/\]$/, '')
   return inner.split(',').map(Number)
+}
+
+function parseJsonArrayField(value: string[] | string | null): string[] {
+  if (Array.isArray(value)) return value
+  if (!value) return []
+  const parsed = JSON.parse(value)
+  return Array.isArray(parsed) ? parsed.map(String) : []
+}
+
+function parseJsonObjectField(value: Record<string, unknown> | string | null): Record<string, unknown> | null {
+  if (!value) return null
+  if (typeof value !== 'string') return value
+  const parsed = JSON.parse(value)
+  return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : null
 }
