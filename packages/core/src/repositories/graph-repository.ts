@@ -283,6 +283,10 @@ export class GraphRepository {
     )
   }
 
+  async loadGraphArtifact(graphSourceId: string, noteIds: string[] = []): Promise<CommunityGraph> {
+    return this.graphFromArtifact(graphSourceId, noteIds)
+  }
+
   private async buildSimilarityGraphFromResolved(
     resolved: ResolvedEmbeddingSet,
     options: SimilarityGraphOptions,
