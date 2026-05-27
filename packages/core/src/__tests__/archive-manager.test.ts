@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { ArchiveManager } from '../archive-manager.js'
 import { TypedEventBus } from '../event-bus.js'
+import { allMigrations } from '../migrations/index.js'
+
+const latestMigrationVersion = allMigrations[allMigrations.length - 1].version
 
 describe('ArchiveManager', { timeout: 30_000 }, () => {
   let manager: ArchiveManager
@@ -38,12 +41,12 @@ describe('ArchiveManager', { timeout: 30_000 }, () => {
     expect(result.rows).toHaveLength(1)
   })
 
-  it('runs migrations on open — version is 6 after open', async () => {
+  it('runs migrations on open — version is current after open', async () => {
     const db = await manager.open()
     const result = await db.query<{ version: number }>(
       'SELECT COALESCE(MAX(version), 0) AS version FROM schema_version',
     )
-    expect(result.rows[0].version).toBe(6)
+    expect(result.rows[0].version).toBe(latestMigrationVersion)
   })
 
   it('opens a named archive', async () => {
