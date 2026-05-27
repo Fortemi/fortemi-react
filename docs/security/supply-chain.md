@@ -13,7 +13,7 @@ Fortemi follows the AIWG security-engineering supply-chain baseline for npm publ
 - The publish workflow packs and inspects both npm artifacts before publish.
 - `@fortemi/core` is published before `@fortemi/react`.
 - Public npmjs.org publishing runs from the GitHub mirror in `.github/workflows/npm-publish.yml` using the mirror's `secrets.NPMJS_TOKEN` and `npm publish --provenance`.
-- Local Gitea publishing remains in `.gitea/workflows/publish.yml` and uses `secrets.NPM_TOKEN` only for the internal Gitea package registry.
+- Local Gitea publishing remains in `.gitea/workflows/publish.yml` and uses `secrets.GT_PUBLISH_TOKEN` for the internal Gitea package registry, falling back to `secrets.NPM_TOKEN` only for older repository configurations.
 
 ## Release Tag Recovery
 

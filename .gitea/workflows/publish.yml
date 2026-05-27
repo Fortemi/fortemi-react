@@ -158,12 +158,14 @@ jobs:
 
       - name: Publish packages to Gitea registry
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GT_PUBLISH_TOKEN: ${{ secrets.GT_PUBLISH_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
         run: |
           set -euo pipefail
+          NODE_AUTH_TOKEN="${GT_PUBLISH_TOKEN:-${NPM_TOKEN:-}}"
           if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "NPM_TOKEN is required for internal Gitea package publishing" >&2
+            echo "GT_PUBLISH_TOKEN or NPM_TOKEN is required for internal Gitea package publishing" >&2
             exit 1
           fi
 
