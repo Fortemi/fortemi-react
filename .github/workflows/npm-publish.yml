@@ -81,6 +81,8 @@ jobs:
           git checkout --detach "refs/tags/${TAG}"
 
       - name: Verify signed release tag
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
         run: bash tools/ci/verify-signed-tag.sh
 
       - name: Verify pnpm supply-chain gates
