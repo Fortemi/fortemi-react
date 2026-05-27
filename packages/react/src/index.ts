@@ -31,6 +31,7 @@ export type { UseLocalDiscoveryReturn, UseLocalDiscoveryOptions } from './hooks/
 export { useEmbeddingPipeline } from './hooks/useEmbeddingPipeline.js'
 export { useEmbeddingSets } from './hooks/useEmbeddingSets.js'
 export { useSimilarityGraph } from './hooks/useSimilarityGraph.js'
+export { useCommunities } from './hooks/useCommunities.js'
 export type { UseEmbeddingPipelineReturn, EmbeddingPipelineStatus, EmbedFunctionLoader } from './hooks/useEmbeddingPipeline.js'
 export { useCapabilitySetup } from './hooks/useCapabilitySetup.js'
 export type { UseCapabilitySetupReturn, UseCapabilitySetupOptions, SetupCapabilitiesFn } from './hooks/useCapabilitySetup.js'

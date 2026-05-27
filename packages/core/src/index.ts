@@ -42,6 +42,7 @@ export { NotesRepository } from './repositories/notes-repository.js'
 export { SearchRepository } from './repositories/search-repository.js'
 export { EmbeddingSetsRepository } from './repositories/embedding-sets-repository.js'
 export { GraphRepository, detectCommunities } from './repositories/graph-repository.js'
+export { CommunitiesRepository } from './repositories/communities-repository.js'
 export { buildNoteConditions } from './repositories/condition-builder.js'
 export type { ConditionResult } from './repositories/condition-builder.js'
 export type {
@@ -76,6 +77,7 @@ export type {
   ResolvedEmbeddingRow,
 } from './repositories/embedding-sets-repository.js'
 export type { GraphNode, GraphEdge, GraphCommunity, CommunityGraph, SimilarityGraphOptions, SimilarityGraphRequest, SimilarityGraphCacheKey, SimilarityGraphResult, CommunityOptions } from './repositories/graph-repository.js'
+export type { CommunitySourceType, CommunityFilterDefinition, CommunitySourceDescriptor, CommunityAssignmentView, CommunitySummary, CommunityCreateInput } from './repositories/communities-repository.js'
 
 export {
   JobQueueWorker,

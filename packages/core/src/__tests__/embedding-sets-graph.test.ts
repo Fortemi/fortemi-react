@@ -6,6 +6,7 @@ import { allMigrations } from '../migrations/index.js'
 import { EmbeddingSetsRepository } from '../repositories/embedding-sets-repository.js'
 import { SearchRepository } from '../repositories/search-repository.js'
 import { GraphRepository, detectCommunities } from '../repositories/graph-repository.js'
+import { CommunitiesRepository } from '../repositories/communities-repository.js'
 import { exportShard } from '../shard/shard-export.js'
 import { importShard } from '../shard/shard-import.js'
 import { unpackTarGz } from '../shard/shard-tar.js'
@@ -152,6 +153,40 @@ describe('embedding sets and graph APIs', () => {
   })
 
 
+
+
+  it('previews and saves dynamic and user-authored communities without overwriting each other', async () => {
+    const communities = new CommunitiesRepository(db)
+    const preview = await communities.previewDynamicCommunity({ query: 'Alpha' })
+    expect(preview.map((assignment) => assignment.noteId)).toEqual(['note-a'])
+
+    const dynamic = await communities.saveCommunity({
+      name: 'Alpha search snapshot',
+      label: 'Alpha',
+      sourceType: 'dynamic-snapshot',
+      filters: { query: 'Alpha' },
+    })
+    const authored = await communities.saveCommunity({
+      name: 'Manual pair',
+      label: 'Manual',
+      sourceType: 'user-authored',
+      noteIds: ['note-a', 'note-b'],
+      representativeNoteIds: ['note-a'],
+    })
+
+    const sources = await communities.listCommunitySources()
+    expect(sources.map((source) => source.sourceType).sort()).toEqual(['dynamic-snapshot', 'user-authored'])
+
+    const dynamicAssignments = await communities.getCommunityAssignments(dynamic.id)
+    const authoredAssignments = await communities.getCommunityAssignments(authored.id)
+    expect(dynamicAssignments.map((assignment) => assignment.noteId)).toEqual(['note-a'])
+    expect(authoredAssignments.map((assignment) => assignment.noteId)).toEqual(['note-a', 'note-b'])
+
+    await insertNote(db, 'note-c', 'Alpha C')
+    const rerun = await communities.rerunDynamicCommunity(dynamic.id)
+    expect(rerun.map((assignment) => assignment.noteId).sort()).toEqual(['note-a', 'note-c'])
+    expect((await communities.getCommunityAssignments(dynamic.id)).map((assignment) => assignment.noteId)).toEqual(['note-a'])
+  })
 
   it('builds, reuses, and invalidates cached similarity graph artifacts', async () => {
     const sets = new EmbeddingSetsRepository(db)
