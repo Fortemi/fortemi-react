@@ -75,7 +75,7 @@ export type {
   ResolvedEmbeddingSet,
   ResolvedEmbeddingRow,
 } from './repositories/embedding-sets-repository.js'
-export type { GraphNode, GraphEdge, GraphCommunity, CommunityGraph, SimilarityGraphOptions, CommunityOptions } from './repositories/graph-repository.js'
+export type { GraphNode, GraphEdge, GraphCommunity, CommunityGraph, SimilarityGraphOptions, SimilarityGraphRequest, SimilarityGraphCacheKey, SimilarityGraphResult, CommunityOptions } from './repositories/graph-repository.js'
 
 export {
   JobQueueWorker,

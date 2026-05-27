@@ -152,6 +152,33 @@ describe('embedding sets and graph APIs', () => {
   })
 
 
+
+  it('builds, reuses, and invalidates cached similarity graph artifacts', async () => {
+    const sets = new EmbeddingSetsRepository(db)
+    const set = await sets.create({ name: 'Cache vectors' })
+    await sets.putEmbedding({ note_id: 'note-a', embedding_set_id: set.id, vector: vec(1, 0) })
+    await sets.putEmbedding({ note_id: 'note-b', embedding_set_id: set.id, vector: vec(0.9, 0.1) })
+
+    const repo = new GraphRepository(db)
+    const selector = { kind: 'embedding-set' as const, embeddingSetId: set.id }
+    const first = await repo.buildOrLoadSimilarityGraph({ selector, k: 1, threshold: 0.5 })
+    expect(first.cache).toBe('miss-live-built')
+    expect(first.graph.edges).toHaveLength(1)
+
+    const second = await repo.buildOrLoadSimilarityGraph({ selector, k: 1, minSimilarity: 0.5 })
+    expect(second.cache).toBe('hit')
+    expect(second.graph.edges).toEqual(first.graph.edges)
+
+    await repo.markSimilarityGraphStale(first.graphSource.id, 'test invalidation')
+    await expect(repo.buildOrLoadSimilarityGraph({ selector, k: 1, minSimilarity: 0.5, source: 'cache-only' })).rejects.toThrow('similarity graph cache stale')
+
+    const rebuilt = await repo.buildOrLoadSimilarityGraph({ selector, k: 1, minSimilarity: 0.5 })
+    expect(rebuilt.cache).toBe('stale-live-built')
+    expect(rebuilt.graphSource.id).toBe(first.graphSource.id)
+
+    await expect(repo.buildOrLoadSimilarityGraph({ selector, minSimilarity: 0.2, threshold: 0.5 })).rejects.toThrow('conflicting-threshold')
+  })
+
   it('round-trips virtual embedding definitions and graph community artifacts through shards', async () => {
     const sets = new EmbeddingSetsRepository(db)
     const base = await sets.create({ id: 'base-set', name: 'Base vectors' })
