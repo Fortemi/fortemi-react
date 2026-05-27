@@ -2,6 +2,30 @@
 
 All notable changes to fortemi-react are documented here.
 
+## v2026.5.4 - 2026-05-27
+
+### Graph and Embedding Workflows
+
+- Added virtual embedding-set selectors and durable virtual embedding-set definitions for default, criteria, set-operation, fallback, latest-compatible, and snapshot workflows.
+- Added persisted graph/community artifact tables and Knowledge Shard import/export support for graph sources, graph edges, community sets, communities, and community assignments.
+- Added cached similarity graph APIs with freshness tracking, cache-only/live-only modes, stale marking, and threshold alias validation.
+- Added dynamic and user-authored community APIs plus React hooks for embedding sets, similarity graphs, communities, and graph-source controller state.
+
+### Release and Supply Chain
+
+- Split public npmjs.org distribution to the GitHub mirror workflow using `NPMJS_TOKEN` and npm provenance while keeping Gitea package publication for the internal registry.
+- Added the release-tag helper that forces the project release-signing key before publishing workflows run.
+- Fixed migration-count tests so future schema migrations do not require hard-coded test rewrites.
+
+### Published Packages
+
+- `@fortemi/core@2026.5.4`
+- `@fortemi/react@2026.5.4`
+
+### Upgrade Notes
+
+Consumers upgrading from `2026.5.3` get two new migrations: `0007_virtual_embedding_sets` and `0008_graph_community_artifacts`. Existing archives migrate on open. React consumers can keep existing hooks unchanged; the new graph/community hooks are additive.
+
 ## v2026.5.3 - 2026-05-24
 
 ### Package Documentation

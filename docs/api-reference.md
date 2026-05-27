@@ -1,7 +1,7 @@
 # API Reference
 
 **Packages:** `@fortemi/core` · `@fortemi/react`
-**Version:** 2026.5.3
+**Version:** 2026.5.4
 
 ---
 
@@ -20,6 +20,9 @@
     - [LinksRepository](#linksrepository)
     - [SkosRepository](#skosrepository)
     - [AttachmentsRepository](#attachmentsrepository)
+    - [EmbeddingSetsRepository](#embeddingsetsrepository)
+    - [GraphRepository](#graphrepository)
+    - [CommunitiesRepository](#communitiesrepository)
   - [Repository Types](#repository-types)
   - [Tool Functions](#tool-functions)
   - [Job Queue](#job-queue)
@@ -30,6 +33,7 @@
 - [@fortemi/react](#fortemireact)
   - [Provider](#provider)
   - [Hooks](#hooks)
+    - [Graph and community hooks](#graph-and-community-hooks)
 
 ---
 
@@ -43,7 +47,7 @@
 const VERSION: string
 ```
 
-The current package version string. Value: `'2026.5.3'`.
+The current package version string. Value: `'2026.5.4'`.
 
 ---
 
@@ -522,6 +526,71 @@ Unlike other repositories, `AttachmentsRepository` takes a `BlobStore` instead o
 | `getBlob(id)` | Retrieve the raw binary data for an attachment. |
 | `list(noteId)` | List all attachments for a note (metadata only). |
 | `delete(id)` | Remove metadata from the database and delete the blob. |
+
+---
+
+#### `EmbeddingSetsRepository`
+
+```typescript
+class EmbeddingSetsRepository {
+  constructor(db: PGlite, events?: TypedEventBus)
+
+  create(input: EmbeddingSetCreateInput): Promise<EmbeddingSetRow>
+  ensureDefault(): Promise<EmbeddingSetRow>
+  get(id: string): Promise<EmbeddingSetRow>
+  list(): Promise<EmbeddingSetRow[]>
+  listDescriptors(): Promise<EmbeddingSetDescriptor[]>
+  createVirtualDefinition(input: VirtualEmbeddingSetDefinition): Promise<EmbeddingSetRow>
+  putEmbedding(input: EmbeddingSetEmbeddingInput): Promise<{ id: string }>
+  resolveSelector(selector: EmbeddingSetSelector): Promise<ResolvedEmbeddingSet>
+}
+```
+
+Manages physical and virtual embedding sets. Selectors can target explicit sets, criteria-based sets, set operations, latest-compatible sets, snapshots, or fallback chains. Virtual definitions are durable metadata until materialized by application code.
+
+---
+
+#### `GraphRepository`
+
+```typescript
+class GraphRepository {
+  constructor(db: PGlite)
+
+  buildLinkGraph(): Promise<CommunityGraph>
+  buildSimilarityGraph(embeddingSet: string | EmbeddingSetSelector, options?: SimilarityGraphOptions): Promise<CommunityGraph>
+  buildOrLoadSimilarityGraph(request: SimilarityGraphRequest): Promise<SimilarityGraphResult>
+  saveSimilarityGraphArtifact(input: {
+    graph: CommunityGraph
+    request: Required<Pick<SimilarityGraphRequest, 'selector' | 'k' | 'minSimilarity' | 'metric' | 'source'>>
+    resolved: ResolvedEmbeddingSet
+    cacheKey: SimilarityGraphCacheKey
+    freshness?: 'fresh' | 'stale' | 'unknown'
+  }): Promise<SimilarityGraphResult['graphSource']>
+  markSimilarityGraphStale(graphSourceId: string, reason: string): Promise<void>
+  loadGraphArtifact(graphSourceId: string, noteIds?: string[]): Promise<CommunityGraph>
+}
+```
+
+Builds citation and embedding-similarity graphs, detects communities, and persists precomputed graph artifacts for shard export/import and UI reuse. Cached graph results include source metadata, freshness, and cache status.
+
+---
+
+#### `CommunitiesRepository`
+
+```typescript
+class CommunitiesRepository {
+  constructor(db: PGlite)
+
+  previewDynamicCommunity(filters: CommunityFilterDefinition): Promise<CommunityAssignmentView[]>
+  saveCommunity(input: CommunityCreateInput): Promise<CommunitySourceDescriptor>
+  rerunDynamicCommunity(sourceId: string): Promise<CommunityAssignmentView[]>
+  listCommunitySources(): Promise<CommunitySourceDescriptor[]>
+  getCommunityAssignments(sourceId: string): Promise<CommunityAssignmentView[]>
+  listCommunitySummaries(sourceId: string): Promise<CommunitySummary[]>
+}
+```
+
+Provides runtime-only dynamic community previews plus persisted dynamic snapshots and user-authored communities. Saved communities use the graph/community artifact tables so they can round-trip through Knowledge Shards.
 
 ---
 
@@ -1648,3 +1717,88 @@ Job results are summarized (e.g., `"3 links found"`, `"384-dim vector"`).
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `noteId` | `string` | required | Note to retrieve provenance timeline for |
+---
+
+### Graph and community hooks
+
+#### `useEmbeddingSets()`
+
+```typescript
+function useEmbeddingSets(): {
+  embeddingSets: EmbeddingSetDescriptor[]
+  loading: boolean
+  error: Error | null
+  refresh: () => Promise<void>
+  create: (input: EmbeddingSetCreateInput) => Promise<EmbeddingSetRow>
+  createVirtualDefinition: (input: VirtualEmbeddingSetDefinition) => Promise<EmbeddingSetRow>
+}
+```
+
+Lists physical and virtual embedding-set descriptors and creates new physical sets or durable virtual definitions.
+
+#### `useSimilarityGraph(embeddingSet, options?)`
+
+```typescript
+function useSimilarityGraph(
+  embeddingSet: string | EmbeddingSetSelector | null | undefined,
+  options?: SimilarityGraphOptions & { autoRefresh?: boolean }
+): {
+  graph: CommunityGraph | null
+  graphSource: SimilarityGraphResult['graphSource'] | null
+  cache: SimilarityGraphResult['cache'] | null
+  freshness: SimilarityGraphResult['freshness'] | null
+  loading: boolean
+  error: Error | null
+  refresh: () => Promise<SimilarityGraphResult | null>
+  recompute: () => Promise<SimilarityGraphResult | null>
+  markStale: (reason: string) => Promise<void>
+}
+```
+
+Loads cached precomputed similarity graphs when available, falls back to live computation, and exposes cache/freshness state for UI decisions.
+
+#### `useCommunities()`
+
+```typescript
+function useCommunities(): {
+  sources: CommunitySourceDescriptor[]
+  activeSourceId: string | null
+  summaries: CommunitySummary[]
+  assignments: Map<string, CommunityAssignmentView>
+  loading: boolean
+  error: Error | null
+  preview: (filters: CommunityFilterDefinition) => Promise<CommunityAssignmentView[]>
+  save: (input: CommunityCreateInput) => Promise<CommunitySourceDescriptor>
+  rerun: (sourceId: string) => Promise<CommunityAssignmentView[]>
+  setActiveSource: (sourceId: string | null) => void
+  refresh: (sourceId?: string | null) => Promise<void>
+}
+```
+
+Works with persisted community sources and unsaved dynamic previews for search-derived or manually authored groupings.
+
+#### `useGraphController(options?)`
+
+```typescript
+function useGraphController(options?: UseGraphControllerOptions): {
+  mode: 'citations' | 'topics' | 'precomputed' | 'dynamic-search' | 'user-authored'
+  graph: CommunityGraph | null
+  graphSource?: SimilarityGraphResult['graphSource'] | { id: string; name: string }
+  communitySource?: CommunitySourceDescriptor
+  embeddingSetSelector?: EmbeddingSetSelector
+  filters?: CommunityFilterDefinition
+  layout: GraphLayoutState
+  status: GraphControllerStatus
+  transition?: GraphTransitionState
+  setMode: (mode: GraphSourceMode) => void
+  setEmbeddingSetSelector: (selector: EmbeddingSetSelector) => void
+  setCommunitySource: (sourceId: string | null) => void
+  setFilters: (filters: CommunityFilterDefinition) => void
+  refresh: () => Promise<void>
+  recompute: () => Promise<void>
+  previewDynamicCommunity: (filters: CommunityFilterDefinition) => Promise<void>
+  saveCurrentCommunity: (input: CommunityCreateInput) => Promise<CommunitySourceDescriptor>
+}
+```
+
+Coordinates graph-source switching for citation, topic, precomputed, dynamic-search, and user-authored graph views without exposing raw SQL or graphology internals to React UI code.

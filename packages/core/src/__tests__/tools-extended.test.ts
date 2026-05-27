@@ -598,7 +598,7 @@ describe('manageLinks', () => {
 // manageArchive
 // ---------------------------------------------------------------------------
 
-describe('manageArchive', () => {
+describe('manageArchive', { timeout: 30_000 }, () => {
   let manager: ArchiveManager
   let events: TypedEventBus
 

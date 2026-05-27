@@ -576,7 +576,17 @@ Examples of invalid version strings: `2026.03.0` (leading zero in month), `2026.
 
 Git tags use a `v` prefix: `v2026.3.0`.
 
-All packages in the monorepo are versioned together. When cutting a release, update `version` in all three `package.json` files (`packages/core`, `packages/react`, `apps/standalone`) to the same version string before tagging.
+All packages in the monorepo are versioned together. When cutting a release, update `version` in the root package and all workspace `package.json` files (`packages/core`, `packages/react`, `apps/standalone`) to the same version string before tagging.
+
+## Release Cutting Checklist
+
+1. Update `package.json`, `packages/core/package.json`, `packages/react/package.json`, `apps/standalone/package.json`, and `packages/core/src/index.ts` to the target CalVer.
+2. Add a top-level `CHANGELOG.md` entry and a matching `docs/releases/v<version>.md` release note.
+3. Run `pnpm typecheck`, `pnpm lint`, `pnpm test:core`, `pnpm test:e2e`, and `pnpm build`.
+4. Commit the release-prep changes and wait for Gitea CI on `main` to pass.
+5. Cut the signed tag with the release key: `tools/release/cut-tag.sh <version> -m "v<version>"`.
+6. Push `main` and the signed tag to both remotes: `git push origin main --tags` and `git push github main --tags`.
+7. Confirm Gitea publishes the internal registry packages and the GitHub mirror publishes npmjs.org packages with provenance using `NPMJS_TOKEN`.
 
 ---
 

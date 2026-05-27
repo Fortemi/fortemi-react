@@ -83,10 +83,10 @@ function Notebook() {
 | Package | Published | Purpose |
 |---|---|---|
 | `@fortemi/core` | npm | Headless data layer: PGlite repositories, migrations, workers, tool helpers, event bus, capability system |
-| `@fortemi/react` | npm | React 19 provider and hooks for notes, search, tags, collections, jobs, capabilities, and shards |
+| `@fortemi/react` | npm | React 19 provider and hooks for notes, search, tags, collections, jobs, capabilities, shards, embedding sets, similarity graphs, and communities |
 | `@fortemi/standalone` | workspace app | Vite application for local development and static deployment |
 
-All packages are versioned together. The current release is `2026.5.3`.
+All packages are versioned together. The current release is `2026.5.4`.
 
 ## What You Get
 
@@ -94,6 +94,8 @@ All packages are versioned together. The current release is `2026.5.3`.
 - PGlite-backed local storage with `opfs`, `idb`, and `memory` persistence modes
 - Full-text search with PostgreSQL `tsvector` / `tsquery`, phrase search, filters, facets, and snippets
 - Hybrid semantic search with pgvector HNSW and BM25 reciprocal-rank fusion
+- Virtual embedding-set selectors, cached similarity graphs, and graph/community artifact persistence
+- Dynamic and user-authored communities with React graph-controller hooks for source switching
 - Tags, collections, inter-note links, SKOS schemes, concepts, and relations
 - Knowledge Shard tar.gz import/export with checksums and JSON format parity
 - 10 manifest-backed Fortemi tools plus 11 exported direct tool helper functions
