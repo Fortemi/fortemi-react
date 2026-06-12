@@ -2,6 +2,34 @@
 
 All notable changes to fortemi-react are documented here.
 
+## v2026.6.0 - 2026-06-12
+
+### AIWG CRM Integration
+
+- Added the AIWG Fortemi index import and validation surface for sanitized CRM/task exports.
+- Added review-decision export helpers and React `useAiwgIndex()` support so host apps can ingest, inspect, and act on AIWG index records.
+- Added API documentation and a dedicated AIWG CRM integration guide.
+
+### Job Queue Capability Gating
+
+- Deferred jobs with unavailable `required_capability` values before handler dispatch instead of letting LLM-dependent handlers run and fail with misleading provider errors.
+- Kept deferred jobs in `pending` without retry increments while storing a clear `requires capability '<name>' - not ready` message.
+- Added `job.blocked` and `capability.required` events so host apps can prompt users to enable missing capabilities on demand.
+
+### Release Infrastructure
+
+- Fixed internal publish credentials so the Gitea package workflow uses the Gitea publish token.
+- Passed the selected release tag through the publish verifier for manual publish reruns.
+
+### Published Packages
+
+- `@fortemi/core@2026.6.0`
+- `@fortemi/react@2026.6.0`
+
+### Upgrade Notes
+
+Consumers upgrading from `2026.5.4` get additive AIWG index APIs and improved job queue gating. Existing archives do not require a schema migration for this release.
+
 ## v2026.5.4 - 2026-05-27
 
 ### Graph and Embedding Workflows
