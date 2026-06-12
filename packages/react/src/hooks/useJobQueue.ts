@@ -46,6 +46,7 @@ export function useJobQueue(pollIntervalMs = 3000) {
     // Refresh on job events
     const completedSub = events.on('job.completed', refreshJobs)
     const failedSub = events.on('job.failed', refreshJobs)
+    const blockedSub = events.on('job.blocked', refreshJobs)
 
     return () => {
       worker.stop()
@@ -53,6 +54,7 @@ export function useJobQueue(pollIntervalMs = 3000) {
       clearInterval(statusTimer)
       completedSub.dispose()
       failedSub.dispose()
+      blockedSub.dispose()
     }
   }, [db, events, capabilityManager, pollIntervalMs])
 

@@ -23,8 +23,10 @@ export interface EventMap {
   'capability.ready': { name: string }
   'capability.disabled': { name: string }
   'capability.loading': { name: string; progress?: number }
+  'capability.required': { name: string; jobId: string; noteId: string; type: string; message: string }
   'job.completed': { id: string; noteId: string; type: string }
   'job.failed': { id: string; noteId: string; type: string; error: string }
+  'job.blocked': { id: string; noteId: string; type: string; capability: string; message: string }
   'archive.switched': { name: string }
   'migration.applied': { version: number }
   'provider.added': { id: string; name: string }

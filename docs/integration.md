@@ -630,7 +630,7 @@ const failed = noteJobs.filter(j => j.status === 'failed')
 
 ### Capability-gated jobs
 
-Jobs with a `required_capability` field are held in `pending` state until the corresponding capability is `ready`. The worker checks `capabilityManager.isReady(name)` before dispatching. You can set `requiredCapability` to `null` to bypass gating entirely.
+Jobs with a `required_capability` field are held in `pending` state until the corresponding capability is `ready`. The worker checks `capabilityManager.isReady(name)` before dispatching, stores a clear pending message such as `requires capability 'llm' — not ready`, and emits `job.blocked` plus `capability.required` so host apps can prompt the user to enable the missing capability. You can set `requiredCapability` to `null` to bypass gating entirely.
 
 Built-in capability gates:
 

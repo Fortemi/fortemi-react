@@ -1049,7 +1049,7 @@ class JobQueueWorker {
 ```typescript
 function enqueueJob(
   db: PGlite,
-  input: { noteId: string; jobType: JobType; priority?: number }
+  input: { noteId: string; jobType: JobType; priority?: number; requiredCapability?: string | null }
 ): Promise<string>
 ```
 
@@ -1148,6 +1148,9 @@ const JOB_CAPABILITIES: Record<JobType, CapabilityName>
 ```
 
 Maps each job type to the capability that must be ready before the job can run.
+If a pending job's required capability is not ready, the worker defers dispatch,
+keeps the job pending with a `requires capability '<name>' — not ready` message,
+and emits both `job.blocked` and `capability.required` events.
 
 ---
 

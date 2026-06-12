@@ -241,14 +241,14 @@ export class JobQueueWorker {
       if (job.required_capability) {
         const capName = job.required_capability as CapabilityName
         if (!this.capabilityManager?.isReady(capName)) {
-          console.log(`[JobQueue] Skipping ${job.job_type} — capability '${capName}' not ready`)
+          await this.blockForCapability(job, capName)
           continue
         }
       }
 
       // Mark as processing
       await this.db.query(
-        `UPDATE job_queue SET status = 'processing', updated_at = now() WHERE id = $1`,
+        `UPDATE job_queue SET status = 'processing', error = NULL, updated_at = now() WHERE id = $1`,
         [job.id],
       )
 
@@ -258,7 +258,7 @@ export class JobQueueWorker {
         console.log(`[JobQueue] Completed ${job.job_type}:`, jobResult)
 
         await this.db.query(
-          `UPDATE job_queue SET status = 'completed', result = $1, updated_at = now() WHERE id = $2`,
+          `UPDATE job_queue SET status = 'completed', error = NULL, result = $1, updated_at = now() WHERE id = $2`,
           [JSON.stringify(jobResult ?? null), job.id],
         )
 
@@ -296,6 +296,34 @@ export class JobQueueWorker {
     }
 
     return processed
+  }
+
+  private async blockForCapability(job: Job, capability: string): Promise<void> {
+    const message = `requires capability '${capability}' — not ready`
+    console.log(`[JobQueue] Deferring ${job.job_type} — ${message}`)
+
+    await this.db.query(
+      `UPDATE job_queue
+       SET status = 'pending', error = $1, updated_at = now()
+       WHERE id = $2 AND error IS DISTINCT FROM $1`,
+      [message, job.id],
+    )
+
+    this.events?.emit('job.blocked', {
+      id: job.id,
+      noteId: job.note_id,
+      type: job.job_type,
+      capability,
+      message,
+    })
+
+    this.events?.emit('capability.required', {
+      name: capability,
+      jobId: job.id,
+      noteId: job.note_id,
+      type: job.job_type,
+      message,
+    })
   }
 
   getBackoffDelay(retryCount: number): number {

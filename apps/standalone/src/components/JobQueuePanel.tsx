@@ -31,10 +31,12 @@ export function JobQueuePanel() {
     const timer = setInterval(refresh, 2000)
     const sub1 = events.on('job.completed', refresh)
     const sub2 = events.on('job.failed', refresh)
+    const sub3 = events.on('job.blocked', refresh)
     return () => {
       clearInterval(timer)
       sub1.dispose()
       sub2.dispose()
+      sub3.dispose()
     }
   }, [refresh, events])
 
