@@ -274,3 +274,27 @@ export type {
   ShardProvenanceEdge,
   BrowserNoteExport,
 } from './shard/index.js'
+
+export {
+  assertAiwgFortemiIndexExport,
+  createAiwgReviewDecisionExport,
+  getAiwgFortemiFacets,
+  queryAiwgFortemiIndex,
+  validateAiwgFortemiIndexExport,
+} from './aiwg-index.js'
+export type {
+  AiwgFortemiIndexExport,
+  AiwgFortemiProvenance,
+  AiwgFortemiRecord,
+  AiwgFortemiRecordSource,
+  AiwgFortemiRecordType,
+  AiwgFortemiRelationship,
+  AiwgIndexQueryOptions,
+  AiwgIndexQueryResult,
+  AiwgIndexValidationResult,
+  AiwgPrivacyClassification,
+  AiwgProvenanceConfidence,
+  AiwgReviewAction,
+  AiwgReviewDecision,
+  AiwgReviewDecisionExport,
+} from './aiwg-index.js'

@@ -1,0 +1,402 @@
+{
+  "schema_version": "aiwg.fortemi.index.export.v1",
+  "generated_at": "2026-01-01T00:00:00.000Z",
+  "source": {
+    "repo": "roctinam/crm-fixture",
+    "privacy": "sanitized"
+  },
+  "items": [
+    {
+      "schema_version": "aiwg.fortemi.index.record.v1",
+      "id": "aiwg:artifact:.aiwg/architecture/0003-provenance-per-field.md",
+      "type": "aiwg.artifact",
+      "source": {
+        "path": ".aiwg/architecture/0003-provenance-per-field.md#/0",
+        "repo_relative_path": ".aiwg/architecture/0003-provenance-per-field.md",
+        "locator": ".aiwg/architecture/0003-provenance-per-field.md#/0"
+      },
+      "title": "ADR 0003: Provenance Per Field",
+      "text": "Every enriched or externally sourced field carries provenance.",
+      "facets": {
+        "entity_type": [
+          "aiwg-artifact"
+        ],
+        "artifact_type": [
+          "adr"
+        ],
+        "phase": [
+          "inception"
+        ],
+        "privacy": [
+          "sanitized"
+        ]
+      },
+      "tags": [
+        "aiwg",
+        "crm",
+        "provenance"
+      ],
+      "concepts": [
+        "field-provenance"
+      ],
+      "relationships": [],
+      "provenance": [
+        {
+          "field": "artifact",
+          "source": "aiwg-index",
+          "path": ".aiwg/architecture/0003-provenance-per-field.md",
+          "confidence": "source",
+          "privacy": "sanitized"
+        }
+      ],
+      "privacy": {
+        "classification": "sanitized",
+        "pii": false
+      },
+      "updated_at": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "schema_version": "aiwg.fortemi.index.record.v1",
+      "id": "crm:contact:partiful-fixture-person-1",
+      "type": "crm.contact",
+      "source": {
+        "path": "data/contacts.json#/0",
+        "repo_relative_path": "data/contacts.json",
+        "locator": "data/contacts.json#/0"
+      },
+      "title": "Alex Example",
+      "text": "Alex Example\nperson\nalex-example\nfixture-person-1\nFixture Founder Breakfast",
+      "facets": {
+        "entity_type": [
+          "contact"
+        ],
+        "source": [
+          "partiful"
+        ],
+        "contact_kind": [
+          "person"
+        ],
+        "review_status": [
+          "source"
+        ],
+        "provenance_confidence": [
+          "source"
+        ]
+      },
+      "tags": [
+        "crm",
+        "partiful",
+        "person"
+      ],
+      "concepts": [
+        "person",
+        "relationship"
+      ],
+      "relationships": [
+        {
+          "type": "appears_in_event",
+          "target_id": "crm:event:fixture-event-1",
+          "source_path": "data/contacts.json"
+        }
+      ],
+      "provenance": [
+        {
+          "field": "name",
+          "source": "crm-json",
+          "path": "data/contacts.json",
+          "confidence": "source",
+          "privacy": "sanitized"
+        },
+        {
+          "field": "events",
+          "source": "crm-json",
+          "path": "data/contacts.json",
+          "confidence": "source",
+          "privacy": "sanitized"
+        }
+      ],
+      "privacy": {
+        "classification": "sanitized",
+        "pii": true
+      },
+      "updated_at": "1970-01-01T00:00:00.000Z"
+    },
+    {
+      "schema_version": "aiwg.fortemi.index.record.v1",
+      "id": "crm:event:fixture-event-1",
+      "type": "crm.event",
+      "source": {
+        "path": "data/events.json#/0",
+        "repo_relative_path": "data/events.json",
+        "locator": "data/events.json#/0"
+      },
+      "title": "Fixture Founder Breakfast",
+      "text": "Fixture Founder Breakfast\n2026-01-15\napproved\nprimary\nExample Hall\nhttps://example.invalid/events/fixture-event-1\nAlex Example\nExample Labs",
+      "facets": {
+        "entity_type": [
+          "event"
+        ],
+        "source": [
+          "partiful"
+        ],
+        "status": [
+          "approved"
+        ],
+        "tier": [
+          "primary"
+        ],
+        "review_status": [
+          "source"
+        ],
+        "provenance_confidence": [
+          "source"
+        ]
+      },
+      "tags": [
+        "crm",
+        "event",
+        "partiful",
+        "primary"
+      ],
+      "concepts": [
+        "event",
+        "relationship-signal"
+      ],
+      "relationships": [
+        {
+          "type": "host_named",
+          "target_id": "crm:contact-name:alex-example",
+          "source_path": "data/events.json"
+        },
+        {
+          "type": "host_named",
+          "target_id": "crm:contact-name:example-labs",
+          "source_path": "data/events.json"
+        }
+      ],
+      "provenance": [
+        {
+          "field": "title",
+          "source": "crm-json",
+          "path": "data/events.json",
+          "confidence": "source",
+          "privacy": "sanitized"
+        },
+        {
+          "field": "hosts",
+          "source": "crm-json",
+          "path": "data/events.json",
+          "confidence": "source",
+          "privacy": "sanitized"
+        }
+      ],
+      "privacy": {
+        "classification": "sanitized",
+        "pii": false
+      },
+      "updated_at": "1970-01-01T00:00:00.000Z"
+    },
+    {
+      "schema_version": "aiwg.fortemi.index.record.v1",
+      "id": "crm:interaction:partiful-fixture-org-1:fixture-event-1:sponsor",
+      "type": "crm.interaction",
+      "source": {
+        "path": "data/contacts.json#/1/events/0",
+        "repo_relative_path": "data/contacts.json",
+        "locator": "data/contacts.json#/1/events/0"
+      },
+      "title": "Example Labs sponsor Fixture Founder Breakfast",
+      "text": "Example Labs\nsponsor\nFixture Founder Breakfast\n2026-01-15\napproved",
+      "facets": {
+        "entity_type": [
+          "interaction"
+        ],
+        "source": [
+          "partiful"
+        ],
+        "role": [
+          "sponsor"
+        ],
+        "status": [
+          "approved"
+        ],
+        "review_status": [
+          "source"
+        ],
+        "provenance_confidence": [
+          "source"
+        ]
+      },
+      "tags": [
+        "crm",
+        "interaction",
+        "partiful",
+        "sponsor"
+      ],
+      "concepts": [
+        "event-participation",
+        "relationship-signal"
+      ],
+      "relationships": [
+        {
+          "type": "contact",
+          "target_id": "crm:organization:partiful-fixture-org-1",
+          "source_path": "data/contacts.json"
+        },
+        {
+          "type": "event",
+          "target_id": "crm:event:fixture-event-1",
+          "source_path": "data/contacts.json"
+        }
+      ],
+      "provenance": [
+        {
+          "field": "events",
+          "source": "crm-json",
+          "path": "data/contacts.json",
+          "confidence": "source",
+          "privacy": "sanitized"
+        }
+      ],
+      "privacy": {
+        "classification": "sanitized",
+        "pii": false
+      },
+      "updated_at": "1970-01-01T00:00:00.000Z"
+    },
+    {
+      "schema_version": "aiwg.fortemi.index.record.v1",
+      "id": "crm:interaction:partiful-fixture-person-1:fixture-event-1:host",
+      "type": "crm.interaction",
+      "source": {
+        "path": "data/contacts.json#/0/events/0",
+        "repo_relative_path": "data/contacts.json",
+        "locator": "data/contacts.json#/0/events/0"
+      },
+      "title": "Alex Example host Fixture Founder Breakfast",
+      "text": "Alex Example\nhost\nFixture Founder Breakfast\n2026-01-15\napproved",
+      "facets": {
+        "entity_type": [
+          "interaction"
+        ],
+        "source": [
+          "partiful"
+        ],
+        "role": [
+          "host"
+        ],
+        "status": [
+          "approved"
+        ],
+        "review_status": [
+          "source"
+        ],
+        "provenance_confidence": [
+          "source"
+        ]
+      },
+      "tags": [
+        "crm",
+        "host",
+        "interaction",
+        "partiful"
+      ],
+      "concepts": [
+        "event-participation",
+        "relationship-signal"
+      ],
+      "relationships": [
+        {
+          "type": "contact",
+          "target_id": "crm:contact:partiful-fixture-person-1",
+          "source_path": "data/contacts.json"
+        },
+        {
+          "type": "event",
+          "target_id": "crm:event:fixture-event-1",
+          "source_path": "data/contacts.json"
+        }
+      ],
+      "provenance": [
+        {
+          "field": "events",
+          "source": "crm-json",
+          "path": "data/contacts.json",
+          "confidence": "source",
+          "privacy": "sanitized"
+        }
+      ],
+      "privacy": {
+        "classification": "sanitized",
+        "pii": true
+      },
+      "updated_at": "1970-01-01T00:00:00.000Z"
+    },
+    {
+      "schema_version": "aiwg.fortemi.index.record.v1",
+      "id": "crm:organization:partiful-fixture-org-1",
+      "type": "crm.organization",
+      "source": {
+        "path": "data/contacts.json#/1",
+        "repo_relative_path": "data/contacts.json",
+        "locator": "data/contacts.json#/1"
+      },
+      "title": "Example Labs",
+      "text": "Example Labs\norg\nfixture-org-1\nFixture Founder Breakfast",
+      "facets": {
+        "entity_type": [
+          "organization"
+        ],
+        "source": [
+          "partiful"
+        ],
+        "contact_kind": [
+          "org"
+        ],
+        "review_status": [
+          "source"
+        ],
+        "provenance_confidence": [
+          "source"
+        ]
+      },
+      "tags": [
+        "crm",
+        "org",
+        "partiful"
+      ],
+      "concepts": [
+        "organization",
+        "relationship"
+      ],
+      "relationships": [
+        {
+          "type": "appears_in_event",
+          "target_id": "crm:event:fixture-event-1",
+          "source_path": "data/contacts.json"
+        }
+      ],
+      "provenance": [
+        {
+          "field": "name",
+          "source": "crm-json",
+          "path": "data/contacts.json",
+          "confidence": "source",
+          "privacy": "sanitized"
+        },
+        {
+          "field": "events",
+          "source": "crm-json",
+          "path": "data/contacts.json",
+          "confidence": "source",
+          "privacy": "sanitized"
+        }
+      ],
+      "privacy": {
+        "classification": "sanitized",
+        "pii": false
+      },
+      "updated_at": "1970-01-01T00:00:00.000Z"
+    }
+  ]
+}
