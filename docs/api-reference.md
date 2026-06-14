@@ -1,7 +1,7 @@
 # API Reference
 
 **Packages:** `@fortemi/core` · `@fortemi/react`
-**Version:** 2026.6.0
+**Version:** 2026.6.1
 
 ---
 
@@ -47,7 +47,7 @@
 const VERSION: string
 ```
 
-The current package version string. Value: `'2026.6.0'`.
+The current package version string. Value: `'2026.6.1'`.
 
 ---
 

@@ -26,6 +26,30 @@ filters by type, facets, tags, concepts, privacy, and relationship target.
 React apps can use `useAiwgIndex()` to load an export, search it, and maintain
 human-gated review decisions in local state.
 
+## Graph Projection
+
+`useAiwgIndex()` also exposes `toCommunityGraph()`, which projects the loaded
+AIWG export into graph nodes and edges suitable for `GraphView`. Nodes preserve
+the source item id, title, type, tags, concepts, privacy classification, and PII
+flag so reviewers can inspect CRM, task, and AIWG artifact relationships without
+writing back to canonical AIWG data.
+
+```tsx
+import { useEffect, useMemo } from 'react'
+import { GraphView, useAiwgIndex } from '@fortemi/react'
+
+function AiwgReviewGraph({ exportJson }: { exportJson: unknown }) {
+  const { index, loadIndex, toCommunityGraph } = useAiwgIndex()
+  const graph = useMemo(() => (index ? toCommunityGraph() : null), [index, toCommunityGraph])
+
+  useEffect(() => {
+    loadIndex(exportJson)
+  }, [exportJson, loadIndex])
+
+  return <GraphView graph={graph} height={520} />
+}
+```
+
 ## Review Queues
 
 Review decisions are exported separately as

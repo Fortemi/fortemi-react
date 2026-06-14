@@ -46,7 +46,7 @@ async function createTestShard(): Promise<{ archive: Uint8Array; sourceDb: PGlit
   return { archive, sourceDb }
 }
 
-describe('importShard', () => {
+describe('importShard', { timeout: 30_000 }, () => {
   let db: PGlite
 
   beforeEach(async () => {

@@ -2,6 +2,34 @@
 
 All notable changes to fortemi-react are documented here.
 
+## v2026.6.1 - 2026-06-14
+
+### Provider Configuration and Standalone UX
+
+- Added bridge-safe provider configuration in the standalone app with preloaded browser-local, OpenAI, OpenRouter, Ollama, LM Studio, Jan, llama.cpp, and vLLM options.
+- Kept API keys out of normal browser storage by requiring secure browser or machine-backed secret storage before persisting provider credentials.
+- Seeded the standalone app with the project documentation corpus so the default UX can search and review `/docs` content immediately after initialization.
+
+### PGlite and Shard Scalability
+
+- Added worker-mode PGlite support in `FortemiProvider` for UI-safe database startup and heavy archive work.
+- Added chunked Knowledge Shard import with progress callbacks and event-loop yielding.
+- Added set-scoped Knowledge Shard export and lazy/paged vector handling for large embedding archives.
+
+### Graph and AIWG Review
+
+- Added `GraphView` and AIWG index graph projection so loaded AIWG exports can be inspected as relationship graphs.
+- Exported bridge helpers and tests for the new provider, AIWG graph, shard, and worker-mode surfaces.
+
+### Published Packages
+
+- `@fortemi/core@2026.6.1`
+- `@fortemi/react@2026.6.1`
+
+### Upgrade Notes
+
+Consumers upgrading from `2026.6.0` get additive React props, shard options, AIWG graph projection helpers, and standalone provider configuration. Existing archives do not require a schema migration.
+
 ## v2026.6.0 - 2026-06-12
 
 ### AIWG CRM Integration

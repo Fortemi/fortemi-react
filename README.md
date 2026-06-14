@@ -86,7 +86,7 @@ function Notebook() {
 | `@fortemi/react` | npm | React 19 provider and hooks for notes, search, tags, collections, jobs, capabilities, shards, embedding sets, similarity graphs, and communities |
 | `@fortemi/standalone` | workspace app | Vite application for local development and static deployment |
 
-All packages are versioned together. The current release is `2026.6.0`.
+All packages are versioned together. The current release is `2026.6.1`.
 
 ## What You Get
 

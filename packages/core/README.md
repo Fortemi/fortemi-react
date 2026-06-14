@@ -38,7 +38,7 @@ Most browser note and knowledge apps choose between a thin IndexedDB wrapper, a 
 | Queryable knowledge | SQL-backed repositories for notes, links, tags, collections, SKOS concepts, jobs, and search |
 | Retrieval quality | Full-text search, pgvector-backed semantic search, hybrid ranking, snippets, facets, and filters |
 | AI-ready workflows | Optional embeddings, local LLM capability discovery, job provenance, and fallback routing |
-| Portable archives | Knowledge Shard tar.gz import/export with checksums and JSON format parity |
+| Portable archives | Knowledge Shard tar.gz import/export with set-scoped exports, chunked imports, checksums, and JSON format parity |
 | Agent integration | Manifest-backed tools and direct helper functions for bridge adapters and automation |
 | UI freedom | A headless package you can use from React, another framework, a browser extension, or a custom host |
 
@@ -111,7 +111,7 @@ await registerServiceWorker()
 | Event bus | Typed subscriptions for note, job, archive, and capability events |
 | Capability system | Embeddings, local LLM, GPU detection, local-provider discovery, fallback routing |
 | Job queue | Server-compatible background workflow for revisions, titles, embeddings, concepts, and links |
-| Knowledge Shards | Tar.gz import/export with checksums and JSON format parity |
+| Knowledge Shards | Tar.gz import/export with checksums, progress callbacks, yielding imports, set-scoped embedding exports, and JSON format parity |
 | Service-worker helpers | Route registration primitives for standalone browser integration |
 
 ## Search and Knowledge Model
@@ -144,11 +144,11 @@ Use the manifest when a host needs to advertise Fortemi operations to an agent r
 | `idb` | IndexedDB-backed PGlite data directory | Firefox and broad compatibility |
 | `memory` | In-memory database | Tests, demos, restricted browser contexts |
 
-Data stays in the selected browser storage mode unless your application explicitly exports it, imports it, or wires external providers. Optional AI capabilities are opt-in and can be routed to local WASM, local provider servers, or host-provided integrations depending on your product requirements.
+Data stays in the selected browser storage mode unless your application explicitly exports it, imports it, or wires external providers. Optional AI capabilities are opt-in and can be routed to local WASM, local provider servers, OpenAI-compatible APIs, or host-provided integrations depending on your product requirements. API keys should live only in browser or machine secure storage; if secure storage is unavailable, do not persist them.
 
 ## React Bindings
 
-For React applications, install `@fortemi/react`. It wraps `@fortemi/core` with `FortemiProvider`, context access, and 21 hooks.
+For React applications, install `@fortemi/react`. It wraps `@fortemi/core` with `FortemiProvider`, context access, worker-mode PGlite, graph visualization primitives, and the React hook surface.
 
 ```bash
 pnpm add @fortemi/react @fortemi/core react

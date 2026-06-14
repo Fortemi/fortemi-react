@@ -4,7 +4,7 @@
 
 **React 19 provider and hooks for local-first Fortemi knowledge archives**
 
-Build React knowledge apps with browser-local PostgreSQL storage, typed hooks, hybrid search, SKOS concepts, job queues, local AI capability setup, and Knowledge Shard import/export.
+Build React knowledge apps with browser-local PostgreSQL storage, typed hooks, hybrid search, SKOS concepts, job queues, configurable AI providers, graph views, and Knowledge Shard import/export.
 
 ```bash
 pnpm add @fortemi/react @fortemi/core react
@@ -34,12 +34,13 @@ Fortemi React is for product teams that want the user experience of a modern kno
 
 | Product need | React package support |
 |---|---|
-| Local-first user data | `FortemiProvider` opens OPFS, IndexedDB, or memory-backed PGlite archives |
+| Local-first user data | `FortemiProvider` opens OPFS, IndexedDB, or memory-backed PGlite archives on the main thread or in worker mode |
 | Fast note UI | Hooks for note CRUD, lists, single-note reads, deletion, and automatic refresh |
 | Search UX | Full-text, semantic, and hybrid search hooks with history and suggestions |
 | Knowledge organization | Tags, collections, links, SKOS concepts, related notes, and provenance hooks |
-| AI workflows | Job queue, embeddings, capability setup, GPU detection, and local-provider discovery hooks |
-| Portability | Knowledge Shard import/export hooks for moving archives between environments |
+| AI workflows | Job queue, embeddings, capability setup, GPU detection, local-provider discovery, and OpenAI-compatible provider configuration |
+| Portability | Knowledge Shard import/export hooks with chunked import progress and scoped embedding export |
+| Graph review | `GraphView` plus AIWG index graph projection for visual inspection workflows |
 | Advanced integration | Direct context access to the database, event bus, archive manager, capability manager, and blob store |
 
 ### What You Can Build
@@ -115,9 +116,13 @@ function Notebook() {
 |---|---|---|---|---|
 | `persistence` | <code>'opfs' \| 'idb' \| 'memory'</code> | Yes | - | Storage backend |
 | `archiveName` | `string` | No | `'default'` | Logical archive name |
+| `executionMode` | <code>'main' \| 'worker'</code> | No | `'main'` | Run PGlite on the main thread or in a Web Worker |
+| `createWorker` | `() => Worker` | No | package worker | Custom worker factory for host bundlers |
 | `children` | `ReactNode` | Yes | - | Application subtree |
 
 Use `useFortemiContext()` when you need direct access to `db`, `events`, `archiveManager`, `capabilityManager`, or `blobStore`. That lets you mix high-level hooks with custom repository queries, bridge adapters, background handlers, or diagnostics.
+
+Use `executionMode="worker"` for large imports, vector-heavy graph work, or any host where PGlite startup and query execution should not block the UI thread.
 
 ## Hooks
 
@@ -145,7 +150,28 @@ Use `useFortemiContext()` when you need direct access to `db`, `events`, `archiv
 | `useEmbeddingPipeline` | Embedding pipeline lifecycle |
 | `useEmbeddingSets` | Named embedding set selection and creation |
 | `useSimilarityGraph` | Embedding-set scoped similarity graph construction |
+| `useAiwgIndex` | Load, search, review, and project AIWG index exports into graph data |
 | `useCapabilitySetup` | Unified capability wiring |
+
+## GraphView
+
+`GraphView` renders graph data produced by similarity APIs or `useAiwgIndex().toCommunityGraph()`. It is designed for review surfaces where users inspect relationships, community clusters, and source records without leaving the local archive UI.
+
+```tsx
+import { useEffect, useMemo } from 'react'
+import { GraphView, useAiwgIndex } from '@fortemi/react'
+
+function AiwgGraph({ exportJson }: { exportJson: unknown }) {
+  const { index, loadIndex, toCommunityGraph } = useAiwgIndex()
+  const graph = useMemo(() => (index ? toCommunityGraph() : null), [index, toCommunityGraph])
+
+  useEffect(() => {
+    loadIndex(exportJson)
+  }, [exportJson, loadIndex])
+
+  return <GraphView graph={graph} height={480} />
+}
+```
 
 ## When to Use Core Directly
 
@@ -159,7 +185,7 @@ Start with `@fortemi/react` when your application is React-based and most intera
 | Firefox 111+ | IndexedDB fallback | WASM embeddings work; WebGPU support is limited |
 | Safari 17+ | Memory or IndexedDB depending context | Use `memory` when persistent storage is restricted |
 
-On Linux Chrome, local WebGPU inference commonly needs `--enable-unsafe-webgpu`. Data stays in the selected browser storage mode unless your application explicitly exports it, imports it, or wires external providers.
+On Linux Chrome, local WebGPU inference commonly needs `--enable-unsafe-webgpu`. Data stays in the selected browser storage mode unless your application explicitly exports it, imports it, or wires external providers. Browser or remote provider API keys should be persisted only through secure browser or machine storage; when that storage is unavailable, keep the provider disabled instead of storing secrets in plain local storage.
 
 ## Documentation
 
