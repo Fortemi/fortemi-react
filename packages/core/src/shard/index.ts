@@ -15,6 +15,8 @@ export type {
   ShardComponent,
   ExportOptions,
   ImportOptions,
+  ImportProgress,
+  ImportProgressPhase,
   ImportResult,
   ImportCounts,
   ConflictStrategy,

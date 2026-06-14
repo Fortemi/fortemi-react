@@ -47,6 +47,8 @@ export interface ExportOptions {
   collectionId?: string
   /** Filter to notes with this tag (e.g. 'app:research' for app-scoped export). */
   tag?: string
+  /** Export only these embedding sets and their member/vector rows. */
+  embeddingSetIds?: string[]
 }
 
 /** Conflict resolution strategy for shard import. */
@@ -55,6 +57,31 @@ export type ConflictStrategy = 'skip' | 'replace' | 'error'
 /** Options for shard import. */
 export interface ImportOptions {
   conflictStrategy?: ConflictStrategy
+  /** Rows processed between cooperative yields. Defaults to 250. */
+  batchSize?: number
+  /** Progress callback for long-running import phases. */
+  onProgress?: (progress: ImportProgress) => void
+}
+
+export type ImportProgressPhase =
+  | 'unpack'
+  | 'validate'
+  | 'collections'
+  | 'notes'
+  | 'skos'
+  | 'links'
+  | 'provenance'
+  | 'embedding_sets'
+  | 'embeddings'
+  | 'embedding_set_members'
+  | 'graph'
+  | 'communities'
+  | 'index'
+
+export interface ImportProgress {
+  phase: ImportProgressPhase
+  done: number
+  total: number
 }
 
 /** Per-entity import counts. */

@@ -1,5 +1,6 @@
 import type { PGlite } from '@electric-sql/pglite'
 import { createPGliteInstance, type PersistenceMode } from './db.js'
+import { PGliteWorkerClient } from './worker/worker-client.js'
 
 export interface QueryResult<T = Record<string, unknown>> {
   rows: T[]
@@ -69,3 +70,48 @@ export class PGliteStorageBackendFactory implements StorageBackendFactory {
 }
 
 export const defaultStorageBackendFactory = new PGliteStorageBackendFactory()
+
+export class PGliteWorkerStorageBackend implements StorageBackend {
+  readonly mode = 'readwrite'
+
+  constructor(
+    readonly id: string,
+    private client: PGliteWorkerClient,
+  ) {}
+
+  query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<QueryResult<T>> {
+    return this.client.query<T>(sql, params)
+  }
+
+  exec(sql: string): Promise<unknown> {
+    return this.client.exec(sql)
+  }
+
+  transaction<T>(fn: (tx: QueryExecutor) => Promise<T>): Promise<T> {
+    return this.client.transaction(fn)
+  }
+
+  close(): Promise<void> {
+    return this.client.close()
+  }
+}
+
+export interface PGliteWorkerStorageBackendFactoryOptions {
+  createWorker: () => Worker
+}
+
+export class PGliteWorkerStorageBackendFactory implements StorageBackendFactory {
+  constructor(private options: PGliteWorkerStorageBackendFactoryOptions) {}
+
+  async open(input: StorageOpenRequest): Promise<StorageBackend> {
+    const worker = this.options.createWorker()
+    const client = new PGliteWorkerClient(worker)
+    worker.postMessage({
+      type: 'INIT',
+      persistence: input.persistence,
+      archiveName: input.archiveName,
+    })
+    await client.waitReady()
+    return new PGliteWorkerStorageBackend(`pglite-worker:${input.persistence}:${input.archiveName}`, client)
+  }
+}

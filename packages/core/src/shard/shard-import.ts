@@ -42,6 +42,22 @@ import type {
 } from './types.js'
 
 const decoder = new TextDecoder()
+const DEFAULT_BATCH_SIZE = 250
+
+async function yieldToEventLoop(): Promise<void> {
+  const scheduler = (globalThis as unknown as { scheduler?: { yield?: () => Promise<void> } }).scheduler
+  if (scheduler?.yield) {
+    await scheduler.yield()
+    return
+  }
+  await new Promise<void>((resolve) => setTimeout(resolve, 0))
+}
+
+async function maybeYield(done: number, batchSize: number): Promise<void> {
+  if (batchSize > 0 && done > 0 && done % batchSize === 0) {
+    await yieldToEventLoop()
+  }
+}
 
 /**
  * Import a .shard archive into the database.
@@ -61,6 +77,8 @@ export async function importShard(
 ): Promise<ImportResult> {
   const start = performance.now()
   const strategy = options?.conflictStrategy ?? 'skip'
+  const batchSize = options?.batchSize ?? DEFAULT_BATCH_SIZE
+  const report = options?.onProgress
   const warnings: string[] = []
   const errors: string[] = []
   const counts: ImportCounts = {
@@ -87,9 +105,11 @@ export async function importShard(
   const inputData = data instanceof ArrayBuffer ? new Uint8Array(data) : data
 
   // ── Step 1: Unpack tar.gz ─────────────────────────────────────────────
+  report?.({ phase: 'unpack', done: 0, total: 1 })
   let files: Map<string, Uint8Array>
   try {
     files = unpackTarGz(inputData)
+    report?.({ phase: 'unpack', done: 1, total: 1 })
   } catch (err) {
     return {
       success: false,
@@ -144,6 +164,7 @@ export async function importShard(
   }
 
   // ── Step 3: Validate checksums ────────────────────────────────────────
+  report?.({ phase: 'validate', done: 0, total: 1 })
   const checksumResult = await validateChecksums(manifest.checksums, files)
   if (!checksumResult.valid) {
     return {
@@ -155,6 +176,7 @@ export async function importShard(
       duration_ms: performance.now() - start,
     }
   }
+  report?.({ phase: 'validate', done: 1, total: 1 })
 
   // ── Step 4: Parse all components ──────────────────────────────────────
   const parsedNotes = parseJsonl<ShardNote>(files.get('notes.jsonl'))
@@ -214,7 +236,8 @@ export async function importShard(
   try {
     await db.transaction(async (tx) => {
       // Import collections first (notes may reference them)
-      for (const shardCol of parsedCollections) {
+      report?.({ phase: 'collections', done: 0, total: parsedCollections.length })
+      for (const [index, shardCol] of parsedCollections.entries()) {
         const col = collectionFromShard(shardCol)
         if (strategy === 'replace') {
           await tx.query(
@@ -231,10 +254,13 @@ export async function importShard(
           )
         }
         counts.collections++
+        report?.({ phase: 'collections', done: index + 1, total: parsedCollections.length })
+        await maybeYield(index + 1, batchSize)
       }
 
       // Import notes
-      for (const shardNote of parsedNotes) {
+      report?.({ phase: 'notes', done: 0, total: parsedNotes.length })
+      for (const [index, shardNote] of parsedNotes.entries()) {
         const note = noteFromShard(shardNote)
         const contentHash = computeHash(new TextEncoder().encode(note.original_content))
 
@@ -309,9 +335,14 @@ export async function importShard(
         }
 
         counts.notes++
+        report?.({ phase: 'notes', done: index + 1, total: parsedNotes.length })
+        await maybeYield(index + 1, batchSize)
       }
 
       // Import SKOS schemes and concepts before note concept assignments.
+      const totalSkos = parsedSkosSchemes.length + parsedSkosConcepts.length + parsedSkosRelations.length + parsedNoteSkosTags.length
+      let doneSkos = 0
+      report?.({ phase: 'skos', done: doneSkos, total: totalSkos })
       for (const scheme of parsedSkosSchemes) {
         if (strategy === 'replace') {
           await tx.query(
@@ -328,6 +359,8 @@ export async function importShard(
           )
         }
         counts.skos_schemes++
+        report?.({ phase: 'skos', done: ++doneSkos, total: totalSkos })
+        await maybeYield(doneSkos, batchSize)
       }
 
       for (const concept of parsedSkosConcepts) {
@@ -347,10 +380,13 @@ export async function importShard(
           )
         }
         counts.skos_concepts++
+        report?.({ phase: 'skos', done: ++doneSkos, total: totalSkos })
+        await maybeYield(doneSkos, batchSize)
       }
 
       // Import links
-      for (const shardLink of parsedLinks) {
+      report?.({ phase: 'links', done: 0, total: parsedLinks.length })
+      for (const [index, shardLink] of parsedLinks.entries()) {
         const link = linkFromShard(shardLink)
         if (strategy === 'replace') {
           await tx.query(
@@ -367,6 +403,8 @@ export async function importShard(
           )
         }
         counts.links++
+        report?.({ phase: 'links', done: index + 1, total: parsedLinks.length })
+        await maybeYield(index + 1, batchSize)
       }
 
       // Import SKOS relations and note assignments after concepts and notes.
@@ -386,6 +424,8 @@ export async function importShard(
           )
         }
         counts.skos_relations++
+        report?.({ phase: 'skos', done: ++doneSkos, total: totalSkos })
+        await maybeYield(doneSkos, batchSize)
       }
 
       for (const tag of parsedNoteSkosTags) {
@@ -396,10 +436,13 @@ export async function importShard(
           [tag.id, tag.note_id, tag.concept_id, tag.created_at],
         )
         counts.note_skos_tags++
+        report?.({ phase: 'skos', done: ++doneSkos, total: totalSkos })
+        await maybeYield(doneSkos, batchSize)
       }
 
       // Import provenance edges.
-      for (const edge of parsedProvenanceEdges) {
+      report?.({ phase: 'provenance', done: 0, total: parsedProvenanceEdges.length })
+      for (const [index, edge] of parsedProvenanceEdges.entries()) {
         const attributes = edge.attributes === null ? null : JSON.stringify(edge.attributes)
         if (strategy === 'replace') {
           await tx.query(
@@ -416,10 +459,13 @@ export async function importShard(
           )
         }
         counts.provenance_edges++
+        report?.({ phase: 'provenance', done: index + 1, total: parsedProvenanceEdges.length })
+        await maybeYield(index + 1, batchSize)
       }
 
       // Import embedding sets
-      for (const shardSet of parsedEmbSets) {
+      report?.({ phase: 'embedding_sets', done: 0, total: parsedEmbSets.length })
+      for (const [index, shardSet] of parsedEmbSets.entries()) {
         const set = embeddingSetFromShard(shardSet)
         if (strategy === 'replace') {
           await tx.query(
@@ -442,10 +488,13 @@ export async function importShard(
           )
         }
         counts.embedding_sets++
+        report?.({ phase: 'embedding_sets', done: index + 1, total: parsedEmbSets.length })
+        await maybeYield(index + 1, batchSize)
       }
 
       // Import embeddings
-      for (const shardEmb of parsedEmbeddings) {
+      report?.({ phase: 'embeddings', done: 0, total: parsedEmbeddings.length })
+      for (const [index, shardEmb] of parsedEmbeddings.entries()) {
         const emb = embeddingFromShard(shardEmb)
         if (strategy === 'replace') {
           await tx.query(
@@ -462,11 +511,16 @@ export async function importShard(
           )
         }
         counts.embeddings++
+        report?.({ phase: 'embeddings', done: index + 1, total: parsedEmbeddings.length })
+        await maybeYield(index + 1, batchSize)
       }
 
 
 
       // Import graph/community artifacts after primary graph inputs exist.
+      const totalGraph = parsedGraphSources.length + parsedGraphEdges.length
+      let doneGraph = 0
+      report?.({ phase: 'graph', done: doneGraph, total: totalGraph })
       for (const source of parsedGraphSources) {
         const parameters = source.parameters == null ? null : JSON.stringify(source.parameters)
         const freshness = JSON.stringify({ ...(source.freshness ?? {}), status: 'unknown' })
@@ -481,6 +535,8 @@ export async function importShard(
           [source.id, source.name, source.kind, source.source_table ?? null, source.embedding_set_id ?? null, source.virtual_set_id ?? null, source.model ?? null, source.dimension ?? null, source.truncate_dimension ?? null, source.metric ?? null, source.algorithm ?? null, parameters, source.input_hash, freshness, source.created_at],
         )
         counts.graph_sources++
+        report?.({ phase: 'graph', done: ++doneGraph, total: totalGraph })
+        await maybeYield(doneGraph, batchSize)
       }
 
       for (const edge of parsedGraphEdges) {
@@ -494,8 +550,13 @@ export async function importShard(
           [edge.graph_source_id, edge.from_note_id, edge.to_note_id, edge.weight, edge.kind, edge.rank ?? null, metadata],
         )
         counts.graph_edges++
+        report?.({ phase: 'graph', done: ++doneGraph, total: totalGraph })
+        await maybeYield(doneGraph, batchSize)
       }
 
+      const totalCommunities = parsedCommunitySets.length + parsedCommunitySets.reduce((sum, set) => sum + (set.communities?.length ?? 0), 0) + parsedCommunityAssignments.length
+      let doneCommunities = 0
+      report?.({ phase: 'communities', done: doneCommunities, total: totalCommunities })
       for (const set of parsedCommunitySets) {
         const parameters = set.parameters == null ? null : JSON.stringify(set.parameters)
         const freshness = JSON.stringify({ ...(set.freshness ?? {}), status: 'unknown' })
@@ -508,6 +569,8 @@ export async function importShard(
           [set.id, set.graph_source_id, set.name, set.source_type, set.algorithm ?? null, parameters, set.input_hash, freshness, set.created_at],
         )
         counts.community_sets++
+        report?.({ phase: 'communities', done: ++doneCommunities, total: totalCommunities })
+        await maybeYield(doneCommunities, batchSize)
 
         for (const community of set.communities ?? []) {
           const metadata = community.metadata == null ? null : JSON.stringify(community.metadata)
@@ -520,6 +583,8 @@ export async function importShard(
             [set.id, community.id, community.label ?? null, community.rank ?? null, community.size ?? null, community.confidence ?? null, community.representative_note_ids ?? [], metadata],
           )
           counts.communities++
+          report?.({ phase: 'communities', done: ++doneCommunities, total: totalCommunities })
+          await maybeYield(doneCommunities, batchSize)
         }
       }
 
@@ -534,18 +599,24 @@ export async function importShard(
           [assignment.community_set_id, assignment.community_id, assignment.note_id, assignment.confidence ?? null, assignment.source_type, metadata],
         )
         counts.community_assignments++
+        report?.({ phase: 'communities', done: ++doneCommunities, total: totalCommunities })
+        await maybeYield(doneCommunities, batchSize)
       }
 
       // Import embedding set members
-      for (const member of parsedEmbMembers) {
+      report?.({ phase: 'embedding_set_members', done: 0, total: parsedEmbMembers.length })
+      for (const [index, member] of parsedEmbMembers.entries()) {
         await tx.query(
           `INSERT INTO embedding_set_member (embedding_set_id, note_id, embedding_id)
            VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
           [member.embedding_set_id, member.note_id, member.embedding_id],
         )
         counts.embedding_set_members++
+        report?.({ phase: 'embedding_set_members', done: index + 1, total: parsedEmbMembers.length })
+        await maybeYield(index + 1, batchSize)
       }
     })
+    report?.({ phase: 'index', done: 1, total: 1 })
   } catch (err) {
     return {
       success: false,

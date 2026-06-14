@@ -13,6 +13,7 @@ import { allMigrations } from '../../migrations/index.js'
 import { NotesRepository } from '../../repositories/notes-repository.js'
 import { CollectionsRepository } from '../../repositories/collections-repository.js'
 import { LinksRepository } from '../../repositories/links-repository.js'
+import { EmbeddingSetsRepository } from '../../repositories/embedding-sets-repository.js'
 import { exportShard } from '../../shard/shard-export.js'
 import { unpackTarGz } from '../../shard/shard-tar.js'
 import { validateChecksums } from '../../shard/checksum.js'
@@ -200,6 +201,56 @@ describe('exportShard', () => {
 
     expect(files.has('embeddings.jsonl')).toBe(false)
     expect(files.has('embedding_sets.json')).toBe(false)
+  })
+
+  it('scopes exported embeddings to selected embedding sets', async () => {
+    const note = await notes.create({ content: 'Vector scoped note' })
+    const embeddingSets = new EmbeddingSetsRepository(db)
+    const summaries = await embeddingSets.create({
+      name: 'Summaries',
+      purpose: 'summary search',
+      model_name: 'summary-model',
+      dimensions: 384,
+    })
+    const full = await embeddingSets.create({
+      name: 'Full content',
+      purpose: 'deep search',
+      model_name: 'full-model',
+      dimensions: 384,
+    })
+    await embeddingSets.putEmbedding({
+      note_id: note.id,
+      embedding_set_id: summaries.id,
+      vector: [1, ...new Array(383).fill(0)],
+    })
+    await embeddingSets.putEmbedding({
+      note_id: note.id,
+      embedding_set_id: full.id,
+      vector: [0, 1, ...new Array(382).fill(0)],
+    })
+
+    const archive = await exportShard(db, {
+      includeEmbeddings: true,
+      embeddingSetIds: [summaries.id],
+    })
+    const files = unpackTarGz(archive)
+    const exportedSets = JSON.parse(new TextDecoder().decode(files.get('embedding_sets.json')!)) as Array<{ id: string }>
+    const exportedEmbeddings = new TextDecoder()
+      .decode(files.get('embeddings.jsonl')!)
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => JSON.parse(line) as { embedding_set_id: string })
+    const exportedMembers = new TextDecoder()
+      .decode(files.get('embedding_set_members.jsonl')!)
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => JSON.parse(line) as { embedding_set_id: string })
+
+    expect(exportedSets.map((set) => set.id)).toEqual([summaries.id])
+    expect(exportedEmbeddings).toHaveLength(1)
+    expect(exportedEmbeddings[0].embedding_set_id).toBe(summaries.id)
+    expect(exportedMembers).toHaveLength(1)
+    expect(exportedMembers[0].embedding_set_id).toBe(summaries.id)
   })
 
   it('exports global tag list', async () => {

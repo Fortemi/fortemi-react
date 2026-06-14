@@ -8,8 +8,23 @@ export type { EventMap, IDisposable } from './event-bus.js'
 export { createPGliteInstance } from './db.js'
 export type { PersistenceMode } from './db.js'
 
-export { PGliteStorageBackend, PGliteStorageBackendFactory, defaultStorageBackendFactory } from './storage-backend.js'
-export type { DatabaseClient, QueryExecutor, QueryResult, StorageBackend, StorageBackendFactory, StorageOpenRequest, StorageTopology } from './storage-backend.js'
+export {
+  PGliteStorageBackend,
+  PGliteStorageBackendFactory,
+  PGliteWorkerStorageBackend,
+  PGliteWorkerStorageBackendFactory,
+  defaultStorageBackendFactory,
+} from './storage-backend.js'
+export type {
+  DatabaseClient,
+  QueryExecutor,
+  QueryResult,
+  StorageBackend,
+  StorageBackendFactory,
+  StorageOpenRequest,
+  StorageTopology,
+  PGliteWorkerStorageBackendFactoryOptions,
+} from './storage-backend.js'
 
 export { CapabilityManager } from './capability-manager.js'
 export type { CapabilityName, CapabilityState } from './capability-manager.js'
@@ -257,6 +272,8 @@ export type {
   ShardComponent,
   ExportOptions,
   ImportOptions,
+  ImportProgress,
+  ImportProgressPhase,
   ImportResult,
   ImportCounts,
   ConflictStrategy,

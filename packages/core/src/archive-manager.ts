@@ -25,12 +25,13 @@ export class ArchiveManager {
   constructor(
     persistenceOrFactory: PersistenceMode | StorageBackendFactory,
     private events?: TypedEventBus,
+    persistenceOverride?: PersistenceMode,
   ) {
     if (typeof persistenceOrFactory === 'string') {
       this.persistence = persistenceOrFactory
       this.backendFactory = defaultStorageBackendFactory
     } else {
-      this.persistence = 'memory'
+      this.persistence = persistenceOverride ?? 'memory'
       this.backendFactory = persistenceOrFactory
     }
 

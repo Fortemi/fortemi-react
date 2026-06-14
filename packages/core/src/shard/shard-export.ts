@@ -288,6 +288,8 @@ export async function exportShard(
 
   // ── Query embeddings (optional) ─────────────────────────────────────
   if (options?.includeEmbeddings) {
+    const embeddingSetIds = options.embeddingSetIds?.filter(Boolean) ?? []
+    const setScoped = embeddingSetIds.length > 0
     const embSetRows = await db.query<{
       id: string
       name: string
@@ -295,7 +297,13 @@ export async function exportShard(
       model_name: string
       dimensions: number
       created_at: Date
-    }>(`SELECT * FROM embedding_set ORDER BY created_at`)
+    }>(
+      `SELECT * FROM embedding_set
+       ${setScoped ? 'WHERE id = ANY($1)' : ''}
+       ORDER BY created_at`,
+      setScoped ? [embeddingSetIds] : [],
+    )
+    const exportedSetIds = new Set(embSetRows.rows.map((row) => row.id))
 
     const shardEmbSets = embSetRows.rows.map(embeddingSetToShard)
     files.set('embedding_sets.json', encoder.encode(JSON.stringify(shardEmbSets)))
@@ -306,14 +314,21 @@ export async function exportShard(
       embedding_set_id: string
       note_id: string
       embedding_id: string
-    }>(`SELECT * FROM embedding_set_member`)
+    }>(
+      `SELECT * FROM embedding_set_member
+       ${setScoped ? 'WHERE embedding_set_id = ANY($1)' : ''}`,
+      setScoped ? [embeddingSetIds] : [],
+    )
+    const scopedEmbMemberRows = embMemberRows.rows.filter((member) =>
+      exportedSetIds.has(member.embedding_set_id) && exportedNoteIds.has(member.note_id),
+    )
 
-    const membersJsonl = embMemberRows.rows
+    const membersJsonl = scopedEmbMemberRows
       .map((m) => JSON.stringify(embeddingSetMemberToShard(m)))
       .join('\n')
     files.set('embedding_set_members.jsonl', encoder.encode(membersJsonl))
     components.push('embedding_set_members')
-    counts.embedding_set_members = embMemberRows.rows.length
+    counts.embedding_set_members = scopedEmbMemberRows.length
 
     const embRows = await db.query<{
       id: string
@@ -321,12 +336,23 @@ export async function exportShard(
       embedding_set_id: string
       vector: string
       created_at: Date
-    }>(`SELECT * FROM embedding ORDER BY created_at`)
+    }>(
+      `SELECT * FROM embedding
+       ${setScoped ? 'WHERE embedding_set_id = ANY($1)' : ''}
+       ORDER BY created_at`,
+      setScoped ? [embeddingSetIds] : [],
+    )
+    const memberEmbeddingIds = new Set(scopedEmbMemberRows.map((member) => member.embedding_id))
+    const scopedEmbRows = embRows.rows.filter((embedding) =>
+      exportedSetIds.has(embedding.embedding_set_id) &&
+      exportedNoteIds.has(embedding.note_id) &&
+      (memberEmbeddingIds.size === 0 || memberEmbeddingIds.has(embedding.id)),
+    )
 
-    const embJsonl = embRows.rows.map((e) => JSON.stringify(embeddingToShard(e))).join('\n')
+    const embJsonl = scopedEmbRows.map((e) => JSON.stringify(embeddingToShard(e))).join('\n')
     files.set('embeddings.jsonl', encoder.encode(embJsonl))
     components.push('embeddings')
-    counts.embeddings = embRows.rows.length
+    counts.embeddings = scopedEmbRows.length
   }
 
 
@@ -349,8 +375,13 @@ export async function exportShard(
     freshness_json: unknown
     created_at: Date
   }>(`SELECT * FROM graph_source ORDER BY created_at, id`)
-  if (graphSourceRows.rows.length > 0) {
-    const shardGraphSources = graphSourceRows.rows.map((row) => ({
+  const graphScoped = !!options?.embeddingSetIds?.length
+  const scopedGraphSourceRows = graphScoped
+    ? graphSourceRows.rows.filter((row) => !row.embedding_set_id || options.embeddingSetIds?.includes(row.embedding_set_id))
+    : graphSourceRows.rows
+  const exportedGraphSourceIds = new Set(scopedGraphSourceRows.map((row) => row.id))
+  if (scopedGraphSourceRows.length > 0) {
+    const shardGraphSources = scopedGraphSourceRows.map((row) => ({
       id: row.id,
       name: row.name,
       kind: row.kind,
@@ -381,8 +412,11 @@ export async function exportShard(
     rank: number | null
     metadata_json: unknown | null
   }>(`SELECT * FROM graph_edge_artifact ORDER BY graph_source_id, from_note_id, to_note_id, kind`)
-  if (graphEdgeRows.rows.length > 0) {
-    const graphEdgesJsonl = graphEdgeRows.rows.map((row) => JSON.stringify({
+  const scopedGraphEdgeRows = graphScoped
+    ? graphEdgeRows.rows.filter((row) => exportedGraphSourceIds.has(row.graph_source_id))
+    : graphEdgeRows.rows
+  if (scopedGraphEdgeRows.length > 0) {
+    const graphEdgesJsonl = scopedGraphEdgeRows.map((row) => JSON.stringify({
       graph_source_id: row.graph_source_id,
       from_note_id: row.from_note_id,
       to_note_id: row.to_note_id,
@@ -393,7 +427,7 @@ export async function exportShard(
     })).join('\n')
     files.set('graph_edges.jsonl', encoder.encode(graphEdgesJsonl))
     components.push('graph_edges')
-    counts.graph_edges = graphEdgeRows.rows.length
+    counts.graph_edges = scopedGraphEdgeRows.length
   }
 
   const communitySetRows = await db.query<{
@@ -417,14 +451,21 @@ export async function exportShard(
     representative_note_ids: string[] | null
     metadata_json: unknown | null
   }>(`SELECT * FROM community ORDER BY community_set_id, rank NULLS LAST, id`)
-  if (communitySetRows.rows.length > 0) {
+  const scopedCommunitySetRows = graphScoped
+    ? communitySetRows.rows.filter((row) => exportedGraphSourceIds.has(row.graph_source_id))
+    : communitySetRows.rows
+  const exportedCommunitySetIds = new Set(scopedCommunitySetRows.map((row) => row.id))
+  const scopedCommunityRows = graphScoped
+    ? communityRows.rows.filter((row) => exportedCommunitySetIds.has(row.community_set_id))
+    : communityRows.rows
+  if (scopedCommunitySetRows.length > 0) {
     const communitiesBySet = new Map<string, typeof communityRows.rows>()
-    for (const row of communityRows.rows) {
+    for (const row of scopedCommunityRows) {
       const rows = communitiesBySet.get(row.community_set_id) ?? []
       rows.push(row)
       communitiesBySet.set(row.community_set_id, rows)
     }
-    const shardCommunitySets = communitySetRows.rows.map((row) => ({
+    const shardCommunitySets = scopedCommunitySetRows.map((row) => ({
       id: row.id,
       graph_source_id: row.graph_source_id,
       name: row.name,
@@ -447,7 +488,7 @@ export async function exportShard(
     files.set('communities.json', encoder.encode(JSON.stringify(shardCommunitySets)))
     components.push('communities')
     counts.community_sets = shardCommunitySets.length
-    counts.communities = communityRows.rows.length
+    counts.communities = scopedCommunityRows.length
   }
 
   const assignmentRows = await db.query<{
@@ -458,8 +499,11 @@ export async function exportShard(
     source_type: 'precomputed' | 'dynamic-snapshot' | 'user-authored' | 'imported'
     metadata_json: unknown | null
   }>(`SELECT * FROM community_assignment ORDER BY community_set_id, community_id, note_id`)
-  if (assignmentRows.rows.length > 0) {
-    const assignmentsJsonl = assignmentRows.rows.map((row) => JSON.stringify({
+  const scopedAssignmentRows = graphScoped
+    ? assignmentRows.rows.filter((row) => exportedCommunitySetIds.has(row.community_set_id))
+    : assignmentRows.rows
+  if (scopedAssignmentRows.length > 0) {
+    const assignmentsJsonl = scopedAssignmentRows.map((row) => JSON.stringify({
       community_set_id: row.community_set_id,
       community_id: row.community_id,
       note_id: row.note_id,
@@ -469,7 +513,7 @@ export async function exportShard(
     })).join('\n')
     files.set('community_assignments.jsonl', encoder.encode(assignmentsJsonl))
     components.push('community_assignments')
-    counts.community_assignments = assignmentRows.rows.length
+    counts.community_assignments = scopedAssignmentRows.length
   }
 
   // ── Compute checksums ───────────────────────────────────────────────

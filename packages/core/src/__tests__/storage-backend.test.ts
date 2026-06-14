@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   ArchiveManager,
+  PGliteWorkerStorageBackendFactory,
   TagsRepository,
   type QueryExecutor,
   type QueryResult,
@@ -8,6 +9,43 @@ import {
   type StorageBackendFactory,
   type StorageOpenRequest,
 } from '../index.js'
+
+class MockWorker {
+  private handlers: Array<(e: MessageEvent) => void> = []
+  readonly sent: unknown[] = []
+  terminated = false
+
+  postMessage(data: Record<string, unknown>): void {
+    this.sent.push(data)
+    if (data.type === 'INIT') {
+      queueMicrotask(() => this.broadcast({ type: 'READY' }))
+      return
+    }
+    if (data.type === 'CLOSE') {
+      queueMicrotask(() => this.broadcast({ id: data.id as string, type: 'EXEC_DONE' }))
+      return
+    }
+    if (data.type === 'QUERY') {
+      queueMicrotask(() => this.broadcast({ id: data.id as string, type: 'RESULT', rows: [{ ok: true }] }))
+      return
+    }
+    queueMicrotask(() => this.broadcast({ id: data.id as string, type: 'EXEC_DONE' }))
+  }
+
+  addEventListener(type: string, handler: (e: MessageEvent) => void): void {
+    if (type === 'message') this.handlers.push(handler)
+  }
+
+  terminate(): void {
+    this.terminated = true
+  }
+
+  private broadcast(data: unknown): void {
+    for (const handler of this.handlers) {
+      handler(new MessageEvent('message', { data }))
+    }
+  }
+}
 
 class FakeStorageBackend implements StorageBackend {
   readonly mode = 'readwrite' as const
@@ -90,5 +128,33 @@ describe('storage backend abstraction', () => {
 
     expect(backend.queries[0].params?.slice(1)).toEqual(['note-1', 'portable'])
     expect(backend.queries[0].sql).toContain('INSERT INTO note_tag')
+  })
+
+  it('passes persistence through to an injected backend factory when provided', async () => {
+    const factory = new FakeStorageBackendFactory()
+    const manager = new ArchiveManager(factory, undefined, 'idb')
+
+    await manager.open('worker-archive')
+
+    expect(factory.requests).toEqual([{ archiveName: 'worker-archive', persistence: 'idb' }])
+    await manager.close()
+  })
+
+  it('opens a PGlite worker backend with INIT and wraps query/close', async () => {
+    const worker = new MockWorker()
+    const factory = new PGliteWorkerStorageBackendFactory({
+      createWorker: () => worker as unknown as Worker,
+    })
+
+    const backend = await factory.open({ archiveName: 'docs', persistence: 'opfs' })
+    const init = worker.sent[0] as Record<string, unknown>
+    expect(init).toMatchObject({ type: 'INIT', archiveName: 'docs', persistence: 'opfs' })
+    expect(backend.id).toBe('pglite-worker:opfs:docs')
+
+    const result = await backend.query<{ ok: boolean }>('SELECT true AS ok')
+    expect(result.rows[0].ok).toBe(true)
+
+    await backend.close()
+    expect(worker.terminated).toBe(true)
   })
 })

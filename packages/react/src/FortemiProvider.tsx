@@ -1,5 +1,13 @@
 import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react'
-import { ArchiveManager, CapabilityManager, TypedEventBus, createBlobStore, type PersistenceMode, type BlobStore } from '@fortemi/core'
+import {
+  ArchiveManager,
+  CapabilityManager,
+  PGliteWorkerStorageBackendFactory,
+  TypedEventBus,
+  createBlobStore,
+  type PersistenceMode,
+  type BlobStore,
+} from '@fortemi/core'
 
 type PGliteInstance = Awaited<ReturnType<ArchiveManager['open']>>
 
@@ -16,6 +24,8 @@ const FortemiContext = createContext<FortemiContextValue | null>(null)
 export interface FortemiProviderProps {
   persistence: PersistenceMode
   archiveName?: string
+  executionMode?: 'main' | 'worker'
+  createWorker?: () => Worker
   children: ReactNode
 }
 
@@ -23,23 +33,51 @@ export interface FortemiProviderProps {
 // PGlite WASM can only be instantiated once per Response — a second call
 // to WebAssembly.instantiateStreaming() with the same cached Response fails
 // with "Response already consumed".
-let globalInitPromise: Promise<{ db: PGliteInstance; events: TypedEventBus; manager: ArchiveManager; capManager: CapabilityManager; blobStore: BlobStore }> | null = null
+const globalInitPromises = new Map<string, Promise<{ db: PGliteInstance; events: TypedEventBus; manager: ArchiveManager; capManager: CapabilityManager; blobStore: BlobStore }>>()
 
-function initFortemi(persistence: PersistenceMode, archiveName: string) {
-  if (!globalInitPromise) {
-    globalInitPromise = (async () => {
+function defaultCreateWorker(): Worker {
+  return new Worker(new URL('@fortemi/core/worker/pglite-worker', import.meta.url), {
+    type: 'module',
+  })
+}
+
+function initFortemi(
+  persistence: PersistenceMode,
+  archiveName: string,
+  executionMode: 'main' | 'worker',
+  createWorker?: () => Worker,
+) {
+  const key = `${executionMode}:${persistence}:${archiveName}`
+  let promise = globalInitPromises.get(key)
+  if (!promise) {
+    promise = (async () => {
       const events = new TypedEventBus()
-      const manager = new ArchiveManager(persistence, events)
+      const manager = executionMode === 'worker'
+        ? new ArchiveManager(
+            new PGliteWorkerStorageBackendFactory({
+              createWorker: createWorker ?? defaultCreateWorker,
+            }),
+            events,
+            persistence,
+          )
+        : new ArchiveManager(persistence, events)
       const capManager = new CapabilityManager(events)
       const blobStore = createBlobStore(archiveName)
       const db = await manager.open(archiveName)
       return { db, events, manager, capManager, blobStore }
     })()
+    globalInitPromises.set(key, promise)
   }
-  return globalInitPromise
+  return promise
 }
 
-export function FortemiProvider({ persistence, archiveName = 'default', children }: FortemiProviderProps) {
+export function FortemiProvider({
+  persistence,
+  archiveName = 'default',
+  executionMode = 'main',
+  createWorker,
+  children,
+}: FortemiProviderProps) {
   const [ctx, setCtx] = useState<FortemiContextValue | null>(null)
   const [error, setError] = useState<string | null>(null)
   const initRef = useRef(false)
@@ -49,12 +87,12 @@ export function FortemiProvider({ persistence, archiveName = 'default', children
     if (initRef.current) return
     initRef.current = true
 
-    initFortemi(persistence, archiveName).then(({ db, events, manager, capManager, blobStore }) => {
+    initFortemi(persistence, archiveName, executionMode, createWorker).then(({ db, events, manager, capManager, blobStore }) => {
       setCtx({ db, events, archiveManager: manager, capabilityManager: capManager, blobStore })
     }).catch((err) => {
       setError(err instanceof Error ? err.message : String(err))
     })
-  }, [persistence, archiveName])
+  }, [persistence, archiveName, executionMode, createWorker])
 
   if (error) throw new Error(`FortemiProvider init failed: ${error}`)
   if (!ctx) return null // Loading state handled by parent Suspense or loading screen

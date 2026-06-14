@@ -18,7 +18,7 @@ import { exportShard } from '../../shard/shard-export.js'
 import { importShard } from '../../shard/shard-import.js'
 import { packTarGz } from '../../shard/shard-tar.js'
 import { sha256Hex } from '../../shard/checksum.js'
-import type { ShardManifest } from '../../shard/types.js'
+import type { ImportProgress, ShardManifest } from '../../shard/types.js'
 
 const encoder = new TextEncoder()
 
@@ -68,6 +68,24 @@ describe('importShard', () => {
     expect(result.counts.collections).toBe(1)
     expect(result.counts.links).toBe(1)
     expect(result.errors).toEqual([])
+  })
+
+  it('reports import progress phases without changing existing result shape', async () => {
+    const { archive, sourceDb } = await createTestShard()
+    const progress: ImportProgress[] = []
+
+    const result = await importShard(db, archive, {
+      batchSize: 1,
+      onProgress: (event) => progress.push(event),
+    })
+    await sourceDb.close()
+
+    expect(result.success).toBe(true)
+    expect(progress.some((event) => event.phase === 'unpack' && event.done === event.total)).toBe(true)
+    expect(progress.some((event) => event.phase === 'validate' && event.done === event.total)).toBe(true)
+    expect(progress.some((event) => event.phase === 'notes' && event.done === 2 && event.total === 2)).toBe(true)
+    expect(progress.some((event) => event.phase === 'links' && event.done === 1 && event.total === 1)).toBe(true)
+    expect(progress.some((event) => event.phase === 'index' && event.done === event.total)).toBe(true)
   })
 
   it('imported notes have correct content', async () => {

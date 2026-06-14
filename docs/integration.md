@@ -139,11 +139,15 @@ export function HostApp() {
 |------|------|----------|-------------|
 | `persistence` | `'opfs' \| 'idb' \| 'memory'` | Yes | Storage backend. Use `opfs` for production, `memory` for tests. |
 | `archiveName` | `string` | No (default: `'default'`) | Name of the initial archive to open. Maps to `opfs-ahp://fortemi-{name}` or `idb://fortemi-{name}`. |
+| `executionMode` | `'main' \| 'worker'` | No (default: `'main'`) | Runs PGlite on the main thread or in a Web Worker. Use `worker` for large imports, vector indexes, or heavy search workloads. |
+| `createWorker` | `() => Worker` | No | Optional worker factory for custom bundlers or host shells. Defaults to `new Worker(new URL('@fortemi/core/worker/pglite-worker', import.meta.url), { type: 'module' })`. |
 | `children` | `ReactNode` | Yes | Component subtree that will consume the context. |
 
 While PGlite is initializing, `FortemiProvider` returns `null`. The Suspense boundary above it displays the loading UI during that window.
 
-**React StrictMode note:** `FortemiProvider` uses a module-level singleton promise (`globalInitPromise`) to prevent double-initialization from StrictMode's deliberate double-mount in development. The PGlite WASM module can only be instantiated once per cached `Response` — a second `WebAssembly.instantiateStreaming()` call against the same cached response will fail. The guard handles this automatically; you do not need to disable StrictMode.
+**Worker mode:** `executionMode="worker"` keeps database work off the UI thread while preserving the same `db.query`, `db.exec`, and `db.transaction` surface used by hooks and repositories. `opfs`, `idb`, and `memory` persistence are forwarded to the worker-backed database.
+
+**React StrictMode note:** `FortemiProvider` uses module-level singleton promises keyed by execution mode, persistence, and archive name to prevent double-initialization from StrictMode's deliberate double-mount in development. The PGlite WASM module can only be instantiated once per cached `Response` — a second `WebAssembly.instantiateStreaming()` call against the same cached response will fail. The guard handles this automatically; you do not need to disable StrictMode.
 
 ---
 
@@ -1007,7 +1011,36 @@ await manageArchive({ action: 'switch', name: 'fieldwork-notes' }, archiveManage
 
 ---
 
-## 11. Service Worker Setup
+## 11. Knowledge Shard Import/Export
+
+`importShard` accepts optional progress and batching controls for large corpora:
+
+```ts
+await importShard(db, bytes, {
+  conflictStrategy: 'skip',
+  batchSize: 250,
+  onProgress: ({ phase, done, total }) => {
+    console.log(`${phase}: ${done}/${total}`)
+  },
+})
+```
+
+The importer reports phases such as `unpack`, `validate`, `notes`, `embeddings`, `embedding_set_members`, and `index`. It yields between batches so hosts can repaint progress UI even when not using worker mode.
+
+`exportShard` can scope embedding payloads to specific sets:
+
+```ts
+const summariesOnly = await exportShard(db, {
+  includeEmbeddings: true,
+  embeddingSetIds: ['summary-set-id'],
+})
+```
+
+Use this for the recommended large-corpus pattern: ship a small summary embedding set as the default semantic experience, then import a larger content/deep-search set on demand. HNSW and vector search can only rank vectors that are already loaded and indexed; for very large corpora, use text or summary search to select candidates before loading/reranking deeper content vectors.
+
+---
+
+## 12. Service Worker Setup
 
 The service worker registers REST route shapes under `/api/v1/*`. The current route handlers return 503 until standalone-mode database wiring injects a live PGlite connection, so direct tool functions remain the primary integration point for code running inside the app.
 
