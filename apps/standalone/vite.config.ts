@@ -48,6 +48,19 @@ export default defineConfig({
   worker: {
     format: 'es',
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('@huggingface/transformers')) return 'ai-transformers'
+          if (id.includes('@mlc-ai/web-llm')) return 'ai-web-llm'
+          if (id.includes('/pages/GraphPage') || id.includes('/components/GraphView')) return 'graph'
+          if (id.includes('/examples/')) return 'examples'
+          if (id.includes('/pages/SettingsPage') || id.includes('/capabilities/')) return 'settings'
+        },
+      },
+    },
+  },
   // PGlite requires SharedArrayBuffer — these COOP/COEP headers are mandatory
   server: {
     headers: {

@@ -34,6 +34,23 @@ function vec(first: number, second: number): number[] {
   return [first, second, ...new Array(382).fill(0)]
 }
 
+function parseVector(value: string): number[] {
+  return value.replace(/^\[/, '').replace(/\]$/, '').split(',').filter(Boolean).map(Number)
+}
+
+function cosineSimilarity(left: number[], right: number[]): number {
+  let dot = 0
+  let leftNorm = 0
+  let rightNorm = 0
+  for (let i = 0; i < Math.min(left.length, right.length); i++) {
+    dot += left[i] * right[i]
+    leftNorm += left[i] * left[i]
+    rightNorm += right[i] * right[i]
+  }
+  const denominator = Math.sqrt(leftNorm) * Math.sqrt(rightNorm)
+  return denominator === 0 ? 0 : dot / denominator
+}
+
 describe('embedding sets and graph APIs', () => {
   let db: PGlite
 
@@ -87,6 +104,50 @@ describe('embedding sets and graph APIs', () => {
       { source: 'c', target: 'd', weight: 1 },
     ])
     expect(arbitrary.map((c) => c.nodes.sort())).toEqual([['a', 'b'], ['c', 'd']])
+  })
+
+  it('matches the previous per-row k-NN semantics while reporting batched graph progress', async () => {
+    const sets = new EmbeddingSetsRepository(db)
+    const set = await sets.create({ name: 'Graph vectors' })
+    await insertNote(db, 'note-c', 'Gamma')
+    await sets.putEmbedding({ note_id: 'note-a', embedding_set_id: set.id, vector: vec(1, 0) })
+    await sets.putEmbedding({ note_id: 'note-b', embedding_set_id: set.id, vector: vec(0.9, 0.1) })
+    await sets.putEmbedding({ note_id: 'note-c', embedding_set_id: set.id, vector: vec(0, 1) })
+
+    const resolved = await sets.resolveSelector({ kind: 'embedding-set', embeddingSetId: set.id })
+    const expectedEdges = new Map<string, number>()
+    for (const row of resolved.rows) {
+      const sourceVector = parseVector(row.vector)
+      const neighbors = resolved.rows
+        .filter((candidate) => candidate.note_id !== row.note_id)
+        .map((candidate) => ({
+          noteId: candidate.note_id,
+          similarity: cosineSimilarity(sourceVector, parseVector(candidate.vector)),
+        }))
+        .sort((a, b) => b.similarity - a.similarity || a.noteId.localeCompare(b.noteId))
+        .slice(0, 2)
+      for (const neighbor of neighbors) {
+        const [source, target] = [row.note_id, neighbor.noteId].sort()
+        const key = `${source}:${target}`
+        expectedEdges.set(key, Math.max(expectedEdges.get(key) ?? -Infinity, neighbor.similarity))
+      }
+    }
+
+    const progress: string[] = []
+    const graph = await new GraphRepository(db).buildSimilarityGraph(set.id, {
+      k: 2,
+      batchSize: 1,
+      onProgress: (event) => progress.push(`${event.phase}:${event.done}/${event.total}`),
+    })
+
+    expect(graph.edges.map((edge) => `${edge.source}:${edge.target}`)).toEqual(
+      Array.from(expectedEdges.keys()).sort(),
+    )
+    expect(graph.edges.map((edge) => edge.weight)).toEqual(
+      graph.edges.map((edge) => expectedEdges.get(`${edge.source}:${edge.target}`)),
+    )
+    expect(progress).toContain('prepare:3/3')
+    expect(progress).toContain('neighbors:3/3')
   })
 
 
@@ -179,6 +240,69 @@ describe('embedding sets and graph APIs', () => {
     })
 
     expect(resolved.noteIds).toEqual(['note-a'])
+  })
+
+  it('materializes, reuses, and invalidates criteria virtual embedding selectors', async () => {
+    const sets = new EmbeddingSetsRepository(db)
+    const base = await sets.create({ name: 'Materialized property vectors' })
+    await db.query(`UPDATE note SET source = 'docs-seed' WHERE id = 'note-a'`)
+    await sets.putEmbedding({ note_id: 'note-a', embedding_set_id: base.id, vector: vec(1, 0) })
+    await sets.putEmbedding({ note_id: 'note-b', embedding_set_id: base.id, vector: vec(0.9, 0.1) })
+
+    const materialized = await sets.createVirtualDefinition({
+      id: 'materialized-docs',
+      name: 'Materialized docs',
+      source: { type: 'criteria', baseSetId: base.id, criteria: { sources: ['docs-seed'] } },
+      compatibility: {
+        model: 'require-same',
+        dimension: 'require-same',
+        duplicateVectors: 'prefer-set-order',
+        missingVectors: 'omit',
+      },
+      materialization: { allowed: true, freshness: 'unknown' },
+    })
+
+    const first = await sets.resolveSelector({ kind: 'embedding-set', embeddingSetId: materialized.id })
+    expect(first.noteIds).toEqual(['note-a'])
+    expect(first.resolutionSource).toBe('materialized')
+
+    await db.query(`UPDATE note SET source = 'manual' WHERE id = 'note-a'`)
+    const stillCached = await sets.resolveSelector({ kind: 'embedding-set', embeddingSetId: materialized.id })
+    expect(stillCached.noteIds).toEqual(['note-a'])
+    expect(stillCached.resolutionSource).toBe('materialized')
+
+    const live = await sets.resolveSelector({
+      kind: 'virtual-definition',
+      definition: {
+        id: 'live-docs',
+        name: 'Live docs',
+        source: { type: 'criteria', baseSetId: base.id, criteria: { sources: ['docs-seed'] } },
+        compatibility: {
+          model: 'require-same',
+          dimension: 'require-same',
+          duplicateVectors: 'prefer-set-order',
+          missingVectors: 'omit',
+        },
+      },
+    })
+    expect(live.noteIds).toEqual([])
+    expect(live.resolutionSource).toBe('live')
+
+    await sets.markVirtualSetStale(materialized.id, 'note source changed')
+    const staleLive = await sets.resolveSelector({ kind: 'embedding-set', embeddingSetId: materialized.id })
+    expect(staleLive.noteIds).toEqual([])
+    expect(staleLive.resolutionSource).toBe('live')
+    expect(staleLive.freshness.status).toBe('stale')
+
+    const refreshed = await sets.refreshMaterializedVirtualSet(materialized.id)
+    expect(refreshed.noteIds).toEqual([])
+    expect(refreshed.resolutionSource).toBe('materialized')
+    const row = await sets.get(materialized.id)
+    expect(row.materialization_json).toMatchObject({
+      allowed: true,
+      freshness: 'fresh',
+      resolvedMemberCount: 0,
+    })
   })
 
   it('resolves set-operation virtual definitions over compatible physical sets', async () => {
@@ -335,6 +459,48 @@ describe('embedding sets and graph APIs', () => {
     } finally {
       await imported.close()
     }
+  }, 30000)
+
+  it('exports materialized selector metadata only when explicitly requested', async () => {
+    const sets = new EmbeddingSetsRepository(db)
+    const base = await sets.create({ id: 'mat-base-set', name: 'Materialized base' })
+    await sets.putEmbedding({ note_id: 'note-a', embedding_set_id: base.id, vector: vec(1, 0) })
+    await sets.createVirtualDefinition({
+      id: 'mat-virtual-notes',
+      name: 'Materialized virtual notes',
+      source: { type: 'criteria', baseSetId: base.id, criteria: { noteIds: ['note-a'] } },
+      compatibility: {
+        model: 'require-same',
+        dimension: 'require-same',
+        duplicateVectors: 'prefer-set-order',
+        missingVectors: 'omit',
+      },
+      materialization: { allowed: true, freshness: 'unknown' },
+    })
+
+    const defaultShard = await exportShard(db, { includeEmbeddings: true })
+    const defaultFiles = unpackTarGz(defaultShard)
+    const defaultSets = JSON.parse(new TextDecoder().decode(defaultFiles.get('embedding_sets.json')))
+    const defaultMembers = new TextDecoder().decode(defaultFiles.get('embedding_set_members.jsonl'))
+    expect(defaultSets.find((set: { id: string }) => set.id === 'mat-virtual-notes')).toMatchObject({
+      materialization: null,
+      freshness: { status: 'unknown' },
+    })
+    expect(defaultMembers).not.toContain('mat-virtual-notes')
+
+    const explicitShard = await exportShard(db, {
+      includeEmbeddings: true,
+      includeMaterializedSelectors: true,
+    })
+    const explicitFiles = unpackTarGz(explicitShard)
+    const explicitSets = JSON.parse(new TextDecoder().decode(explicitFiles.get('embedding_sets.json')))
+    const explicitMembers = new TextDecoder().decode(explicitFiles.get('embedding_set_members.jsonl'))
+    expect(explicitSets.find((set: { id: string }) => set.id === 'mat-virtual-notes').materialization).toMatchObject({
+      allowed: true,
+      freshness: 'fresh',
+      resolvedMemberCount: 1,
+    })
+    expect(explicitMembers).toContain('mat-virtual-notes')
   }, 30000)
 
   it('round-trips embedding set name and purpose through shards', async () => {

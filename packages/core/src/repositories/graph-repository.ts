@@ -28,12 +28,21 @@ export interface SimilarityGraphOptions {
   k?: number
   minSimilarity?: number
   threshold?: number
+  metric?: 'cosine' | 'inner_product' | 'l2'
+  batchSize?: number
+  yieldEvery?: number
+  onProgress?: (progress: SimilarityGraphProgress) => void
 }
 
 export interface SimilarityGraphRequest extends SimilarityGraphOptions {
   selector: EmbeddingSetSelector
-  metric?: 'cosine' | 'inner_product' | 'l2'
   source?: 'cache-preferred' | 'live-only' | 'cache-only'
+}
+
+export interface SimilarityGraphProgress {
+  phase: 'prepare' | 'neighbors'
+  done: number
+  total: number
 }
 
 export interface SimilarityGraphCacheKey {
@@ -67,7 +76,8 @@ export interface CommunityOptions {
   maxIterations?: number
 }
 
-const SIMILARITY_GRAPH_ALGORITHM = 'knn-v1'
+const SIMILARITY_GRAPH_ALGORITHM = 'knn-batched-v1'
+const DEFAULT_GRAPH_BATCH_SIZE = 64
 
 function hashJson(value: unknown): string {
   return computeHash(new TextEncoder().encode(JSON.stringify(value)))
@@ -81,6 +91,58 @@ function jsonObject(value: unknown): Record<string, unknown> | null {
   if (value == null) return null
   if (typeof value === 'string') return JSON.parse(value) as Record<string, unknown>
   return value as Record<string, unknown>
+}
+
+async function yieldToEventLoop(): Promise<void> {
+  const scheduler = (globalThis as unknown as { scheduler?: { yield?: () => Promise<void> } }).scheduler
+  if (scheduler?.yield) {
+    await scheduler.yield()
+    return
+  }
+  await new Promise<void>((resolve) => setTimeout(resolve, 0))
+}
+
+async function maybeYield(done: number, every: number): Promise<void> {
+  if (every > 0 && done > 0 && done % every === 0) {
+    await yieldToEventLoop()
+  }
+}
+
+function parseVector(value: string): number[] {
+  return value
+    .replace(/^\[/, '')
+    .replace(/\]$/, '')
+    .split(',')
+    .filter((part) => part.length > 0)
+    .map(Number)
+}
+
+function vectorScore(
+  left: number[],
+  right: number[],
+  metric: 'cosine' | 'inner_product' | 'l2',
+): { distance: number; similarity: number } {
+  let dot = 0
+  let leftNorm = 0
+  let rightNorm = 0
+  let squaredDistance = 0
+  for (let i = 0; i < Math.min(left.length, right.length); i++) {
+    dot += left[i] * right[i]
+    leftNorm += left[i] * left[i]
+    rightNorm += right[i] * right[i]
+    const diff = left[i] - right[i]
+    squaredDistance += diff * diff
+  }
+  if (metric === 'inner_product') {
+    return { distance: -dot, similarity: dot }
+  }
+  if (metric === 'l2') {
+    const distance = Math.sqrt(squaredDistance)
+    return { distance, similarity: -distance }
+  }
+  const denominator = Math.sqrt(leftNorm) * Math.sqrt(rightNorm)
+  const similarity = denominator === 0 ? 0 : dot / denominator
+  return { distance: 1 - similarity, similarity }
 }
 
 export function detectCommunities(
@@ -293,28 +355,38 @@ export class GraphRepository {
   ): Promise<CommunityGraph> {
     const k = options.k ?? 5
     const minSimilarity = options.minSimilarity ?? options.threshold ?? -1
+    const metric = options.metric ?? 'cosine'
+    const yieldEvery = options.yieldEvery ?? options.batchSize ?? DEFAULT_GRAPH_BATCH_SIZE
     const embeddings = resolved.rows
 
     const nodes = embeddings.map((row) => ({ id: row.note_id }))
     const edgeMap = new Map<string, GraphEdge>()
-    for (const row of embeddings) {
-      const neighbors = await this.db.query<{ note_id: string; similarity: number }>(
-        `SELECT note_id, 1 - (vector <=> $2::vector) as similarity
-         FROM embedding
-         WHERE id = ANY($1) AND note_id != $3
-         ORDER BY vector <=> $2::vector ASC
-         LIMIT $4`,
-        [resolved.embeddingIds, row.vector, row.note_id, k],
-      )
-      for (const neighbor of neighbors.rows) {
+    const vectors = embeddings.map((row) => ({
+      row,
+      vector: parseVector(row.vector),
+    }))
+    options.onProgress?.({ phase: 'prepare', done: vectors.length, total: vectors.length })
+
+    for (const [index, item] of vectors.entries()) {
+      const neighbors = vectors
+        .filter((candidate) => candidate.row.note_id !== item.row.note_id)
+        .map((candidate) => {
+          const score = vectorScore(item.vector, candidate.vector, metric)
+          return { noteId: candidate.row.note_id, ...score }
+        })
+        .sort((a, b) => a.distance - b.distance || a.noteId.localeCompare(b.noteId))
+        .slice(0, k)
+      for (const neighbor of neighbors) {
         if (neighbor.similarity < minSimilarity) continue
-        const [source, target] = [row.note_id, neighbor.note_id].sort()
+        const [source, target] = [item.row.note_id, neighbor.noteId].sort()
         const id = `${source}\u0000${target}`
         const existing = edgeMap.get(id)
         if (!existing || neighbor.similarity > existing.weight) {
           edgeMap.set(id, { source, target, weight: neighbor.similarity, kind: 'similarity' })
         }
       }
+      options.onProgress?.({ phase: 'neighbors', done: index + 1, total: vectors.length })
+      await maybeYield(index + 1, yieldEvery)
     }
 
     const edges = Array.from(edgeMap.values()).sort((a, b) =>

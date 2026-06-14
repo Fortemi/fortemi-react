@@ -49,6 +49,8 @@ export interface ExportOptions {
   tag?: string
   /** Export only these embedding sets and their member/vector rows. */
   embeddingSetIds?: string[]
+  /** Preserve virtual selector materialization metadata and virtual member rows. */
+  includeMaterializedSelectors?: boolean
 }
 
 /** Conflict resolution strategy for shard import. */

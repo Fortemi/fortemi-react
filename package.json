@@ -21,6 +21,7 @@
     "test:core": "pnpm --filter @fortemi/core test",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
+    "report:bundle": "pnpm --filter @fortemi/standalone report:bundle",
     "test:e2e": "pnpm --filter @fortemi/standalone test:e2e"
   }
 }

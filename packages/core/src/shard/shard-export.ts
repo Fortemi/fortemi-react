@@ -290,13 +290,23 @@ export async function exportShard(
   if (options?.includeEmbeddings) {
     const embeddingSetIds = options.embeddingSetIds?.filter(Boolean) ?? []
     const setScoped = embeddingSetIds.length > 0
+    const includeMaterializedSelectors = options.includeMaterializedSelectors === true
     const embSetRows = await db.query<{
       id: string
       name: string
       purpose: string | null
       model_name: string
       dimensions: number
+      kind?: 'physical' | 'filter' | 'virtual'
+      mode?: 'auto' | 'manual' | 'mixed' | null
+      truncate_dimension?: number | null
+      criteria_json?: unknown | null
+      source_json?: unknown | null
+      compatibility_json?: unknown | null
+      materialization_json?: unknown | null
+      freshness_json?: unknown | null
       created_at: Date
+      updated_at?: Date
     }>(
       `SELECT * FROM embedding_set
        ${setScoped ? 'WHERE id = ANY($1)' : ''}
@@ -304,8 +314,17 @@ export async function exportShard(
       setScoped ? [embeddingSetIds] : [],
     )
     const exportedSetIds = new Set(embSetRows.rows.map((row) => row.id))
+    const virtualSetIds = new Set(embSetRows.rows.filter((row) => row.kind === 'virtual').map((row) => row.id))
 
-    const shardEmbSets = embSetRows.rows.map(embeddingSetToShard)
+    const shardEmbSets = embSetRows.rows.map((row) => embeddingSetToShard(
+      row.kind === 'virtual' && !includeMaterializedSelectors
+        ? {
+            ...row,
+            materialization_json: undefined,
+            freshness_json: { status: 'unknown' },
+          }
+        : row,
+    ))
     files.set('embedding_sets.json', encoder.encode(JSON.stringify(shardEmbSets)))
     components.push('embedding_sets')
     counts.embedding_sets = shardEmbSets.length
@@ -320,7 +339,9 @@ export async function exportShard(
       setScoped ? [embeddingSetIds] : [],
     )
     const scopedEmbMemberRows = embMemberRows.rows.filter((member) =>
-      exportedSetIds.has(member.embedding_set_id) && exportedNoteIds.has(member.note_id),
+      exportedSetIds.has(member.embedding_set_id) &&
+      exportedNoteIds.has(member.note_id) &&
+      (includeMaterializedSelectors || !virtualSetIds.has(member.embedding_set_id)),
     )
 
     const membersJsonl = scopedEmbMemberRows

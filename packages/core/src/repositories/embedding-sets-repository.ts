@@ -4,6 +4,7 @@
 
 import type { QueryExecutor } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
+import { computeHash } from '../hash.js'
 
 export type EmbeddingSetKind = 'physical' | 'filter' | 'virtual'
 export type EmbeddingSetMode = 'auto' | 'manual' | 'mixed'
@@ -49,6 +50,9 @@ export interface VirtualMaterializationPolicy {
   includeResolvedMembers?: boolean
   includeResolvedEdges?: boolean
   freshness: 'fresh' | 'stale' | 'unknown'
+  inputHash?: string
+  generatedAt?: string
+  resolvedMemberCount?: number
 }
 
 export interface CriteriaVirtualSource {
@@ -145,6 +149,7 @@ export interface ResolvedEmbeddingSet {
   embeddingIds: string[]
   errors: VirtualEmbeddingSetValidationError[]
   freshness: EmbeddingSetFreshness
+  resolutionSource: 'live' | 'materialized'
 }
 
 export interface EmbeddingSetRow {
@@ -210,6 +215,10 @@ function dateMillis(value: Date | string): number {
   return value instanceof Date ? value.getTime() : new Date(value).getTime()
 }
 
+function hashJson(value: unknown): string {
+  return computeHash(new TextEncoder().encode(JSON.stringify(value)))
+}
+
 export class EmbeddingSetsRepository {
   constructor(private db: QueryExecutor) {}
 
@@ -257,7 +266,12 @@ export class EmbeddingSetsRepository {
         input.updatedAt ?? null,
       ],
     )
-    return this.get(id)
+    const row = await this.get(id)
+    if (input.materialization?.allowed) {
+      await this.refreshMaterializedVirtualSet(id)
+      return this.get(id)
+    }
+    return row
   }
 
   async ensureDefault(): Promise<EmbeddingSetRow> {
@@ -361,7 +375,7 @@ export class EmbeddingSetsRepository {
       const set = await this.get(selector.embeddingSetId)
       if (set.kind === 'virtual') {
         const definition = this.definitionFromRow(set)
-        return this.resolveDefinition({ kind: 'embedding-set', embeddingSetId: set.id }, definition)
+        return this.resolveDefinition({ kind: 'embedding-set', embeddingSetId: set.id }, definition, set)
       }
       return this.resolvePhysicalSet(selector, set.id)
     }
@@ -369,10 +383,103 @@ export class EmbeddingSetsRepository {
     return this.resolveDefinition(selector, selector.definition)
   }
 
+  async refreshMaterializedVirtualSet(setId: string): Promise<ResolvedEmbeddingSet> {
+    const set = await this.get(setId)
+    if (set.kind !== 'virtual') throw new Error(`Embedding set is not virtual: ${setId}`)
+    const definition = this.definitionFromRow(set)
+    if (!definition.materialization?.allowed) {
+      throw new Error(`Virtual embedding set does not allow materialization: ${setId}`)
+    }
+
+    const live = await this.resolveDefinition(
+      { kind: 'embedding-set', embeddingSetId: setId },
+      definition,
+      set,
+      { forceLive: true },
+    )
+    await this.db.query(`DELETE FROM embedding_set_member WHERE embedding_set_id = $1`, [setId])
+    for (const row of live.rows) {
+      await this.db.query(
+        `INSERT INTO embedding_set_member (embedding_set_id, note_id, embedding_id)
+         VALUES ($1, $2, $3)
+         ON CONFLICT DO NOTHING`,
+        [setId, row.note_id, row.embedding_id],
+      )
+    }
+
+    const inputHash = this.resolutionInputHash(definition, live.rows)
+    const generatedAt = new Date().toISOString()
+    const materialization: VirtualMaterializationPolicy = {
+      ...definition.materialization,
+      allowed: true,
+      includeResolvedMembers: true,
+      freshness: 'fresh',
+      inputHash,
+      generatedAt,
+      resolvedMemberCount: live.rows.length,
+    }
+    const freshness: EmbeddingSetFreshness = {
+      status: 'fresh',
+      sourceHash: inputHash,
+      checkedAt: generatedAt,
+    }
+    await this.db.query(
+      `UPDATE embedding_set
+       SET materialization_json = $2::jsonb, freshness_json = $3::jsonb, updated_at = now()
+       WHERE id = $1`,
+      [setId, jsonParam(materialization), jsonParam(freshness)],
+    )
+
+    return this.finalizeResolution(
+      { kind: 'embedding-set', embeddingSetId: setId },
+      live.rows,
+      live.errors,
+      definition.compatibility,
+      'fresh',
+      'materialized',
+    )
+  }
+
+  async markVirtualSetStale(setId: string, reason: string): Promise<void> {
+    const set = await this.get(setId)
+    if (set.kind !== 'virtual') throw new Error(`Embedding set is not virtual: ${setId}`)
+    const definition = this.definitionFromRow(set)
+    const now = new Date().toISOString()
+    const materialization = definition.materialization
+      ? { ...definition.materialization, freshness: 'stale' as const }
+      : null
+    await this.db.query(
+      `UPDATE embedding_set
+       SET materialization_json = $2::jsonb, freshness_json = $3::jsonb, updated_at = now()
+       WHERE id = $1`,
+      [
+        setId,
+        jsonParam(materialization),
+        jsonParam({ status: 'stale', sourceHash: definition.materialization?.inputHash, checkedAt: now, reason }),
+      ],
+    )
+  }
+
   private async resolveDefinition(
     selector: EmbeddingSetSelector,
     definition: VirtualEmbeddingSetDefinition,
+    set?: EmbeddingSetRow,
+    options: { forceLive?: boolean } = {},
   ): Promise<ResolvedEmbeddingSet> {
+    if (!options.forceLive && set && definition.materialization?.allowed && definition.materialization.freshness === 'fresh') {
+      const materialized = await this.resolveMaterializedRows(set.id)
+      if (materialized.length > 0 || definition.materialization.resolvedMemberCount === 0) {
+        return this.finalizeResolution(
+          selector,
+          materialized,
+          [],
+          definition.compatibility,
+          'fresh',
+          'materialized',
+        )
+      }
+    }
+
     let rows: ResolvedEmbeddingRow[]
     const errors: VirtualEmbeddingSetValidationError[] = []
     switch (definition.source.type) {
@@ -394,11 +501,11 @@ export class EmbeddingSetsRepository {
       default:
         rows = []
     }
-    return this.finalizeResolution(selector, rows, errors, definition.compatibility, definition.materialization?.freshness ?? 'unknown')
+    return this.finalizeResolution(selector, rows, errors, definition.compatibility, definition.materialization?.freshness ?? 'unknown', 'live')
   }
 
   private async resolvePhysicalSet(selector: EmbeddingSetSelector, setId: string): Promise<ResolvedEmbeddingSet> {
-    return this.finalizeResolution(selector, await this.resolvePhysicalRows(setId), [], DEFAULT_COMPATIBILITY, 'fresh')
+    return this.finalizeResolution(selector, await this.resolvePhysicalRows(setId), [], DEFAULT_COMPATIBILITY, 'fresh', 'live')
   }
 
   private async resolvePhysicalRows(setId: string): Promise<ResolvedEmbeddingRow[]> {
@@ -407,6 +514,18 @@ export class EmbeddingSetsRepository {
        FROM embedding
        WHERE embedding_set_id = $1
        ORDER BY note_id, created_at DESC`,
+      [setId],
+    )
+    return result.rows
+  }
+
+  private async resolveMaterializedRows(setId: string): Promise<ResolvedEmbeddingRow[]> {
+    const result = await this.db.query<ResolvedEmbeddingRow>(
+      `SELECT e.note_id, e.embedding_set_id, e.id as embedding_id, e.vector::text as vector, e.created_at
+       FROM embedding_set_member m
+       JOIN embedding e ON e.id = m.embedding_id
+       WHERE m.embedding_set_id = $1
+       ORDER BY e.note_id, e.created_at DESC`,
       [setId],
     )
     return result.rows
@@ -602,6 +721,7 @@ export class EmbeddingSetsRepository {
     errors: VirtualEmbeddingSetValidationError[],
     compatibility: EmbeddingCompatibilityPolicy,
     freshness: EmbeddingSetFreshness['status'],
+    resolutionSource: ResolvedEmbeddingSet['resolutionSource'],
   ): ResolvedEmbeddingSet {
     const deduped = this.resolveDuplicateRows(rows, compatibility, errors)
     return {
@@ -611,7 +731,19 @@ export class EmbeddingSetsRepository {
       embeddingIds: deduped.map((row) => row.embedding_id),
       errors,
       freshness: { status: freshness },
+      resolutionSource,
     }
+  }
+
+  private resolutionInputHash(
+    definition: VirtualEmbeddingSetDefinition,
+    rows: ResolvedEmbeddingRow[],
+  ): string {
+    return hashJson({
+      source: definition.source,
+      compatibility: definition.compatibility,
+      members: rows.map((row) => [row.note_id, row.embedding_set_id, row.embedding_id]),
+    })
   }
 
   private definitionFromRow(row: EmbeddingSetRow): VirtualEmbeddingSetDefinition {
