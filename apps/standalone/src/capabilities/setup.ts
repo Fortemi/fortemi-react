@@ -10,9 +10,15 @@ import {
   detectGpuCapabilities,
   estimateVramTier,
   selectLlmModel,
+  type TypedEventBus,
   type EmbedFunction,
   type LlmCompleteFn,
 } from '@fortemi/core'
+import {
+  activateProvider,
+  activeConfiguredProviderSupports,
+  loadProviderConfigs,
+} from './provider-config'
 
 /** Load transformers.js and return a real embed function */
 async function loadTransformersEmbedFunction(onProgress?: (msg: string) => void): Promise<EmbedFunction> {
@@ -133,9 +139,11 @@ async function loadWebLLM(onProgress?: (msg: string) => void): Promise<LlmComple
  * Register all capability loaders with the CapabilityManager.
  * Call once at app startup.
  */
-export function setupCapabilities(manager: CapabilityManager): void {
+export function setupCapabilities(manager: CapabilityManager, events?: TypedEventBus): void {
   // Semantic: transformers.js embedding (works in all browsers, WASM-based)
   manager.registerLoader('semantic', async () => {
+    if (activeConfiguredProviderSupports('semantic')) return
+
     const embedFn = await loadTransformersEmbedFunction((msg) => {
       console.log(`[Semantic] ${msg}`)
       manager.setProgress?.('semantic', msg)
@@ -145,6 +153,8 @@ export function setupCapabilities(manager: CapabilityManager): void {
 
   // LLM: WebLLM (requires WebGPU)
   manager.registerLoader('llm', async () => {
+    if (activeConfiguredProviderSupports('llm')) return
+
     if (typeof navigator === 'undefined' || !('gpu' in navigator)) {
       throw new Error(
         'WebGPU is not available. Local LLM requires WebGPU.\n' +
@@ -158,4 +168,13 @@ export function setupCapabilities(manager: CapabilityManager): void {
     })
     setLlmFunction(completeFn)
   })
+
+  if (events) {
+    const activeProvider = loadProviderConfigs().find((provider) => provider.active)
+    if (activeProvider && activeProvider.id !== 'browser') {
+      activateProvider(activeProvider, manager, events).catch((err) => {
+        console.warn('[Providers] Active provider could not be restored:', err)
+      })
+    }
+  }
 }

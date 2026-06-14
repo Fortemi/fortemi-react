@@ -204,6 +204,20 @@ export type {
   ModelCategory,
 } from './capabilities/local-discovery.js'
 
+export {
+  getFortemiBridge,
+  getFortemiSecretStore,
+  hasFortemiSecureSecrets,
+} from './fortemi-bridge.js'
+export type {
+  BridgeProviderInfo,
+  FortemiBridge,
+  FortemiBridgeCapabilities,
+  FortemiBridgeHost,
+  FortemiInferenceRouter,
+  FortemiSecretStore,
+} from './fortemi-bridge.js'
+
 export type {
   InferenceProvider,
   ProviderCapabilities,
@@ -294,6 +308,7 @@ export type {
 
 export {
   assertAiwgFortemiIndexExport,
+  aiwgFortemiIndexToCommunityGraph,
   createAiwgReviewDecisionExport,
   getAiwgFortemiFacets,
   queryAiwgFortemiIndex,
@@ -306,6 +321,7 @@ export type {
   AiwgFortemiRecordSource,
   AiwgFortemiRecordType,
   AiwgFortemiRelationship,
+  AiwgIndexGraphOptions,
   AiwgIndexQueryOptions,
   AiwgIndexQueryResult,
   AiwgIndexValidationResult,

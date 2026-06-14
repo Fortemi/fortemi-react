@@ -1,5 +1,5 @@
 import { Suspense, useState, useEffect, useRef } from 'react'
-import { VERSION, detectGpuCapabilities } from '@fortemi/core'
+import { NotesRepository, VERSION, detectGpuCapabilities } from '@fortemi/core'
 import { FortemiProvider, useFortemiContext } from '@fortemi/react'
 import { LoadingScreen } from './components/LoadingScreen'
 import { NoteListPage } from './pages/NoteListPage'
@@ -9,6 +9,7 @@ import { ResearchOrganizer } from './examples/ResearchOrganizer'
 import { FlashcardQuiz } from './examples/FlashcardQuiz'
 import { WritingPrompts } from './examples/WritingPrompts'
 import { JournalApp } from './examples/JournalApp'
+import { PROJECT_DOCS } from './data/project-docs'
 
 declare global {
   interface Window {
@@ -40,12 +41,12 @@ function E2EDiagnostics() {
 
 /** Register real capability loaders and auto-enable previously active capabilities */
 function CapabilitySetup() {
-  const { capabilityManager } = useFortemiContext()
+  const { capabilityManager, events } = useFortemiContext()
   const initialized = useRef(false)
   useEffect(() => {
     if (!initialized.current) {
       initialized.current = true
-      setupCapabilities(capabilityManager)
+      setupCapabilities(capabilityManager, events)
 
       // Auto-enable capabilities that were active last session (or defaults on first visit)
       const toEnable = getEnabledCapabilities()
@@ -55,7 +56,43 @@ function CapabilitySetup() {
         })
       }
     }
-  }, [capabilityManager])
+  }, [capabilityManager, events])
+  return null
+}
+
+function ProjectDocsSeed() {
+  const { db, events } = useFortemiContext()
+  const initialized = useRef(false)
+
+  useEffect(() => {
+    if (initialized.current) return
+    initialized.current = true
+
+    async function seedDocs() {
+      const existing = await db.query<{ count: string }>(
+        `SELECT COUNT(*) AS count
+         FROM note_tag
+         WHERE tag = 'docs:seed:fortemi-react'`,
+      )
+      if (Number(existing.rows[0]?.count ?? 0) > 0) return
+
+      const notes = new NotesRepository(db, events)
+      for (const doc of PROJECT_DOCS) {
+        await notes.create({
+          title: doc.title,
+          content: doc.content,
+          tags: ['docs:seed:fortemi-react', ...doc.tags],
+          source: 'docs-seed',
+          visibility: 'public',
+        })
+      }
+    }
+
+    seedDocs().catch((err) => {
+      console.warn('[Docs] Project docs seed failed:', err)
+    })
+  }, [db, events])
+
   return null
 }
 
@@ -245,6 +282,7 @@ export function App() {
     <Suspense fallback={<LoadingScreen message="Starting database..." />}>
       <FortemiProvider persistence="idb">
         <CapabilitySetup />
+        <ProjectDocsSeed />
         {import.meta.env.DEV ? <E2EDiagnostics /> : null}
         <AppShell />
       </FortemiProvider>

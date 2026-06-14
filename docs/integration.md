@@ -1256,6 +1256,55 @@ Custom backends must preserve the `DatabaseClient` contract: `query()`, `exec()`
 
 Dual-backend desktop topologies should use an explicit coordinator policy such as `primary-only`, `read-through-secondary`, or `explicit-replication`. Repositories should still see one active database client, and writes must be serialized through one writer per physical backend to preserve ADR-003.
 
+### Secure provider bridge
+
+Keyed remote inference providers must be configured through a host bridge, not browser-readable storage. The shared bridge contract is exported from `@fortemi/core`:
+
+```typescript
+import type { FortemiBridge } from '@fortemi/core'
+
+declare global {
+  interface Window {
+    fortemiBridge?: FortemiBridge
+  }
+}
+```
+
+Hosts expose `window.fortemiBridge.capabilities()` and `window.fortemiBridge.secrets`. `hasFortemiSecureSecrets()` returns `true` only when the bridge reports `secureSecrets: true` and the secret store is available. Browser-only apps must fail closed for OpenAI/OpenRouter-style API key providers when this check fails.
+
+The standalone app ships provider presets for browser-local ML, OpenAI, OpenRouter, Groq, Mistral, Together, Fireworks, DeepInfra, xAI, Ollama, LM Studio, llama.cpp, vLLM, and Jan. Remote keyed presets are locked unless a bridge is present. API keys are written only through the bridge secret API and are not serialized into localStorage, IndexedDB, PGlite, Cache Storage, notes, or Knowledge Shards.
+
+The intended bridge hosts are:
+
+- Fortemi server bridge for workstation integration and server-side secret storage.
+- A small standalone privacy router that stores keys in OS secure storage and brokers provider calls.
+- Local no-key OpenAI-compatible servers such as Ollama or LM Studio, which do not require the bridge when intentionally unauthenticated.
+
+### AIWG graph projection and view
+
+AIWG index exports can be searched and projected into a `CommunityGraph`:
+
+```typescript
+import { aiwgFortemiIndexToCommunityGraph } from '@fortemi/core'
+import { GraphView, useAiwgIndex } from '@fortemi/react'
+
+const graph = aiwgFortemiIndexToCommunityGraph(index, {
+  communityFacet: 'role',
+  relationshipWeights: { co_attended: 2 },
+})
+```
+
+React hosts can call `useAiwgIndex().toCommunityGraph()` and pass the result to `GraphView`:
+
+```tsx
+const aiwg = useAiwgIndex(index)
+const graph = aiwg.toCommunityGraph({ communityTagPrefix: 'community:' })
+
+return <GraphView graph={graph} layout={{ algorithm: 'community' }} onSelectNode={openRecord} />
+```
+
+`GraphView` is browser-only and renders SVG with zoom/pan controls, node selection callbacks, community coloring, degree-based node sizing, and filters for nodes, communities, and edge kinds.
+
 ### WebGPU for local LLM
 
 WebGPU is required for the `llm` capability. The `detectGpuCapabilities()` function handles the detection and surfaces the result clearly:

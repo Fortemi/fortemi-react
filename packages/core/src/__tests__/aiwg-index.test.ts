@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  aiwgFortemiIndexToCommunityGraph,
   createAiwgReviewDecisionExport,
   queryAiwgFortemiIndex,
   validateAiwgFortemiIndexExport,
@@ -45,5 +46,32 @@ describe('AIWG Fortemi index adapter', () => {
     expect(exported.schema_version).toBe('aiwg.fortemi.review-decisions.v1')
     expect(exported.decisions).toHaveLength(1)
     expect(index.items.find((item) => item.id === exported.decisions[0]?.item_id)?.type).toBe('crm.interaction')
+  })
+
+  it('projects relationships into a CommunityGraph', () => {
+    const graph = aiwgFortemiIndexToCommunityGraph(index, {
+      communityFacet: 'role',
+      relationshipWeights: { co_attended: 2 },
+    })
+
+    expect(graph.nodes).toHaveLength(index.items.length)
+    expect(graph.edges.length).toBeGreaterThan(0)
+    expect(graph.edges.every((edge) => edge.source && edge.target && edge.weight > 0)).toBe(true)
+    expect(graph.communities.length).toBeGreaterThan(0)
+  })
+
+  it('drops dangling relationships by default', () => {
+    const graph = aiwgFortemiIndexToCommunityGraph({
+      ...index,
+      items: [
+        {
+          ...index.items[0],
+          relationships: [{ type: 'missing', target_id: 'does-not-exist' }],
+        },
+      ],
+    })
+
+    expect(graph.nodes).toHaveLength(1)
+    expect(graph.edges).toHaveLength(0)
   })
 })

@@ -17,6 +17,7 @@ import {
 import { LLM_PRESETS, getSelectedLlmModel, setSelectedLlmModel, saveEnabledCapabilities } from '../capabilities/setup'
 import { ShardExportDialog } from '../components/ShardExportDialog'
 import { ShardImportDialog } from '../components/ShardImportDialog'
+import { ProviderSettings } from '../components/ProviderSettings'
 
 interface CapabilityCardProps {
   name: CapabilityName
@@ -250,6 +251,8 @@ export function SettingsPage({ onBack }: { onBack: () => void }) {
 
       {/* Capabilities */}
       <h3 style={{ margin: '0 0 12px', fontSize: 14 }}>AI Capabilities</h3>
+
+      <ProviderSettings />
 
       <CapabilityCard
         name="semantic"

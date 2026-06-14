@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
 import {
+  aiwgFortemiIndexToCommunityGraph,
   assertAiwgFortemiIndexExport,
   createAiwgReviewDecisionExport,
   queryAiwgFortemiIndex,
   type AiwgFortemiIndexExport,
+  type AiwgIndexGraphOptions,
   type AiwgIndexQueryOptions,
   type AiwgIndexQueryResult,
   type AiwgReviewAction,
@@ -67,6 +69,11 @@ export function useAiwgIndex(initialIndex?: AiwgFortemiIndexExport) {
     return createAiwgReviewDecisionExport(index, reviewDecisions)
   }, [index, reviewDecisions])
 
+  const toCommunityGraph = useCallback((options?: AiwgIndexGraphOptions) => {
+    if (!index) throw new Error('No AIWG index export loaded')
+    return aiwgFortemiIndexToCommunityGraph(index, options)
+  }, [index])
+
   const counts = useMemo(() => {
     if (!index) return {}
     return index.items.reduce<Record<string, number>>((acc, item) => {
@@ -86,5 +93,6 @@ export function useAiwgIndex(initialIndex?: AiwgFortemiIndexExport) {
     setReviewDecision,
     clearReviewDecision,
     exportReviewDecisions,
+    toCommunityGraph,
   }
 }

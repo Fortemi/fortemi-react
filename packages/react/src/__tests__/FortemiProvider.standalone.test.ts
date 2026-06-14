@@ -53,4 +53,10 @@ describe('FortemiProvider — no-host stub (standalone-host regression)', () => 
     expect(mod.FortemiProvider).toBeDefined()
     expect(typeof mod.FortemiProvider).toBe('function')
   })
+
+  it('GraphView component is exported from package index', async () => {
+    const mod = await import('../index.js')
+    expect(mod.GraphView).toBeDefined()
+    expect(typeof mod.GraphView).toBe('function')
+  })
 })

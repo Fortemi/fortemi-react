@@ -95,6 +95,13 @@ export interface AiwgReviewDecisionExport {
   decisions: AiwgReviewDecision[]
 }
 
+export interface AiwgIndexGraphOptions {
+  communityFacet?: string
+  communityTagPrefix?: string
+  relationshipWeights?: Record<string, number>
+  includeDanglingRelationships?: boolean
+}
+
 const REQUIRED_RECORD_FIELDS: Array<keyof AiwgFortemiRecord> = [
   'schema_version',
   'id',
@@ -249,4 +256,61 @@ export function createAiwgReviewDecisionExport(
     source_export_schema_version: source.schema_version,
     decisions: [...decisions].sort((left, right) => left.item_id.localeCompare(right.item_id)),
   }
+}
+
+export function aiwgFortemiIndexToCommunityGraph(
+  index: AiwgFortemiIndexExport,
+  options: AiwgIndexGraphOptions = {},
+) {
+  const ids = new Set(index.items.map((item) => item.id))
+  const relationshipWeights = options.relationshipWeights ?? {}
+  const edgeCounts = new Map<string, { source: string; target: string; kind: string; weight: number }>()
+
+  for (const item of index.items) {
+    for (const relationship of item.relationships) {
+      if (!ids.has(relationship.target_id) && !options.includeDanglingRelationships) continue
+      const kind = relationship.type
+      const baseWeight = relationshipWeights[kind] ?? 1
+      const key = `${item.id}\u0000${relationship.target_id}\u0000${kind}`
+      const existing = edgeCounts.get(key)
+      if (existing) existing.weight += baseWeight
+      else edgeCounts.set(key, { source: item.id, target: relationship.target_id, kind, weight: baseWeight })
+    }
+  }
+
+  const communities = new Map<string, string[]>()
+  for (const item of index.items) {
+    const communityIds = communityIdsFor(item, options)
+    for (const communityId of communityIds) {
+      const nodes = communities.get(communityId) ?? []
+      nodes.push(item.id)
+      communities.set(communityId, nodes)
+    }
+  }
+
+  return {
+    nodes: index.items.map((item) => ({ id: item.id })),
+    edges: Array.from(edgeCounts.values()).sort((left, right) => (
+      left.source.localeCompare(right.source)
+      || left.target.localeCompare(right.target)
+      || left.kind.localeCompare(right.kind)
+    )),
+    communities: Array.from(communities.entries())
+      .map(([id, nodes]) => ({ id, nodes: [...new Set(nodes)].sort() }))
+      .sort((left, right) => left.id.localeCompare(right.id)),
+  }
+}
+
+function communityIdsFor(item: AiwgFortemiRecord, options: AiwgIndexGraphOptions): string[] {
+  if (options.communityFacet) {
+    const values = item.facets[options.communityFacet] ?? []
+    if (values.length > 0) return values.map((value) => `${options.communityFacet}:${value}`)
+  }
+  if (options.communityTagPrefix) {
+    const prefix = options.communityTagPrefix
+    const tags = item.tags.filter((tag) => tag.startsWith(prefix))
+    if (tags.length > 0) return tags
+  }
+  if (item.concepts.length > 0) return item.concepts.map((concept) => `concept:${concept}`)
+  return [`type:${item.type}`]
 }

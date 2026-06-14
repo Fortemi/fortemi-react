@@ -24,7 +24,7 @@ test('app displays version after initialization completes', async ({ page }) => 
   await expect(page.locator('text=v2026')).toBeVisible({ timeout: PGLITE_TIMEOUT })
 })
 
-test('empty note list prompt is visible after initialization', async ({ page }) => {
+test('project docs are visible after initialization', async ({ page }) => {
   await page.goto('/')
-  await expect(page.locator('text=No notes yet')).toBeVisible({ timeout: PGLITE_TIMEOUT })
+  await expect(page.locator('text=docs:seed:fortemi-react').first()).toBeVisible({ timeout: PGLITE_TIMEOUT })
 })
