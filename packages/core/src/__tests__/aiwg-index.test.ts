@@ -33,6 +33,87 @@ describe('AIWG Fortemi index adapter', () => {
     expect(queryAiwgFortemiIndex(index, '', { relationshipTargetId: 'crm:event:fixture-event-1' }).total).toBe(4)
   })
 
+  it('accepts static documentation page records', () => {
+    const docsIndex: AiwgFortemiIndexExport = {
+      ...index,
+      items: [
+        {
+          schema_version: 'aiwg.fortemi.index.record.v1',
+          id: 'docs:page:pagenary/getting-started',
+          type: 'docs.page',
+          source: {
+            path: 'docs/getting-started.md',
+            repo_relative_path: 'docs/getting-started.md',
+            locator: 'section:getting-started',
+          },
+          title: 'Pagenary Getting Started',
+          text: 'Pagenary tenants can publish sanitized static documentation for lookup.',
+          facets: {
+            product: ['pagenary'],
+            section: ['getting-started'],
+          },
+          tags: ['docs', 'lookup'],
+          concepts: ['static-index'],
+          relationships: [],
+          provenance: [
+            {
+              field: 'text',
+              source: 'docs/getting-started.md',
+              path: '$.items[0].text',
+              confidence: 'source',
+              privacy: 'public',
+            },
+          ],
+          privacy: {
+            classification: 'public',
+            pii: false,
+          },
+          updated_at: '2026-01-04T00:00:00.000Z',
+        },
+      ],
+    }
+
+    const validation = validateAiwgFortemiIndexExport(docsIndex)
+    const result = queryAiwgFortemiIndex(docsIndex, 'tenant', { types: ['docs.page'] })
+
+    expect(validation.valid).toBe(true)
+    expect(validation.counts).toMatchObject({ 'docs.page': 1 })
+    expect(result.items[0]?.source.locator).toBe('section:getting-started')
+  })
+
+  it('returns opt-in ranked results with plain text snippets and matches', () => {
+    const result = queryAiwgFortemiIndex(index, 'Example', {
+      rank: true,
+      snippets: true,
+      includeMatches: true,
+      snippetLength: 48,
+      limit: 2,
+      weights: { title: 10, text: 1, tag: 1, concept: 1 },
+    })
+
+    expect(result.items).toHaveLength(2)
+    expect(result.rankedItems).toHaveLength(2)
+    expect(result.rankedItems?.[0]?.rank).toBeGreaterThanOrEqual(result.rankedItems?.[1]?.rank ?? 0)
+    expect(result.rankedItems?.[0]?.snippet).toContain('Example')
+    expect(result.rankedItems?.[0]?.snippet).not.toContain('<mark>')
+    expect(result.rankedItems?.[0]?.matches?.some((match) => match.field === 'title')).toBe(true)
+    expect(result.facets.type).toMatchObject({
+      'crm.contact': 1,
+      'crm.organization': 1,
+      'crm.event': 1,
+    })
+  })
+
+  it('preserves default export ordering and paginates after ranking', () => {
+    const defaultResult = queryAiwgFortemiIndex(index, 'Example', { limit: 2 })
+    const rankedResult = queryAiwgFortemiIndex(index, 'Example', { rank: true, limit: 2, offset: 1 })
+
+    expect(defaultResult.rankedItems).toBeUndefined()
+    expect(defaultResult.items[0]?.id).toBe(index.items[1]?.id)
+    expect(rankedResult.rankedItems?.[0]?.item.id).toBe(rankedResult.items[0]?.id)
+    expect(rankedResult.total).toBe(defaultResult.total)
+  })
+
   it('exports review decisions without mutating source records', () => {
     const exported = createAiwgReviewDecisionExport(index, [
       {

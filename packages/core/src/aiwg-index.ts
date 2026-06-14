@@ -4,6 +4,7 @@ export type AiwgFortemiRecordType =
   | 'crm.event'
   | 'crm.interaction'
   | 'aiwg.artifact'
+  | 'docs.page'
 
 export type AiwgPrivacyClassification = 'private' | 'sanitized' | 'public'
 export type AiwgProvenanceConfidence = 'source' | 'candidate' | 'reviewed' | 'rejected'
@@ -73,12 +74,37 @@ export interface AiwgIndexQueryOptions {
   relationshipTargetId?: string
   limit?: number
   offset?: number
+  rank?: boolean
+  snippets?: boolean
+  snippetLength?: number
+  weights?: Partial<AiwgIndexQueryWeights>
+  includeMatches?: boolean
+}
+
+export interface AiwgIndexQueryWeights {
+  title: number
+  text: number
+  tag: number
+  concept: number
+}
+
+export interface AiwgIndexQueryMatch {
+  field: 'title' | 'text' | 'tag' | 'concept'
+  value: string
+}
+
+export interface AiwgIndexQueryRankedItem {
+  item: AiwgFortemiRecord
+  rank: number
+  snippet?: string
+  matches?: AiwgIndexQueryMatch[]
 }
 
 export interface AiwgIndexQueryResult {
   items: AiwgFortemiRecord[]
   total: number
   facets: Record<string, Record<string, number>>
+  rankedItems?: AiwgIndexQueryRankedItem[]
 }
 
 export interface AiwgReviewDecision {
@@ -124,7 +150,15 @@ const VALID_TYPES = new Set<AiwgFortemiRecordType>([
   'crm.event',
   'crm.interaction',
   'aiwg.artifact',
+  'docs.page',
 ])
+
+const DEFAULT_QUERY_WEIGHTS: AiwgIndexQueryWeights = {
+  title: 4,
+  tag: 3,
+  concept: 2,
+  text: 1,
+}
 
 function hasString(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0
@@ -216,17 +250,58 @@ function matchesFacetFilters(item: AiwgFortemiRecord, filters: Record<string, st
   return Object.entries(filters).every(([name, expected]) => includesAll(item.facets[name] ?? [], expected))
 }
 
+function queryMatches(item: AiwgFortemiRecord, q: string): AiwgIndexQueryMatch[] {
+  if (!q) return []
+  const matches: AiwgIndexQueryMatch[] = []
+  if (item.title.toLowerCase().includes(q)) matches.push({ field: 'title', value: item.title })
+  if (item.text.toLowerCase().includes(q)) matches.push({ field: 'text', value: item.text })
+  for (const tag of item.tags) {
+    if (tag.toLowerCase().includes(q)) matches.push({ field: 'tag', value: tag })
+  }
+  for (const concept of item.concepts) {
+    if (concept.toLowerCase().includes(q)) matches.push({ field: 'concept', value: concept })
+  }
+  return matches
+}
+
+function rankMatches(matches: AiwgIndexQueryMatch[], weights: AiwgIndexQueryWeights): number {
+  return matches.reduce((total, match) => total + weights[match.field], 0)
+}
+
+function clipSnippet(value: string, q: string, maxLength: number): string {
+  const normalizedLength = Math.max(20, maxLength)
+  if (!value) return ''
+  if (!q) return value.length > normalizedLength ? `${value.slice(0, normalizedLength).trimEnd()}...` : value
+
+  const lower = value.toLowerCase()
+  const index = lower.indexOf(q)
+  if (index < 0) return value.length > normalizedLength ? `${value.slice(0, normalizedLength).trimEnd()}...` : value
+
+  const context = Math.max(0, Math.floor((normalizedLength - q.length) / 2))
+  const start = Math.max(0, index - context)
+  const end = Math.min(value.length, start + normalizedLength)
+  const prefix = start > 0 ? '...' : ''
+  const suffix = end < value.length ? '...' : ''
+  return `${prefix}${value.slice(start, end).trim()}${suffix}`
+}
+
+function createSnippet(item: AiwgFortemiRecord, matches: AiwgIndexQueryMatch[], q: string, maxLength: number): string {
+  const textMatch = matches.find((match) => match.field === 'text')
+  const titleMatch = matches.find((match) => match.field === 'title')
+  const firstMatch = textMatch ?? titleMatch ?? matches[0]
+  return clipSnippet(firstMatch?.value ?? item.text, q, maxLength)
+}
+
 export function queryAiwgFortemiIndex(
   index: AiwgFortemiIndexExport,
   query = '',
   options: AiwgIndexQueryOptions = {},
 ): AiwgIndexQueryResult {
   const q = query.trim().toLowerCase()
-  const filtered = index.items.filter((item) => {
-    if (q) {
-      const haystack = [item.title, item.text, ...item.tags, ...item.concepts].join('\n').toLowerCase()
-      if (!haystack.includes(q)) return false
-    }
+  const weights = { ...DEFAULT_QUERY_WEIGHTS, ...options.weights }
+  const matched = index.items.map((item, ordinal) => ({ item, ordinal, matches: queryMatches(item, q) }))
+  const filtered = matched.filter(({ item, matches }) => {
+    if (q && matches.length === 0) return false
     if (options.types && !options.types.includes(item.type)) return false
     if (options.privacy && !options.privacy.includes(item.privacy.classification)) return false
     if (!includesAll(item.tags, options.tags)) return false
@@ -235,14 +310,40 @@ export function queryAiwgFortemiIndex(
     if (options.relationshipTargetId && !item.relationships.some((rel) => rel.target_id === options.relationshipTargetId)) return false
     return true
   })
+  const ranked = filtered.map(({ item, ordinal, matches }) => ({
+    item,
+    ordinal,
+    rank: rankMatches(matches, weights),
+    matches,
+  }))
+
+  if (options.rank) {
+    ranked.sort((left, right) => (
+      right.rank - left.rank
+      || left.ordinal - right.ordinal
+    ))
+  } else {
+    ranked.sort((left, right) => left.ordinal - right.ordinal)
+  }
 
   const offset = options.offset ?? 0
-  const limit = options.limit ?? filtered.length
-  return {
-    items: filtered.slice(offset, offset + limit),
-    total: filtered.length,
-    facets: getAiwgFortemiFacets(filtered),
+  const limit = options.limit ?? ranked.length
+  const page = ranked.slice(offset, offset + limit)
+  const result: AiwgIndexQueryResult = {
+    items: page.map((entry) => entry.item),
+    total: ranked.length,
+    facets: getAiwgFortemiFacets(ranked.map((entry) => entry.item)),
   }
+  if (options.rank || options.snippets || options.includeMatches) {
+    const snippetLength = options.snippetLength ?? 160
+    result.rankedItems = page.map((entry) => ({
+      item: entry.item,
+      rank: entry.rank,
+      ...(options.snippets ? { snippet: createSnippet(entry.item, entry.matches, q, snippetLength) } : {}),
+      ...(options.includeMatches ? { matches: entry.matches } : {}),
+    }))
+  }
+  return result
 }
 
 export function createAiwgReviewDecisionExport(

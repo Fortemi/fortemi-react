@@ -23,6 +23,21 @@ Use `validateAiwgFortemiIndexExport(value)` or
 `queryAiwgFortemiIndex(index, query, options)` searches title/text/tags/concepts and
 filters by type, facets, tags, concepts, privacy, and relationship target.
 
+By default, query results preserve the deterministic export order. Pass
+`rank: true` to sort matches by weighted title, tag, concept, and text hits, and
+override `weights` when a host app needs a different lookup policy. Pass
+`snippets: true` to include plain text snippets in `rankedItems`; Fortemi does
+not inject markup into snippets. `includeMatches: true` exposes the fields that
+matched so host apps can render their own highlights.
+
+## Static Documentation Records
+
+Exports may include `docs.page` records for documentation, README, and other
+static content that should participate in lookup alongside CRM and AIWG records.
+Static page records use the same source locator, facets, tags, concepts,
+provenance, privacy, ranking, and snippet behavior as CRM records, which lets a
+host replace bespoke documentation search without changing the query helper.
+
 React apps can use `useAiwgIndex()` to load an export, search it, and maintain
 human-gated review decisions in local state.
 
@@ -60,4 +75,5 @@ write canonical CRM JSON or trigger outreach.
 
 `packages/core/test/fixtures/sanitized-aiwg-fortemi-index.json` mirrors the aiwg-crm
 shared fixture and contains synthetic contact, organization, event, interaction, and
-AIWG artifact records.
+AIWG artifact records. Tests also cover `docs.page` records for static lookup
+integration.
