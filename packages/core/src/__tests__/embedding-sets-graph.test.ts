@@ -126,6 +126,61 @@ describe('embedding sets and graph APIs', () => {
     expect(graph.edges).toEqual([])
   })
 
+  it('resolves criteria virtual embedding sets using note properties and enrichment state', async () => {
+    const sets = new EmbeddingSetsRepository(db)
+    const base = await sets.create({ name: 'Property vectors', purpose: 'Property-scoped vectors' })
+    await db.query(
+      `UPDATE note
+       SET source = 'docs-seed', visibility = 'public', is_starred = true
+       WHERE id = 'note-a'`,
+    )
+    await db.query(
+      `UPDATE note_revised_current
+       SET is_user_edited = true, generation_count = 2, ai_metadata = '{"provider":"test"}'::jsonb
+       WHERE note_id = 'note-a'`,
+    )
+    await db.query(
+      `INSERT INTO note_revision (id, note_id, revision_number, type, content)
+       VALUES ('rev-note-a-1', 'note-a', 1, 'ai', 'Alpha revised')`,
+    )
+    await sets.putEmbedding({ note_id: 'note-a', embedding_set_id: base.id, vector: vec(1, 0) })
+    await sets.putEmbedding({ note_id: 'note-b', embedding_set_id: base.id, vector: vec(0.9, 0.1) })
+
+    const resolved = await sets.resolveSelector({
+      kind: 'virtual-definition',
+      definition: {
+        id: 'property-filtered',
+        name: 'Property filtered',
+        source: {
+          type: 'criteria',
+          baseSetId: base.id,
+          criteria: {
+            sources: ['docs-seed'],
+            visibilities: ['public'],
+            formats: ['markdown'],
+            isStarred: true,
+            isArchived: false,
+            hasTitle: true,
+            hasEmbedding: true,
+            isUserEdited: true,
+            hasAiMetadata: true,
+            hasRevisions: true,
+            minGenerationCount: 1,
+            maxGenerationCount: 3,
+          },
+        },
+        compatibility: {
+          model: 'require-same',
+          dimension: 'require-same',
+          duplicateVectors: 'prefer-set-order',
+          missingVectors: 'omit',
+        },
+      },
+    })
+
+    expect(resolved.noteIds).toEqual(['note-a'])
+  })
+
   it('resolves set-operation virtual definitions over compatible physical sets', async () => {
     const sets = new EmbeddingSetsRepository(db)
     const first = await sets.create({ name: 'First' })

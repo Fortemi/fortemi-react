@@ -4,6 +4,7 @@ import { FortemiProvider, useFortemiContext } from '@fortemi/react'
 import { LoadingScreen } from './components/LoadingScreen'
 import { NoteListPage } from './pages/NoteListPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { GraphPage } from './pages/GraphPage'
 import { setupCapabilities, getEnabledCapabilities } from './capabilities/setup'
 import { ResearchOrganizer } from './examples/ResearchOrganizer'
 import { FlashcardQuiz } from './examples/FlashcardQuiz'
@@ -96,7 +97,7 @@ function ProjectDocsSeed() {
   return null
 }
 
-type Page = 'notes' | 'settings' | 'examples'
+type Page = 'notes' | 'settings' | 'examples' | 'graph'
 
 const EXAMPLES = [
   {
@@ -253,6 +254,16 @@ function AppShell() {
             Examples
           </button>
           <button
+            onClick={() => setPage(page === 'graph' ? 'notes' : 'graph')}
+            title="Graph"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer', fontSize: 13,
+              color: page === 'graph' ? '#4a9eff' : '#666', padding: '2px 4px',
+            }}
+          >
+            Graph
+          </button>
+          <button
             onClick={() => setPage(page === 'settings' ? 'notes' : 'settings')}
             title="Settings"
             aria-label="Settings"
@@ -270,6 +281,8 @@ function AppShell() {
         <SettingsPage onBack={() => setPage('notes')} />
       ) : page === 'examples' ? (
         <ExamplesPage onBack={() => setPage('notes')} />
+      ) : page === 'graph' ? (
+        <GraphPage onBack={() => setPage('notes')} />
       ) : (
         <NoteListPage onShowExamples={() => setPage('examples')} />
       )}

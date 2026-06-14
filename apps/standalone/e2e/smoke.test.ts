@@ -22,3 +22,15 @@ test('search bar is visible after load', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByPlaceholder('Search notes... (Ctrl+K)')).toBeVisible({ timeout: PGLITE_TIMEOUT })
 })
+
+test('graph page exposes vector property filters', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Graph' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Graph' })).toBeVisible({ timeout: PGLITE_TIMEOUT })
+  await expect(page.getByLabel('Vector set')).toBeVisible()
+  await expect(page.getByLabel('Source')).toBeVisible()
+  await expect(page.getByLabel('Visibility')).toBeVisible()
+  await expect(page.getByLabel('Enrichment')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Build graph' })).toBeVisible()
+})

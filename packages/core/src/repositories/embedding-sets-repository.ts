@@ -14,6 +14,18 @@ export interface EmbeddingSetCriteria {
   collectionIds?: string[]
   conceptIds?: string[]
   noteIds?: string[]
+  sources?: string[]
+  formats?: string[]
+  visibilities?: string[]
+  isStarred?: boolean
+  isArchived?: boolean
+  hasTitle?: boolean
+  hasEmbedding?: boolean
+  isUserEdited?: boolean
+  hasAiMetadata?: boolean
+  hasRevisions?: boolean
+  minGenerationCount?: number
+  maxGenerationCount?: number
   updatedAfter?: string
   updatedBefore?: string
 }
@@ -419,6 +431,52 @@ export class EmbeddingSetsRepository {
     if (criteria.collectionIds?.length) {
       conditions.push(`EXISTS (SELECT 1 FROM collection_note cn WHERE cn.note_id = n.id AND cn.collection_id = ANY($${idx++}))`)
       params.push(criteria.collectionIds)
+    }
+    if (criteria.sources?.length) {
+      conditions.push(`n.source = ANY($${idx++})`)
+      params.push(criteria.sources)
+    }
+    if (criteria.formats?.length) {
+      conditions.push(`n.format = ANY($${idx++})`)
+      params.push(criteria.formats)
+    }
+    if (criteria.visibilities?.length) {
+      conditions.push(`n.visibility = ANY($${idx++})`)
+      params.push(criteria.visibilities)
+    }
+    if (criteria.isStarred !== undefined) {
+      conditions.push(`n.is_starred = $${idx++}`)
+      params.push(criteria.isStarred)
+    }
+    if (criteria.isArchived !== undefined) {
+      conditions.push(`n.is_archived = $${idx++}`)
+      params.push(criteria.isArchived)
+    }
+    if (criteria.hasTitle !== undefined) {
+      conditions.push(criteria.hasTitle ? `n.title IS NOT NULL AND n.title <> ''` : `(n.title IS NULL OR n.title = '')`)
+    }
+    if (criteria.hasEmbedding === false) {
+      conditions.push('FALSE')
+    }
+    if (criteria.isUserEdited !== undefined) {
+      conditions.push(`COALESCE(c.is_user_edited, false) = $${idx++}`)
+      params.push(criteria.isUserEdited)
+    }
+    if (criteria.hasAiMetadata !== undefined) {
+      conditions.push(criteria.hasAiMetadata ? `c.ai_metadata IS NOT NULL` : `c.ai_metadata IS NULL`)
+    }
+    if (criteria.hasRevisions !== undefined) {
+      conditions.push(criteria.hasRevisions
+        ? `EXISTS (SELECT 1 FROM note_revision nr WHERE nr.note_id = n.id)`
+        : `NOT EXISTS (SELECT 1 FROM note_revision nr WHERE nr.note_id = n.id)`)
+    }
+    if (criteria.minGenerationCount !== undefined) {
+      conditions.push(`COALESCE(c.generation_count, 0) >= $${idx++}`)
+      params.push(criteria.minGenerationCount)
+    }
+    if (criteria.maxGenerationCount !== undefined) {
+      conditions.push(`COALESCE(c.generation_count, 0) <= $${idx++}`)
+      params.push(criteria.maxGenerationCount)
     }
     if (criteria.updatedAfter) {
       conditions.push(`n.updated_at >= $${idx++}`)
