@@ -23,7 +23,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 jobs:
@@ -237,3 +237,13 @@ jobs:
           publish_package packages/core
           publish_package packages/graph
           publish_package packages/react
+
+      - name: Create GitHub release with packages
+        env:
+          RELEASE_PLATFORM: github
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+          RELEASE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_API: ${{ github.api_url }}
+          RELEASE_REPO: ${{ github.repository }}
+          RELEASE_PACK_DIR: /tmp/fortemi-publish-check
+        run: node tools/release/create-repo-release.mjs

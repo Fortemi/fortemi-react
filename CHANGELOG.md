@@ -2,6 +2,12 @@
 
 All notable changes to fortemi-react are documented here.
 
+## Unreleased
+
+### Release engineering
+
+- The Gitea and npmjs publish workflows now create a repository **Release** for each signed tag and attach the packaged `@fortemi/core`, `@fortemi/graph`, and `@fortemi/react` tarballs (`fortemi-<pkg>-<version>.tgz`) as release assets, alongside the npm publishes — so every release carries downloadable packages on both Gitea and GitHub. Release creation is idempotent (re-runnable from `workflow_dispatch`) and driven by `tools/release/create-repo-release.mjs`. Notes come from `docs/releases/<tag>.md` when present.
+
 ## v2026.6.3 - 2026-06-15
 
 ### `@fortemi/graph` — framework-agnostic `GraphController` (#170, #171)

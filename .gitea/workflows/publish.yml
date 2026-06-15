@@ -234,3 +234,13 @@ jobs:
           publish_package packages/core
           publish_package packages/graph
           publish_package packages/react
+
+      - name: Create Gitea release with packages
+        env:
+          RELEASE_PLATFORM: gitea
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+          RELEASE_TOKEN: ${{ secrets.GT_PUBLISH_TOKEN }}
+          RELEASE_API: ${{ github.server_url }}/api/v1
+          RELEASE_REPO: ${{ github.repository }}
+          RELEASE_PACK_DIR: /tmp/fortemi-publish-check
+        run: node tools/release/create-repo-release.mjs
