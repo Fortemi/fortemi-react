@@ -22,6 +22,30 @@ import {
 
 export type { AiwgReviewInput }
 
+/**
+ * Per-type record counts that behave identically in whole-index and chunked modes.
+ *
+ * - Whole-index: tally `index.items` by `type`.
+ * - Chunked: read the manifest's pre-computed `type` facet — exact global counts
+ *   derived from the full records at build time, available from the ~2 KB manifest
+ *   with no part fetch. Falls back to `{}` when a manifest carries no facets.
+ *
+ * @see https://git.integrolabs.net/Fortemi/fortemi-react/issues/173
+ */
+export function deriveTypeCounts(
+  index: AiwgFortemiIndexExport | null,
+  chunkedManifest: AiwgFortemiChunkManifest | null,
+): Record<string, number> {
+  if (chunkedManifest) {
+    return chunkedManifest.facets?.type ?? {}
+  }
+  if (!index) return {}
+  return index.items.reduce<Record<string, number>>((acc, item) => {
+    acc[item.type] = (acc[item.type] ?? 0) + 1
+    return acc
+  }, {})
+}
+
 export function useAiwgIndex(initialIndex?: AiwgFortemiIndexExport) {
   const [chunkedController] = useState(() => createAiwgIndexController())
   const [index, setIndex] = useState<AiwgFortemiIndexExport | null>(initialIndex ?? null)
@@ -139,13 +163,10 @@ export function useAiwgIndex(initialIndex?: AiwgFortemiIndexExport) {
     return aiwgFortemiIndexToCommunityGraph(index, options)
   }, [index])
 
-  const counts = useMemo(() => {
-    if (!index) return {}
-    return index.items.reduce<Record<string, number>>((acc, item) => {
-      acc[item.type] = (acc[item.type] ?? 0) + 1
-      return acc
-    }, {})
-  }, [index])
+  const counts = useMemo(
+    () => deriveTypeCounts(index, chunkedManifest),
+    [index, chunkedManifest],
+  )
 
   return {
     index,
