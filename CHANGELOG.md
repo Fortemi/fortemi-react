@@ -2,7 +2,18 @@
 
 All notable changes to fortemi-react are documented here.
 
-## Unreleased
+## v2026.6.3 - 2026-06-15
+
+### `@fortemi/graph` — framework-agnostic `GraphController` (#170, #171)
+
+- Extracted the graph-source state machine out of the React `useGraphController` hook into a new `GraphController` in `@fortemi/graph`. It owns the `citations | topics | precomputed | dynamic-search | user-authored` mode dispatch, transition tracking, and load orchestration behind a plain observable surface (`getState()` / `subscribe()`) with no React — so JS-only hosts get the same capability.
+- `@fortemi/graph` now depends on `@fortemi/core` (maintainer-authorized). The stack is a clean linear chain with no cycles: `@electric-sql/pglite ← @fortemi/core ← @fortemi/graph ← @fortemi/react`; `@fortemi/core` still imports nothing from `@fortemi/graph`. The pure projection helpers (layout/filter/color/degree/bounds/neighborhood/snapshot) remain database-free and tree-shakeable — only `GraphController` reaches the PGlite-backed repositories.
+- `useGraphController` is now a thin `useSyncExternalStore` adapter over `GraphController`; its public return shape is unchanged (no consumer breakage). `GraphView` sources `GraphLayoutState` from `@fortemi/graph`.
+- Corrected the `@fortemi/graph` package description, README, and the root dependency-direction note: it is consumed by `@fortemi/react` and JS-only hosts (not `@fortemi/core`) and depends on `@fortemi/core` — dropping the earlier "zero deps / no React / no database" wording (#171).
+
+### `@fortemi/react` — `useAiwgIndex().counts` works in chunked mode (#173)
+
+- `counts` now resolves identically in whole-index and chunked modes. In chunked mode (`loadChunkedIndex`, where `index` is `null`) it derives per-type counts from the manifest's pre-computed `type` facet (`chunkedManifest.facets.type`) — exact global counts from the ~2 KB manifest, no part fetch — and falls back to the item tally for whole-index mode. Consumers can drop the `chunkedManifest.facets.record_type ?? counts` workaround. No change to the hook's return shape.
 
 ### `@fortemi/core` — slim/projected chunk parts (#168)
 
@@ -12,6 +23,16 @@ All notable changes to fortemi-react are documented here.
 - New pure builder `buildAiwgChunkedIndex(index, { partSize, projection?, detailHref? })` returns `{ manifest, parts, details }` — the generalizable writer so consumers don't hand-roll chunk emission. Manifest facets are computed from full records, so global counts stay exact even with slim parts. Exported `AIWG_SCAN_REQUIRED_FIELDS` documents the minimum projection.
 - Validation is projection-aware: manifests require the scan-required fields in any `projection` and a `{id}` placeholder in `detail.href`; projected parts validate as slim records.
 - `@fortemi/react` `useAiwgIndex()` exposes `getRecord(id)` (resolves chunked detail or whole-index lookup) and forwards `detailLoader` via `loadChunkedIndex` options.
+
+### Tooling
+
+- CI builds `@fortemi/core` before running the `@fortemi/graph` test suite. `@fortemi/graph` now imports `@fortemi/core` by its published entry point, so its tests need core's build output present — the `unit-test` job previously ran them before the build step.
+
+### Published Packages
+
+- `@fortemi/core@2026.6.3`
+- `@fortemi/graph@2026.6.3`
+- `@fortemi/react@2026.6.3`
 
 ## v2026.6.2 - 2026-06-15
 
