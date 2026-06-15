@@ -17,6 +17,7 @@ pnpm dev
 [![Node Version](https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen?style=flat-square&logo=node.js)](https://nodejs.org)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
+[![Built with aiwg](https://img.shields.io/npm/v/aiwg?label=built%20with%20aiwg&color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/aiwg)
 
 [**Get Started**](#quick-start) · [**Packages**](#packages) · [**Features**](#what-you-get) · [**AI Capabilities**](#ai-capabilities) · [**Documentation**](#documentation) · [**License**](#license)
 
