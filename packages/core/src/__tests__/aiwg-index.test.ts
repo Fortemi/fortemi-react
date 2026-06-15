@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
+  AIWG_SCAN_REQUIRED_FIELDS,
   aiwgFortemiIndexToCommunityGraph,
+  buildAiwgChunkedIndex,
   createAiwgIndexController,
   createAiwgReviewDecisionExport,
   queryAiwgFortemiIndex,
   validateAiwgFortemiChunkManifest,
   validateAiwgFortemiChunkPart,
   validateAiwgFortemiIndexExport,
+  type AiwgChunkedIndexDetailLoader,
   type AiwgChunkedIndexLoader,
   type AiwgFortemiChunkManifest,
   type AiwgFortemiChunkPart,
@@ -309,5 +312,97 @@ describe('AIWG Fortemi index adapter', () => {
     expect(result.complete).toBe(true)
     expect(progress).toContain(`part:${manifest.parts.length}/${manifest.parts.length}`)
     expect(controller.getSnapshot().chunked?.cachedParts).toBeLessThanOrEqual(1)
+  })
+})
+
+describe('AIWG Fortemi chunked index — slim/projected parts (#168)', () => {
+  const projection = AIWG_SCAN_REQUIRED_FIELDS
+
+  function projectedRuntime(partSize = 2) {
+    const built = buildAiwgChunkedIndex(index, { partSize, projection })
+    const partsByHref = new Map(built.parts.map((entry) => [entry.href, entry.part]))
+    const detailById = new Map(built.details.map((entry) => [entry.id, entry.record]))
+    let detailFetches = 0
+    const loader: AiwgChunkedIndexLoader = async (ref) => partsByHref.get(ref.href)
+    const detailLoader: AiwgChunkedIndexDetailLoader = async (id) => {
+      detailFetches += 1
+      return detailById.get(id)
+    }
+    return { built, loader, detailLoader, detailFetches: () => detailFetches }
+  }
+
+  it('builds a projected manifest + slim parts + full detail records', () => {
+    const built = buildAiwgChunkedIndex(index, { partSize: 2, projection })
+    expect(built.manifest.projection).toEqual(projection)
+    expect(built.manifest.detail?.href).toBe('detail/{id}.json')
+    // manifest facets computed from FULL records → exact global counts even though parts are slim
+    expect(built.manifest.facets?.type?.['crm.organization']).toBe(1)
+    // slim parts omit detail-only fields, keep scan fields
+    const firstItem = built.parts[0].part.items[0] as unknown as Record<string, unknown>
+    expect(firstItem.title).toBeDefined()
+    expect(firstItem.facets).toBeDefined()
+    expect(firstItem.source).toBeUndefined()
+    expect(firstItem.provenance).toBeUndefined()
+    expect(firstItem.relationships).toBeUndefined()
+    // every record has a full detail entry
+    expect(built.details.length).toBe(index.items.length)
+    expect(built.details[0].record.provenance.length).toBeGreaterThan(0)
+  })
+
+  it('builds whole-record parts (no projection, no detail) by default', () => {
+    const built = buildAiwgChunkedIndex(index, { partSize: 2 })
+    expect(built.manifest.projection).toBeUndefined()
+    expect(built.manifest.detail).toBeUndefined()
+    expect(built.details).toEqual([])
+    expect((built.parts[0].part.items[0] as unknown as Record<string, unknown>).provenance).toBeDefined()
+  })
+
+  it('validates a projected manifest and projected parts', () => {
+    const { built } = projectedRuntime()
+    expect(validateAiwgFortemiChunkManifest(built.manifest)).toEqual({ valid: true, errors: [] })
+    const part = built.parts[0].part
+    expect(validateAiwgFortemiChunkPart(part, built.manifest.parts[0], built.manifest)).toEqual({ valid: true, errors: [] })
+  })
+
+  it('rejects a projection missing scan-required fields and a detail href without {id}', () => {
+    const { built } = projectedRuntime()
+    const badProjection = validateAiwgFortemiChunkManifest({ ...built.manifest, projection: ['id', 'type'] })
+    expect(badProjection.valid).toBe(false)
+    expect(badProjection.errors.some((e) => e.includes('scan-required field title'))).toBe(true)
+    const badDetail = validateAiwgFortemiChunkManifest({ ...built.manifest, detail: { href: 'detail.json' } })
+    expect(badDetail.valid).toBe(false)
+    expect(badDetail.errors.some((e) => e.includes('{id}'))).toBe(true)
+  })
+
+  it('queries projected parts with the same results as the whole index, then lazy-loads detail', async () => {
+    const { built, loader, detailLoader, detailFetches } = projectedRuntime()
+    const controller = createAiwgIndexController()
+    controller.loadChunkedIndex(built.manifest, loader, { detailLoader, maxCachedParts: 1, maxCachedDetails: 4 })
+
+    // scan parity with the in-memory query (ids + totals)
+    const chunked = await controller.queryChunked('', { types: ['crm.organization'] })
+    const inMemory = queryAiwgFortemiIndex(index, '', { types: ['crm.organization'] })
+    expect(chunked.items.map((item) => item.id)).toEqual(inMemory.items.map((item) => item.id))
+    expect(chunked.total).toBe(inMemory.total)
+
+    // the scanned item is slim — detail not fetched yet
+    const slim = chunked.items[0] as unknown as Record<string, unknown>
+    expect(slim.provenance).toBeUndefined()
+    expect(detailFetches()).toBe(0)
+
+    // getRecord resolves the full record on demand and caches it
+    const full = await controller.getRecord(chunked.items[0].id)
+    expect(full.provenance.length).toBeGreaterThan(0)
+    expect(full.source.path).toBeTruthy()
+    expect(detailFetches()).toBe(1)
+    await controller.getRecord(chunked.items[0].id)
+    expect(detailFetches()).toBe(1) // served from detail cache
+  })
+
+  it('rejects getRecord on a projected index without a detailLoader', async () => {
+    const { built, loader } = projectedRuntime()
+    const controller = createAiwgIndexController()
+    controller.loadChunkedIndex(built.manifest, loader)
+    await expect(controller.getRecord(index.items[0].id)).rejects.toThrow(/detailLoader/)
   })
 })

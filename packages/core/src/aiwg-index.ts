@@ -65,6 +65,36 @@ export interface AiwgFortemiChunkPartRef {
   count: number
 }
 
+// Fields a scan part must retain for query/browse/rank/facet to work. The rest
+// (source, provenance, relationships, updated_at) are detail-only and may be
+// dropped from scan parts via `projection`, then resolved on demand by id.
+export const AIWG_SCAN_REQUIRED_FIELDS: Array<keyof AiwgFortemiRecord> = [
+  'schema_version',
+  'id',
+  'type',
+  'title',
+  'text',
+  'facets',
+  'tags',
+  'concepts',
+  'privacy',
+]
+
+// A record as it appears in a scan part. With no manifest `projection`, this is a
+// full AiwgFortemiRecord. With a projection, detail-only fields are absent — read
+// them via the controller's getRecord(). Typed as the full record for ergonomics;
+// query/browse code guards the projectable fields.
+export type AiwgFortemiProjectedRecord =
+  Pick<AiwgFortemiRecord, 'schema_version' | 'id' | 'type' | 'title' | 'text' | 'facets' | 'tags' | 'concepts' | 'privacy'>
+  & Partial<AiwgFortemiRecord>
+
+// How the controller resolves a full record by id when scan parts are projected.
+export interface AiwgFortemiChunkDetailRef {
+  // href template containing `{id}` (URL-encoded at substitution), relative to the
+  // manifest base — e.g. "detail/{id}.json".
+  href: string
+}
+
 export interface AiwgFortemiChunkManifest {
   schema_version: 'aiwg.fortemi.index.chunk-manifest.v1'
   generated_at: string
@@ -72,6 +102,11 @@ export interface AiwgFortemiChunkManifest {
   total: number
   part_size: number
   facets?: Record<string, Record<string, number>>
+  // Field names present in scan-part items. Absent → scan parts carry whole records.
+  // When set, must include AIWG_SCAN_REQUIRED_FIELDS.
+  projection?: Array<keyof AiwgFortemiRecord>
+  // Resolver for full records by id (used with `projection` to lazy-load detail).
+  detail?: AiwgFortemiChunkDetailRef
   parts: AiwgFortemiChunkPartRef[]
 }
 
@@ -140,8 +175,18 @@ export type AiwgChunkedIndexLoader = (
   manifest: AiwgFortemiChunkManifest,
 ) => Promise<unknown>
 
+// Resolves a full record by id (used with projected scan parts). Returns the
+// parsed record JSON; validated by the controller before use.
+export type AiwgChunkedIndexDetailLoader = (
+  id: string,
+  manifest: AiwgFortemiChunkManifest,
+) => Promise<unknown>
+
 export interface AiwgChunkedIndexLoadOptions {
   maxCachedParts?: number
+  // Required to resolve detail for projected indexes via getRecord(); ignored otherwise.
+  detailLoader?: AiwgChunkedIndexDetailLoader
+  maxCachedDetails?: number
 }
 
 export type AiwgChunkedIndexProgressPhase = 'part' | 'query'
@@ -217,6 +262,10 @@ export interface AiwgIndexController {
   getSnapshot(): AiwgIndexControllerSnapshot
   query(query?: string, options?: AiwgIndexQueryOptions): AiwgIndexQueryResult
   queryChunked(query?: string, options?: AiwgChunkedIndexQueryOptions): Promise<AiwgChunkedIndexQueryResult>
+  // Resolve a full record by id. For a projected chunked index, fetches detail via
+  // the detailLoader (bounded cache); for a whole-record index/parts, returns the
+  // record from loaded data. Rejects if detail is unavailable.
+  getRecord(id: string): Promise<AiwgFortemiRecord>
   clearChunkCache(): void
   toCommunityGraph(options?: AiwgIndexGraphOptions): ReturnType<typeof aiwgFortemiIndexToCommunityGraph>
   setReviewDecision(input: AiwgReviewInput): AiwgReviewDecision
@@ -355,6 +404,20 @@ export function validateAiwgFortemiChunkManifest(value: unknown): AiwgChunkedInd
   if (data.facets !== undefined && !isFacetCounts(data.facets)) {
     errors.push('facets must be a nested string-to-number count object')
   }
+  if (data.projection !== undefined) {
+    if (!Array.isArray(data.projection) || !data.projection.every((field) => typeof field === 'string')) {
+      errors.push('projection must be an array of field names')
+    } else {
+      const present = new Set(data.projection)
+      for (const field of AIWG_SCAN_REQUIRED_FIELDS) {
+        if (!present.has(field)) errors.push('projection must include scan-required field ' + field)
+      }
+    }
+  }
+  if (data.detail !== undefined) {
+    if (!hasString(data.detail.href)) errors.push('detail.href is required')
+    else if (!data.detail.href.includes('{id}')) errors.push('detail.href must contain the {id} placeholder')
+  }
   if (!Array.isArray(data?.parts)) errors.push('parts must be an array')
 
   let expectedOffset = 0
@@ -383,6 +446,37 @@ export function assertAiwgFortemiChunkManifest(value: unknown): AiwgFortemiChunk
   return value as AiwgFortemiChunkManifest
 }
 
+// Validate projected (slim) scan-part items: scan-required fields only, ids unique + sorted.
+function validateProjectedRecords(items: Array<Partial<AiwgFortemiRecord>>): string[] {
+  const errors: string[] = []
+  const ids = new Set<string>()
+  let previousId = ''
+  for (const [index, item] of items.entries()) {
+    if (item.schema_version !== 'aiwg.fortemi.index.record.v1') {
+      errors.push('items[' + index + '].schema_version must be aiwg.fortemi.index.record.v1')
+    }
+    if (!hasString(item.id)) errors.push('items[' + index + '].id is required')
+    if (hasString(item.id) && ids.has(item.id)) errors.push('duplicate id: ' + item.id)
+    if (hasString(item.id)) ids.add(item.id)
+    if (previousId && hasString(item.id) && previousId.localeCompare(item.id) > 0) {
+      errors.push('items must be sorted by id: ' + previousId + ' before ' + item.id)
+    }
+    if (hasString(item.id)) previousId = item.id
+    if (!item.type || !VALID_TYPES.has(item.type)) errors.push('items[' + index + '].type is invalid')
+    if (!hasString(item.title)) errors.push('items[' + index + '].title is required')
+    if (typeof item.text !== 'string') errors.push('items[' + index + '].text is required')
+    if (!item.facets || typeof item.facets !== 'object' || Array.isArray(item.facets)) {
+      errors.push('items[' + index + '].facets must be an object')
+    }
+    if (!Array.isArray(item.tags)) errors.push('items[' + index + '].tags must be an array')
+    if (!Array.isArray(item.concepts)) errors.push('items[' + index + '].concepts must be an array')
+    if (!item.privacy || !hasString(item.privacy.classification)) {
+      errors.push('items[' + index + '].privacy.classification is required')
+    }
+  }
+  return errors
+}
+
 export function validateAiwgFortemiChunkPart(
   value: unknown,
   partRef?: AiwgFortemiChunkPartRef,
@@ -408,13 +502,17 @@ export function validateAiwgFortemiChunkPart(
   }
 
   if (Array.isArray(data?.items)) {
-    const validation = validateAiwgFortemiIndexExport({
-      schema_version: 'aiwg.fortemi.index.export.v1',
-      generated_at: manifest?.generated_at ?? '1970-01-01T00:00:00.000Z',
-      source: manifest?.source ?? { repo: 'chunk', privacy: 'public' },
-      items: data.items,
-    })
-    errors.push(...validation.errors.map((error) => 'items.' + error))
+    if (manifest?.projection) {
+      errors.push(...validateProjectedRecords(data.items).map((error) => 'items.' + error))
+    } else {
+      const validation = validateAiwgFortemiIndexExport({
+        schema_version: 'aiwg.fortemi.index.export.v1',
+        generated_at: manifest?.generated_at ?? '1970-01-01T00:00:00.000Z',
+        source: manifest?.source ?? { repo: 'chunk', privacy: 'public' },
+        items: data.items,
+      })
+      errors.push(...validation.errors.map((error) => 'items.' + error))
+    }
   }
 
   return { valid: errors.length === 0, errors }
@@ -441,6 +539,19 @@ export function createAiwgFetchChunkLoader(baseUrl?: string | URL): AiwgChunkedI
   }
 }
 
+// Detail loader for projected indexes: resolves the manifest's detail.href {id}
+// template (id URL-encoded) against baseUrl and fetches the full record.
+export function createAiwgFetchDetailLoader(baseUrl?: string | URL): AiwgChunkedIndexDetailLoader {
+  return async (id, manifest) => {
+    if (!manifest.detail?.href) throw new Error('Manifest has no detail.href for record resolution')
+    const relative = manifest.detail.href.replace('{id}', encodeURIComponent(id))
+    const href = baseUrl ? new URL(relative, baseUrl).toString() : relative
+    const response = await fetch(href)
+    if (!response.ok) throw new Error('Failed to fetch AIWG index detail ' + href + ': ' + response.status)
+    return response.json()
+  }
+}
+
 export function getAiwgFortemiFacets(items: AiwgFortemiRecord[]): Record<string, Record<string, number>> {
   const result: Record<string, Record<string, number>> = {}
   for (const item of items) {
@@ -453,6 +564,76 @@ export function getAiwgFortemiFacets(items: AiwgFortemiRecord[]): Record<string,
     }
   }
   return result
+}
+
+export interface AiwgChunkedIndexBuildOptions {
+  partSize?: number
+  // When set, scan parts carry only these fields; full records go to `details`.
+  projection?: Array<keyof AiwgFortemiRecord>
+  // Detail href template (with {id}); defaults to "detail/{id}.json" when projecting.
+  detailHref?: string
+  generatedAt?: string
+}
+
+export interface AiwgChunkedIndexBuildResult {
+  manifest: AiwgFortemiChunkManifest
+  parts: Array<{ href: string; part: AiwgFortemiChunkPart }>
+  // Empty unless projecting. Each entry is a full record to host at the detail href.
+  details: Array<{ id: string; record: AiwgFortemiRecord }>
+}
+
+// Pure builder (no I/O): project an index export into the chunked manifest + parts
+// (+ detail records when projecting). The caller writes the returned objects to disk.
+// Manifest facets are computed from the full records, so global counts are exact even
+// when scan parts are slim.
+export function buildAiwgChunkedIndex(
+  index: AiwgFortemiIndexExport,
+  options: AiwgChunkedIndexBuildOptions = {},
+): AiwgChunkedIndexBuildResult {
+  const partSize = hasPositiveInteger(options.partSize) ? options.partSize : 500
+  const projection = options.projection
+  const items = index.items
+  const pad = (value: number): string => String(value).padStart(4, '0')
+  const project = (record: AiwgFortemiRecord): AiwgFortemiRecord => {
+    if (!projection) return record
+    const slim: Record<string, unknown> = {}
+    for (const field of projection) slim[field] = record[field]
+    return slim as unknown as AiwgFortemiRecord
+  }
+
+  const parts: Array<{ href: string; part: AiwgFortemiChunkPart }> = []
+  const partRefs: AiwgFortemiChunkPartRef[] = []
+  for (let offset = 0, partIndex = 0; offset < items.length; offset += partSize, partIndex += 1) {
+    const slice = items.slice(offset, offset + partSize)
+    const href = 'part-' + pad(partIndex) + '.json'
+    parts.push({
+      href,
+      part: {
+        schema_version: 'aiwg.fortemi.index.chunk.v1',
+        manifest_schema_version: 'aiwg.fortemi.index.chunk-manifest.v1',
+        offset,
+        items: slice.map(project),
+      },
+    })
+    partRefs.push({ href, offset, count: slice.length })
+  }
+
+  const manifest: AiwgFortemiChunkManifest = {
+    schema_version: 'aiwg.fortemi.index.chunk-manifest.v1',
+    generated_at: options.generatedAt ?? index.generated_at,
+    source: index.source,
+    total: items.length,
+    part_size: partSize,
+    facets: getAiwgFortemiFacets(items),
+    parts: partRefs,
+    ...(projection ? { projection, detail: { href: options.detailHref ?? 'detail/{id}.json' } } : {}),
+  }
+
+  return {
+    manifest,
+    parts,
+    details: projection ? items.map((record) => ({ id: record.id, record })) : [],
+  }
 }
 
 function includesAll(actual: string[], expected: string[] | undefined): boolean {
@@ -530,7 +711,7 @@ function createRankedEntries(
       if (!includesAll(item.tags, options.tags)) return false
       if (!includesAll(item.concepts, options.concepts)) return false
       if (!matchesFacetFilters(item, options.facets)) return false
-      if (options.relationshipTargetId && !item.relationships.some((rel) => rel.target_id === options.relationshipTargetId)) {
+      if (options.relationshipTargetId && !(item.relationships ?? []).some((rel) => rel.target_id === options.relationshipTargetId)) {
         return false
       }
       return true
@@ -590,6 +771,9 @@ interface AiwgChunkedIndexRuntime {
   loader: AiwgChunkedIndexLoader
   maxCachedParts: number
   partCache: Map<string, AiwgFortemiChunkPart>
+  detailLoader?: AiwgChunkedIndexDetailLoader
+  maxCachedDetails: number
+  detailCache: Map<string, AiwgFortemiRecord>
 }
 
 function chunkPartCacheKey(part: AiwgFortemiChunkPartRef): string {
@@ -598,6 +782,11 @@ function chunkPartCacheKey(part: AiwgFortemiChunkPartRef): string {
 
 function clampMaxCachedParts(value: number | undefined): number {
   if (!hasPositiveInteger(value)) return 3
+  return value
+}
+
+function clampMaxCachedDetails(value: number | undefined): number {
+  if (!hasPositiveInteger(value)) return 32
   return value
 }
 
@@ -643,6 +832,42 @@ async function loadChunkPart(
     runtime.partCache.delete(oldest)
   }
   return { part: parsed, fetched: true }
+}
+
+async function getChunkRecord(runtime: AiwgChunkedIndexRuntime, id: string): Promise<AiwgFortemiRecord> {
+  const cached = runtime.detailCache.get(id)
+  if (cached) {
+    runtime.detailCache.delete(id)
+    runtime.detailCache.set(id, cached)
+    return cached
+  }
+  // Whole-record parts already in cache: serve without a detail fetch.
+  if (!runtime.manifest.projection) {
+    for (const part of runtime.partCache.values()) {
+      const found = part.items.find((item) => item.id === id)
+      if (found) return found
+    }
+  }
+  if (!runtime.detailLoader) {
+    throw new Error('No detailLoader configured to resolve record ' + id)
+  }
+  const raw = await runtime.detailLoader(id, runtime.manifest)
+  const record = assertAiwgFortemiIndexExport({
+    schema_version: 'aiwg.fortemi.index.export.v1',
+    generated_at: runtime.manifest.generated_at,
+    source: runtime.manifest.source,
+    items: [raw],
+  }).items[0]
+  if (record.id !== id) {
+    throw new Error('Detail record id mismatch: expected ' + id + ', got ' + record.id)
+  }
+  runtime.detailCache.set(id, record)
+  while (runtime.detailCache.size > runtime.maxCachedDetails) {
+    const oldest = runtime.detailCache.keys().next().value
+    if (oldest === undefined) break
+    runtime.detailCache.delete(oldest)
+  }
+  return record
 }
 
 async function queryChunkedAiwgFortemiIndex(
@@ -771,6 +996,9 @@ export function createAiwgIndexController(initialIndex?: AiwgFortemiIndexExport)
           loader,
           maxCachedParts: clampMaxCachedParts(options.maxCachedParts),
           partCache: new Map(),
+          detailLoader: options.detailLoader,
+          maxCachedDetails: clampMaxCachedDetails(options.maxCachedDetails),
+          detailCache: new Map(),
         }
         data = null
         reviewDecisions = []
@@ -813,8 +1041,23 @@ export function createAiwgIndexController(initialIndex?: AiwgFortemiIndexExport)
         throw error
       }
     },
+    async getRecord(id: string): Promise<AiwgFortemiRecord> {
+      if (chunked) {
+        try {
+          return await getChunkRecord(chunked, id)
+        } catch (err) {
+          error = err instanceof Error ? err : new Error(String(err))
+          notify()
+          throw error
+        }
+      }
+      const found = requireIndex().items.find((item) => item.id === id)
+      if (!found) throw new Error('Record not found: ' + id)
+      return found
+    },
     clearChunkCache(): void {
       chunked?.partCache.clear()
+      chunked?.detailCache.clear()
       error = null
       notify()
     },

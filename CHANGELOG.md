@@ -2,6 +2,17 @@
 
 All notable changes to fortemi-react are documented here.
 
+## Unreleased
+
+### `@fortemi/core` — slim/projected chunk parts (#168)
+
+- `AiwgFortemiChunkManifest` gains optional `projection` (the field names present in scan parts) and `detail` (`{ href }` template with `{id}`). When a manifest declares a `projection`, scan parts may omit detail-only fields (`source`, `provenance`, `relationships`, `updated_at`) — roughly half the bytes for a typical CRM index — so broad/agent `searchChunked` scans transfer only the searchable projection. Absent `projection`, parts remain whole records (fully backward compatible).
+- `createAiwgIndexController()` gains `getRecord(id)` and `loadChunkedIndex` accepts `detailLoader` + `maxCachedDetails`: a projected index resolves full records on demand (bounded LRU detail cache); a whole-record index serves from loaded parts/data.
+- New `createAiwgFetchDetailLoader(baseUrl)` resolves the manifest's `detail.href` `{id}` template (id URL-encoded) and fetches the full record.
+- New pure builder `buildAiwgChunkedIndex(index, { partSize, projection?, detailHref? })` returns `{ manifest, parts, details }` — the generalizable writer so consumers don't hand-roll chunk emission. Manifest facets are computed from full records, so global counts stay exact even with slim parts. Exported `AIWG_SCAN_REQUIRED_FIELDS` documents the minimum projection.
+- Validation is projection-aware: manifests require the scan-required fields in any `projection` and a `{id}` placeholder in `detail.href`; projected parts validate as slim records.
+- `@fortemi/react` `useAiwgIndex()` exposes `getRecord(id)` (resolves chunked detail or whole-index lookup) and forwards `detailLoader` via `loadChunkedIndex` options.
+
 ## v2026.6.2 - 2026-06-15
 
 ### New Package: @fortemi/graph

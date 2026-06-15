@@ -11,6 +11,7 @@ import {
   type AiwgChunkedIndexQueryResult,
   type AiwgFortemiChunkManifest,
   type AiwgFortemiIndexExport,
+  type AiwgFortemiRecord,
   type AiwgIndexGraphOptions,
   type AiwgIndexQueryOptions,
   type AiwgIndexQueryResult,
@@ -90,6 +91,24 @@ export function useAiwgIndex(initialIndex?: AiwgFortemiIndexExport) {
     }
   }, [chunkedController])
 
+  // Resolve a full record by id — fetches detail for a projected chunked index
+  // (via the detailLoader passed to loadChunkedIndex), or looks up the loaded
+  // whole index. Use this to populate a detail panel without holding detail in the list.
+  const getRecord = useCallback(async (id: string): Promise<AiwgFortemiRecord> => {
+    if (chunkedManifest) {
+      try {
+        return await chunkedController.getRecord(id)
+      } catch (err) {
+        const e = err instanceof Error ? err : new Error(String(err))
+        setError(e)
+        throw e
+      }
+    }
+    const found = index?.items.find((item) => item.id === id)
+    if (!found) throw new Error('Record not found: ' + id)
+    return found
+  }, [chunkedManifest, chunkedController, index])
+
   const clearChunkCache = useCallback(() => {
     chunkedController.clearChunkCache()
   }, [chunkedController])
@@ -139,6 +158,7 @@ export function useAiwgIndex(initialIndex?: AiwgFortemiIndexExport) {
     loadChunkedIndex,
     search,
     searchChunked,
+    getRecord,
     clearChunkCache,
     setReviewDecision,
     clearReviewDecision,

@@ -307,11 +307,14 @@ export type {
 } from './shard/index.js'
 
 export {
+  AIWG_SCAN_REQUIRED_FIELDS,
   assertAiwgFortemiIndexExport,
   assertAiwgFortemiChunkManifest,
   assertAiwgFortemiChunkPart,
   aiwgFortemiIndexToCommunityGraph,
+  buildAiwgChunkedIndex,
   createAiwgFetchChunkLoader,
+  createAiwgFetchDetailLoader,
   createAiwgIndexController,
   createAiwgReviewDecisionExport,
   getAiwgFortemiFacets,
@@ -321,6 +324,9 @@ export {
   validateAiwgFortemiIndexExport,
 } from './aiwg-index.js'
 export type {
+  AiwgChunkedIndexBuildOptions,
+  AiwgChunkedIndexBuildResult,
+  AiwgChunkedIndexDetailLoader,
   AiwgChunkedIndexLoadOptions,
   AiwgChunkedIndexLoader,
   AiwgChunkedIndexProgress,
@@ -328,10 +334,12 @@ export type {
   AiwgChunkedIndexQueryOptions,
   AiwgChunkedIndexQueryResult,
   AiwgChunkedIndexValidationResult,
+  AiwgFortemiChunkDetailRef,
   AiwgFortemiChunkManifest,
   AiwgFortemiChunkPart,
   AiwgFortemiChunkPartRef,
   AiwgFortemiIndexExport,
+  AiwgFortemiProjectedRecord,
   AiwgFortemiProvenance,
   AiwgFortemiRecord,
   AiwgFortemiRecordSource,
