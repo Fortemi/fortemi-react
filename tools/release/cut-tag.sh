@@ -48,7 +48,9 @@ if ! [[ "$VERSION" =~ ^[0-9]{4}\.([1-9]|1[0-2])\.([0-9]|[1-9][0-9]+)(-[0-9A-Za-z
   exit 1
 fi
 
-for package_json in packages/core/package.json packages/graph/package.json packages/react/package.json; do
+# Every workspace package stays in version lockstep, including the private root
+# and the private demo app — not just the three published packages.
+for package_json in package.json packages/core/package.json packages/graph/package.json packages/react/package.json apps/standalone/package.json; do
   pkg_version="$(node -e "console.log(JSON.parse(require('fs').readFileSync('${package_json}','utf8')).version)")"
   if [ "$pkg_version" != "$VERSION" ]; then
     echo "FAIL: ${package_json} version is '${pkg_version}', expected '${VERSION}'." >&2
