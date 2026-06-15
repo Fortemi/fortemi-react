@@ -128,6 +128,33 @@ export interface AiwgIndexGraphOptions {
   includeDanglingRelationships?: boolean
 }
 
+export interface AiwgReviewInput {
+  item_id: string
+  action: AiwgReviewAction
+  reason?: string
+}
+
+export interface AiwgIndexControllerSnapshot {
+  index: AiwgFortemiIndexExport | null
+  data: AiwgIndexQueryResult | null
+  error: Error | null
+  reviewDecisions: AiwgReviewDecision[]
+}
+
+export type AiwgIndexControllerListener = (snapshot: AiwgIndexControllerSnapshot) => void
+
+export interface AiwgIndexController {
+  loadIndex(value: unknown): AiwgFortemiIndexExport
+  getIndex(): AiwgFortemiIndexExport | null
+  getSnapshot(): AiwgIndexControllerSnapshot
+  query(query?: string, options?: AiwgIndexQueryOptions): AiwgIndexQueryResult
+  toCommunityGraph(options?: AiwgIndexGraphOptions): ReturnType<typeof aiwgFortemiIndexToCommunityGraph>
+  setReviewDecision(input: AiwgReviewInput): AiwgReviewDecision
+  clearReviewDecision(itemId: string): void
+  createReviewDecisionExport(generatedAt?: string): AiwgReviewDecisionExport
+  subscribe(listener: AiwgIndexControllerListener): () => void
+}
+
 const REQUIRED_RECORD_FIELDS: Array<keyof AiwgFortemiRecord> = [
   'schema_version',
   'id',
@@ -356,6 +383,90 @@ export function createAiwgReviewDecisionExport(
     generated_at: generatedAt,
     source_export_schema_version: source.schema_version,
     decisions: [...decisions].sort((left, right) => left.item_id.localeCompare(right.item_id)),
+  }
+}
+
+export function createAiwgIndexController(initialIndex?: AiwgFortemiIndexExport): AiwgIndexController {
+  let index: AiwgFortemiIndexExport | null = initialIndex ?? null
+  let data: AiwgIndexQueryResult | null = null
+  let error: Error | null = null
+  let reviewDecisions: AiwgReviewDecision[] = []
+  const listeners = new Set<AiwgIndexControllerListener>()
+
+  const snapshot = (): AiwgIndexControllerSnapshot => ({
+    index,
+    data,
+    error,
+    reviewDecisions: [...reviewDecisions],
+  })
+  const notify = () => {
+    const current = snapshot()
+    for (const listener of listeners) listener(current)
+  }
+  const requireIndex = (): AiwgFortemiIndexExport => {
+    if (!index) throw new Error('No AIWG index export loaded')
+    return index
+  }
+
+  return {
+    loadIndex(value: unknown): AiwgFortemiIndexExport {
+      try {
+        const parsed = assertAiwgFortemiIndexExport(value)
+        index = parsed
+        data = null
+        reviewDecisions = []
+        error = null
+        notify()
+        return parsed
+      } catch (err) {
+        error = err instanceof Error ? err : new Error(String(err))
+        notify()
+        throw error
+      }
+    },
+    getIndex(): AiwgFortemiIndexExport | null {
+      return index
+    },
+    getSnapshot(): AiwgIndexControllerSnapshot {
+      return snapshot()
+    },
+    query(query = '', options?: AiwgIndexQueryOptions): AiwgIndexQueryResult {
+      const result = queryAiwgFortemiIndex(requireIndex(), query, options)
+      data = result
+      error = null
+      notify()
+      return result
+    },
+    toCommunityGraph(options?: AiwgIndexGraphOptions) {
+      return aiwgFortemiIndexToCommunityGraph(requireIndex(), options)
+    },
+    setReviewDecision(input: AiwgReviewInput): AiwgReviewDecision {
+      const decision: AiwgReviewDecision = {
+        ...input,
+        updated_at: new Date().toISOString(),
+      }
+      reviewDecisions = [
+        ...reviewDecisions.filter((item) => item.item_id !== decision.item_id),
+        decision,
+      ].sort((left, right) => left.item_id.localeCompare(right.item_id))
+      error = null
+      notify()
+      return decision
+    },
+    clearReviewDecision(itemId: string): void {
+      reviewDecisions = reviewDecisions.filter((item) => item.item_id !== itemId)
+      error = null
+      notify()
+    },
+    createReviewDecisionExport(generatedAt?: string): AiwgReviewDecisionExport {
+      return createAiwgReviewDecisionExport(requireIndex(), reviewDecisions, generatedAt)
+    },
+    subscribe(listener: AiwgIndexControllerListener): () => void {
+      listeners.add(listener)
+      return () => {
+        listeners.delete(listener)
+      }
+    },
   }
 }
 

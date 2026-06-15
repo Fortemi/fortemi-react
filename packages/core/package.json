@@ -36,6 +36,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./aiwg-index": {
+      "types": "./dist/aiwg-index.d.ts",
+      "import": "./dist/aiwg-index.js"
+    },
     "./worker/pglite-worker": "./dist/worker/pglite-worker.js",
     "./service-worker/sw": "./dist/service-worker/sw.js",
     "./package.json": "./package.json"

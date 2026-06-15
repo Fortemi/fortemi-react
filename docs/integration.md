@@ -1285,7 +1285,7 @@ The intended bridge hosts are:
 AIWG index exports can be searched and projected into a `CommunityGraph`:
 
 ```typescript
-import { aiwgFortemiIndexToCommunityGraph } from '@fortemi/core'
+import { aiwgFortemiIndexToCommunityGraph } from '@fortemi/core/aiwg-index'
 import { GraphView, useAiwgIndex } from '@fortemi/react'
 
 const graph = aiwgFortemiIndexToCommunityGraph(index, {
@@ -1304,6 +1304,32 @@ return <GraphView graph={graph} layout={{ algorithm: 'community' }} onSelectNode
 ```
 
 `GraphView` is browser-only and renders SVG with zoom/pan controls, node selection callbacks, community coloring, degree-based node sizing, and filters for nodes, communities, and edge kinds.
+
+No-bundler static documentation hosts can use the lightweight subpath directly:
+
+```html
+<script type="module">
+  import { createAiwgIndexController } from 'https://cdn.example/@fortemi/core/aiwg-index.js'
+
+  const controller = createAiwgIndexController()
+  const exportJson = await fetch('/search/aiwg-index.json').then((res) => res.json())
+  controller.loadIndex(exportJson)
+
+  const results = controller.query('deployment', {
+    types: ['docs.page'],
+    rank: true,
+    snippets: true,
+    limit: 8,
+  })
+
+  console.log(results.rankedItems?.map((entry) => entry.snippet))
+</script>
+```
+
+Package consumers should prefer `@fortemi/core/aiwg-index` for static search and
+review surfaces. The subpath contains only the static index helpers, the
+framework-agnostic controller, and their types; it does not import React, PGlite,
+workers, shards, or browser storage.
 
 ### WebGPU for local LLM
 

@@ -309,6 +309,7 @@ export type {
 export {
   assertAiwgFortemiIndexExport,
   aiwgFortemiIndexToCommunityGraph,
+  createAiwgIndexController,
   createAiwgReviewDecisionExport,
   getAiwgFortemiFacets,
   queryAiwgFortemiIndex,
@@ -321,6 +322,9 @@ export type {
   AiwgFortemiRecordSource,
   AiwgFortemiRecordType,
   AiwgFortemiRelationship,
+  AiwgIndexController,
+  AiwgIndexControllerListener,
+  AiwgIndexControllerSnapshot,
   AiwgIndexGraphOptions,
   AiwgIndexQueryMatch,
   AiwgIndexQueryOptions,
@@ -333,4 +337,5 @@ export type {
   AiwgReviewAction,
   AiwgReviewDecision,
   AiwgReviewDecisionExport,
+  AiwgReviewInput,
 } from './aiwg-index.js'

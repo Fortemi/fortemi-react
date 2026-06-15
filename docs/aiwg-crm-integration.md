@@ -18,6 +18,16 @@ An export contains a deterministic `items[]` array. Each record includes:
 Use `validateAiwgFortemiIndexExport(value)` or
 `assertAiwgFortemiIndexExport(value)` before using untrusted exports.
 
+Static sites and no-bundler hosts can import only the AIWG index helpers without
+loading PGlite, workers, shard code, or browser storage:
+
+```typescript
+import {
+  createAiwgIndexController,
+  queryAiwgFortemiIndex,
+} from '@fortemi/core/aiwg-index'
+```
+
 ## Query
 
 `queryAiwgFortemiIndex(index, query, options)` searches title/text/tags/concepts and
@@ -40,6 +50,27 @@ host replace bespoke documentation search without changing the query helper.
 
 React apps can use `useAiwgIndex()` to load an export, search it, and maintain
 human-gated review decisions in local state.
+
+Vanilla JavaScript hosts can use the framework-agnostic controller with the same
+validation, query, graph projection, and review export behavior:
+
+```typescript
+import { createAiwgIndexController } from '@fortemi/core/aiwg-index'
+
+const controller = createAiwgIndexController()
+controller.loadIndex(exportJson)
+
+const result = controller.query('tenant deployment', {
+  types: ['docs.page'],
+  rank: true,
+  snippets: true,
+  limit: 10,
+})
+
+for (const item of result.rankedItems ?? []) {
+  console.log(item.item.title, item.snippet)
+}
+```
 
 ## Graph Projection
 

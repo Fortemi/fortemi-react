@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   aiwgFortemiIndexToCommunityGraph,
+  createAiwgIndexController,
   createAiwgReviewDecisionExport,
   queryAiwgFortemiIndex,
   validateAiwgFortemiIndexExport,
@@ -154,5 +155,53 @@ describe('AIWG Fortemi index adapter', () => {
 
     expect(graph.nodes).toHaveLength(1)
     expect(graph.edges).toHaveLength(0)
+  })
+
+  it('provides a framework-agnostic controller aligned with the React hook workflow', () => {
+    const controller = createAiwgIndexController()
+    const snapshots: Array<{ hasIndex: boolean; dataTotal: number | null; decisions: number; error: string | null }> = []
+    const unsubscribe = controller.subscribe((snapshot) => {
+      snapshots.push({
+        hasIndex: !!snapshot.index,
+        dataTotal: snapshot.data?.total ?? null,
+        decisions: snapshot.reviewDecisions.length,
+        error: snapshot.error?.message ?? null,
+      })
+    })
+
+    expect(controller.getIndex()).toBeNull()
+    expect(() => controller.query('Example')).toThrow('No AIWG index export loaded')
+
+    const loaded = controller.loadIndex(index)
+    const result = controller.query('Example', { rank: true, snippets: true, limit: 1 })
+    const graph = controller.toCommunityGraph({ communityFacet: 'role' })
+    const decision = controller.setReviewDecision({
+      item_id: result.items[0].id,
+      action: 'accept',
+      reason: 'reviewed in static host',
+    })
+    const exported = controller.createReviewDecisionExport('2026-01-03T00:00:00.000Z')
+
+    unsubscribe()
+    controller.clearReviewDecision(decision.item_id)
+
+    expect(loaded).toBe(index)
+    expect(result.rankedItems?.[0]?.snippet).toContain('Example')
+    expect(graph.nodes).toHaveLength(index.items.length)
+    expect(exported.decisions).toEqual([{ ...decision }])
+    expect(controller.getSnapshot().reviewDecisions).toEqual([])
+    expect(snapshots.map((snapshot) => snapshot.decisions)).toContain(1)
+  })
+
+  it('reports invalid index load errors through the controller snapshot', () => {
+    const controller = createAiwgIndexController()
+    const errors: string[] = []
+    controller.subscribe((snapshot) => {
+      if (snapshot.error) errors.push(snapshot.error.message)
+    })
+
+    expect(() => controller.loadIndex({ schema_version: 'wrong' })).toThrow('Invalid AIWG Fortemi index export')
+    expect(errors[0]).toContain('schema_version must be aiwg.fortemi.index.export.v1')
+    expect(controller.getSnapshot().index).toBeNull()
   })
 })

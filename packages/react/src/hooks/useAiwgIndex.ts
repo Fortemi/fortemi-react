@@ -8,16 +8,12 @@ import {
   type AiwgIndexGraphOptions,
   type AiwgIndexQueryOptions,
   type AiwgIndexQueryResult,
-  type AiwgReviewAction,
+  type AiwgReviewInput,
   type AiwgReviewDecision,
   type AiwgReviewDecisionExport,
-} from '@fortemi/core'
+} from '@fortemi/core/aiwg-index'
 
-export interface AiwgReviewInput {
-  item_id: string
-  action: AiwgReviewAction
-  reason?: string
-}
+export type { AiwgReviewInput }
 
 export function useAiwgIndex(initialIndex?: AiwgFortemiIndexExport) {
   const [index, setIndex] = useState<AiwgFortemiIndexExport | null>(initialIndex ?? null)

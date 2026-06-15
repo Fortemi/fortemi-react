@@ -102,6 +102,29 @@ const results = await search.search('hello')
 await registerServiceWorker()
 ```
 
+## Static AIWG Index Search
+
+Static documentation hosts can import the AIWG index helpers without pulling in
+PGlite, workers, shards, or browser storage:
+
+```ts
+import { createAiwgIndexController } from '@fortemi/core/aiwg-index'
+
+const controller = createAiwgIndexController()
+controller.loadIndex(await fetch('/aiwg-index.json').then((res) => res.json()))
+
+const results = controller.query('deployment', {
+  types: ['docs.page'],
+  rank: true,
+  snippets: true,
+  limit: 10,
+})
+```
+
+Use this subpath for Pagenary-style command palettes, static docs search, and
+vanilla JavaScript review surfaces. The top-level `@fortemi/core` export remains
+available for full archive/runtime integrations.
+
 ## What You Get
 
 | Surface | Description |
