@@ -6,7 +6,7 @@ import {
   layoutCommunityGraph,
   nodeRadius,
 } from '@fortemi/graph'
-import type { GraphLayoutState } from '../hooks/useGraphController.js'
+import type { GraphLayoutState } from '@fortemi/graph'
 
 export interface GraphViewFilters {
   communityIds?: string[]

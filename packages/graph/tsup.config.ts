@@ -1,7 +1,8 @@
 import { defineConfig } from 'tsup';
 
-// Pure framework-agnostic graph utilities. ESM only with .d.ts emitted.
-// No runtime dependencies — nothing is marked external.
+// Framework-agnostic graph utilities. ESM only with .d.ts emitted.
+// @fortemi/core is a runtime dependency (for GraphController) and must stay
+// external — never bundle the core data layer into the graph package.
 
 export default defineConfig({
   entry: { index: 'src/index.ts' },
@@ -13,4 +14,5 @@ export default defineConfig({
   splitting: false,
   treeshake: true,
   outDir: 'dist',
+  external: ['@fortemi/core'],
 });

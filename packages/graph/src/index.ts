@@ -1,13 +1,20 @@
-// @fortemi/graph — framework-agnostic graph presentation/projection helpers.
+// @fortemi/graph — framework-agnostic graph presentation/projection helpers
+// plus the graph-source controller.
 //
-// This is a standalone add-on with zero runtime dependencies. It layers on top
-// of any host that produces `CommunityGraph`-shaped data (e.g. @fortemi/core's
-// GraphRepository / AIWG index export) and gives React and JS-only hosts the
-// shared projection, layout, filtering, coloring, sizing, bounds, neighborhood,
-// and snapshot logic needed to render their own SVG/canvas views.
+// Depends on @fortemi/core (the base data layer) and is consumed by
+// @fortemi/react and JS-only hosts. Dependency direction is the linear chain:
+// pglite ← @fortemi/core ← @fortemi/graph ← @fortemi/react. @fortemi/core never
+// imports @fortemi/graph.
+//
+// Pure projection helpers (layout, filtering, coloring, sizing, bounds,
+// neighborhood, snapshot) give React and JS-only hosts the shared logic to
+// render their own SVG/canvas views. `GraphController` adds the framework-
+// agnostic graph-source state machine (mode selection + load dispatch) on top
+// of @fortemi/core's repositories.
 //
 // Community *detection* intentionally lives in @fortemi/core (the base layer);
-// this package only renders/projects graphs it is given.
+// this package only renders/projects graphs it is given and orchestrates which
+// source to load.
 
 export const VERSION = '2026.6.2'
 
@@ -53,3 +60,16 @@ export {
   deserializeGraphSnapshot,
 } from './serialize.js'
 export type { GraphSnapshot, SerializeSnapshotOptions } from './serialize.js'
+
+export { GraphController } from './controller.js'
+export type {
+  GraphControllerDb,
+  GraphSourceMode,
+  GraphLayoutState,
+  GraphTransitionState,
+  GraphControllerStatus,
+  GraphSourceRef,
+  GraphControllerState,
+  GraphControllerOptions,
+  GraphControllerListener,
+} from './controller.js'

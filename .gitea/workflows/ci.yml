@@ -38,10 +38,14 @@ jobs:
       - run: pnpm --filter @fortemi/core exec vitest run --coverage
         env:
           VITEST_MAX_WORKERS: 2
+      # @fortemi/graph now imports @fortemi/core by its published entry point
+      # (dist), so build core before running graph's tests.
+      - run: pnpm --filter @fortemi/core build
       - run: pnpm --filter @fortemi/graph test
       # @fortemi/react tests import @fortemi/core and @fortemi/graph by their
-      # published entry points (dist), so build those packages first.
-      - run: pnpm --filter @fortemi/core --filter @fortemi/graph build
+      # published entry points (dist), so build graph before react's tests
+      # (core is already built above).
+      - run: pnpm --filter @fortemi/graph build
       - run: pnpm --filter @fortemi/react test
 
   e2e:

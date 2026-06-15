@@ -27,12 +27,12 @@ fortemi-react is the React port of the fortemi knowledge management server (Rust
 
 ```
 packages/core/       @fortemi/core — headless data layer (PGlite, repos, tools, workers, migrations, shard)
-packages/graph/      @fortemi/graph — framework-agnostic graph add-on (layout, filter, color, degree, bounds, neighborhood, snapshot); zero deps, no React/DB
+packages/graph/      @fortemi/graph — framework-agnostic graph add-on (layout, filter, color, degree, bounds, neighborhood, snapshot, GraphController); depends on @fortemi/core, no React
 packages/react/      @fortemi/react — React hooks, FortemiProvider, GraphView (uses @fortemi/graph)
 apps/standalone/     @fortemi/standalone — Vite demo app (private, not published)
 ```
 
-Dependency direction: `@fortemi/core` is the base (never depends on graph). `@fortemi/graph` is a standalone add-on consumed by `@fortemi/react` and JS-only hosts.
+Dependency direction (linear chain, no cycles): `@electric-sql/pglite` ← `@fortemi/core` ← `@fortemi/graph` ← `@fortemi/react`. `@fortemi/core` is the base and never depends on graph; `@fortemi/graph` depends on core (for `GraphController` and shared graph types) and is consumed by `@fortemi/react` and JS-only hosts.
 
 ## Development Commands
 

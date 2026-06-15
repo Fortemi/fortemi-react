@@ -96,6 +96,10 @@ importers:
         version: 4.1.0(@types/node@22.19.15)(vite@7.3.1(@types/node@22.19.15))
 
   packages/graph:
+    dependencies:
+      '@fortemi/core':
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       tsup:
         specifier: ^8.3.5
