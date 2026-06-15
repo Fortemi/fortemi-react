@@ -2,9 +2,9 @@
 
 # fortemi-react
 
-**Browser-only knowledge management packages for React, PGlite, semantic search, and agent tool integration**
+**Local-first knowledge management for the browser — real PostgreSQL, private by default, no cloud required.**
 
-Full PostgreSQL in the browser with PGlite WASM, typed React 19 hooks, SKOS tagging, Knowledge Shard import/export, local AI capability wiring, and JSON format parity with the Fortemi server.
+Build notebooks, research tools, and AI-powered knowledge apps where the data lives on the user's device, search runs locally, and any cloud or AI provider is opt-in and yours to choose. Full PostgreSQL in the browser (PGlite + pgvector), typed React 19 hooks, and portable Knowledge Shard archives — no backend, no account, no lock-in.
 
 ```bash
 pnpm add @fortemi/core @fortemi/react
@@ -19,17 +19,22 @@ pnpm dev
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
 [![Built with aiwg](https://img.shields.io/npm/v/aiwg?label=built%20with%20aiwg&color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/aiwg)
 
-[**Get Started**](#quick-start) · [**Packages**](#packages) · [**Features**](#what-you-get) · [**AI Capabilities**](#ai-capabilities) · [**Documentation**](#documentation) · [**License**](#license)
+[**Why**](#why-fortemi-react) · [**Get Started**](#quick-start) · [**Packages**](#packages) · [**Features**](#what-you-get) · [**AI Capabilities**](#ai-capabilities) · [**Documentation**](#documentation) · [**License**](#license)
 
 </div>
 
 ---
 
-## What fortemi-react Is
+## Why fortemi-react
 
-fortemi-react is a browser-only knowledge management toolkit. It gives React applications a local PostgreSQL-compatible archive using PGlite, repository APIs for notes and knowledge structures, optional local AI capability wiring, and typed hooks for building production UI without a server.
+Most knowledge tools make you choose: capable but cloud-bound, or private but primitive. fortemi-react refuses the trade-off — it runs a full PostgreSQL engine *inside the browser*, so data never has to leave the device to be searchable, structured, and AI-ready.
 
-Use it when you need local-first note storage, semantic retrieval, agent-readable tool functions, or portable Knowledge Shard archives inside a web application.
+- **Private by default.** Notes live in the browser on the user's device — no server, no sync service, no cloud backup, no account. The only thing that ever leaves the device is a cloud AI call you explicitly opt into.
+- **Capable, not toy-grade.** Real PostgreSQL with `tsvector` full-text, pgvector HNSW semantic search, and BM25 reciprocal-rank fusion — production-grade retrieval that stays fast as an archive grows, entirely client-side.
+- **AI on your terms.** Embeddings and LLMs are opt-in and bring-your-own: run locally (WebGPU, Ollama, LM Studio, llama.cpp, vLLM, Jan) or route to a provider you control. Nothing is wired to a vendor you can't swap out.
+- **Yours to keep.** Knowledge Shard archives (tar.gz, with checksums and JSON format parity) export the whole graph on demand, and the AGPL-3.0 license keeps the stack open. No lock-in by design.
+
+Use it when you need local-first note storage, semantic retrieval, agent-readable tool functions, or portable archives inside a web application — whether that's a personal notebook, a research workspace, or a product that must keep user data on the user's device.
 
 ## Quick Start
 
@@ -88,7 +93,7 @@ function Notebook() {
 | `@fortemi/react` | npm | React 19 provider and hooks for notes, search, tags, collections, jobs, capabilities, shards, embedding sets, similarity graphs, and communities |
 | `@fortemi/standalone` | workspace app | Vite application for local development and static deployment |
 
-All packages are versioned together. The current release is `2026.6.2`.
+All packages are versioned together — the npm badges above always show the current release.
 
 ## What You Get
 
