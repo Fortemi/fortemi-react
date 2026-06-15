@@ -2,9 +2,12 @@
 
 fortemi-react ships three published npm packages plus a private demo app. They
 form a strict layering: `@fortemi/core` is the base and depends on nothing in the
-workspace; `@fortemi/graph` is a zero-dependency add-on; `@fortemi/react` binds
-both to React. Dependency arrows only ever point *up* the stack — **core never
-depends on graph or react, and graph never depends on core or react.**
+workspace; `@fortemi/graph` builds on core (projection helpers plus a
+`GraphController`); `@fortemi/react` binds both to React. The dependencies form a
+linear chain with no cycles — `@electric-sql/pglite ← @fortemi/core ← @fortemi/graph ← @fortemi/react`
+— so **core never depends on graph or react, and graph depends on core but never on
+react.** The pure projection helpers stay database-free and tree-shakeable; only
+`GraphController` reaches core's PGlite-backed repositories.
 
 ## Capabilities by package
 
@@ -15,9 +18,10 @@ flowchart TB
     reactView["GraphView<br/>SVG render of a CommunityGraph"]
   end
 
-  subgraph pkgGraph["@fortemi/graph — projection add-on (zero deps · no React · no DB)"]
-    graphProj["Projection helpers<br/>layout · filter · color<br/>degree sizing · bounds/fit · neighborhood"]
+  subgraph pkgGraph["@fortemi/graph — graph add-on (no React · depends on core)"]
+    graphProj["Projection helpers (DB-free, tree-shakeable)<br/>layout · filter · color<br/>degree sizing · bounds/fit · neighborhood"]
     graphSnap["Static snapshots<br/>serialize / deserialize CommunityGraph"]
+    graphCtrl["GraphController<br/>graph-source state machine<br/>(reaches core repositories)"]
   end
 
   subgraph pkgCore["@fortemi/core — base layer (PGlite · headless)"]
@@ -33,6 +37,8 @@ flowchart TB
 
   pkgReact -->|"depends on"| pkgCore
   pkgReact -->|"depends on"| pkgGraph
+  pkgGraph -->|"depends on"| pkgCore
+  graphCtrl -.->|"reads"| coreRepos
   reactView -.->|"projects with"| graphProj
   coreShard -->|"CommunityGraph data"| graphProj
   consumerApp --> pkgReact
@@ -66,11 +72,15 @@ surface of each package.
 | Bounds / fit | `computeGraphBounds`, `fitGraphToViewport` |
 | Neighborhood | `buildAdjacency`, `neighborsOf`, `expandNeighborhood`, `subgraphForNodes`, `neighborhoodSubgraph` |
 | Snapshots | `serializeGraphSnapshot`, `stringifyGraphSnapshot`, `deserializeGraphSnapshot` |
+| Controller | `GraphController` — framework-free graph-source state machine (`citations` / `topics` / `precomputed` / `dynamic-search` / `user-authored` mode dispatch, transition tracking, `getState()` / `subscribe()`) |
 
-Zero runtime dependencies. Pure and deterministic. Operates on plain
-`CommunityGraph` data, so a graph from `@fortemi/core` (or any compatible source)
-drops straight in. Community *detection* stays in `@fortemi/core`; this package
-only *projects* graphs it is given.
+Depends on `@fortemi/core` (and transitively PGlite). The projection helpers and
+snapshot functions are pure, deterministic, and database-free — they operate on
+plain `CommunityGraph` data, so a graph from `@fortemi/core` (or any compatible
+source) drops straight in, and a host importing only those helpers tree-shakes the
+DB out. `GraphController` is the one piece that reaches core's repositories.
+Community *detection* stays in `@fortemi/core`; this package *projects* graphs it
+is given and *selects* the source to project.
 
 ### `@fortemi/react` — React 19 bindings
 
@@ -84,9 +94,11 @@ only *projects* graphs it is given.
 
 - **Core stays minimal and reusable.** Anything that needs the database lives in
   core; nothing forces a core consumer to adopt React or the graph helpers.
-- **Graph is shareable and mixable.** Because it has no dependencies and renders
-  plain `CommunityGraph` data, a static documentation site can render an AIWG
-  relationship graph from a precomputed snapshot without React or PGlite (see
-  `packages/graph/README.md` for a vanilla-JS example).
+- **Graph is shareable and mixable.** Its projection helpers render plain
+  `CommunityGraph` data and stay database-free, so a static documentation site can
+  render an AIWG relationship graph from a precomputed snapshot without React or
+  PGlite (see `packages/graph/README.md` for a vanilla-JS example). The package
+  depends on `@fortemi/core` for `GraphController`, but that path tree-shakes away
+  when only the pure helpers are imported.
 - **React composes both** into hooks and a `GraphView` component, staying
   visually aligned with JS-only hosts because they share the same projection code.

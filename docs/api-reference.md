@@ -1413,12 +1413,15 @@ Handle passed to transaction callbacks in `PGliteWorkerClient.transaction`. Scop
 
 ## @fortemi/graph
 
-Framework-agnostic, zero-dependency graph projection helpers. They operate on
-plain `CommunityGraph` data (structurally identical to what `@fortemi/core`
-produces), so a graph from `GraphRepository` or `aiwgFortemiIndexToCommunityGraph`
-drops straight in. `@fortemi/react`'s `GraphView` is built on these helpers, and
-JS-only hosts can use them to render their own SVG/canvas views without React or
-PGlite. All helpers are pure (no input mutation) and deterministic.
+Framework-agnostic graph tooling. The projection helpers operate on plain
+`CommunityGraph` data (structurally identical to what `@fortemi/core` produces),
+so a graph from `GraphRepository` or `aiwgFortemiIndexToCommunityGraph` drops
+straight in. `@fortemi/react`'s `GraphView` is built on these helpers, and JS-only
+hosts can use them to render their own SVG/canvas views without React or PGlite.
+All projection helpers are pure (no input mutation), deterministic, and
+database-free, so they tree-shake cleanly. The package depends on `@fortemi/core`
+for `GraphController` (the graph-source state machine), which reaches core's
+repositories.
 
 ```bash
 pnpm add @fortemi/graph
