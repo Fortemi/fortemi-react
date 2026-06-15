@@ -4,7 +4,7 @@
 
 **React 19 provider and hooks for local-first Fortemi knowledge archives**
 
-Build React knowledge apps with browser-local PostgreSQL storage, typed hooks, hybrid search, SKOS concepts, job queues, configurable AI providers, graph views, and Knowledge Shard import/export.
+Build React knowledge apps that keep user data in the browser on the device — private by default, no backend required — with browser-local PostgreSQL storage, typed hooks, hybrid search, SKOS concepts, job queues, bring-your-own AI providers, graph views, and Knowledge Shard import/export.
 
 ```bash
 pnpm add @fortemi/react @fortemi/core react

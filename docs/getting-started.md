@@ -1,6 +1,6 @@
 # Getting Started with Fortemi React
 
-This guide walks you through adding Fortemi knowledge management to a React application. By the end you will have a working local-first archive that can create, list, and search notes stored in the browser with PGlite, using the same foundation Fortemi exposes for hybrid retrieval, tags, collections, jobs, capabilities, and Knowledge Shard portability. No server is required for the archive path.
+Fortemi gives a React app a private, local-first knowledge archive: the data lives in the browser on the user's device, search runs locally, and any cloud or AI provider is opt-in. This guide walks you through adding it to a React application. By the end you will have a working local-first archive that can create, list, and search notes stored in the browser with PGlite, using the same foundation Fortemi exposes for hybrid retrieval, tags, collections, jobs, capabilities, and Knowledge Shard portability. No server is required for the archive path.
 
 ---
 

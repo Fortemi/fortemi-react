@@ -4,7 +4,7 @@
 
 **Framework-agnostic graph projection helpers for rendering Fortemi community graphs anywhere**
 
-Turn a `CommunityGraph` into something you can draw — deterministic layout, filtering, community coloring, degree-based sizing, bounds/fit, neighborhood expansion, and static snapshot serialization — plus a framework-agnostic `GraphController` for graph-source selection. Framework-agnostic (no React); depends on `@fortemi/core`. The pure projection helpers stay database-free and tree-shakeable for JS-only hosts.
+Turn a `CommunityGraph` into something you can draw — deterministic layout, filtering, community coloring, degree-based sizing, bounds/fit, neighborhood expansion, and static snapshot serialization — plus a framework-agnostic `GraphController` for graph-source selection. Framework-agnostic (no React); depends on `@fortemi/core`. The pure projection helpers stay database-free and tree-shakeable for JS-only hosts, and run entirely client-side — no network, no database.
 
 ```bash
 pnpm add @fortemi/graph

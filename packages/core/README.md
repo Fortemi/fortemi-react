@@ -4,7 +4,7 @@
 
 **Headless browser knowledge-management core powered by PGlite, typed repositories, semantic retrieval, and agent tool helpers**
 
-Build local-first knowledge apps with PostgreSQL-compatible storage in the browser, production-ready repositories, search primitives, Knowledge Shard portability, optional local AI wiring, and bridge-ready tool metadata.
+Build local-first knowledge apps where data stays in the browser on the user's device — no server, no account — with PostgreSQL-compatible storage, production-ready repositories, hybrid search primitives, portable Knowledge Shard archives, opt-in bring-your-own AI wiring, and bridge-ready tool metadata.
 
 ```bash
 pnpm add @fortemi/core
