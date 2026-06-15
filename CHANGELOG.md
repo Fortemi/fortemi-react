@@ -2,6 +2,30 @@
 
 All notable changes to fortemi-react are documented here.
 
+## v2026.6.2 - 2026-06-15
+
+### New Package: @fortemi/graph
+
+- Extracted the graph projection logic that lived inside the React `GraphView` into a new standalone package `@fortemi/graph` with zero runtime dependencies. It provides pure, deterministic helpers for graph layout, filtering, community color assignment, degree-based node sizing, bounds/fit calculations, neighborhood expansion, and static snapshot serialization.
+- The helpers operate on plain `CommunityGraph` data, so they can be shared and mixed across `@fortemi/core` consumers, `@fortemi/react`, and JS-only hosts that want to render an AIWG relationship graph without pulling in React or PGlite.
+- `@fortemi/react`'s `GraphView` now delegates layout/filter/color/sizing to the add-on; rendering behavior is unchanged. `useGraphController` sources `GraphLayoutAlgorithm` from the package.
+- `@fortemi/core` is unchanged and remains the base layer — it still owns graph production (`GraphRepository`, similarity/link graphs) and community detection.
+
+### Tooling
+
+- CI now runs the `@fortemi/graph` and `@fortemi/react` package test suites in addition to `@fortemi/core`.
+- The Gitea and npmjs.org publish workflows and the signed-tag release gate verify and publish `@fortemi/graph` alongside `@fortemi/core` and `@fortemi/react` (graph publishes before react, which depends on it).
+
+### Published Packages
+
+- `@fortemi/core@2026.6.2`
+- `@fortemi/graph@2026.6.2`
+- `@fortemi/react@2026.6.2`
+
+### Upgrade Notes
+
+Additive release. Consumers upgrading from `2026.6.1` need no source changes; `GraphView` behavior is unchanged. Hosts that want the raw graph helpers directly can now `pnpm add @fortemi/graph`. No archive schema migration is included.
+
 ## v2026.6.1 - 2026-06-14
 
 ### Provider Configuration and Standalone UX

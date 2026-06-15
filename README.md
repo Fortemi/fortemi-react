@@ -87,7 +87,7 @@ function Notebook() {
 | `@fortemi/react` | npm | React 19 provider and hooks for notes, search, tags, collections, jobs, capabilities, shards, embedding sets, similarity graphs, and communities |
 | `@fortemi/standalone` | workspace app | Vite application for local development and static deployment |
 
-All packages are versioned together. The current release is `2026.6.1`.
+All packages are versioned together. The current release is `2026.6.2`.
 
 ## What You Get
 
@@ -156,9 +156,10 @@ The repository uses Node.js 22, pnpm 10, TypeScript, Vitest, Playwright, and Vit
 | Guide | Description |
 |---|---|
 | [Getting Started](docs/getting-started.md) | Installation, provider setup, first note, search |
+| [Package Architecture](docs/architecture/package-architecture.md) | Diagram and capability tables for each npm package and how they layer |
 | [Search](docs/search.md) | Text, semantic, and hybrid search modes, filters, RRF fusion, snippets |
 | [Integration Guide](docs/integration.md) | Embedding in React apps, tool helpers, events, jobs, capabilities |
-| [API Reference](docs/api-reference.md) | Full API surface for `@fortemi/core` and `@fortemi/react` |
+| [API Reference](docs/api-reference.md) | Full API surface for `@fortemi/core`, `@fortemi/graph`, and `@fortemi/react` |
 | [Deployment](docs/deployment.md) | Static hosting, Vite config, browser compatibility, WebGPU, CI/CD |
 | [Extending](docs/extending.md) | Custom tools, job handlers, capabilities, migrations, hooks |
 | [Supply Chain](docs/security/supply-chain.md) | Release signing, workflow pinning, and publishing controls |

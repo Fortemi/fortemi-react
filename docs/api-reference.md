@@ -1,7 +1,7 @@
 # API Reference
 
-**Packages:** `@fortemi/core` · `@fortemi/react`
-**Version:** 2026.6.1
+**Packages:** `@fortemi/core` · `@fortemi/graph` · `@fortemi/react`
+**Version:** 2026.6.2
 
 ---
 
@@ -30,6 +30,9 @@
   - [Migrations and Archive](#migrations-and-archive)
   - [Service Worker](#service-worker)
   - [Worker Utilities](#worker-utilities)
+- [@fortemi/graph](#fortemigraph)
+  - [Graph Data Model](#graph-data-model)
+  - [Graph Helpers](#graph-helpers)
 - [@fortemi/react](#fortemireact)
   - [Provider](#provider)
   - [Hooks](#hooks)
@@ -47,7 +50,7 @@
 const VERSION: string
 ```
 
-The current package version string. Value: `'2026.6.1'`.
+The current package version string. Value: `'2026.6.2'`.
 
 ---
 
@@ -1405,6 +1408,126 @@ interface TransactionProxy {
 ```
 
 Handle passed to transaction callbacks in `PGliteWorkerClient.transaction`. Scoped to the in-flight transaction.
+
+---
+
+## @fortemi/graph
+
+Framework-agnostic, zero-dependency graph projection helpers. They operate on
+plain `CommunityGraph` data (structurally identical to what `@fortemi/core`
+produces), so a graph from `GraphRepository` or `aiwgFortemiIndexToCommunityGraph`
+drops straight in. `@fortemi/react`'s `GraphView` is built on these helpers, and
+JS-only hosts can use them to render their own SVG/canvas views without React or
+PGlite. All helpers are pure (no input mutation) and deterministic.
+
+```bash
+pnpm add @fortemi/graph
+```
+
+### Graph Data Model
+
+```typescript
+interface GraphNode { id: string }
+interface GraphEdge { source: string; target: string; weight: number; kind?: string }
+interface GraphCommunity { id: string; nodes: string[] }
+interface CommunityGraph {
+  nodes: GraphNode[]
+  edges: GraphEdge[]
+  communities: GraphCommunity[]
+}
+
+type GraphLayoutAlgorithm = 'force' | 'radial' | 'community' | 'manual'
+
+interface PositionedGraphNode extends GraphNode {
+  x: number
+  y: number
+  degree: number
+  communityId?: string
+}
+
+interface PositionedGraph {
+  nodes: PositionedGraphNode[]
+  edges: GraphEdge[]
+  nodeIndex: Map<string, PositionedGraphNode>
+}
+
+interface GraphBounds {
+  minX: number; minY: number; maxX: number; maxY: number
+  width: number; height: number; centerX: number; centerY: number
+}
+
+interface ViewportTransform { scale: number; offsetX: number; offsetY: number }
+```
+
+`@fortemi/graph` re-exports `CommunityGraph` and its member types for hosts that
+do not depend on `@fortemi/core`. Community *detection* (`detectCommunities`)
+lives in `@fortemi/core`, which remains the base layer; this package only
+projects graphs it is given.
+
+### Graph Helpers
+
+```typescript
+// Layout — deterministic 2D positions + per-node degree/community
+function layoutCommunityGraph(
+  graph: CommunityGraph,
+  options?: { algorithm?: GraphLayoutAlgorithm; width?: number; height?: number },
+): PositionedGraph
+
+// Filter — by community, edge kind, node allow-list, or predicate
+interface GraphFilter {
+  communityIds?: string[]
+  edgeKinds?: string[]
+  nodeIds?: string[]
+  nodePredicate?: (node: GraphNode) => boolean
+}
+function filterCommunityGraph(graph: CommunityGraph | null | undefined, filter?: GraphFilter): CommunityGraph
+
+// Sizing
+function computeDegrees(graph: CommunityGraph): Map<string, number>
+function nodeRadius(
+  degree: number,
+  options?: { base?: number; perDegree?: number; min?: number; max?: number },
+): number
+
+// Color — deterministic community → color (themeable palette)
+const COMMUNITY_COLORS: readonly string[]
+const UNASSIGNED_COMMUNITY_COLOR: string
+function colorForCommunity(communityId: string | undefined, palette?: readonly string[], unassignedColor?: string): string
+
+// Bounds / fit
+function computeGraphBounds(nodes: ReadonlyArray<{ x: number; y: number }>): GraphBounds
+function fitGraphToViewport(
+  bounds: GraphBounds,
+  viewport: { width: number; height: number },
+  options?: { padding?: number; minScale?: number; maxScale?: number },
+): ViewportTransform
+
+// Selection / neighborhood
+function buildAdjacency(graph: CommunityGraph): Map<string, Set<string>>
+function neighborsOf(graph: CommunityGraph, nodeId: string): Set<string>
+function expandNeighborhood(
+  graph: CommunityGraph,
+  seeds: Iterable<string>,
+  options?: { depth?: number; includeSeeds?: boolean },
+): Set<string>
+function subgraphForNodes(graph: CommunityGraph, nodeIds: Iterable<string>): CommunityGraph
+function neighborhoodSubgraph(graph: CommunityGraph, seeds: Iterable<string>, options?: { depth?: number; includeSeeds?: boolean }): CommunityGraph
+
+// Static snapshots — reproducible JSON for JS-only hosts
+interface GraphSnapshot {
+  version: number
+  graph: CommunityGraph
+  layout?: { algorithm: GraphLayoutAlgorithm; width: number; height: number }
+  generatedAt?: string
+}
+const GRAPH_SNAPSHOT_VERSION: number
+function serializeGraphSnapshot(graph: CommunityGraph, options?: { layout?: GraphSnapshot['layout']; generatedAt?: string }): GraphSnapshot
+function stringifyGraphSnapshot(graph: CommunityGraph, options?: { layout?: GraphSnapshot['layout']; generatedAt?: string }): string
+function deserializeGraphSnapshot(input: GraphSnapshot | string): CommunityGraph
+```
+
+See `packages/graph/README.md` for a complete vanilla-JS host example that
+fetches a snapshot and renders it to SVG using these helpers.
 
 ---
 

@@ -123,7 +123,7 @@ jobs:
           node - <<'CHECK'
           const fs = require('node:fs');
           const expected = process.env.TAG_VERSION;
-          for (const dir of ['packages/core', 'packages/react']) {
+          for (const dir of ['packages/core', 'packages/graph', 'packages/react']) {
             const pkg = JSON.parse(fs.readFileSync(dir + '/package.json', 'utf8'));
             if (pkg.version !== expected) {
               throw new Error(pkg.name + ' version ' + pkg.version + ' does not match release tag ' + expected);
@@ -143,17 +143,21 @@ jobs:
           mkdir -p "$PACK_DIR"
 
           (cd packages/core && pnpm pack --pack-destination "$PACK_DIR")
+          (cd packages/graph && pnpm pack --pack-destination "$PACK_DIR")
           (cd packages/react && pnpm pack --pack-destination "$PACK_DIR")
 
           CORE_TGZ="$PACK_DIR/fortemi-core-${TAG_VERSION}.tgz"
+          GRAPH_TGZ="$PACK_DIR/fortemi-graph-${TAG_VERSION}.tgz"
           REACT_TGZ="$PACK_DIR/fortemi-react-${TAG_VERSION}.tgz"
           test -s "$CORE_TGZ"
+          test -s "$GRAPH_TGZ"
           test -s "$REACT_TGZ"
 
           tar -tzf "$CORE_TGZ" > "$PACK_DIR/core-files.txt"
+          tar -tzf "$GRAPH_TGZ" > "$PACK_DIR/graph-files.txt"
           tar -tzf "$REACT_TGZ" > "$PACK_DIR/react-files.txt"
 
-          if grep -E 'package/(\.aiwg|\.agents|\.codex|\.claude)/' "$PACK_DIR/core-files.txt" "$PACK_DIR/react-files.txt"; then
+          if grep -E 'package/(\.aiwg|\.agents|\.codex|\.claude)/' "$PACK_DIR/core-files.txt" "$PACK_DIR/graph-files.txt" "$PACK_DIR/react-files.txt"; then
             echo "Packed artifact contains local AI/operator metadata" >&2
             exit 1
           fi
@@ -162,9 +166,12 @@ jobs:
           node - <<'CHECK'
           const fs = require('node:fs');
           const pkg = JSON.parse(fs.readFileSync('/tmp/fortemi-publish-check/react-package.json', 'utf8'));
-          const dep = pkg.dependencies && pkg.dependencies['@fortemi/core'];
-          if (dep !== process.env.TAG_VERSION) {
-            throw new Error('@fortemi/react artifact depends on @fortemi/core ' + dep + ', expected ' + process.env.TAG_VERSION);
+          const expected = process.env.TAG_VERSION;
+          for (const name of ['@fortemi/core', '@fortemi/graph']) {
+            const dep = pkg.dependencies && pkg.dependencies[name];
+            if (dep !== expected) {
+              throw new Error('@fortemi/react artifact depends on ' + name + ' ' + dep + ', expected ' + expected);
+            }
           }
           CHECK
 
@@ -228,4 +235,5 @@ jobs:
           }
 
           publish_package packages/core
+          publish_package packages/graph
           publish_package packages/react

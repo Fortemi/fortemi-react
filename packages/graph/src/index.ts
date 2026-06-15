@@ -9,7 +9,7 @@
 // Community *detection* intentionally lives in @fortemi/core (the base layer);
 // this package only renders/projects graphs it is given.
 
-export const VERSION = '2026.6.1'
+export const VERSION = '2026.6.2'
 
 export type {
   GraphNode,

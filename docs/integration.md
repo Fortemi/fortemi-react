@@ -52,8 +52,8 @@ If you are consuming published packages rather than a local checkout, replace `w
 ```json
 {
   "dependencies": {
-    "@fortemi/core": "2026.6.1",
-    "@fortemi/react": "2026.6.1"
+    "@fortemi/core": "2026.6.2",
+    "@fortemi/react": "2026.6.2"
   }
 }
 ```
