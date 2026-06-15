@@ -5,6 +5,7 @@
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
+      "@fortemi/graph": ["packages/graph/src/index.ts"],
       "@fortemi/core": ["packages/core/src/index.ts"],
       "@fortemi/core/aiwg-index": ["packages/core/src/aiwg-index.ts"],
       "@fortemi/core/worker/pglite-worker": ["packages/core/src/worker/pglite-worker.ts"],

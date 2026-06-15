@@ -9,12 +9,13 @@ import {
   type EmbeddingSetSelector,
   type SimilarityGraphResult,
 } from '@fortemi/core'
+import type { GraphLayoutAlgorithm } from '@fortemi/graph'
 import { useFortemiContext } from '../FortemiProvider.js'
 
 export type GraphSourceMode = 'citations' | 'topics' | 'precomputed' | 'dynamic-search' | 'user-authored'
 
 export interface GraphLayoutState {
-  algorithm: 'force' | 'radial' | 'community' | 'manual'
+  algorithm: GraphLayoutAlgorithm
   pinSelectedNodes?: boolean
   preserveViewport?: boolean
   communitySpacing?: number

@@ -95,11 +95,26 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0(@types/node@22.19.15)(vite@7.3.1(@types/node@22.19.15))
 
+  packages/graph:
+    devDependencies:
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(postcss@8.5.8)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.0
+        version: 4.1.0(@types/node@22.19.15)(vite@7.3.1(@types/node@22.19.15))
+
   packages/react:
     dependencies:
       '@fortemi/core':
         specifier: workspace:*
         version: link:../core
+      '@fortemi/graph':
+        specifier: workspace:*
+        version: link:../graph
     devDependencies:
       '@types/react':
         specifier: ^19.0.0

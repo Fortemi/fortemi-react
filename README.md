@@ -83,6 +83,7 @@ function Notebook() {
 | Package | Published | Purpose |
 |---|---|---|
 | `@fortemi/core` | npm | Headless data layer: PGlite repositories, migrations, workers, tool helpers, event bus, capability system |
+| `@fortemi/graph` | npm | Framework-agnostic graph add-on: pure layout, filtering, coloring, degree sizing, bounds/fit, neighborhood, and snapshot helpers. Zero runtime deps — usable from `@fortemi/core`, `@fortemi/react`, or any JS-only host |
 | `@fortemi/react` | npm | React 19 provider and hooks for notes, search, tags, collections, jobs, capabilities, shards, embedding sets, similarity graphs, and communities |
 | `@fortemi/standalone` | workspace app | Vite application for local development and static deployment |
 

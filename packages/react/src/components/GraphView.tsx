@@ -1,5 +1,11 @@
 import { useMemo, useState, type CSSProperties } from 'react'
-import type { CommunityGraph, GraphNode } from '@fortemi/core'
+import type { CommunityGraph } from '@fortemi/core'
+import {
+  colorForCommunity,
+  filterCommunityGraph,
+  layoutCommunityGraph,
+  nodeRadius,
+} from '@fortemi/graph'
 import type { GraphLayoutState } from '../hooks/useGraphController.js'
 
 export interface GraphViewFilters {
@@ -19,24 +25,6 @@ export interface GraphViewProps {
   style?: CSSProperties
 }
 
-interface PositionedNode extends GraphNode {
-  x: number
-  y: number
-  degree: number
-  communityId?: string
-}
-
-const COMMUNITY_COLORS = [
-  '#2f6fbb',
-  '#d97706',
-  '#218838',
-  '#7c3aed',
-  '#c2410c',
-  '#0f766e',
-  '#be185d',
-  '#4b5563',
-]
-
 export function GraphView({
   graph,
   layout,
@@ -50,8 +38,11 @@ export function GraphView({
   const [scale, setScale] = useState(1)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const algorithm = layout?.algorithm ?? 'force'
-  const visible = useMemo(() => filterGraph(graph, filters), [graph, filters])
-  const positioned = useMemo(() => layoutGraph(visible, algorithm, width, height), [visible, algorithm, width, height])
+  const visible = useMemo(() => filterCommunityGraph(graph, filters), [graph, filters])
+  const positioned = useMemo(
+    () => layoutCommunityGraph(visible, { algorithm, width, height }),
+    [visible, algorithm, width, height],
+  )
 
   if (!graph || graph.nodes.length === 0) {
     return (
@@ -86,8 +77,8 @@ export function GraphView({
       >
         <g transform={`translate(${offset.x} ${offset.y}) scale(${scale})`}>
           {positioned.edges.map((edge) => {
-            const source = positioned.nodeMap.get(edge.source)
-            const target = positioned.nodeMap.get(edge.target)
+            const source = positioned.nodeIndex.get(edge.source)
+            const target = positioned.nodeIndex.get(edge.target)
             if (!source || !target) return null
             return (
               <line
@@ -105,7 +96,7 @@ export function GraphView({
           {positioned.nodes.map((node) => {
             const selected = node.id === selectedNodeId
             const color = colorForCommunity(node.communityId)
-            const radius = Math.max(5, Math.min(16, 5 + node.degree * 1.5))
+            const radius = nodeRadius(node.degree)
             return (
               <g key={node.id} transform={`translate(${node.x} ${node.y})`}>
                 <circle
@@ -130,82 +121,4 @@ export function GraphView({
       </svg>
     </div>
   )
-}
-
-function filterGraph(graph: CommunityGraph | null, filters?: GraphViewFilters): CommunityGraph {
-  if (!graph) return { nodes: [], edges: [], communities: [] }
-  const nodeIds = new Set(filters?.nodeIds ?? graph.nodes.map((node) => node.id))
-  if (filters?.communityIds?.length) {
-    const allowedCommunities = new Set(filters.communityIds)
-    nodeIds.clear()
-    for (const community of graph.communities) {
-      if (allowedCommunities.has(community.id)) {
-        for (const nodeId of community.nodes) nodeIds.add(nodeId)
-      }
-    }
-  }
-  const edgeKinds = filters?.edgeKinds ? new Set(filters.edgeKinds) : null
-  const nodes = graph.nodes.filter((node) => nodeIds.has(node.id))
-  const edges = graph.edges.filter((edge) => (
-    nodeIds.has(edge.source)
-    && nodeIds.has(edge.target)
-    && (!edgeKinds || edgeKinds.has(edge.kind ?? ''))
-  ))
-  const communities = graph.communities
-    .map((community) => ({ ...community, nodes: community.nodes.filter((nodeId) => nodeIds.has(nodeId)) }))
-    .filter((community) => community.nodes.length > 0)
-  return { nodes, edges, communities }
-}
-
-function layoutGraph(graph: CommunityGraph, algorithm: GraphLayoutState['algorithm'], width: number, height: number) {
-  const degree = new Map<string, number>()
-  for (const node of graph.nodes) degree.set(node.id, 0)
-  for (const edge of graph.edges) {
-    degree.set(edge.source, (degree.get(edge.source) ?? 0) + 1)
-    degree.set(edge.target, (degree.get(edge.target) ?? 0) + 1)
-  }
-
-  const communityByNode = new Map<string, string>()
-  for (const community of graph.communities) {
-    for (const nodeId of community.nodes) {
-      if (!communityByNode.has(nodeId)) communityByNode.set(nodeId, community.id)
-    }
-  }
-
-  const centerX = width / 2
-  const centerY = height / 2
-  const radius = Math.max(40, Math.min(width, height) * 0.38)
-  const nodes = graph.nodes.map((node, index): PositionedNode => {
-    const angle = (Math.PI * 2 * index) / Math.max(1, graph.nodes.length)
-    const communityIndex = graph.communities.findIndex((community) => community.id === communityByNode.get(node.id))
-    const communityAngle = (Math.PI * 2 * Math.max(0, communityIndex)) / Math.max(1, graph.communities.length)
-    const communityRadius = algorithm === 'community' ? radius * 0.55 : radius
-    const localRadius = algorithm === 'force' ? radius * (0.7 + ((degree.get(node.id) ?? 0) % 4) * 0.08) : radius
-    const x = algorithm === 'community'
-      ? centerX + Math.cos(communityAngle) * communityRadius + Math.cos(angle) * 46
-      : centerX + Math.cos(angle) * localRadius
-    const y = algorithm === 'community'
-      ? centerY + Math.sin(communityAngle) * communityRadius + Math.sin(angle) * 46
-      : centerY + Math.sin(angle) * (algorithm === 'radial' ? radius : localRadius * 0.72)
-    return {
-      ...node,
-      x,
-      y,
-      degree: degree.get(node.id) ?? 0,
-      communityId: communityByNode.get(node.id),
-    }
-  })
-
-  return {
-    nodes,
-    edges: graph.edges,
-    nodeMap: new Map(nodes.map((node) => [node.id, node])),
-  }
-}
-
-function colorForCommunity(communityId: string | undefined): string {
-  if (!communityId) return '#64748b'
-  let hash = 0
-  for (const char of communityId) hash = (hash * 31 + char.charCodeAt(0)) | 0
-  return COMMUNITY_COLORS[Math.abs(hash) % COMMUNITY_COLORS.length]
 }

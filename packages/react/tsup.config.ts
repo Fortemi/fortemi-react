@@ -1,8 +1,9 @@
 import { defineConfig } from 'tsup';
 
 // React hooks + FortemiProvider. ESM only with .d.ts.
-// React and @fortemi/core stay external — peer deps for React,
-// regular dependency for core (consumer pnpm-adds both).
+// React stays external (peer dep). @fortemi/core and @fortemi/graph are
+// regular dependencies (consumer pnpm-adds them) — kept external so they
+// resolve at runtime rather than being inlined into the react bundle.
 
 export default defineConfig({
   entry: { index: 'src/index.ts' },
@@ -14,5 +15,5 @@ export default defineConfig({
   splitting: false,
   treeshake: true,
   outDir: 'dist',
-  external: ['react', 'react-dom', '@fortemi/core'],
+  external: ['react', 'react-dom', '@fortemi/core', '@fortemi/graph'],
 });
