@@ -15,6 +15,7 @@ pnpm add @fortemi/react @fortemi/core react
 [![License: AGPL-3.0-only](https://img.shields.io/badge/License-AGPL--3.0--only-blue.svg?style=flat-square)](https://github.com/Fortemi/fortemi-react/blob/main/LICENSE)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
+[![Built with aiwg](https://img.shields.io/npm/v/aiwg?label=built%20with%20aiwg&color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/aiwg)
 
 [**Install**](#installation) · [**Why Fortemi**](#why-fortemi-react) · [**Quick Start**](#quick-start) · [**Hooks**](#hooks) · [**Provider**](#provider) · [**Docs**](#documentation) · [**License**](#license)
 
