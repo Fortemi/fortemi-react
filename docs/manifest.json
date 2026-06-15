@@ -1,0 +1,77 @@
+{
+  "default": "getting-started",
+  "sections": [
+    {
+      "id": "getting-started",
+      "title": "Getting Started",
+      "summary": "Install fortemi-react and integrate it into a React application.",
+      "file": "getting-started.md"
+    },
+    {
+      "id": "guides",
+      "title": "Guides",
+      "summary": "Integration, search, and extension guides.",
+      "sections": [
+        { "id": "guides-integration", "title": "Integration", "summary": "Integrate fortemi-react into an existing React app.", "file": "integration.md" },
+        { "id": "guides-search", "title": "Search", "summary": "Hybrid lexical + semantic search in the browser.", "file": "search.md" },
+        { "id": "guides-examples", "title": "Examples", "summary": "Example applications and usage patterns.", "file": "examples.md" },
+        { "id": "guides-extending", "title": "Extending", "summary": "Extend fortemi-react with custom capabilities.", "file": "extending.md" },
+        { "id": "guides-deployment", "title": "Deployment", "summary": "Deployment and operations guide.", "file": "deployment.md" },
+        { "id": "guides-aiwg-crm", "title": "AIWG CRM Integration", "summary": "Integrating fortemi-react with AIWG CRM.", "file": "aiwg-crm-integration.md" }
+      ]
+    },
+    {
+      "id": "api-reference",
+      "title": "API Reference",
+      "summary": "Hooks, providers, and core APIs.",
+      "file": "api-reference.md"
+    },
+    {
+      "id": "packages",
+      "title": "Packages",
+      "summary": "Per-package documentation for the fortemi-react monorepo.",
+      "sections": [
+        { "id": "packages-core", "title": "@fortemi/core", "summary": "Browser-only knowledge management core: PGlite, MCP tools, hybrid search.", "file": "packages/core.md" },
+        { "id": "packages-graph", "title": "@fortemi/graph", "summary": "Framework-agnostic graph tooling: layout, filtering, snapshots.", "file": "packages/graph.md" },
+        { "id": "packages-react", "title": "@fortemi/react", "summary": "React 19 hooks and FortemiProvider over @fortemi/core.", "file": "packages/react.md" }
+      ]
+    },
+    {
+      "id": "architecture",
+      "title": "Architecture",
+      "summary": "Design of the graph, embedding, and community subsystems.",
+      "sections": [
+        { "id": "arch-package", "title": "Package Architecture", "summary": "Layout and boundaries of core, graph, and react.", "file": "architecture/package-architecture.md" },
+        { "id": "arch-graph-source", "title": "Graph Source Controller", "summary": "Graph-source selection controller.", "file": "architecture/graph-source-controller.md" },
+        { "id": "arch-precomputed", "title": "Precomputed Similarity Graphs", "summary": "Precomputed similarity graph artifacts.", "file": "architecture/precomputed-similarity-graphs.md" },
+        { "id": "arch-virtual-embeddings", "title": "Virtual Embedding Sets", "summary": "Virtual embedding set model.", "file": "architecture/virtual-embedding-sets.md" },
+        { "id": "arch-shard-artifacts", "title": "Graph & Community Shard Artifacts", "summary": "Graph and community shard artifact format.", "file": "architecture/graph-community-shard-artifacts.md" },
+        { "id": "arch-communities", "title": "Dynamic & User-Authored Communities", "summary": "Dynamic and user-authored community model.", "file": "architecture/dynamic-user-authored-communities.md" },
+        { "id": "arch-phase0", "title": "Embedding & Graph Ownership", "summary": "Phase 0: embedding and graph ownership.", "file": "architecture/phase-0-embedding-graph-ownership.md" }
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Security",
+      "summary": "Plugin content security and supply-chain controls.",
+      "sections": [
+        { "id": "security-plugin", "title": "Plugin Content Security", "summary": "Security model for plugin content.", "file": "security/plugin-content-security.md" },
+        { "id": "security-supply-chain", "title": "Supply-Chain Controls", "summary": "Supply-chain release controls.", "file": "security/supply-chain.md" }
+      ]
+    },
+    {
+      "id": "releases",
+      "title": "Releases",
+      "summary": "Release notes.",
+      "sections": [
+        { "id": "rel-2026-6-3", "title": "v2026.6.3", "summary": "fortemi-react v2026.6.3 release notes.", "file": "releases/v2026.6.3.md" },
+        { "id": "rel-2026-6-2", "title": "v2026.6.2", "summary": "fortemi-react v2026.6.2 release notes.", "file": "releases/v2026.6.2.md" },
+        { "id": "rel-2026-6-1", "title": "v2026.6.1", "summary": "fortemi-react v2026.6.1 release notes.", "file": "releases/v2026.6.1.md" },
+        { "id": "rel-2026-6-0", "title": "v2026.6.0", "summary": "fortemi-react v2026.6.0 release notes.", "file": "releases/v2026.6.0.md" },
+        { "id": "rel-2026-5-4", "title": "v2026.5.4", "summary": "fortemi-react v2026.5.4 release notes.", "file": "releases/v2026.5.4.md" },
+        { "id": "rel-2026-5-3", "title": "v2026.5.3", "summary": "fortemi-react v2026.5.3 release notes.", "file": "releases/v2026.5.3.md" },
+        { "id": "rel-2026-5-2", "title": "v2026.5.2", "summary": "fortemi-react v2026.5.2 release notes.", "file": "releases/v2026.5.2.md" }
+      ]
+    }
+  ]
+}

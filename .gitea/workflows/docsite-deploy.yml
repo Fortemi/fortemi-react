@@ -1,0 +1,88 @@
+# Doc Site Deploy
+#
+# Builds and deploys the fortemi-react documentation site on new release tags.
+# Runs independently from the package publish workflows.
+#
+# Uses the public @pagenary/publisher npm package. The docsite build tooling is
+# isolated under docsite/ (its own package.json + tenants.json), so it never
+# touches the pnpm workspace (packages/*, apps/*). Per-package pages are
+# generated from packages/*/README.md by docsite/prebuild-packages.mjs.
+#
+# Published to docs.fortemi.com/react (a sub-path of the shared docs host).
+#
+# Required secrets:
+#   DEPLOY_SSH_KEY   — private key for the deploy user
+#   DEPLOY_HOST      — docs server hostname
+#   DEPLOY_PORT      — docs server SSH port
+#   DEPLOY_USER      — deploy user on the docs server
+#   DEPLOY_PATH      — absolute path on the docs server (with trailing slash),
+#                      e.g. /home/roctinam/production-deploy/docs-fortemi-com/react/
+
+name: Docsite Deploy
+
+on:
+  push:
+    tags: ['v*']
+
+concurrency:
+  group: docsite-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-docs:
+    name: Build & Deploy Documentation
+    runs-on: ubuntu-latest
+    container: node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5  # 20
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout fortemi-react
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+
+      - name: Install docsite tooling
+        working-directory: docsite
+        run: npm ci
+
+      - name: Build doc site
+        working-directory: docsite
+        run: npm run docs:build
+
+      - name: Verify build output
+        run: |
+          test -d docsite/dist/fortemi-react || { echo "Missing build output directory"; exit 1; }
+          test -f docsite/dist/fortemi-react/index.html || { echo "Missing index.html"; exit 1; }
+          echo "Build verification passed"
+          ls -lah docsite/dist/fortemi-react/
+
+      - name: Install SSH tools
+        run: apt-get update && apt-get install -y --no-install-recommends openssh-client rsync
+
+      - name: Configure SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' '${{ secrets.DEPLOY_SSH_KEY }}' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+      - name: Deploy to docs server
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_PORT }} -o StrictHostKeyChecking=accept-new" \
+            docsite/dist/fortemi-react/ \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}
+
+      - name: Verify deployment
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_PORT }} -o StrictHostKeyChecking=accept-new \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            'test -f ${{ secrets.DEPLOY_PATH }}index.html && echo "Deploy verified: index.html present" || { echo "Deploy failed: index.html missing"; exit 1; }'
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
+
+      - name: Log deployment result
+        if: success()
+        run: |
+          echo "Deployed docs.fortemi.com/react"
+          echo "Tag: ${{ gitea.ref }}"
+          echo "Commit: ${{ gitea.sha }}"

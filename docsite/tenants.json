@@ -1,0 +1,12 @@
+{
+  "tenants": [
+    {
+      "id": "fortemi-react-docs",
+      "enabled": true,
+      "source": { "type": "local", "path": "../docs" },
+      "target": { "type": "local", "path": "./dist/fortemi-react" },
+      "domains": ["docs.fortemi.com"],
+      "strictLinks": false
+    }
+  ]
+}

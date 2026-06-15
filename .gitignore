@@ -8,3 +8,6 @@ apps/standalone/test-results/
 .claude/
 .agents/
 .codex/
+
+# docsite (pagenary): generated per-package pages (READMEs are the source of truth)
+docs/packages/
