@@ -2,6 +2,8 @@
 <!-- aiwg-managed -->
 <!-- AIWG.md is the CLAUDE.md companion for non-Claude providers; same content. -->
 
+
+
 This file provides guidance to Claude Code when working with this codebase.
 
 ## Repository Purpose
@@ -153,6 +155,20 @@ Rules active from AIWG: see `.claude/rules/RULES-INDEX.md` — 35 rules across c
 
 <!-- USER NOTES - Content below preserved during regeneration -->
 
+<!-- AIWG:claude-md-hook:start -->
+
+# AIWG
+
+
+<!--
+  This block is managed by `aiwg regenerate` and `aiwg use`.
+  Operator content above and below this block is preserved on regenerate.
+  To change AIWG.md content, edit .aiwg/AIWG.md (the normalized source)
+  then run `aiwg regenerate`.
+-->
+
+<!-- AIWG:claude-md-hook:end -->
+
 <!-- AIWG-PARALLELISM-CAP:START -->
 ## Parallelism Cap
 
@@ -182,7 +198,9 @@ This section is synthesized after template emission from the current workspace s
 
 ### Discover-First Protocol
 
-Before declining an AIWG request as out of scope or inventing a workflow from memory, run `aiwg discover "<the user need>"`. The CLI ranks AIWG capabilities across the installed corpus. Fetch the selected item with `aiwg show <type> <name>`. This prevents decline-without-search failures and hallucinated skill or agent names. Full rule: `agentic/code/addons/aiwg-utils/rules/skill-discovery.md`.
+Classify every user turn FIRST: is it a **new directive** or a continuation? When a message names or references an AIWG command/capability — even as pasted content like an `address-issues` tracker table, an issue list, or a `flow-*` name — treat it as a new directive and ACT: run `aiwg discover "<the need>"`, fetch with `aiwg show <type> <name>`, and invoke it. Do NOT ask "what would you like me to do with these?" when the action is implied — a pasted `address-issues #1234` table means run the address-issues workflow on those issues.
+
+Also run `aiwg discover` before declining an AIWG request as out of scope or inventing a workflow from memory. The CLI ranks AIWG capabilities across the installed corpus and rebuilds the index from `$AIWG_ROOT` automatically, so a "no matches" for a command you know is deployed is a bug — not a signal it is absent. Commands AIWG deploys to your provider command directory (`.opencode/command/`, `.claude/commands/`, `~/.codex/prompts/`, …) ARE discoverable this way; fetch them with `aiwg show command <name>`. This prevents decline-without-search failures, ask-instead-of-act on new directives, and hallucinated skill or agent names. Full rule: `agentic/code/addons/aiwg-utils/rules/skill-discovery.md`.
 
 ### Engagement Verification
 
