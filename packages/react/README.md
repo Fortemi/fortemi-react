@@ -150,7 +150,7 @@ Use `executionMode="worker"` for large imports, vector-heavy graph work, or any 
 | `useEmbeddingPipeline` | Embedding pipeline lifecycle |
 | `useEmbeddingSets` | Named embedding set selection and creation |
 | `useSimilarityGraph` | Embedding-set scoped similarity graph construction |
-| `useAiwgIndex` | Load, search, review, and project AIWG index exports into graph data |
+| `useAiwgIndex` | Load, chunk-load, search, review, and project AIWG index exports into graph data |
 | `useCapabilitySetup` | Unified capability wiring |
 
 ## GraphView
@@ -170,6 +170,26 @@ function AiwgGraph({ exportJson }: { exportJson: unknown }) {
   }, [exportJson, loadIndex])
 
   return <GraphView graph={graph} height={480} />
+}
+```
+
+For large static AIWG indexes, use the chunked hook methods so pages fetch only
+the needed manifest parts and the hook does not retain a full export array:
+
+```tsx
+import { createAiwgFetchChunkLoader } from '@fortemi/core/aiwg-index'
+import { useAiwgIndex } from '@fortemi/react'
+
+function AiwgSearch() {
+  const aiwg = useAiwgIndex()
+
+  async function load() {
+    const manifest = await fetch('/search/aiwg-index/manifest.json').then((res) => res.json())
+    aiwg.loadChunkedIndex(manifest, createAiwgFetchChunkLoader('/search/aiwg-index/'))
+    await aiwg.searchChunked('', { offset: 0, limit: 25 })
+  }
+
+  return <button onClick={load}>Load</button>
 }
 ```
 

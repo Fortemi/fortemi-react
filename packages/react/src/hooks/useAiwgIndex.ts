@@ -2,8 +2,14 @@ import { useCallback, useMemo, useState } from 'react'
 import {
   aiwgFortemiIndexToCommunityGraph,
   assertAiwgFortemiIndexExport,
+  createAiwgIndexController,
   createAiwgReviewDecisionExport,
   queryAiwgFortemiIndex,
+  type AiwgChunkedIndexLoadOptions,
+  type AiwgChunkedIndexLoader,
+  type AiwgChunkedIndexQueryOptions,
+  type AiwgChunkedIndexQueryResult,
+  type AiwgFortemiChunkManifest,
   type AiwgFortemiIndexExport,
   type AiwgIndexGraphOptions,
   type AiwgIndexQueryOptions,
@@ -16,7 +22,9 @@ import {
 export type { AiwgReviewInput }
 
 export function useAiwgIndex(initialIndex?: AiwgFortemiIndexExport) {
+  const [chunkedController] = useState(() => createAiwgIndexController())
   const [index, setIndex] = useState<AiwgFortemiIndexExport | null>(initialIndex ?? null)
+  const [chunkedManifest, setChunkedManifest] = useState<AiwgFortemiChunkManifest | null>(null)
   const [data, setData] = useState<AiwgIndexQueryResult | null>(null)
   const [reviewDecisions, setReviewDecisions] = useState<AiwgReviewDecision[]>([])
   const [error, setError] = useState<Error | null>(null)
@@ -25,6 +33,8 @@ export function useAiwgIndex(initialIndex?: AiwgFortemiIndexExport) {
     try {
       const parsed = assertAiwgFortemiIndexExport(value)
       setIndex(parsed)
+      setChunkedManifest(null)
+      chunkedController.clearChunkCache()
       setData(null)
       setReviewDecisions([])
       setError(null)
@@ -34,7 +44,27 @@ export function useAiwgIndex(initialIndex?: AiwgFortemiIndexExport) {
       setError(e)
       throw e
     }
-  }, [])
+  }, [chunkedController])
+
+  const loadChunkedIndex = useCallback((
+    manifest: unknown,
+    loader: AiwgChunkedIndexLoader,
+    options?: AiwgChunkedIndexLoadOptions,
+  ): AiwgFortemiChunkManifest => {
+    try {
+      const parsed = chunkedController.loadChunkedIndex(manifest, loader, options)
+      setIndex(null)
+      setChunkedManifest(parsed)
+      setData(null)
+      setReviewDecisions([])
+      setError(null)
+      return parsed
+    } catch (err) {
+      const e = err instanceof Error ? err : new Error(String(err))
+      setError(e)
+      throw e
+    }
+  }, [chunkedController])
 
   const search = useCallback((query = '', options?: AiwgIndexQueryOptions): AiwgIndexQueryResult => {
     if (!index) throw new Error('No AIWG index export loaded')
@@ -43,6 +73,26 @@ export function useAiwgIndex(initialIndex?: AiwgFortemiIndexExport) {
     setError(null)
     return result
   }, [index])
+
+  const searchChunked = useCallback(async (
+    query = '',
+    options?: AiwgChunkedIndexQueryOptions,
+  ): Promise<AiwgChunkedIndexQueryResult> => {
+    try {
+      const result = await chunkedController.queryChunked(query, options)
+      setData(result)
+      setError(null)
+      return result
+    } catch (err) {
+      const e = err instanceof Error ? err : new Error(String(err))
+      setError(e)
+      throw e
+    }
+  }, [chunkedController])
+
+  const clearChunkCache = useCallback(() => {
+    chunkedController.clearChunkCache()
+  }, [chunkedController])
 
   const setReviewDecision = useCallback((input: AiwgReviewInput): AiwgReviewDecision => {
     const decision: AiwgReviewDecision = {
@@ -80,12 +130,16 @@ export function useAiwgIndex(initialIndex?: AiwgFortemiIndexExport) {
 
   return {
     index,
+    chunkedManifest,
     counts,
     data,
     error,
     reviewDecisions,
     loadIndex,
+    loadChunkedIndex,
     search,
+    searchChunked,
+    clearChunkCache,
     setReviewDecision,
     clearReviewDecision,
     exportReviewDecisions,

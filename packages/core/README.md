@@ -125,6 +125,39 @@ Use this subpath for Pagenary-style command palettes, static docs search, and
 vanilla JavaScript review surfaces. The top-level `@fortemi/core` export remains
 available for full archive/runtime integrations.
 
+Large static indexes can use the chunked browser path instead of downloading one
+full `aiwg.fortemi.index.export.v1` file. Host a manifest plus deterministic part
+files:
+
+```text
+/search/aiwg-index/manifest.json
+/search/aiwg-index/part-0000.json
+/search/aiwg-index/part-0001.json
+```
+
+```ts
+import {
+  createAiwgFetchChunkLoader,
+  createAiwgIndexController,
+} from '@fortemi/core/aiwg-index'
+
+const controller = createAiwgIndexController()
+const manifest = await fetch('/search/aiwg-index/manifest.json').then((res) => res.json())
+
+controller.loadChunkedIndex(
+  manifest,
+  createAiwgFetchChunkLoader('/search/aiwg-index/'),
+  { maxCachedParts: 3 },
+)
+
+const page = await controller.queryChunked('', { offset: 100, limit: 25 })
+```
+
+Unfiltered browse requests fetch only the part files intersecting the requested
+`offset` and `limit`. Filtered or ranked searches scan part files to compute exact
+results, but the controller keeps only a bounded part cache and never sets a
+materialized full export in `getIndex()`.
+
 ## What You Get
 
 | Surface | Description |

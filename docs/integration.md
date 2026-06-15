@@ -1309,13 +1309,20 @@ No-bundler static documentation hosts can use the lightweight subpath directly:
 
 ```html
 <script type="module">
-  import { createAiwgIndexController } from 'https://cdn.example/@fortemi/core/aiwg-index.js'
+  import {
+    createAiwgFetchChunkLoader,
+    createAiwgIndexController,
+  } from 'https://cdn.example/@fortemi/core/aiwg-index.js'
 
   const controller = createAiwgIndexController()
-  const exportJson = await fetch('/search/aiwg-index.json').then((res) => res.json())
-  controller.loadIndex(exportJson)
+  const manifest = await fetch('/search/aiwg-index/manifest.json').then((res) => res.json())
+  controller.loadChunkedIndex(
+    manifest,
+    createAiwgFetchChunkLoader('/search/aiwg-index/'),
+    { maxCachedParts: 3 },
+  )
 
-  const results = controller.query('deployment', {
+  const results = await controller.queryChunked('deployment', {
     types: ['docs.page'],
     rank: true,
     snippets: true,
@@ -1330,6 +1337,11 @@ Package consumers should prefer `@fortemi/core/aiwg-index` for static search and
 review surfaces. The subpath contains only the static index helpers, the
 framework-agnostic controller, and their types; it does not import React, PGlite,
 workers, shards, or browser storage.
+
+Use `loadIndex()` for small single-file exports. Use `loadChunkedIndex()` for
+large static indexes when first load and memory must stay bounded. Plain browse
+calls fetch only the intersecting part files; filtered and ranked searches scan
+parts for exact results while retaining only the configured part cache.
 
 ### WebGPU for local LLM
 

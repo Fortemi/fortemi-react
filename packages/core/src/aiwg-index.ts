@@ -59,10 +59,38 @@ export interface AiwgFortemiIndexExport {
   items: AiwgFortemiRecord[]
 }
 
+export interface AiwgFortemiChunkPartRef {
+  href: string
+  offset: number
+  count: number
+}
+
+export interface AiwgFortemiChunkManifest {
+  schema_version: 'aiwg.fortemi.index.chunk-manifest.v1'
+  generated_at: string
+  source: AiwgFortemiIndexExport['source']
+  total: number
+  part_size: number
+  facets?: Record<string, Record<string, number>>
+  parts: AiwgFortemiChunkPartRef[]
+}
+
+export interface AiwgFortemiChunkPart {
+  schema_version: 'aiwg.fortemi.index.chunk.v1'
+  manifest_schema_version: 'aiwg.fortemi.index.chunk-manifest.v1'
+  offset: number
+  items: AiwgFortemiRecord[]
+}
+
 export interface AiwgIndexValidationResult {
   valid: boolean
   errors: string[]
   counts: Partial<Record<AiwgFortemiRecordType, number>>
+}
+
+export interface AiwgChunkedIndexValidationResult {
+  valid: boolean
+  errors: string[]
 }
 
 export interface AiwgIndexQueryOptions {
@@ -107,6 +135,35 @@ export interface AiwgIndexQueryResult {
   rankedItems?: AiwgIndexQueryRankedItem[]
 }
 
+export type AiwgChunkedIndexLoader = (
+  part: AiwgFortemiChunkPartRef,
+  manifest: AiwgFortemiChunkManifest,
+) => Promise<unknown>
+
+export interface AiwgChunkedIndexLoadOptions {
+  maxCachedParts?: number
+}
+
+export type AiwgChunkedIndexProgressPhase = 'part' | 'query'
+
+export interface AiwgChunkedIndexProgress {
+  phase: AiwgChunkedIndexProgressPhase
+  done: number
+  total: number
+  href?: string
+}
+
+export interface AiwgChunkedIndexQueryOptions extends AiwgIndexQueryOptions {
+  onProgress?: (progress: AiwgChunkedIndexProgress) => void
+}
+
+export interface AiwgChunkedIndexQueryResult extends AiwgIndexQueryResult {
+  manifestTotal: number
+  scannedParts: number
+  fetchedParts: number
+  complete: boolean
+}
+
 export interface AiwgReviewDecision {
   item_id: string
   action: AiwgReviewAction
@@ -136,6 +193,11 @@ export interface AiwgReviewInput {
 
 export interface AiwgIndexControllerSnapshot {
   index: AiwgFortemiIndexExport | null
+  chunked: {
+    manifest: AiwgFortemiChunkManifest
+    cachedParts: number
+    maxCachedParts: number
+  } | null
   data: AiwgIndexQueryResult | null
   error: Error | null
   reviewDecisions: AiwgReviewDecision[]
@@ -145,9 +207,17 @@ export type AiwgIndexControllerListener = (snapshot: AiwgIndexControllerSnapshot
 
 export interface AiwgIndexController {
   loadIndex(value: unknown): AiwgFortemiIndexExport
+  loadChunkedIndex(
+    manifest: unknown,
+    loader: AiwgChunkedIndexLoader,
+    options?: AiwgChunkedIndexLoadOptions,
+  ): AiwgFortemiChunkManifest
   getIndex(): AiwgFortemiIndexExport | null
+  getChunkedManifest(): AiwgFortemiChunkManifest | null
   getSnapshot(): AiwgIndexControllerSnapshot
   query(query?: string, options?: AiwgIndexQueryOptions): AiwgIndexQueryResult
+  queryChunked(query?: string, options?: AiwgChunkedIndexQueryOptions): Promise<AiwgChunkedIndexQueryResult>
+  clearChunkCache(): void
   toCommunityGraph(options?: AiwgIndexGraphOptions): ReturnType<typeof aiwgFortemiIndexToCommunityGraph>
   setReviewDecision(input: AiwgReviewInput): AiwgReviewDecision
   clearReviewDecision(itemId: string): void
@@ -194,6 +264,24 @@ function hasString(value: unknown): value is string {
 function pushFacet(counts: Record<string, Record<string, number>>, name: string, value: string) {
   counts[name] ??= {}
   counts[name][value] = (counts[name][value] ?? 0) + 1
+}
+
+function hasNonNegativeInteger(value: unknown): value is number {
+  return Number.isInteger(value) && typeof value === 'number' && value >= 0
+}
+
+function hasPositiveInteger(value: unknown): value is number {
+  return Number.isInteger(value) && typeof value === 'number' && value > 0
+}
+
+function isFacetCounts(value: unknown): value is Record<string, Record<string, number>> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  return Object.values(value).every((counts) => (
+    !!counts
+    && typeof counts === 'object'
+    && !Array.isArray(counts)
+    && Object.values(counts).every((count) => hasNonNegativeInteger(count))
+  ))
 }
 
 export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidationResult {
@@ -250,6 +338,107 @@ export function assertAiwgFortemiIndexExport(value: unknown): AiwgFortemiIndexEx
     throw new Error('Invalid AIWG Fortemi index export:\n' + result.errors.join('\n'))
   }
   return value as AiwgFortemiIndexExport
+}
+
+export function validateAiwgFortemiChunkManifest(value: unknown): AiwgChunkedIndexValidationResult {
+  const errors: string[] = []
+  const data = value as Partial<AiwgFortemiChunkManifest>
+
+  if (data?.schema_version !== 'aiwg.fortemi.index.chunk-manifest.v1') {
+    errors.push('schema_version must be aiwg.fortemi.index.chunk-manifest.v1')
+  }
+  if (!hasString(data?.generated_at)) errors.push('generated_at is required')
+  if (!hasString(data?.source?.repo)) errors.push('source.repo is required')
+  if (!hasString(data?.source?.privacy)) errors.push('source.privacy is required')
+  if (!hasNonNegativeInteger(data?.total)) errors.push('total must be a non-negative integer')
+  if (!hasPositiveInteger(data?.part_size)) errors.push('part_size must be a positive integer')
+  if (data.facets !== undefined && !isFacetCounts(data.facets)) {
+    errors.push('facets must be a nested string-to-number count object')
+  }
+  if (!Array.isArray(data?.parts)) errors.push('parts must be an array')
+
+  let expectedOffset = 0
+  const parts = Array.isArray(data?.parts) ? data.parts : []
+  for (const [index, part] of parts.entries()) {
+    if (!hasString(part.href)) errors.push('parts[' + index + '].href is required')
+    if (!hasNonNegativeInteger(part.offset)) errors.push('parts[' + index + '].offset must be a non-negative integer')
+    if (!hasNonNegativeInteger(part.count)) errors.push('parts[' + index + '].count must be a non-negative integer')
+    if (hasNonNegativeInteger(part.offset) && part.offset !== expectedOffset) {
+      errors.push('parts[' + index + '].offset must be ' + expectedOffset)
+    }
+    if (hasNonNegativeInteger(part.count)) expectedOffset += part.count
+  }
+  if (hasNonNegativeInteger(data?.total) && expectedOffset !== data.total) {
+    errors.push('parts counts must add up to total')
+  }
+
+  return { valid: errors.length === 0, errors }
+}
+
+export function assertAiwgFortemiChunkManifest(value: unknown): AiwgFortemiChunkManifest {
+  const result = validateAiwgFortemiChunkManifest(value)
+  if (!result.valid) {
+    throw new Error('Invalid AIWG Fortemi chunk manifest:\n' + result.errors.join('\n'))
+  }
+  return value as AiwgFortemiChunkManifest
+}
+
+export function validateAiwgFortemiChunkPart(
+  value: unknown,
+  partRef?: AiwgFortemiChunkPartRef,
+  manifest?: AiwgFortemiChunkManifest,
+): AiwgChunkedIndexValidationResult {
+  const errors: string[] = []
+  const data = value as Partial<AiwgFortemiChunkPart>
+
+  if (data?.schema_version !== 'aiwg.fortemi.index.chunk.v1') {
+    errors.push('schema_version must be aiwg.fortemi.index.chunk.v1')
+  }
+  if (data?.manifest_schema_version !== 'aiwg.fortemi.index.chunk-manifest.v1') {
+    errors.push('manifest_schema_version must be aiwg.fortemi.index.chunk-manifest.v1')
+  }
+  if (!hasNonNegativeInteger(data?.offset)) errors.push('offset must be a non-negative integer')
+  if (!Array.isArray(data?.items)) errors.push('items must be an array')
+
+  if (partRef && hasNonNegativeInteger(data?.offset) && data.offset !== partRef.offset) {
+    errors.push('offset must match manifest part offset ' + partRef.offset)
+  }
+  if (partRef && Array.isArray(data?.items) && data.items.length !== partRef.count) {
+    errors.push('items length must match manifest part count ' + partRef.count)
+  }
+
+  if (Array.isArray(data?.items)) {
+    const validation = validateAiwgFortemiIndexExport({
+      schema_version: 'aiwg.fortemi.index.export.v1',
+      generated_at: manifest?.generated_at ?? '1970-01-01T00:00:00.000Z',
+      source: manifest?.source ?? { repo: 'chunk', privacy: 'public' },
+      items: data.items,
+    })
+    errors.push(...validation.errors.map((error) => 'items.' + error))
+  }
+
+  return { valid: errors.length === 0, errors }
+}
+
+export function assertAiwgFortemiChunkPart(
+  value: unknown,
+  partRef?: AiwgFortemiChunkPartRef,
+  manifest?: AiwgFortemiChunkManifest,
+): AiwgFortemiChunkPart {
+  const result = validateAiwgFortemiChunkPart(value, partRef, manifest)
+  if (!result.valid) {
+    throw new Error('Invalid AIWG Fortemi chunk part:\n' + result.errors.join('\n'))
+  }
+  return value as AiwgFortemiChunkPart
+}
+
+export function createAiwgFetchChunkLoader(baseUrl?: string | URL): AiwgChunkedIndexLoader {
+  return async (part) => {
+    const href = baseUrl ? new URL(part.href, baseUrl).toString() : part.href
+    const response = await fetch(href)
+    if (!response.ok) throw new Error('Failed to fetch AIWG index chunk ' + href + ': ' + response.status)
+    return response.json()
+  }
 }
 
 export function getAiwgFortemiFacets(items: AiwgFortemiRecord[]): Record<string, Record<string, number>> {
@@ -319,40 +508,54 @@ function createSnippet(item: AiwgFortemiRecord, matches: AiwgIndexQueryMatch[], 
   return clipSnippet(firstMatch?.value ?? item.text, q, maxLength)
 }
 
-export function queryAiwgFortemiIndex(
-  index: AiwgFortemiIndexExport,
-  query = '',
-  options: AiwgIndexQueryOptions = {},
-): AiwgIndexQueryResult {
-  const q = query.trim().toLowerCase()
+interface AiwgRankedEntry {
+  item: AiwgFortemiRecord
+  ordinal: number
+  rank: number
+  matches: AiwgIndexQueryMatch[]
+}
+
+function createRankedEntries(
+  items: AiwgFortemiRecord[],
+  q: string,
+  options: AiwgIndexQueryOptions,
+  ordinalBase = 0,
+): AiwgRankedEntry[] {
   const weights = { ...DEFAULT_QUERY_WEIGHTS, ...options.weights }
-  const matched = index.items.map((item, ordinal) => ({ item, ordinal, matches: queryMatches(item, q) }))
-  const filtered = matched.filter(({ item, matches }) => {
-    if (q && matches.length === 0) return false
-    if (options.types && !options.types.includes(item.type)) return false
-    if (options.privacy && !options.privacy.includes(item.privacy.classification)) return false
-    if (!includesAll(item.tags, options.tags)) return false
-    if (!includesAll(item.concepts, options.concepts)) return false
-    if (!matchesFacetFilters(item, options.facets)) return false
-    if (options.relationshipTargetId && !item.relationships.some((rel) => rel.target_id === options.relationshipTargetId)) return false
-    return true
+  return items.map((item, ordinal) => ({ item, ordinal: ordinalBase + ordinal, matches: queryMatches(item, q) }))
+    .filter(({ item, matches }) => {
+      if (q && matches.length === 0) return false
+      if (options.types && !options.types.includes(item.type)) return false
+      if (options.privacy && !options.privacy.includes(item.privacy.classification)) return false
+      if (!includesAll(item.tags, options.tags)) return false
+      if (!includesAll(item.concepts, options.concepts)) return false
+      if (!matchesFacetFilters(item, options.facets)) return false
+      if (options.relationshipTargetId && !item.relationships.some((rel) => rel.target_id === options.relationshipTargetId)) {
+        return false
+      }
+      return true
+    })
+    .map(({ item, ordinal, matches }) => ({
+      item,
+      ordinal,
+      rank: rankMatches(matches, weights),
+      matches,
+    }))
+}
+
+function sortRankedEntries(entries: AiwgRankedEntry[], rank?: boolean): AiwgRankedEntry[] {
+  return [...entries].sort((left, right) => {
+    if (rank) return right.rank - left.rank || left.ordinal - right.ordinal
+    return left.ordinal - right.ordinal
   })
-  const ranked = filtered.map(({ item, ordinal, matches }) => ({
-    item,
-    ordinal,
-    rank: rankMatches(matches, weights),
-    matches,
-  }))
+}
 
-  if (options.rank) {
-    ranked.sort((left, right) => (
-      right.rank - left.rank
-      || left.ordinal - right.ordinal
-    ))
-  } else {
-    ranked.sort((left, right) => left.ordinal - right.ordinal)
-  }
-
+function createQueryResultFromRankedEntries(
+  entries: AiwgRankedEntry[],
+  query: string,
+  options: AiwgIndexQueryOptions,
+): AiwgIndexQueryResult {
+  const ranked = sortRankedEntries(entries, options.rank)
   const offset = options.offset ?? 0
   const limit = options.limit ?? ranked.length
   const page = ranked.slice(offset, offset + limit)
@@ -366,11 +569,133 @@ export function queryAiwgFortemiIndex(
     result.rankedItems = page.map((entry) => ({
       item: entry.item,
       rank: entry.rank,
-      ...(options.snippets ? { snippet: createSnippet(entry.item, entry.matches, q, snippetLength) } : {}),
+      ...(options.snippets ? { snippet: createSnippet(entry.item, entry.matches, query, snippetLength) } : {}),
       ...(options.includeMatches ? { matches: entry.matches } : {}),
     }))
   }
   return result
+}
+
+export function queryAiwgFortemiIndex(
+  index: AiwgFortemiIndexExport,
+  query = '',
+  options: AiwgIndexQueryOptions = {},
+): AiwgIndexQueryResult {
+  const q = query.trim().toLowerCase()
+  return createQueryResultFromRankedEntries(createRankedEntries(index.items, q, options), q, options)
+}
+
+interface AiwgChunkedIndexRuntime {
+  manifest: AiwgFortemiChunkManifest
+  loader: AiwgChunkedIndexLoader
+  maxCachedParts: number
+  partCache: Map<string, AiwgFortemiChunkPart>
+}
+
+function chunkPartCacheKey(part: AiwgFortemiChunkPartRef): string {
+  return `${part.offset}:${part.href}`
+}
+
+function clampMaxCachedParts(value: number | undefined): number {
+  if (!hasPositiveInteger(value)) return 3
+  return value
+}
+
+function isDirectChunkBrowse(query: string, options: AiwgIndexQueryOptions): boolean {
+  return query.trim() === ''
+    && !options.rank
+    && !options.snippets
+    && !options.includeMatches
+    && !options.types
+    && !options.facets
+    && !options.tags
+    && !options.concepts
+    && !options.privacy
+    && !options.relationshipTargetId
+}
+
+function getPartsForRange(
+  manifest: AiwgFortemiChunkManifest,
+  offset: number,
+  limit: number,
+): AiwgFortemiChunkPartRef[] {
+  const end = offset + limit
+  return manifest.parts.filter((part) => part.count > 0 && part.offset < end && part.offset + part.count > offset)
+}
+
+async function loadChunkPart(
+  runtime: AiwgChunkedIndexRuntime,
+  part: AiwgFortemiChunkPartRef,
+): Promise<{ part: AiwgFortemiChunkPart; fetched: boolean }> {
+  const key = chunkPartCacheKey(part)
+  const cached = runtime.partCache.get(key)
+  if (cached) {
+    runtime.partCache.delete(key)
+    runtime.partCache.set(key, cached)
+    return { part: cached, fetched: false }
+  }
+
+  const parsed = assertAiwgFortemiChunkPart(await runtime.loader(part, runtime.manifest), part, runtime.manifest)
+  runtime.partCache.set(key, parsed)
+  while (runtime.partCache.size > runtime.maxCachedParts) {
+    const oldest = runtime.partCache.keys().next().value
+    if (oldest === undefined) break
+    runtime.partCache.delete(oldest)
+  }
+  return { part: parsed, fetched: true }
+}
+
+async function queryChunkedAiwgFortemiIndex(
+  runtime: AiwgChunkedIndexRuntime,
+  query = '',
+  options: AiwgChunkedIndexQueryOptions = {},
+): Promise<AiwgChunkedIndexQueryResult> {
+  const q = query.trim().toLowerCase()
+  let scannedParts = 0
+  let fetchedParts = 0
+
+  if (isDirectChunkBrowse(query, options)) {
+    const offset = options.offset ?? 0
+    const limit = options.limit ?? runtime.manifest.total
+    const parts = getPartsForRange(runtime.manifest, offset, limit)
+    const items: AiwgFortemiRecord[] = []
+    for (const partRef of parts) {
+      const loaded = await loadChunkPart(runtime, partRef)
+      if (loaded.fetched) fetchedParts += 1
+      scannedParts += 1
+      options.onProgress?.({ phase: 'part', done: scannedParts, total: parts.length, href: partRef.href })
+      const start = Math.max(0, offset - partRef.offset)
+      const end = Math.min(loaded.part.items.length, offset + limit - partRef.offset)
+      items.push(...loaded.part.items.slice(start, end))
+    }
+    return {
+      items,
+      total: runtime.manifest.total,
+      facets: runtime.manifest.facets ?? {},
+      manifestTotal: runtime.manifest.total,
+      scannedParts,
+      fetchedParts,
+      complete: true,
+    }
+  }
+
+  const entries: AiwgRankedEntry[] = []
+  for (const partRef of runtime.manifest.parts) {
+    const loaded = await loadChunkPart(runtime, partRef)
+    if (loaded.fetched) fetchedParts += 1
+    scannedParts += 1
+    options.onProgress?.({ phase: 'part', done: scannedParts, total: runtime.manifest.parts.length, href: partRef.href })
+    entries.push(...createRankedEntries(loaded.part.items, q, options, partRef.offset))
+    options.onProgress?.({ phase: 'query', done: scannedParts, total: runtime.manifest.parts.length, href: partRef.href })
+  }
+
+  return {
+    ...createQueryResultFromRankedEntries(entries, q, options),
+    manifestTotal: runtime.manifest.total,
+    scannedParts,
+    fetchedParts,
+    complete: true,
+  }
 }
 
 export function createAiwgReviewDecisionExport(
@@ -388,6 +713,7 @@ export function createAiwgReviewDecisionExport(
 
 export function createAiwgIndexController(initialIndex?: AiwgFortemiIndexExport): AiwgIndexController {
   let index: AiwgFortemiIndexExport | null = initialIndex ?? null
+  let chunked: AiwgChunkedIndexRuntime | null = null
   let data: AiwgIndexQueryResult | null = null
   let error: Error | null = null
   let reviewDecisions: AiwgReviewDecision[] = []
@@ -395,6 +721,13 @@ export function createAiwgIndexController(initialIndex?: AiwgFortemiIndexExport)
 
   const snapshot = (): AiwgIndexControllerSnapshot => ({
     index,
+    chunked: chunked
+      ? {
+          manifest: chunked.manifest,
+          cachedParts: chunked.partCache.size,
+          maxCachedParts: chunked.maxCachedParts,
+        }
+      : null,
     data,
     error,
     reviewDecisions: [...reviewDecisions],
@@ -413,6 +746,32 @@ export function createAiwgIndexController(initialIndex?: AiwgFortemiIndexExport)
       try {
         const parsed = assertAiwgFortemiIndexExport(value)
         index = parsed
+        chunked = null
+        data = null
+        reviewDecisions = []
+        error = null
+        notify()
+        return parsed
+      } catch (err) {
+        error = err instanceof Error ? err : new Error(String(err))
+        notify()
+        throw error
+      }
+    },
+    loadChunkedIndex(
+      manifest: unknown,
+      loader: AiwgChunkedIndexLoader,
+      options: AiwgChunkedIndexLoadOptions = {},
+    ): AiwgFortemiChunkManifest {
+      try {
+        const parsed = assertAiwgFortemiChunkManifest(manifest)
+        index = null
+        chunked = {
+          manifest: parsed,
+          loader,
+          maxCachedParts: clampMaxCachedParts(options.maxCachedParts),
+          partCache: new Map(),
+        }
         data = null
         reviewDecisions = []
         error = null
@@ -427,6 +786,9 @@ export function createAiwgIndexController(initialIndex?: AiwgFortemiIndexExport)
     getIndex(): AiwgFortemiIndexExport | null {
       return index
     },
+    getChunkedManifest(): AiwgFortemiChunkManifest | null {
+      return chunked?.manifest ?? null
+    },
     getSnapshot(): AiwgIndexControllerSnapshot {
       return snapshot()
     },
@@ -436,6 +798,25 @@ export function createAiwgIndexController(initialIndex?: AiwgFortemiIndexExport)
       error = null
       notify()
       return result
+    },
+    async queryChunked(query = '', options?: AiwgChunkedIndexQueryOptions): Promise<AiwgChunkedIndexQueryResult> {
+      if (!chunked) throw new Error('No AIWG chunked index manifest loaded')
+      try {
+        const result = await queryChunkedAiwgFortemiIndex(chunked, query, options)
+        data = result
+        error = null
+        notify()
+        return result
+      } catch (err) {
+        error = err instanceof Error ? err : new Error(String(err))
+        notify()
+        throw error
+      }
+    },
+    clearChunkCache(): void {
+      chunked?.partCache.clear()
+      error = null
+      notify()
     },
     toCommunityGraph(options?: AiwgIndexGraphOptions) {
       return aiwgFortemiIndexToCommunityGraph(requireIndex(), options)

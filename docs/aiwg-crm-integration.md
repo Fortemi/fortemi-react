@@ -48,8 +48,77 @@ Static page records use the same source locator, facets, tags, concepts,
 provenance, privacy, ranking, and snippet behavior as CRM records, which lets a
 host replace bespoke documentation search without changing the query helper.
 
-React apps can use `useAiwgIndex()` to load an export, search it, and maintain
-human-gated review decisions in local state.
+## Chunked Static Indexes
+
+For large browser-only indexes, host a chunk manifest and part files instead of
+one full export. This keeps static hosts compatible with CDNs and object storage
+while avoiding a single full download and full in-memory `items[]` array.
+
+Manifest files use `aiwg.fortemi.index.chunk-manifest.v1`:
+
+```json
+{
+  "schema_version": "aiwg.fortemi.index.chunk-manifest.v1",
+  "generated_at": "2026-06-15T00:00:00.000Z",
+  "source": { "repo": "example/docs", "privacy": "public" },
+  "total": 4400,
+  "part_size": 250,
+  "facets": { "type": { "docs.page": 4400 } },
+  "parts": [
+    { "href": "part-0000.json", "offset": 0, "count": 250 },
+    { "href": "part-0001.json", "offset": 250, "count": 250 }
+  ]
+}
+```
+
+Each part uses `aiwg.fortemi.index.chunk.v1` and contains the deterministic slice
+for its manifest offset:
+
+```json
+{
+  "schema_version": "aiwg.fortemi.index.chunk.v1",
+  "manifest_schema_version": "aiwg.fortemi.index.chunk-manifest.v1",
+  "offset": 0,
+  "items": []
+}
+```
+
+Vanilla hosts can validate and query this layout through the same controller:
+
+```typescript
+import {
+  createAiwgFetchChunkLoader,
+  createAiwgIndexController,
+} from '@fortemi/core/aiwg-index'
+
+const controller = createAiwgIndexController()
+const manifest = await fetch('/search/aiwg-index/manifest.json').then((res) => res.json())
+
+controller.loadChunkedIndex(
+  manifest,
+  createAiwgFetchChunkLoader('/search/aiwg-index/'),
+  { maxCachedParts: 3 },
+)
+
+const page = await controller.queryChunked('', { offset: 1000, limit: 25 })
+const ranked = await controller.queryChunked('deployment', {
+  types: ['docs.page'],
+  rank: true,
+  snippets: true,
+  limit: 10,
+  onProgress: ({ done, total }) => console.log(`${done}/${total}`),
+})
+```
+
+Unfiltered browse calls fetch only the part files intersecting `offset` and
+`limit`. Filtered, full-text, and ranked calls scan part files to produce exact
+totals, facets, ranking, snippets, and matches. The controller keeps a bounded
+part cache and leaves `getIndex()` as `null`, so consumers do not hold the full
+export in memory unless they explicitly use `loadIndex()`.
+
+React apps can use `useAiwgIndex()` to load a full export, load a chunked
+manifest through `loadChunkedIndex()`, search with `search()` or
+`searchChunked()`, and maintain human-gated review decisions in local state.
 
 Vanilla JavaScript hosts can use the framework-agnostic controller with the same
 validation, query, graph projection, and review export behavior:

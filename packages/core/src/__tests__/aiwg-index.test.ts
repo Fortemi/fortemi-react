@@ -4,12 +4,48 @@ import {
   createAiwgIndexController,
   createAiwgReviewDecisionExport,
   queryAiwgFortemiIndex,
+  validateAiwgFortemiChunkManifest,
+  validateAiwgFortemiChunkPart,
   validateAiwgFortemiIndexExport,
+  type AiwgChunkedIndexLoader,
+  type AiwgFortemiChunkManifest,
+  type AiwgFortemiChunkPart,
   type AiwgFortemiIndexExport,
 } from '../aiwg-index.js'
 import fixture from '../../test/fixtures/sanitized-aiwg-fortemi-index.json' with { type: 'json' }
 
 const index = fixture as unknown as AiwgFortemiIndexExport
+
+function createChunkedFixture(partSize = 2): {
+  manifest: AiwgFortemiChunkManifest
+  parts: Map<string, AiwgFortemiChunkPart>
+} {
+  const parts = new Map<string, AiwgFortemiChunkPart>()
+  const refs = []
+  for (let offset = 0; offset < index.items.length; offset += partSize) {
+    const items = index.items.slice(offset, offset + partSize)
+    const href = `part-${String(offset).padStart(4, '0')}.json`
+    refs.push({ href, offset, count: items.length })
+    parts.set(href, {
+      schema_version: 'aiwg.fortemi.index.chunk.v1',
+      manifest_schema_version: 'aiwg.fortemi.index.chunk-manifest.v1',
+      offset,
+      items,
+    })
+  }
+  return {
+    manifest: {
+      schema_version: 'aiwg.fortemi.index.chunk-manifest.v1',
+      generated_at: index.generated_at,
+      source: index.source,
+      total: index.items.length,
+      part_size: partSize,
+      facets: queryAiwgFortemiIndex(index).facets,
+      parts: refs,
+    },
+    parts,
+  }
+}
 
 describe('AIWG Fortemi index adapter', () => {
   it('validates the shared CRM fixture contract', () => {
@@ -203,5 +239,75 @@ describe('AIWG Fortemi index adapter', () => {
     expect(() => controller.loadIndex({ schema_version: 'wrong' })).toThrow('Invalid AIWG Fortemi index export')
     expect(errors[0]).toContain('schema_version must be aiwg.fortemi.index.export.v1')
     expect(controller.getSnapshot().index).toBeNull()
+  })
+
+  it('validates chunked index manifests and parts', () => {
+    const { manifest, parts } = createChunkedFixture()
+    const firstPart = parts.get(manifest.parts[0].href)
+
+    expect(validateAiwgFortemiChunkManifest(manifest)).toEqual({ valid: true, errors: [] })
+    expect(validateAiwgFortemiChunkPart(firstPart, manifest.parts[0], manifest)).toEqual({ valid: true, errors: [] })
+
+    expect(validateAiwgFortemiChunkManifest({
+      ...manifest,
+      parts: [{ ...manifest.parts[0], offset: 1 }],
+    }).errors).toContain('parts[0].offset must be 0')
+    expect(validateAiwgFortemiChunkPart({
+      ...firstPart,
+      offset: 99,
+    }, manifest.parts[0], manifest).errors).toContain('offset must match manifest part offset 0')
+  })
+
+  it('browses chunked indexes by loading only intersecting static parts', async () => {
+    const { manifest, parts } = createChunkedFixture(2)
+    const loadedHrefs: string[] = []
+    const loader: AiwgChunkedIndexLoader = async (part) => {
+      loadedHrefs.push(part.href)
+      return parts.get(part.href)
+    }
+    const controller = createAiwgIndexController()
+
+    controller.loadChunkedIndex(manifest, loader, { maxCachedParts: 1 })
+    const result = await controller.queryChunked('', { offset: 2, limit: 2 })
+
+    expect(result.items.map((item) => item.id)).toEqual(index.items.slice(2, 4).map((item) => item.id))
+    expect(result.total).toBe(index.items.length)
+    expect(result.scannedParts).toBe(1)
+    expect(result.fetchedParts).toBe(1)
+    expect(loadedHrefs).toEqual([manifest.parts[1].href])
+    expect(controller.getIndex()).toBeNull()
+    expect(controller.getChunkedManifest()).toBe(manifest)
+    expect(controller.getSnapshot().chunked?.cachedParts).toBe(1)
+  })
+
+  it('runs exact ranked chunked searches with bounded part caching', async () => {
+    const { manifest, parts } = createChunkedFixture(2)
+    const progress: string[] = []
+    const loader: AiwgChunkedIndexLoader = async (part) => parts.get(part.href)
+    const controller = createAiwgIndexController()
+    const expected = queryAiwgFortemiIndex(index, 'Example', {
+      rank: true,
+      snippets: true,
+      includeMatches: true,
+      limit: 2,
+    })
+
+    controller.loadChunkedIndex(manifest, loader, { maxCachedParts: 1 })
+    const result = await controller.queryChunked('Example', {
+      rank: true,
+      snippets: true,
+      includeMatches: true,
+      limit: 2,
+      onProgress: (event) => progress.push(`${event.phase}:${event.done}/${event.total}`),
+    })
+
+    expect(result.items.map((item) => item.id)).toEqual(expected.items.map((item) => item.id))
+    expect(result.rankedItems?.map((entry) => entry.snippet)).toEqual(expected.rankedItems?.map((entry) => entry.snippet))
+    expect(result.total).toBe(expected.total)
+    expect(result.scannedParts).toBe(manifest.parts.length)
+    expect(result.fetchedParts).toBe(manifest.parts.length)
+    expect(result.complete).toBe(true)
+    expect(progress).toContain(`part:${manifest.parts.length}/${manifest.parts.length}`)
+    expect(controller.getSnapshot().chunked?.cachedParts).toBeLessThanOrEqual(1)
   })
 })
