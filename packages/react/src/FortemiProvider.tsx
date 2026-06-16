@@ -2,11 +2,14 @@ import { createContext, useContext, useState, useEffect, useRef, type ReactNode 
 import {
   ArchiveManager,
   CapabilityManager,
+  PGliteStorageBackend,
   PGliteWorkerStorageBackendFactory,
   TypedEventBus,
   createBlobStore,
+  restoreDbSnapshot,
   type PersistenceMode,
   type BlobStore,
+  type DbSnapshotExpectations,
 } from '@fortemi/core'
 
 type PGliteInstance = Awaited<ReturnType<ArchiveManager['open']>>
@@ -26,6 +29,18 @@ export interface FortemiProviderProps {
   archiveName?: string
   executionMode?: 'main' | 'worker'
   createWorker?: () => Worker
+  /**
+   * Restore from a physical data-dir snapshot instead of migrating an empty DB
+   * (issue #187). The URL points at the `dumpDbSnapshot` data blob; its
+   * `<url>.meta.json` sidecar is fetched and verified first. Pre-indexed: no
+   * migration, no shard import, no client-side HNSW build. Main execution mode
+   * only for now (worker-mode snapshot restore is a follow-up). On an incompatible
+   * snapshot the provider surfaces a `DbSnapshotVersionError`; hosts wanting a
+   * shard-import fallback should call `restoreDbSnapshot` directly with try/catch.
+   */
+  snapshotUrl?: string
+  /** Optional override of the snapshot version-compatibility expectations. */
+  snapshotExpectations?: DbSnapshotExpectations
   children: ReactNode
 }
 
@@ -41,17 +56,42 @@ function defaultCreateWorker(): Worker {
   })
 }
 
-function initFortemi(
-  persistence: PersistenceMode,
-  archiveName: string,
-  executionMode: 'main' | 'worker',
-  createWorker?: () => Worker,
-) {
-  const key = `${executionMode}:${persistence}:${archiveName}`
+interface InitFortemiOptions {
+  persistence: PersistenceMode
+  archiveName: string
+  executionMode: 'main' | 'worker'
+  createWorker?: () => Worker
+  snapshotUrl?: string
+  snapshotExpectations?: DbSnapshotExpectations
+}
+
+function initFortemi(options: InitFortemiOptions) {
+  const { persistence, archiveName, executionMode, createWorker, snapshotUrl, snapshotExpectations } = options
+  const key = `${executionMode}:${persistence}:${archiveName}:${snapshotUrl ?? ''}`
   let promise = globalInitPromises.get(key)
   if (!promise) {
     promise = (async () => {
       const events = new TypedEventBus()
+      const capManager = new CapabilityManager(events)
+      const blobStore = createBlobStore(archiveName)
+
+      if (snapshotUrl) {
+        if (executionMode === 'worker') {
+          throw new Error('Snapshot restore (snapshotUrl) is not yet supported in worker execution mode')
+        }
+        // Restore a pre-indexed PGlite from the physical snapshot, then adopt it
+        // WITHOUT running migrations (the restored dir already carries them).
+        const manager = new ArchiveManager(persistence, events)
+        const pglite = await restoreDbSnapshot(snapshotUrl, {
+          persistence,
+          archiveName,
+          expectations: snapshotExpectations,
+        })
+        const backend = new PGliteStorageBackend(`pglite:snapshot:${persistence}:${archiveName}`, pglite)
+        const db = await manager.adopt(backend, archiveName)
+        return { db, events, manager, capManager, blobStore }
+      }
+
       const manager = executionMode === 'worker'
         ? new ArchiveManager(
             new PGliteWorkerStorageBackendFactory({
@@ -61,8 +101,6 @@ function initFortemi(
             persistence,
           )
         : new ArchiveManager(persistence, events)
-      const capManager = new CapabilityManager(events)
-      const blobStore = createBlobStore(archiveName)
       const db = await manager.open(archiveName)
       return { db, events, manager, capManager, blobStore }
     })()
@@ -76,6 +114,8 @@ export function FortemiProvider({
   archiveName = 'default',
   executionMode = 'main',
   createWorker,
+  snapshotUrl,
+  snapshotExpectations,
   children,
 }: FortemiProviderProps) {
   const [ctx, setCtx] = useState<FortemiContextValue | null>(null)
@@ -87,12 +127,12 @@ export function FortemiProvider({
     if (initRef.current) return
     initRef.current = true
 
-    initFortemi(persistence, archiveName, executionMode, createWorker).then(({ db, events, manager, capManager, blobStore }) => {
+    initFortemi({ persistence, archiveName, executionMode, createWorker, snapshotUrl, snapshotExpectations }).then(({ db, events, manager, capManager, blobStore }) => {
       setCtx({ db, events, archiveManager: manager, capabilityManager: capManager, blobStore })
     }).catch((err) => {
       setError(err instanceof Error ? err.message : String(err))
     })
-  }, [persistence, archiveName, executionMode, createWorker])
+  }, [persistence, archiveName, executionMode, createWorker, snapshotUrl, snapshotExpectations])
 
   if (error) throw new Error(`FortemiProvider init failed: ${error}`)
   if (!ctx) return null // Loading state handled by parent Suspense or loading screen

@@ -78,6 +78,28 @@ export class ArchiveManager {
     return this.db
   }
 
+  /**
+   * Adopt an already-created backend WITHOUT running migrations — for a backend
+   * whose schema is already present, e.g. a PGlite restored from a physical
+   * data-dir snapshot (issue #187, `restoreDbSnapshot`). Running migrations here
+   * would be wrong: the restored dir already carries them (and the HNSW index).
+   */
+  async adopt(backend: StorageBackend, archiveName: string = 'default'): Promise<StorageBackend> {
+    if (this.db) {
+      await this.db.close()
+    }
+    this.db = backend
+    this.currentArchive = archiveName
+    if (!this.archives.has(archiveName)) {
+      this.archives.set(archiveName, {
+        name: archiveName,
+        createdAt: new Date().toISOString(),
+      })
+    }
+    this.events?.emit('archive.switched', { name: archiveName })
+    return this.db
+  }
+
   async create(archiveName: string): Promise<StorageBackend> {
     if (this.archives.has(archiveName)) {
       throw new Error(`Archive '${archiveName}' already exists`)

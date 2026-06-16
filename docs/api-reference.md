@@ -1350,6 +1350,34 @@ Manages multiple named archives (databases). Each archive is an independent PGli
 | `create(name, persistence?)` | Create a new empty archive with optional override persistence mode. |
 | `switch(name)` | Open a different archive, replacing the currently active instance. |
 | `delete(name)` | Permanently delete an archive and all its data. |
+| `adopt(backend, name?)` | Adopt an already-created backend **without running migrations** — e.g. a PGlite restored from a physical snapshot (the restored data dir already carries the schema + indexes). |
+
+---
+
+#### Physical DB snapshot — `dumpDbSnapshot` / `restoreDbSnapshot`
+
+A **snapshot** is a binary dump of a populated PGlite data directory — schema + rows + **indexes** (including the HNSW vector index) — that restores in a single load with **no migration, no shard import, and no client-side HNSW build**. It is the fast, pre-indexed, single-version restore option, complementary to logical Knowledge Shards (portable + mergeable, but they pay the import + reindex cost on every load).
+
+> Distinct from `ArchiveManager`/`archiveName` (a *named persistence store*) and from Knowledge Shards (logical, mergeable interchange). "Snapshot" = the physical data-dir image.
+
+```typescript
+// Build-time (Node), after the corpus is populated and the HNSW index built once:
+const { data, meta } = await dumpDbSnapshot(db, { compression: 'gzip' })
+// Write `data` to e.g. corpus.pgdata and `meta` to corpus.pgdata.meta.json (the sidecar).
+
+// Browser restore — verifies the version stamp BEFORE loading, then no migration/import:
+const pglite = await restoreDbSnapshot('/corpus/corpus.pgdata', { persistence: 'memory' })
+```
+
+| Export | Description |
+|--------|-------------|
+| `dumpDbSnapshot(db, options?)` | Dump a `{ data, meta }` snapshot. `meta` stamps `{ pglite_version, pgvector_version, migration_head, created_at }`. |
+| `restoreDbSnapshot(source, options?)` | Restore a `PGlite` from a snapshot (`{data,meta}`, a URL, or `{dataUrl, metaUrl?}`). Verifies the stamp first; throws `DbSnapshotVersionError` on mismatch (catch it to fall back to a shard import). |
+| `verifyDbSnapshotMeta(meta, expected?)` | Pure compatibility check → `{ compatible, reasons, warnings }`. Hard gates: snapshot schema, migration head (exact), PGlite major.minor; pgvector is advisory. |
+| `DbSnapshotVersionError` | Thrown when a snapshot is incompatible with this build; carries `reasons` + `meta`. |
+| `SUPPORTED_PGLITE_VERSION` / `CURRENT_MIGRATION_HEAD` / `DB_SNAPSHOT_SCHEMA_VERSION` | The version values this build restores against. |
+
+`createPGliteInstance(persistence, archiveName?, { loadDataDir })` accepts a snapshot blob directly for lower-level use. The React `FortemiProvider` exposes a `snapshotUrl` prop (main execution mode) as the turnkey path.
 
 ---
 
@@ -1574,6 +1602,10 @@ Context provider that initializes a `FortemiCore` instance and makes it availabl
 interface FortemiProviderProps {
   persistence: PersistenceMode
   archiveName?: string
+  executionMode?: 'main' | 'worker'
+  createWorker?: () => Worker
+  snapshotUrl?: string
+  snapshotExpectations?: DbSnapshotExpectations
   children: React.ReactNode
 }
 ```
@@ -1582,6 +1614,10 @@ interface FortemiProviderProps {
 |----------|------|----------|-------------|
 | `persistence` | `PersistenceMode` | Yes | Storage backend for the underlying PGlite instance |
 | `archiveName` | `string` | No | Archive name; uses a default when omitted |
+| `executionMode` | `'main' \| 'worker'` | No | Run PGlite on the main thread (default) or in a worker |
+| `createWorker` | `() => Worker` | No | Worker factory for `executionMode: 'worker'` |
+| `snapshotUrl` | `string` | No | Restore from a physical data-dir snapshot (#187) instead of migrating an empty DB — fetches `<url>` + `<url>.meta.json`, verifies the stamp, then loads pre-indexed (no migration/import/HNSW build). Main mode only. |
+| `snapshotExpectations` | `DbSnapshotExpectations` | No | Override the snapshot version-compatibility expectations |
 | `children` | `React.ReactNode` | Yes | Component subtree |
 
 ---
