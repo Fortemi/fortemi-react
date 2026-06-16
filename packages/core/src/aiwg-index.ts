@@ -88,11 +88,21 @@ export type AiwgFortemiProjectedRecord =
   Pick<AiwgFortemiRecord, 'schema_version' | 'id' | 'type' | 'title' | 'text' | 'facets' | 'tags' | 'concepts' | 'privacy'>
   & Partial<AiwgFortemiRecord>
 
+// How a record id is encoded into a detail filename/path segment.
+//  - 'base64url': path-safe, single segment, no '%' — works on every static host,
+//    including ids containing '/' (default for new builds; see #177).
+//  - 'uri': encodeURIComponent — legacy. Breaks for ids containing '/' on static
+//    servers that reject %2F (path-traversal protection → 404).
+export type AiwgDetailIdEncoding = 'uri' | 'base64url'
+
 // How the controller resolves a full record by id when scan parts are projected.
 export interface AiwgFortemiChunkDetailRef {
-  // href template containing `{id}` (URL-encoded at substitution), relative to the
-  // manifest base — e.g. "detail/{id}.json".
+  // href template containing `{id}`, relative to the manifest base — e.g.
+  // "detail/{id}.json". The `{id}` is encoded per `encoding` at substitution.
   href: string
+  // id→segment encoding. Absent is treated as 'uri' for backward compatibility
+  // with manifests built before #177; new builds default to 'base64url'.
+  encoding?: AiwgDetailIdEncoding
 }
 
 export interface AiwgFortemiChunkManifest {
@@ -417,6 +427,13 @@ export function validateAiwgFortemiChunkManifest(value: unknown): AiwgChunkedInd
   if (data.detail !== undefined) {
     if (!hasString(data.detail.href)) errors.push('detail.href is required')
     else if (!data.detail.href.includes('{id}')) errors.push('detail.href must contain the {id} placeholder')
+    if (
+      data.detail.encoding !== undefined &&
+      data.detail.encoding !== 'uri' &&
+      data.detail.encoding !== 'base64url'
+    ) {
+      errors.push("detail.encoding must be 'uri' or 'base64url'")
+    }
   }
   if (!Array.isArray(data?.parts)) errors.push('parts must be an array')
 
@@ -539,12 +556,32 @@ export function createAiwgFetchChunkLoader(baseUrl?: string | URL): AiwgChunkedI
   }
 }
 
+// Encode a record id into a single, path-safe detail filename segment.
+//  - 'base64url' (default): UTF-8 → base64url (no '+', '/', '=', '%'). Safe for ids
+//    containing '/' on static hosts that reject %2F (#177).
+//  - 'uri': encodeURIComponent (legacy).
+export function encodeAiwgDetailId(id: string, encoding: AiwgDetailIdEncoding = 'base64url'): string {
+  if (encoding === 'uri') return encodeURIComponent(id)
+  const bytes = new TextEncoder().encode(id)
+  let binary = ''
+  for (const byte of bytes) binary += String.fromCharCode(byte)
+  // btoa is available in browsers and Node ≥16.
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+// Resolve a manifest detail.href template for a given id, honoring detail.encoding
+// (absent → 'uri' for backward compatibility). The writer and the loader both go
+// through this so emitted filenames and fetched paths always agree.
+export function aiwgDetailHrefForId(detail: AiwgFortemiChunkDetailRef, id: string): string {
+  return detail.href.replace('{id}', encodeAiwgDetailId(id, detail.encoding ?? 'uri'))
+}
+
 // Detail loader for projected indexes: resolves the manifest's detail.href {id}
-// template (id URL-encoded) against baseUrl and fetches the full record.
+// template (encoded per detail.encoding) against baseUrl and fetches the full record.
 export function createAiwgFetchDetailLoader(baseUrl?: string | URL): AiwgChunkedIndexDetailLoader {
   return async (id, manifest) => {
     if (!manifest.detail?.href) throw new Error('Manifest has no detail.href for record resolution')
-    const relative = manifest.detail.href.replace('{id}', encodeURIComponent(id))
+    const relative = aiwgDetailHrefForId(manifest.detail, id)
     const href = baseUrl ? new URL(relative, baseUrl).toString() : relative
     const response = await fetch(href)
     if (!response.ok) throw new Error('Failed to fetch AIWG index detail ' + href + ': ' + response.status)
@@ -572,14 +609,19 @@ export interface AiwgChunkedIndexBuildOptions {
   projection?: Array<keyof AiwgFortemiRecord>
   // Detail href template (with {id}); defaults to "detail/{id}.json" when projecting.
   detailHref?: string
+  // id→filename encoding for detail files; defaults to 'base64url' (path-safe,
+  // works for ids containing '/'; see #177).
+  idEncoding?: AiwgDetailIdEncoding
   generatedAt?: string
 }
 
 export interface AiwgChunkedIndexBuildResult {
   manifest: AiwgFortemiChunkManifest
   parts: Array<{ href: string; part: AiwgFortemiChunkPart }>
-  // Empty unless projecting. Each entry is a full record to host at the detail href.
-  details: Array<{ id: string; record: AiwgFortemiRecord }>
+  // Empty unless projecting. Each entry carries the full record plus the resolved,
+  // encoding-correct `href` to host it at — write the record to that path so the
+  // detail loader (which uses the same encoding) can fetch it back.
+  details: Array<{ id: string; href: string; record: AiwgFortemiRecord }>
 }
 
 // Pure builder (no I/O): project an index export into the chunked manifest + parts
@@ -592,6 +634,8 @@ export function buildAiwgChunkedIndex(
 ): AiwgChunkedIndexBuildResult {
   const partSize = hasPositiveInteger(options.partSize) ? options.partSize : 500
   const projection = options.projection
+  const idEncoding = options.idEncoding ?? 'base64url'
+  const detailHref = options.detailHref ?? 'detail/{id}.json'
   const items = index.items
   const pad = (value: number): string => String(value).padStart(4, '0')
   const project = (record: AiwgFortemiRecord): AiwgFortemiRecord => {
@@ -626,13 +670,19 @@ export function buildAiwgChunkedIndex(
     part_size: partSize,
     facets: getAiwgFortemiFacets(items),
     parts: partRefs,
-    ...(projection ? { projection, detail: { href: options.detailHref ?? 'detail/{id}.json' } } : {}),
+    ...(projection ? { projection, detail: { href: detailHref, encoding: idEncoding } } : {}),
   }
 
   return {
     manifest,
     parts,
-    details: projection ? items.map((record) => ({ id: record.id, record })) : [],
+    details: projection
+      ? items.map((record) => ({
+          id: record.id,
+          href: aiwgDetailHrefForId({ href: detailHref, encoding: idEncoding }, record.id),
+          record,
+        }))
+      : [],
   }
 }
 
