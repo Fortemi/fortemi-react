@@ -1,10 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   AIWG_SCAN_REQUIRED_FIELDS,
+  aiwgDetailHrefForId,
   aiwgFortemiIndexToCommunityGraph,
   buildAiwgChunkedIndex,
+  createAiwgFetchDetailLoader,
   createAiwgIndexController,
   createAiwgReviewDecisionExport,
+  encodeAiwgDetailId,
   queryAiwgFortemiIndex,
   validateAiwgFortemiChunkManifest,
   validateAiwgFortemiChunkPart,
@@ -404,5 +407,105 @@ describe('AIWG Fortemi chunked index — slim/projected parts (#168)', () => {
     const controller = createAiwgIndexController()
     controller.loadChunkedIndex(built.manifest, loader)
     await expect(controller.getRecord(index.items[0].id)).rejects.toThrow(/detailLoader/)
+  })
+})
+
+describe('AIWG Fortemi chunked index — path-safe detail id encoding (#177)', () => {
+  const projection = AIWG_SCAN_REQUIRED_FIELDS
+  // Two slash-containing ids — the case that breaks encodeURIComponent on static hosts.
+  const slashIndex: AiwgFortemiIndexExport = {
+    ...index,
+    items: [
+      { ...index.items[0], id: 'aiwg:artifact:.aiwg/.milestones.json' },
+      { ...index.items[1], id: 'docs:page:product/getting-started' },
+    ],
+  }
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('encodeAiwgDetailId base64url yields a single path-safe segment for slash ids', () => {
+    const encoded = encodeAiwgDetailId('aiwg:artifact:.aiwg/.milestones.json')
+    expect(encoded).not.toMatch(/[/%+=\n]/) // no path sep, no percent, no base64 +/=
+    expect(encoded).toBe(encodeAiwgDetailId('aiwg:artifact:.aiwg/.milestones.json')) // deterministic
+    // uri mode preserves the legacy behavior
+    expect(encodeAiwgDetailId('a/b', 'uri')).toBe('a%2Fb')
+  })
+
+  it('aiwgDetailHrefForId honors encoding (base64url path-safe, absent → legacy uri)', () => {
+    const id = 'docs:page:product/getting-started'
+    const b64 = aiwgDetailHrefForId({ href: 'detail/{id}.json', encoding: 'base64url' }, id)
+    expect(b64.startsWith('detail/')).toBe(true)
+    expect(b64.endsWith('.json')).toBe(true)
+    expect(b64).not.toContain('%2F')
+    // No encoding → backward-compatible uri behavior.
+    expect(aiwgDetailHrefForId({ href: 'detail/{id}.json' }, id)).toContain('%2F')
+  })
+
+  it('buildAiwgChunkedIndex defaults to base64url and emits encoding-correct detail hrefs', () => {
+    const built = buildAiwgChunkedIndex(slashIndex, { partSize: 2, projection })
+    expect(built.manifest.detail?.encoding).toBe('base64url')
+    expect(validateAiwgFortemiChunkManifest(built.manifest).valid).toBe(true)
+    for (const detail of built.details) {
+      expect(detail.href).toBe(aiwgDetailHrefForId(built.manifest.detail!, detail.id))
+      expect(detail.href).not.toContain('%2F') // path-safe even for slash ids
+    }
+  })
+
+  it('supports opt-in uri encoding for backward compatibility', () => {
+    const built = buildAiwgChunkedIndex(slashIndex, { partSize: 2, projection, idEncoding: 'uri' })
+    expect(built.manifest.detail?.encoding).toBe('uri')
+    const slashDetail = built.details.find((d) => d.id.includes('/'))!
+    expect(slashDetail.href).toContain('%2F')
+  })
+
+  it('resolves slash-containing detail records end-to-end (writer + loader agree)', async () => {
+    const built = buildAiwgChunkedIndex(slashIndex, { partSize: 2, projection })
+    const partsByHref = new Map(built.parts.map((entry) => [entry.href, entry.part]))
+    // Host writes each detail at its emitted (base64url) href.
+    const detailByHref = new Map(built.details.map((entry) => [entry.href, entry.record]))
+
+    const loader: AiwgChunkedIndexLoader = async (ref) => partsByHref.get(ref.href)
+    // Loader resolves the same href via the manifest's encoding — must match the writer.
+    const detailLoader: AiwgChunkedIndexDetailLoader = async (id, manifest) =>
+      detailByHref.get(aiwgDetailHrefForId(manifest.detail!, id))
+
+    const controller = createAiwgIndexController()
+    controller.loadChunkedIndex(built.manifest, loader, { detailLoader, maxCachedParts: 1 })
+
+    const record = await controller.getRecord('aiwg:artifact:.aiwg/.milestones.json')
+    expect(record.id).toBe('aiwg:artifact:.aiwg/.milestones.json')
+    expect(record.provenance.length).toBeGreaterThan(0) // full record, not slim
+  })
+
+  it('createAiwgFetchDetailLoader fetches the base64url path for slash ids', async () => {
+    const built = buildAiwgChunkedIndex(slashIndex, { partSize: 2, projection })
+    const id = 'aiwg:artifact:.aiwg/.milestones.json'
+    const record = built.details.find((d) => d.id === id)!.record
+    const requested: string[] = []
+    vi.stubGlobal('fetch', async (url: string) => {
+      requested.push(url)
+      return new Response(JSON.stringify(record), { status: 200 })
+    })
+
+    const detailLoader = createAiwgFetchDetailLoader('https://static.example/index/')
+    const raw = await detailLoader(id, built.manifest)
+
+    expect(requested).toHaveLength(1)
+    expect(requested[0]).not.toContain('%2F') // base64url, not %2F
+    expect((raw as { id: string }).id).toBe(id)
+  })
+
+  it('validates detail.encoding values', () => {
+    const built = buildAiwgChunkedIndex(slashIndex, { partSize: 2, projection })
+    const bad = validateAiwgFortemiChunkManifest({
+      ...built.manifest,
+      detail: { href: 'detail/{id}.json', encoding: 'bogus' },
+    })
+    expect(bad.errors).toContain("detail.encoding must be 'uri' or 'base64url'")
+    const uriOk = validateAiwgFortemiChunkManifest({
+      ...built.manifest,
+      detail: { href: 'detail/{id}.json', encoding: 'uri' },
+    })
+    expect(uriOk.valid).toBe(true)
   })
 })
