@@ -6,7 +6,28 @@ export { TypedEventBus } from './event-bus.js'
 export type { EventMap, IDisposable } from './event-bus.js'
 
 export { createPGliteInstance } from './db.js'
-export type { PersistenceMode } from './db.js'
+export type { PersistenceMode, CreatePGliteOptions } from './db.js'
+
+export {
+  dumpDbSnapshot,
+  restoreDbSnapshot,
+  verifyDbSnapshotMeta,
+  DbSnapshotVersionError,
+  DB_SNAPSHOT_SCHEMA_VERSION,
+  SUPPORTED_PGLITE_VERSION,
+  CURRENT_MIGRATION_HEAD,
+} from './data-archive.js'
+export type {
+  DbSnapshot,
+  DbSnapshotMeta,
+  DbSnapshotCompat,
+  DbSnapshotExpectations,
+  DbSnapshotSource,
+  DbSnapshotCompression,
+  DumpableDb,
+  DumpDbSnapshotOptions,
+  RestoreDbSnapshotOptions,
+} from './data-archive.js'
 
 export {
   PGliteStorageBackend,

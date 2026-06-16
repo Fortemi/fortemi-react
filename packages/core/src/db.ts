@@ -20,24 +20,39 @@ function getDataDir(persistence: PersistenceMode, archiveName: string): string |
   }
 }
 
+export interface CreatePGliteOptions {
+  /**
+   * Restore the instance from a physical data-dir snapshot (issue #187) — schema
+   * + rows + INDEXES in one binary load, with no migration / import / reindex.
+   * The blob comes from PGlite's `dumpDataDir`; see `dumpDbSnapshot`/`restoreDbSnapshot`.
+   * When set, callers MUST NOT run migrations — the restored dir already carries them.
+   */
+  loadDataDir?: Blob | File
+}
+
 export async function createPGliteInstance(
   persistence: PersistenceMode,
   archiveName: string = 'default',
+  options: CreatePGliteOptions = {},
 ): Promise<PGlite> {
   const dataDir = getDataDir(persistence, archiveName)
 
-  const options: Record<string, unknown> = {
+  const pgliteOptions: Record<string, unknown> = {
     database: 'postgres', // PGlite 0.4.x breaking change: explicit required
     extensions: { vector },
   }
 
   if (dataDir) {
-    options.dataDir = dataDir
+    pgliteOptions.dataDir = dataDir
   }
 
-  const db = await PGlite.create(options)
+  if (options.loadDataDir) {
+    pgliteOptions.loadDataDir = options.loadDataDir
+  }
 
-  // Enable pgvector extension (must be done after create)
+  const db = await PGlite.create(pgliteOptions)
+
+  // Enable pgvector extension (idempotent — already present on a restored dir).
   await db.exec('CREATE EXTENSION IF NOT EXISTS vector')
 
   return db
