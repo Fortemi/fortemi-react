@@ -296,8 +296,15 @@ export {
   provenanceEdgeToShard,
   exportShard,
   importShard,
+  prefetchShard,
+  fromPrefetched,
+  isShardPrefetched,
+  getPrefetchedSha256,
+  clearPrefetchedShard,
 } from './shard/index.js'
 export type {
+  PrefetchOptions,
+  PrefetchResult,
   ShardManifest,
   ShardComponent,
   ExportOptions,

@@ -74,3 +74,13 @@ export { exportShard } from './shard-export.js'
 
 // Import pipeline
 export { importShard } from './shard-import.js'
+
+// Prefetch / warm API
+export {
+  prefetchShard,
+  fromPrefetched,
+  isShardPrefetched,
+  getPrefetchedSha256,
+  clearPrefetchedShard,
+} from './prefetch.js'
+export type { PrefetchOptions, PrefetchResult } from './prefetch.js'
