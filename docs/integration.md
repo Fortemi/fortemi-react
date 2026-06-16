@@ -1038,6 +1038,70 @@ const summariesOnly = await exportShard(db, {
 
 Use this for the recommended large-corpus pattern: ship a small summary embedding set as the default semantic experience, then import a larger content/deep-search set on demand. HNSW and vector search can only rank vectors that are already loaded and indexed; for very large corpora, use text or summary search to select candidates before loading/reranking deeper content vectors.
 
+### Warming shards before import (prefetch)
+
+When the user opts into a larger set, two costs land behind one click: **download** the shard bytes, then **import** them (decode + HNSW build). The import has to be on the click (it is heavy and shown with progress — correct). The download does not: `prefetchShard` warms the bytes in the background on idle so the click is purely the index build.
+
+fortemi-react is server-free — shards are **static assets** (generated at build time and served as static files, or bundled and handed in as bytes). `prefetchShard` warms those static bytes; it assumes no API/server.
+
+```ts
+import { prefetchShard, fromPrefetched, importShard, isShardPrefetched } from '@fortemi/core'
+
+// Build emits /shards/research.shard and its SHA-256 (e.g. into a constant).
+const RESEARCH_SHARD = '/shards/research.shard'
+
+// Warm on idle (avoidable download moves to background).
+requestIdleCallback(() => {
+  void prefetchShard(RESEARCH_SHARD, { expectedSha256: RESEARCH_SHARD_SHA256 })
+})
+
+// On the user's click — warm bytes already in hand, so this is just the index build.
+async function openResearch(db) {
+  const bytes = isShardPrefetched(RESEARCH_SHARD)
+    ? fromPrefetched(RESEARCH_SHARD)
+    : (await prefetchShard(RESEARCH_SHARD)).bytes
+  await importShard(db, bytes, { onProgress: ({ phase, done, total }) => {/* repaint */} })
+}
+```
+
+`prefetchShard(url, options?)` accepts:
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `bytes` | `ArrayBuffer \| Uint8Array` | Warm directly from a bundled/build-time asset instead of fetching `url`. |
+| `verify` | `boolean` | Compute the SHA-256 of the warmed bytes. |
+| `expectedSha256` | `string` | Verify the whole-archive SHA-256 against a build-time-known hash; mismatch throws and stores nothing. |
+| `useCacheStorage` | `boolean` | Also persist to the Cache Storage API so warmth survives a reload (feature-detected; no-op when unavailable). |
+| `cacheName` | `string` | Cache Storage cache name (default `'fortemi-shards'`). |
+| `fetchImpl` / `signal` | — | Inject a custom `fetch` / forward an `AbortSignal`. |
+
+Integrity is two-layer: `expectedSha256` verifies the whole archive at warm time; `importShard` still validates the per-file checksums inside the manifest at import time. Both share core's `sha256Hex`. Companions: `isShardPrefetched(url)`, `getPrefetchedSha256(url)`, `clearPrefetchedShard(url?)` (in-memory eviction).
+
+The React `useShardPrefetch()` hook wraps `prefetchShard` with per-url warming flags, and `useImportShard().importFromUrl(url, strategy?, prefetchOptions?)` imports from a (warm or freshly-fetched) static URL:
+
+```tsx
+import { useShardPrefetch, useImportShard } from '@fortemi/react'
+
+function ResearchLoader() {
+  const { prefetch, isPrefetched } = useShardPrefetch()
+  const { importFromUrl, progress } = useImportShard()
+
+  useEffect(() => {
+    const id = requestIdleCallback(() =>
+      void prefetch('/shards/research.shard', { expectedSha256: RESEARCH_SHARD_SHA256 }),
+    )
+    return () => cancelIdleCallback(id)
+  }, [prefetch])
+
+  // Click runs only the index build when the bytes are already warm.
+  return (
+    <button onClick={() => importFromUrl('/shards/research.shard')}>
+      {isPrefetched('/shards/research.shard') ? 'Open research set' : 'Warming…'}
+    </button>
+  )
+}
+```
+
 ---
 
 ## 12. Service Worker Setup
