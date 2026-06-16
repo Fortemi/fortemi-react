@@ -75,6 +75,26 @@ export { exportShard } from './shard-export.js'
 // Import pipeline
 export { importShard } from './shard-import.js'
 
+// In-place reader (static-file backend, issue #189)
+export { openShard } from './shard-reader.js'
+export type {
+  ShardReader,
+  ShardReaderSource,
+  ShardReaderNote,
+  OpenShardOptions,
+  ShardListOptions,
+  ShardSearchOptions,
+  ShardSearchResult,
+  ShardSearchRankedNote,
+  ShardSearchWeights,
+  ShardNoteFull,
+  StaticSemanticProvider,
+  ShardComponentStore,
+} from './shard-reader.js'
+export { createCosineSemanticProvider } from './semantic-providers.js'
+export type { VectorEntry, CosineSemanticProviderOptions } from './semantic-providers.js'
+export type { ShardClusterRef, ShardLayout } from './types.js'
+
 // Prefetch / warm API
 export {
   prefetchShard,

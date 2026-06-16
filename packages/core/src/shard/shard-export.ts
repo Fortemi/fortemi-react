@@ -33,6 +33,8 @@ import type {
   ExportOptions,
   ShardManifest,
   ShardComponent,
+  ShardClusterRef,
+  ShardLayout,
 } from './types.js'
 
 const encoder = new TextEncoder()
@@ -136,8 +138,22 @@ export async function exportShard(
   // Collect exported note IDs for scoping related data
   const exportedNoteIds = new Set(notes.map((n) => n.id))
 
-  const notesJsonl = notes.map((n) => JSON.stringify(noteToShard(n))).join('\n')
-  files.set('notes.jsonl', encoder.encode(notesJsonl))
+  const shardNotes = notes.map((n) => noteToShard(n))
+  let layout: ShardLayout | undefined
+  const clusterSize = options?.clusterNotesSize
+  if (clusterSize && Number.isInteger(clusterSize) && clusterSize > 0 && shardNotes.length > 0) {
+    // Clustered layout: one addressable file per `clusterSize` records (issue #189).
+    const clusters: ShardClusterRef[] = []
+    for (let offset = 0; offset < shardNotes.length; offset += clusterSize) {
+      const slice = shardNotes.slice(offset, offset + clusterSize)
+      const href = `notes/${String(offset).padStart(6, '0')}.jsonl`
+      clusters.push({ href, offset, count: slice.length })
+      files.set(href, encoder.encode(slice.map((n) => JSON.stringify(n)).join('\n')))
+    }
+    layout = { clusters: { notes: clusters } }
+  } else {
+    files.set('notes.jsonl', encoder.encode(shardNotes.map((n) => JSON.stringify(n)).join('\n')))
+  }
   components.push('notes')
   counts.notes = notes.length
 
@@ -553,6 +569,7 @@ export async function exportShard(
     counts,
     checksums,
     min_reader_version: '1.0.0',
+    ...(layout ? { layout } : {}),
   }
   files.set('manifest.json', encoder.encode(JSON.stringify(manifest, null, 2)))
 

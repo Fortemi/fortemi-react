@@ -179,7 +179,14 @@ export async function importShard(
   report?.({ phase: 'validate', done: 1, total: 1 })
 
   // ── Step 4: Parse all components ──────────────────────────────────────
-  const parsedNotes = parseJsonl<ShardNote>(files.get('notes.jsonl'))
+  // Notes may be clustered (notes/000.jsonl, …) per the manifest layout (#189);
+  // a monolithic notes.jsonl is the default. Concatenate clusters in offset order.
+  const noteClusters = manifest.layout?.clusters?.notes
+  const parsedNotes = noteClusters && noteClusters.length > 0
+    ? [...noteClusters]
+        .sort((a, b) => a.offset - b.offset)
+        .flatMap((ref) => parseJsonl<ShardNote>(files.get(ref.href)))
+    : parseJsonl<ShardNote>(files.get('notes.jsonl'))
   const parsedCollections = parseJsonArray<ShardCollection>(files.get('collections.json'))
   // Tags are embedded in notes as arrays — the global tags.json is informational only
   parseJsonArray<ShardTag>(files.get('tags.json')) // parsed for validation, not used directly
