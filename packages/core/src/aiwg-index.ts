@@ -197,6 +197,12 @@ export interface AiwgChunkedIndexLoadOptions {
   // Required to resolve detail for projected indexes via getRecord(); ignored otherwise.
   detailLoader?: AiwgChunkedIndexDetailLoader
   maxCachedDetails?: number
+  // Bounds the filtered/ranked match-set cache used to page a query without
+  // re-scanning every part. Counts total cached entries across all queries
+  // (LRU-evicted). Defaults to 5000. The cache is keyed on query + filters +
+  // weights, so paging the same query (varying only offset/limit/sort/snippets)
+  // reuses the scan; see queryChunked.
+  maxCachedMatches?: number
 }
 
 export type AiwgChunkedIndexProgressPhase = 'part' | 'query'
@@ -824,6 +830,11 @@ interface AiwgChunkedIndexRuntime {
   detailLoader?: AiwgChunkedIndexDetailLoader
   maxCachedDetails: number
   detailCache: Map<string, AiwgFortemiRecord>
+  maxCachedMatches: number
+  // query+filter+weights key -> the full filtered/ranked entry set for that
+  // query (offset/limit/sort/snippets independent). LRU-ordered; bounded by
+  // maxCachedMatches (total entries). Lets pagination reuse a single scan.
+  matchCache: Map<string, AiwgRankedEntry[]>
 }
 
 function chunkPartCacheKey(part: AiwgFortemiChunkPartRef): string {
@@ -838,6 +849,43 @@ function clampMaxCachedParts(value: number | undefined): number {
 function clampMaxCachedDetails(value: number | undefined): number {
   if (!hasPositiveInteger(value)) return 32
   return value
+}
+
+function clampMaxCachedMatches(value: number | undefined): number {
+  if (!hasPositiveInteger(value)) return 5000
+  return value
+}
+
+// Stable key over the inputs that determine the filtered/ranked entry SET and
+// each entry's rank value — but not offset/limit/sort/snippets, which only shape
+// the page projected from a cached set. Caller-stable option objects (same field
+// order each page) hit the cache; a reordered object simply misses (still correct).
+function matchSetCacheKey(q: string, options: AiwgIndexQueryOptions): string {
+  return JSON.stringify({
+    q,
+    types: options.types ?? null,
+    facets: options.facets ?? null,
+    tags: options.tags ?? null,
+    concepts: options.concepts ?? null,
+    privacy: options.privacy ?? null,
+    rel: options.relationshipTargetId ?? null,
+    weights: { ...DEFAULT_QUERY_WEIGHTS, ...options.weights },
+  })
+}
+
+function cacheMatchEntries(runtime: AiwgChunkedIndexRuntime, key: string, entries: AiwgRankedEntry[]): void {
+  runtime.matchCache.delete(key)
+  runtime.matchCache.set(key, entries)
+  let total = 0
+  for (const set of runtime.matchCache.values()) total += set.length
+  // Evict oldest sets until within budget, but always keep the just-inserted set
+  // so paging a large result still benefits from the single scan.
+  while (total > runtime.maxCachedMatches && runtime.matchCache.size > 1) {
+    const oldest = runtime.matchCache.keys().next().value
+    if (oldest === undefined || oldest === key) break
+    total -= runtime.matchCache.get(oldest)?.length ?? 0
+    runtime.matchCache.delete(oldest)
+  }
 }
 
 function isDirectChunkBrowse(query: string, options: AiwgIndexQueryOptions): boolean {
@@ -954,6 +1002,23 @@ async function queryChunkedAiwgFortemiIndex(
     }
   }
 
+  // Reuse the filtered/ranked entry set across pages of the same query: the
+  // expensive part scan is offset/limit/sort/snippet independent. A hit projects
+  // a new page from cached entries without touching parts (scanned/fetched = 0).
+  const matchKey = matchSetCacheKey(q, options)
+  const cached = runtime.matchCache.get(matchKey)
+  if (cached) {
+    runtime.matchCache.delete(matchKey)
+    runtime.matchCache.set(matchKey, cached)
+    return {
+      ...createQueryResultFromRankedEntries(cached, q, options),
+      manifestTotal: runtime.manifest.total,
+      scannedParts: 0,
+      fetchedParts: 0,
+      complete: true,
+    }
+  }
+
   const entries: AiwgRankedEntry[] = []
   for (const partRef of runtime.manifest.parts) {
     const loaded = await loadChunkPart(runtime, partRef)
@@ -963,6 +1028,7 @@ async function queryChunkedAiwgFortemiIndex(
     entries.push(...createRankedEntries(loaded.part.items, q, options, partRef.offset))
     options.onProgress?.({ phase: 'query', done: scannedParts, total: runtime.manifest.parts.length, href: partRef.href })
   }
+  cacheMatchEntries(runtime, matchKey, entries)
 
   return {
     ...createQueryResultFromRankedEntries(entries, q, options),
@@ -1051,6 +1117,8 @@ export function createAiwgIndexController(initialIndex?: AiwgFortemiIndexExport)
           detailLoader: options.detailLoader,
           maxCachedDetails: clampMaxCachedDetails(options.maxCachedDetails),
           detailCache: new Map(),
+          maxCachedMatches: clampMaxCachedMatches(options.maxCachedMatches),
+          matchCache: new Map(),
         }
         data = null
         reviewDecisions = []
@@ -1110,6 +1178,7 @@ export function createAiwgIndexController(initialIndex?: AiwgFortemiIndexExport)
     clearChunkCache(): void {
       chunked?.partCache.clear()
       chunked?.detailCache.clear()
+      chunked?.matchCache.clear()
       error = null
       notify()
     },
