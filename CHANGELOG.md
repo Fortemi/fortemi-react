@@ -4,6 +4,31 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.6.5 - 2026-06-16
+
+Three interchangeable read paths for the same knowledge base — a pre-indexed PGlite snapshot, a static-file shard read in place, and the live PGlite database — now sit behind one operation interface with negotiated capabilities. All additive and opt-in; existing PGlite paths are unchanged.
+
+### `@fortemi/core` — uniform tool-intent backend seam + capability negotiation (#191)
+
+- New `DataBackend` interface lifts the storage seam above SQL: `listNotes` / `getNote` / `search` are the shared core, with `getNoteFull`, `semantic`, and `manageNote` present only on backends whose capabilities advertise them. The PGlite database backend and the static-file shard reader (#189) both satisfy it to their tier, so app code dispatches the same way regardless of where the data lives.
+- `BackendCapabilities` describes a backend with `read` / `write` / `merge` / `multiUser`, a `semantic` tier (`none` | `cosine-small` | `ann-full` | `server`), and a `startupCost`. `createPGliteBackend(db)` wraps the repositories plus the `manageNote` tool (read+write+merge; `ann-full` semantic when embeddings exist). `createShardBackend(reader)` wraps `openShard` (#189): instant, read-only, with the semantic tier set by the attached vector provider.
+- `selectBackend(request, available)` negotiates: it prefers a fully-satisfying backend with the lightest startup cost and, when none fully satisfy, returns the fewest-missing candidate so callers can degrade deliberately via `selection.missing`. Runtime upgrade/downgrade (static-file → PGlite when a visitor opts into semantic) is the same call with a stronger request. A remote-server backend is a future adapter against this same interface (deferred under epic #190). ADR: `.aiwg/architecture/adr-backend-seam.md`.
+
+### `@fortemi/core` + `@fortemi/react` — static-file backend: in-place clusterable shard reader (#189)
+
+- `openShard(source)` reads a `.shard` archive in place — browse, full-text + facet search (PGlite-parity AND semantics over multiple words), links/tags/concepts resolution, and lazy full content — without importing into PGlite. `source` is a packed `Uint8Array`/`Blob` or `{ baseUrl }` for lazy per-file fetch.
+- Shards can be exported with a clustered note layout (`exportShard(db, { clusterNotesSize })` emits `notes/NNNNNN.jsonl` + a manifest `layout`), so an in-place reader fetches only the clusters a query needs. `importShard` and `openShard` both consume the layout transparently; monolithic shards stay valid.
+- Semantic search over a shard is a pluggable provider with three tradeoff points: none (text/facets only), brute-force cosine over a small static vector set (`createCosineSemanticProvider`), or a prebuilt ANN snapshot. React adds `useShard(source, options?)`, mirroring `useAiwgIndex()`.
+
+### `@fortemi/core` + `@fortemi/react` — physical data-dir snapshot restore (#187)
+
+- `dumpDbSnapshot(db, options?)` captures a pre-indexed PGlite data directory image (gzip by default) plus a version stamp (schema id, migration head, PGlite version, pgvector availability). `restoreDbSnapshot(source, options?)` verifies the stamp against the running environment and loads the image — so a consumer boots a fully-indexed database without replaying migrations or rebuilding HNSW. Hard version gates (schema, exact migration head, PGlite major.minor) throw `DbSnapshotVersionError` on mismatch; pgvector availability is advisory. Source forms: inline `{ data, meta }`, a string URL (with a `<url>.meta.json` sidecar), or `{ dataUrl, metaUrl? }`.
+- `ArchiveManager.adopt(backend, archiveName?)` swaps in an externally-built backend without running migrations. `FortemiProvider` gains `snapshotUrl` / `snapshotExpectations` props to restore from a static snapshot on mount (main-thread mode).
+
+### `@fortemi/core` — aiwg-index chunked-mode fixes (#177, #178, #179)
+
+- Path-safe base64url encoding for chunked detail ids (#177), `exportReviewDecisions` works in chunked mode (#178), and the chunked query match-set is cached across pages so re-paging a query no longer re-scans every part (#179).
+
 ## v2026.6.4 - 2026-06-15
 
 ### `@fortemi/core` + `@fortemi/react` — off-main-thread query-embedding transport (#180)
