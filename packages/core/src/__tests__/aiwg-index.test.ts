@@ -315,6 +315,116 @@ describe('AIWG Fortemi index adapter', () => {
   })
 })
 
+describe('AIWG Fortemi chunked index — match-set page cache (#179)', () => {
+  function countingLoader(parts: Map<string, AiwgFortemiChunkPart>) {
+    const calls: string[] = []
+    const loader: AiwgChunkedIndexLoader = async (part) => {
+      calls.push(part.href)
+      return parts.get(part.href)
+    }
+    return { loader, calls }
+  }
+
+  it('reuses the scan across pages of the same query (no re-scan, no re-fetch)', async () => {
+    const { manifest, parts } = createChunkedFixture(2)
+    const { loader, calls } = countingLoader(parts)
+    const controller = createAiwgIndexController()
+    // Keep all parts resident so a cache MISS would re-fetch (isolating the
+    // match-cache effect from part-cache churn).
+    controller.loadChunkedIndex(manifest, loader, { maxCachedParts: manifest.parts.length })
+
+    const page1 = await controller.queryChunked('Example', { rank: true, limit: 2, offset: 0 })
+    expect(page1.scannedParts).toBe(manifest.parts.length)
+    expect(page1.fetchedParts).toBe(manifest.parts.length)
+    expect(page1.total).toBeGreaterThan(2)
+    const coldCalls = calls.length
+    expect(coldCalls).toBe(manifest.parts.length)
+
+    // Page 2 of the same query: served from the cached match set — no part work.
+    const page2 = await controller.queryChunked('Example', { rank: true, limit: 2, offset: 2 })
+    expect(page2.scannedParts).toBe(0)
+    expect(page2.fetchedParts).toBe(0)
+    expect(calls.length).toBe(coldCalls)
+    expect(page2.total).toBe(page1.total)
+
+    // Identical to paging the whole index — the cache changes cost, not results.
+    const whole1 = queryAiwgFortemiIndex(index, 'Example', { rank: true, limit: 2, offset: 0 })
+    const whole2 = queryAiwgFortemiIndex(index, 'Example', { rank: true, limit: 2, offset: 2 })
+    expect(page1.items.map((item) => item.id)).toEqual(whole1.items.map((item) => item.id))
+    expect(page2.items.map((item) => item.id)).toEqual(whole2.items.map((item) => item.id))
+  })
+
+  it('does not serve a cached set when filters/weights change', async () => {
+    const { manifest, parts } = createChunkedFixture(2)
+    const { loader, calls } = countingLoader(parts)
+    const controller = createAiwgIndexController()
+    controller.loadChunkedIndex(manifest, loader, { maxCachedParts: manifest.parts.length })
+
+    await controller.queryChunked('Example', { rank: true, limit: 2 })
+    const callsAfterCold = calls.length
+
+    // Adding a type filter is a different match set → re-scan (part cache warm,
+    // so scanned but not re-fetched).
+    const filtered = await controller.queryChunked('Example', {
+      rank: true,
+      limit: 2,
+      types: ['crm.interaction'],
+    })
+    expect(filtered.scannedParts).toBe(manifest.parts.length)
+    expect(filtered.fetchedParts).toBe(0)
+    expect(calls.length).toBe(callsAfterCold)
+    const expectedFiltered = queryAiwgFortemiIndex(index, 'Example', {
+      rank: true,
+      limit: 2,
+      types: ['crm.interaction'],
+    })
+    expect(filtered.items.map((item) => item.id)).toEqual(expectedFiltered.items.map((item) => item.id))
+    expect(filtered.total).toBe(expectedFiltered.total)
+
+    // The original query still hits its own cached set.
+    const again = await controller.queryChunked('Example', { rank: true, limit: 2, offset: 2 })
+    expect(again.scannedParts).toBe(0)
+    expect(again.fetchedParts).toBe(0)
+  })
+
+  it('clearChunkCache drops the match set so the next query re-scans', async () => {
+    const { manifest, parts } = createChunkedFixture(2)
+    const { loader, calls } = countingLoader(parts)
+    const controller = createAiwgIndexController()
+    controller.loadChunkedIndex(manifest, loader, { maxCachedParts: manifest.parts.length })
+
+    await controller.queryChunked('Example', { rank: true, limit: 2 })
+    const coldCalls = calls.length
+    controller.clearChunkCache()
+
+    const after = await controller.queryChunked('Example', { rank: true, limit: 2 })
+    expect(after.scannedParts).toBe(manifest.parts.length)
+    expect(after.fetchedParts).toBe(manifest.parts.length)
+    expect(calls.length).toBe(coldCalls + manifest.parts.length)
+  })
+
+  it('bounds the cache by total entries (LRU-evicts older match sets)', async () => {
+    const { manifest, parts } = createChunkedFixture(2)
+    const { loader, calls } = countingLoader(parts)
+    const controller = createAiwgIndexController()
+    // maxCachedMatches: 1 entry total → each distinct query evicts the previous.
+    controller.loadChunkedIndex(manifest, loader, {
+      maxCachedParts: manifest.parts.length,
+      maxCachedMatches: 1,
+    })
+
+    await controller.queryChunked('Example', { rank: true, limit: 2 }) // set A (>1 entry)
+    await controller.queryChunked('crm', { rank: true, limit: 2 }) // set B evicts A
+    const callsBeforeReplay = calls.length
+
+    // A was evicted → re-scan (parts warm, so scanned not fetched).
+    const replayA = await controller.queryChunked('Example', { rank: true, limit: 2, offset: 2 })
+    expect(replayA.scannedParts).toBe(manifest.parts.length)
+    expect(replayA.fetchedParts).toBe(0)
+    expect(calls.length).toBe(callsBeforeReplay)
+  })
+})
+
 describe('AIWG Fortemi chunked index — slim/projected parts (#168)', () => {
   const projection = AIWG_SCAN_REQUIRED_FIELDS
 
