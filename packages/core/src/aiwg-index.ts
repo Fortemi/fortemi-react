@@ -924,7 +924,9 @@ async function queryChunkedAiwgFortemiIndex(
 }
 
 export function createAiwgReviewDecisionExport(
-  source: AiwgFortemiIndexExport,
+  // Only the export schema_version is needed — so this works in chunked mode
+  // (where no whole index is loaded) by passing a minimal source. See #178.
+  source: Pick<AiwgFortemiIndexExport, 'schema_version'>,
   decisions: AiwgReviewDecision[],
   generatedAt = new Date().toISOString(),
 ): AiwgReviewDecisionExport {
@@ -1083,7 +1085,12 @@ export function createAiwgIndexController(initialIndex?: AiwgFortemiIndexExport)
       notify()
     },
     createReviewDecisionExport(generatedAt?: string): AiwgReviewDecisionExport {
-      return createAiwgReviewDecisionExport(requireIndex(), reviewDecisions, generatedAt)
+      // The review-decisions export only needs the export schema_version, not the
+      // items — so it works in chunked mode by synthesizing a minimal source (#178).
+      const source: Pick<AiwgFortemiIndexExport, 'schema_version'> | null =
+        index ?? (chunked ? { schema_version: 'aiwg.fortemi.index.export.v1' } : null)
+      if (!source) throw new Error('No AIWG index export or chunked manifest loaded')
+      return createAiwgReviewDecisionExport(source, reviewDecisions, generatedAt)
     },
     subscribe(listener: AiwgIndexControllerListener): () => void {
       listeners.add(listener)

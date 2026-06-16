@@ -154,9 +154,13 @@ export function useAiwgIndex(initialIndex?: AiwgFortemiIndexExport) {
   }, [])
 
   const exportReviewDecisions = useCallback((): AiwgReviewDecisionExport => {
-    if (!index) throw new Error('No AIWG index export loaded')
-    return createAiwgReviewDecisionExport(index, reviewDecisions)
-  }, [index, reviewDecisions])
+    // The review-decisions export only needs the export schema_version, not the
+    // items — so it works in chunked mode (index null, manifest loaded) by
+    // synthesizing a minimal source (#178).
+    const source = index ?? (chunkedManifest ? { schema_version: 'aiwg.fortemi.index.export.v1' as const } : null)
+    if (!source) throw new Error('No AIWG index export or chunked manifest loaded')
+    return createAiwgReviewDecisionExport(source, reviewDecisions)
+  }, [index, chunkedManifest, reviewDecisions])
 
   const toCommunityGraph = useCallback((options?: AiwgIndexGraphOptions) => {
     if (!index) throw new Error('No AIWG index export loaded')
