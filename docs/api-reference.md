@@ -1241,6 +1241,20 @@ Attach or detach the default semantic capability loader from a `CapabilityManage
 
 ---
 
+#### `registerSemanticCapabilityWorker(manager, port, options?)`
+
+```typescript
+function registerSemanticCapabilityWorker(
+  manager: CapabilityManager,
+  port: EmbedTransportPort, // Worker | MessagePort
+  options?: EmbedWorkerOptions, // { timeoutMs?: number } — default 30000, 0 disables
+): void
+```
+
+Register the semantic capability backed by an off-main-thread transport, so embedding model load and per-query inference never touch the main thread (#180). Core round-trips each `{ texts }` request to the host-owned worker and awaits `number[][]`. Pairs with `handleEmbedRequests(port, embed)` (worker side) and `createWorkerEmbedFunction(port, options?)` (the lower-level primitive). Additive and opt-in; the main-thread `registerSemanticCapability` path is unchanged. See [Integration → Off-main-thread embedding transport](./integration.md#off-main-thread-embedding-transport).
+
+---
+
 #### `registerLlmCapability(manager)` / `unregisterLlmCapability(manager)`
 
 ```typescript

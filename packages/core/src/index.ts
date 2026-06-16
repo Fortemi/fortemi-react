@@ -175,7 +175,23 @@ export type { LlmCompleteFn } from './capabilities/llm-handler.js'
 
 export { cosineSimilarity, suggestTags } from './capabilities/auto-tag.js'
 
-export { registerSemanticCapability, unregisterSemanticCapability } from './capabilities/semantic-loader.js'
+export {
+  registerSemanticCapability,
+  registerSemanticCapabilityWorker,
+  unregisterSemanticCapability,
+} from './capabilities/semantic-loader.js'
+export {
+  createWorkerEmbedFunction,
+  handleEmbedRequests,
+  EMBED_REQUEST_KIND,
+  EMBED_RESPONSE_KIND,
+} from './capabilities/embed-worker-transport.js'
+export type {
+  EmbedTransportPort,
+  EmbedWorkerOptions,
+  EmbedRequestMessage,
+  EmbedResponseMessage,
+} from './capabilities/embed-worker-transport.js'
 export { registerLlmCapability, unregisterLlmCapability } from './capabilities/llm-loader.js'
 export type { LlmCapabilityOptions } from './capabilities/llm-loader.js'
 

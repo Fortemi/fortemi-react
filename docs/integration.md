@@ -718,6 +718,70 @@ function SemanticCapabilityLoader() {
 }
 ```
 
+### Off-main-thread embedding transport
+
+With `executionMode="worker"` the PGlite database and HNSW query run off the main thread, but a main-thread `EmbedFunction` closure still blocks the UI: the embedding model load janks the first paint of search, and every per-query embed blocks input. `registerSemanticCapabilityWorker` moves the embed function itself behind a `Worker`/`MessagePort`, so semantic search runs off-thread end-to-end. Core posts `{ texts }` to the port and awaits `number[][]`; the host owns the worker, the model, and the model params.
+
+Worker side — wire your model to the message protocol with `handleEmbedRequests`:
+
+```typescript
+// queryEmbed.worker.ts
+import { handleEmbedRequests, type EmbedTransportPort } from '@fortemi/core'
+import { pipeline } from '@huggingface/transformers'
+
+const extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2')
+
+handleEmbedRequests(self as unknown as EmbedTransportPort, async (texts) => {
+  const out: number[][] = []
+  for (const text of texts) {
+    // Match the build-time corpus embeddings exactly: fp32, mean pooling, normalized, 384-d.
+    const r = await extractor(text, { pooling: 'mean', normalize: true })
+    out.push(Array.from(r.data as Float32Array))
+  }
+  return out
+})
+```
+
+Main thread — register the worker as the semantic capability:
+
+```typescript
+import { registerSemanticCapabilityWorker } from '@fortemi/core'
+import { useFortemiContext } from '@fortemi/react'
+
+function SemanticWorkerLoader() {
+  const { capabilityManager } = useFortemiContext()
+
+  const enableSemantic = async () => {
+    const worker = new Worker(new URL('./queryEmbed.worker.ts', import.meta.url), { type: 'module' })
+    registerSemanticCapabilityWorker(capabilityManager, worker)
+    await capabilityManager.enable('semantic') // no main-thread model load, no main-thread inference
+  }
+
+  return <button onClick={enableSemantic}>Enable Semantic Search (off-thread)</button>
+}
+```
+
+`registerSemanticCapabilityWorker` accepts an `EmbedWorkerOptions` third argument (`{ timeoutMs }`, default 30000; `0` disables). The transport's message listener is attached when `enable('semantic')` runs and removed by `unregisterSemanticCapability()` (i.e. on `disable`). Disposing the worker (`worker.terminate()`) remains the host's responsibility.
+
+The React `useEmbeddingWorker(transport, options?)` hook is a thin wrapper that wires the same transport directly into the core embed function and tears it down on unmount:
+
+```typescript
+import { useMemo, useEffect } from 'react'
+import { useEmbeddingWorker } from '@fortemi/react'
+
+function SearchProvider() {
+  const worker = useMemo(
+    () => new Worker(new URL('./queryEmbed.worker.ts', import.meta.url), { type: 'module' }),
+    [],
+  )
+  const { status, connect } = useEmbeddingWorker(worker)
+  useEffect(() => connect(), [connect])
+  // status: 'idle' | 'connected'
+}
+```
+
+Both `createWorkerEmbedFunction(port, options?)` (the lower-level primitive) and `handleEmbedRequests(port, embed)` are exported for hosts that want to own the wiring directly. The existing main-thread `registerSemanticCapability(manager, embedFn)` path is unchanged — this transport is additive and opt-in.
+
 ### registerLlmCapability with WebLLM
 
 The LLM capability performs WebGPU detection and selects a model tier before loading. You provide the `LlmCompleteFn` — a function that accepts a prompt string and returns a completion string:
