@@ -1166,6 +1166,66 @@ function ResearchLoader() {
 }
 ```
 
+### In-place query — the static-file backend (`openShard` / `useShard`)
+
+A shard has a second access mode: instead of importing it into PGlite, **open it and query the component files in place — with no PGlite at all**. This is the lightest, server-free tier — ideal for a read-only browse/search UI that only upgrades to a database when a visitor opts into semantic.
+
+```ts
+import { openShard } from '@fortemi/core'
+
+// Source: a packed tar.gz (Uint8Array/Blob) or a static base URL of unpacked files.
+const reader = await openShard({ baseUrl: '/shards/notes' })
+
+const { items, total } = await reader.listNotes({ limit: 20 })
+const result = await reader.search('founder breakfast', { rank: true, snippets: true })
+const note = await reader.getNoteFull('note-id') // note + links + concepts, lazy
+```
+
+| Reader method | Description |
+|---------------|-------------|
+| `listNotes(options?)` | Paginated browse (soft-deleted excluded; archived included by default). |
+| `getNote(id)` / `getNoteFull(id)` | A single note, or the note plus its links + SKOS concepts. |
+| `search(query, options?)` | Full-text + facet search with **AND multi-word semantics** matching the PGlite text path, plus optional `rank`/`snippets`. A per-query match cache means paging the same query re-scans nothing (`fetchedClusters: 0`). |
+| `linksOf(id)` / `conceptsOf(id)` | Lazy relationship + concept resolution from the component files. |
+| `semantic(query, k?)` | Opt-in (see below); returns `[]` when no provider is configured. |
+
+**Clustered layout (large corpora).** Emit notes as addressable cluster files so the reader fetches only what a query needs (the shard analog of the AIWG chunk parts):
+
+```ts
+const clustered = await exportShard(db, { clusterNotesSize: 1000 }) // notes/000000.jsonl, …
+```
+
+`importShard` and `openShard` both consume the clustered layout transparently; a monolithic shard stays valid (the `layout` field is simply absent).
+
+**Semantic over static files — pluggable, three tradeoff points.** The reader is text/facets-only unless you pass a `StaticSemanticProvider`:
+
+1. **none** — omit `semantic` (text/facets only). Lightest.
+2. **cosine-small** — `createCosineSemanticProvider({ embedQuery, vectorsFile })`: brute-force cosine over a small static `vectors.jsonl`. Zero prebuild; small corpora only.
+3. **ANN-full** — implement `StaticSemanticProvider` yourself over a prebuilt ANN snapshot (HNSW / flat-IVF served as a static asset), loading it in `prepare()`. The interface is the extension point; no ANN engine is bundled.
+
+```ts
+import { openShard, createCosineSemanticProvider } from '@fortemi/core'
+
+const reader = await openShard('/shards/notes.shard', {
+  semantic: createCosineSemanticProvider({ embedQuery: (q) => embed(q) }), // vectors.jsonl alongside
+})
+const hits = await reader.semantic('founders meeting', 10)
+```
+
+The React `useShard(source, options?)` hook mirrors `useAiwgIndex()` — it manages the async-opened reader and exposes `search`/`listNotes`/`getNote`/`getNoteFull`/`semantic` plus `manifest`/`loading`/`error`. Memoize `source` to avoid re-opening on every render.
+
+```tsx
+import { useMemo } from 'react'
+import { useShard } from '@fortemi/react'
+
+function NotesBrowser() {
+  const source = useMemo(() => ({ baseUrl: '/shards/notes' }), [])
+  const { search, loading } = useShard(source)
+  // const result = await search('founder breakfast', { rank: true })
+  return loading ? <Spinner /> : <SearchUI onSearch={search} />
+}
+```
+
 ---
 
 ## 12. Service Worker Setup

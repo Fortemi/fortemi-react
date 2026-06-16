@@ -28,6 +28,28 @@ export type ShardComponent =
   | 'graph_edges'
   | 'graph_sources'
 
+/**
+ * Reference to one cluster file of a component split across addressable files
+ * (`notes/000.jsonl`, `notes/001.jsonl`, …). `offset`/`count` are the record
+ * range within the component, so an in-place reader fetches only the clusters a
+ * query needs — the shard analog of the AIWG chunk-manifest scan parts.
+ */
+export interface ShardClusterRef {
+  href: string // path within the shard, relative to manifest base
+  offset: number // index of the first record in this cluster
+  count: number // records in this cluster
+}
+
+/**
+ * Optional clustered layout (additive — absent on monolithic shards). When a
+ * component is present here, its records live in the listed cluster files instead
+ * of (or in addition to) the single `<component>.jsonl`. Both `importShard` and
+ * the in-place reader consume it; a monolithic shard omits `layout` entirely.
+ */
+export interface ShardLayout {
+  clusters?: Partial<Record<ShardComponent, ShardClusterRef[]>>
+}
+
 /** Manifest included in every shard as manifest.json. */
 export interface ShardManifest {
   version: string
@@ -38,6 +60,8 @@ export interface ShardManifest {
   counts: Partial<Record<ShardComponent | 'community_sets', number>>
   checksums: Record<string, string> // filename → sha256 hex
   min_reader_version: string
+  /** Clustered component layout for partial fetch (issue #189). Absent → monolithic. */
+  layout?: ShardLayout
 }
 
 /** Options for shard export. */
@@ -51,6 +75,13 @@ export interface ExportOptions {
   embeddingSetIds?: string[]
   /** Preserve virtual selector materialization metadata and virtual member rows. */
   includeMaterializedSelectors?: boolean
+  /**
+   * When set to a positive integer, emit notes as clustered files
+   * (`notes/000.jsonl`, …) of this many records each, and record the layout in
+   * the manifest, so an in-place reader can fetch only the clusters it needs
+   * (issue #189). Absent → a single monolithic `notes.jsonl` (unchanged).
+   */
+  clusterNotesSize?: number
 }
 
 /** Conflict resolution strategy for shard import. */
