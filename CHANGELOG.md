@@ -4,6 +4,20 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.6.4 - 2026-06-15
+
+### `@fortemi/core` + `@fortemi/react` — off-main-thread query-embedding transport (#180)
+
+- New opt-in worker transport for the semantic embed function, so semantic search runs off the main thread end-to-end. With worker mode (#146) the PGlite DB + HNSW query are already off-thread; the embedding model load and per-query inference now move off the main thread too. `createWorkerEmbedFunction(port, options?)` wraps a `Worker`/`MessagePort` into an `EmbedFunction` with id-matched requests, a per-request timeout (default 30s, `0` disables), and `dispose()` cleanup; `handleEmbedRequests(port, embed)` is the worker-side helper that answers the message protocol. `registerSemanticCapabilityWorker(manager, port, options?)` wires it into the capability lifecycle — listener attached on `enable('semantic')`, removed on `disable`.
+- Wired at the `set/getEmbedFunction` seam, so both query embedding and the job-queue embedding handler go off-thread with one registration. The host keeps full control of the model and its params, so build-time corpus embeddings stay an exact match. The existing main-thread `registerSemanticCapability(manager, embedFn)` path is unchanged — additive and opt-in.
+- `@fortemi/react` adds the `useEmbeddingWorker(transport, options?)` lifecycle hook (`connect` / `disconnect`, auto-teardown on unmount). Exported message types/constants (`EmbedTransportPort`, `EmbedWorkerOptions`, `EmbedRequestMessage`, `EmbedResponseMessage`, `EMBED_REQUEST_KIND`, `EMBED_RESPONSE_KIND`) for hosts that own the wiring directly.
+
+### `@fortemi/core` + `@fortemi/react` — `prefetchShard` / shard warm API (#181)
+
+- New first-class warm/prefetch API that pre-stages shard bytes without building the index, so a user's opt-in click is purely the HNSW index build and the avoidable download moves to background idle. `prefetchShard(url, options?)` resolves bytes from a directly-provided bundled asset (`options.bytes`), the Cache Storage API (`useCacheStorage`, feature-detected), or `fetch(url)`; warms them in an in-memory store with concurrent de-duplication; and optionally verifies the whole-archive SHA-256 against a build-time-known hash (`expectedSha256`). `fromPrefetched(url)` hands the warm bytes to `importShard` unchanged. Helpers: `isShardPrefetched`, `getPrefetchedSha256`, `clearPrefetchedShard`.
+- Server-free / local-first by design: shards are static assets (build-time-generated files or bundled bytes), so the API assumes no API/server. Two-layer integrity, both sharing core's `sha256Hex`: whole-archive `expectedSha256` at warm time + the per-file manifest checksums `importShard` already validates at import time. `importShard`'s signature is unchanged — fully additive.
+- `@fortemi/react` adds `useShardPrefetch()` (per-url warming flags) and `useImportShard().importFromUrl(url, strategy?, prefetchOptions?)`, which skips the download entirely when the bytes are already warm.
+
 ### Release engineering
 
 - The Gitea and npmjs publish workflows now create a repository **Release** for each signed tag and attach the packaged `@fortemi/core`, `@fortemi/graph`, and `@fortemi/react` tarballs (`fortemi-<pkg>-<version>.tgz`) as release assets, alongside the npm publishes — so every release carries downloadable packages on both Gitea and GitHub. Release creation is idempotent (re-runnable from `workflow_dispatch`) and driven by `tools/release/create-repo-release.mjs`. Notes come from `docs/releases/<tag>.md` when present.
