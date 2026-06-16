@@ -29,6 +29,30 @@ export type {
   RestoreDbSnapshotOptions,
 } from './data-archive.js'
 
+// Backend seam (#191) — uniform tool-intent operation interface + negotiation
+export {
+  selectBackend,
+  createPGliteBackend,
+  createShardBackend,
+} from './data-backend.js'
+export type {
+  DataBackend,
+  BackendCapabilities,
+  BackendSemanticTier,
+  BackendStartupCost,
+  BackendNote,
+  BackendNoteFull,
+  BackendSearchHit,
+  BackendSearchResult,
+  BackendListOptions,
+  BackendSearchQueryOptions,
+  BackendRequest,
+  BackendCandidate,
+  BackendSelection,
+  PGliteBackendOptions,
+  ShardBackendOptions,
+} from './data-backend.js'
+
 export {
   PGliteStorageBackend,
   PGliteStorageBackendFactory,
