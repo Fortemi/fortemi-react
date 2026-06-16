@@ -313,6 +313,36 @@ describe('AIWG Fortemi index adapter', () => {
     expect(progress).toContain(`part:${manifest.parts.length}/${manifest.parts.length}`)
     expect(controller.getSnapshot().chunked?.cachedParts).toBeLessThanOrEqual(1)
   })
+
+  it('exports review decisions in chunked mode without a whole index (#178)', () => {
+    const { manifest, parts } = createChunkedFixture(2)
+    const loader: AiwgChunkedIndexLoader = async (part) => parts.get(part.href)
+    const controller = createAiwgIndexController()
+    controller.loadChunkedIndex(manifest, loader, { maxCachedParts: 1 })
+
+    expect(controller.getIndex()).toBeNull() // chunked mode: no whole index
+
+    const decision = controller.setReviewDecision({
+      item_id: index.items[0].id,
+      action: 'accept',
+      reason: 'reviewed against chunked manifest',
+    })
+    // Previously threw 'No AIWG index export loaded' — the export only needs the
+    // export schema_version, not the items.
+    const exported = controller.createReviewDecisionExport('2026-01-03T00:00:00.000Z')
+
+    expect(exported.schema_version).toBe('aiwg.fortemi.review-decisions.v1')
+    expect(exported.source_export_schema_version).toBe('aiwg.fortemi.index.export.v1')
+    expect(exported.generated_at).toBe('2026-01-03T00:00:00.000Z')
+    expect(exported.decisions).toEqual([{ ...decision }])
+  })
+
+  it('createReviewDecisionExport throws when neither index nor manifest is loaded', () => {
+    const controller = createAiwgIndexController()
+    expect(() => controller.createReviewDecisionExport()).toThrow(
+      /No AIWG index export or chunked manifest loaded/,
+    )
+  })
 })
 
 describe('AIWG Fortemi chunked index — slim/projected parts (#168)', () => {
