@@ -1226,6 +1226,45 @@ function NotesBrowser() {
 }
 ```
 
+### Backend seam — uniform tool-intent dispatch + capability negotiation (`selectBackend`)
+
+The PGlite database backend and the static-file shard reader expose the same
+operations through a single `DataBackend` interface, so UI code can run against
+either without branching on storage. `selectBackend` negotiates which one to use
+from the capabilities a caller needs:
+
+```ts
+import {
+  createPGliteBackend,
+  createShardBackend,
+  selectBackend,
+  openShard,
+} from '@fortemi/core'
+
+// Heavy, writable, full corpus.
+const pglite = createPGliteBackend(db) // read+write+merge, semantic 'ann-full' when embeddings exist
+
+// Instant, read-only, fetched on demand.
+const shard = createShardBackend(await openShard({ baseUrl: '/shards/notes' }))
+
+// Ask for what the view needs; get the lightest backend that provides it.
+const { backend, missing } = selectBackend({ read: true }, [pglite, shard])
+// → backend.id === 'static-file' (instant beats index-build), missing === []
+
+const writable = selectBackend({ read: true, write: true }, [pglite, shard])
+// → writable.backend.id === 'pglite' (only it can write)
+
+const results = await backend!.search('founder breakfast') // same call shape on either backend
+```
+
+Every backend implements `listNotes` / `getNote` / `search`; `getNoteFull`,
+`semantic`, and `manageNote` are present only when the backend advertises them
+(`capabilities.write` gates `manageNote`, `capabilities.semantic !== 'none'`
+gates `semantic`). `selectBackend` prefers a fully-satisfying backend with the
+lightest `startupCost`; when none fully satisfy, it returns the fewest-missing
+candidate so the caller can degrade deliberately via `selection.missing`. A
+remote-server backend is a future adapter against this same interface.
+
 ---
 
 ## 12. Service Worker Setup
