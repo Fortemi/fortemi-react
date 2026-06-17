@@ -4,6 +4,14 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.6.6 - 2026-06-17
+
+Documentation maintenance release. The published packages (`@fortemi/core`, `@fortemi/graph`, `@fortemi/react`) are unchanged in content from v2026.6.5 apart from the version number — there are no source, API, or behavior changes. Only repository documentation changed.
+
+### Docs
+
+- Fixed five broken **Next Steps** links in `docs/getting-started.md` that pointed at standalone pages never created (`hooks.md`, `capabilities.md`, `archives.md`, `job-queue.md`, `api-types.md`), producing five broken-link warnings in the docsite build. Each now points at the corresponding section of `api-reference.md` (Hooks, Capability Manager, Migrations and Archive, Job Queue, Types). The docsite build reports zero broken links. (#193)
+
 ## v2026.6.5 - 2026-06-16
 
 Three interchangeable read paths for the same knowledge base — a pre-indexed PGlite snapshot, a static-file shard read in place, and the live PGlite database — now sit behind one operation interface with negotiated capabilities. All additive and opt-in; existing PGlite paths are unchanged.

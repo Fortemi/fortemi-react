@@ -1,6 +1,6 @@
 {
   "name": "@fortemi/core",
-  "version": "2026.6.5",
+  "version": "2026.6.6",
   "description": "Browser-only knowledge management core: PGlite (PostgreSQL WASM) data layer, single-writer worker, MCP tools, job queue, capability system, SKOS taxonomy, hybrid search. 100% JSON format parity with the fortemi Rust server.",
   "keywords": [
     "fortemi",
