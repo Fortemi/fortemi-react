@@ -370,8 +370,8 @@ Additional search hooks: `useSearchHistory()` persists recent queries to localSt
 
 ## Next Steps
 
-- **Hook reference** — Complete API for all hooks including `useNote`, `useUpdateNote`, `useDeleteNote`, `useTags`, `useCollections`, and `useJobQueue`: [hooks.md](./hooks.md)
-- **Capabilities** — How to enable semantic search and LLM features using the `CapabilityManager` and built-in loaders: [capabilities.md](./capabilities.md)
-- **Archives** — Working with named archives to isolate or switch datasets at runtime: [archives.md](./archives.md)
-- **Job queue** — Background processing for title generation, auto-tagging, and embeddings with `useJobQueue`: [job-queue.md](./job-queue.md)
-- **TypeScript types** — All exported types from `@fortemi/core` and `@fortemi/react`: [api-types.md](./api-types.md)
+- **Hook reference** — Complete API for all hooks including `useNote`, `useUpdateNote`, `useDeleteNote`, `useTags`, `useCollections`, and `useJobQueue`: [API reference → Hooks](./api-reference.md#hooks)
+- **Capabilities** — How to enable semantic search and LLM features using the `CapabilityManager` and built-in loaders: [API reference → Capability Manager](./api-reference.md#capability-manager)
+- **Archives** — Working with named archives to isolate or switch datasets at runtime: [API reference → Migrations and Archive](./api-reference.md#migrations-and-archive)
+- **Job queue** — Background processing for title generation, auto-tagging, and embeddings with `useJobQueue`: [API reference → Job Queue](./api-reference.md#job-queue)
+- **TypeScript types** — All exported types from `@fortemi/core` and `@fortemi/react`: [API reference → Types](./api-reference.md#types)
