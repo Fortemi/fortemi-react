@@ -145,13 +145,19 @@ Use `executionMode="worker"` for large imports, vector-heavy graph work, or any 
 | `useNoteProvenance` | Revision and job provenance timeline |
 | `useExportShard` | Knowledge Shard export |
 | `useImportShard` | Knowledge Shard import |
+| `useShardPrefetch` | Background warming and SHA verification for static shard assets |
 | `useGpuCapabilities` | WebGPU and VRAM detection |
 | `useInferenceCapabilities` | Hardware inference tier detection |
 | `useLocalDiscovery` | Local LLM server discovery |
 | `useEmbeddingPipeline` | Embedding pipeline lifecycle |
+| `useEmbeddingWorker` | Host-owned worker transport for off-main-thread embedding |
 | `useEmbeddingSets` | Named embedding set selection and creation |
 | `useSimilarityGraph` | Embedding-set scoped similarity graph construction |
+| `useCommunities` | Community source listing and management |
+| `useGraphController` | Graph-source mode coordination |
 | `useAiwgIndex` | Load, chunk-load, search, review, and project AIWG index exports into graph data |
+| `useShard` | In-place read-only Knowledge Shard browsing and search |
+| `useRemote` | Network-backed Fortemi server `DataBackend` access |
 | `useCapabilitySetup` | Unified capability wiring |
 
 ## GraphView

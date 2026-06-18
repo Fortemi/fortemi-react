@@ -1947,6 +1947,132 @@ Job results are summarized (e.g., `"3 links found"`, `"384-dim vector"`).
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `noteId` | `string` | required | Note to retrieve provenance timeline for |
+
+---
+
+#### `useExportShard()`
+
+```typescript
+function useExportShard(): {
+  exportShard: (options?: ExportOptions) => Promise<void>
+  isExporting: boolean
+  progress: ExportProgress | null
+  error: Error | null
+}
+```
+
+Exports the current archive as a Knowledge Shard and triggers a browser download.
+
+---
+
+#### `useImportShard()`
+
+```typescript
+function useImportShard(): {
+  importShard: (file: File, strategy?: ConflictStrategy) => Promise<ImportResult>
+  importFromUrl: (url: string, strategy?: ConflictStrategy, prefetchOptions?: PrefetchOptions) => Promise<ImportResult>
+  isImporting: boolean
+  progress: ImportProgress | null
+  error: Error | null
+  result: ImportResult | null
+}
+```
+
+Imports a Knowledge Shard from a user-selected file or static URL. Warmed URLs from `useShardPrefetch` reuse prefetched bytes.
+
+---
+
+#### `useShardPrefetch()`
+
+```typescript
+function useShardPrefetch(): {
+  prefetch: (url: string, options?: PrefetchOptions) => Promise<PrefetchResult>
+  isPrefetched: (url: string) => boolean
+  warming: Record<string, boolean>
+  error: Error | null
+}
+```
+
+Warms static shard bytes in the background and optionally verifies SHA-256 before an import click.
+
+---
+
+#### `useGpuCapabilities()`
+
+```typescript
+function useGpuCapabilities(): {
+  caps: GpuCapabilities | null
+  vramTier: VramTier | null
+  isDetecting: boolean
+  error: Error | null
+}
+```
+
+Detects WebGPU capabilities and derives a VRAM tier for local inference planning.
+
+---
+
+#### `useInferenceCapabilities()`
+
+```typescript
+function useInferenceCapabilities(): {
+  capabilities: InferenceCapabilities | null
+  loading: boolean
+  error: Error | null
+}
+```
+
+Detects browser and hardware inference capabilities, including WebGPU/WebNN/Chrome AI availability.
+
+---
+
+#### `useLocalDiscovery(options?)`
+
+```typescript
+function useLocalDiscovery(options?: UseLocalDiscoveryOptions): {
+  providers: DiscoveredProvider[]
+  discovering: boolean
+  error: Error | null
+  refresh: () => void
+}
+```
+
+Probes local inference servers on mount and on the configured interval.
+
+---
+
+#### `useEmbeddingPipeline(loader)`
+
+```typescript
+function useEmbeddingPipeline(loader: EmbedFunctionLoader): {
+  embedFunction: EmbedFunction | null
+  status: 'idle' | 'loading' | 'ready' | 'error'
+  progress: string
+  error: Error | null
+  load: () => void
+  unload: () => void
+}
+```
+
+Loads a host-provided embedding function on demand and registers it with `@fortemi/core`.
+
+---
+
+#### `useEmbeddingWorker(transport, options?)`
+
+```typescript
+function useEmbeddingWorker(
+  transport: EmbedTransportPort,
+  options?: EmbedWorkerOptions
+): {
+  status: 'idle' | 'connected'
+  connect: () => void
+  disconnect: () => void
+}
+```
+
+Wires a host-owned `Worker` or `MessagePort` into the core embed function so query and job embedding run off the main thread.
+
 ---
 
 ### Graph and community hooks
@@ -2032,3 +2158,82 @@ function useGraphController(options?: UseGraphControllerOptions): {
 ```
 
 Coordinates graph-source switching for citation, topic, precomputed, dynamic-search, and user-authored graph views without exposing raw SQL or graphology internals to React UI code.
+
+#### `useCapabilitySetup(options)`
+
+```typescript
+function useCapabilitySetup(options: UseCapabilitySetupOptions): {
+  ready: boolean
+  error: Error | null
+}
+```
+
+Registers host-provided capability loaders and auto-enables previously enabled capabilities from local storage unless `autoEnable` is supplied.
+
+#### `useAiwgIndex(initialIndex?)`
+
+```typescript
+function useAiwgIndex(initialIndex?: AiwgFortemiIndexExport): {
+  index: AiwgFortemiIndexExport | null
+  chunkedManifest: AiwgFortemiChunkManifest | null
+  counts: Record<string, number>
+  data: AiwgIndexQueryResult | AiwgChunkedIndexQueryResult | null
+  error: Error | null
+  reviewDecisions: AiwgReviewDecision[]
+  loadIndex: (value: unknown) => AiwgFortemiIndexExport
+  loadChunkedIndex: (manifest: unknown, loader: AiwgChunkedIndexLoader, options?: AiwgChunkedIndexLoadOptions) => AiwgFortemiChunkManifest
+  search: (query?: string, options?: AiwgIndexQueryOptions) => AiwgIndexQueryResult
+  searchChunked: (query?: string, options?: AiwgChunkedIndexQueryOptions) => Promise<AiwgChunkedIndexQueryResult>
+  getRecord: (id: string) => Promise<AiwgFortemiRecord>
+  clearChunkCache: () => void
+  setReviewDecision: (input: AiwgReviewInput) => AiwgReviewDecision
+  clearReviewDecision: (itemId: string) => void
+  exportReviewDecisions: () => AiwgReviewDecisionExport
+  toCommunityGraph: (options?: AiwgIndexGraphOptions) => CommunityGraph
+}
+```
+
+Loads whole or chunked AIWG Fortemi index exports, searches them, tracks review decisions, and projects loaded indexes into community graph data.
+
+#### `useShard(source, options?)`
+
+```typescript
+function useShard(source: ShardReaderSource, options?: OpenShardOptions): {
+  reader: ShardReader | null
+  manifest: ShardManifest | null
+  loading: boolean
+  error: Error | null
+  listNotes: (options?: ShardListOptions) => Promise<{ items: ShardReaderNote[]; total: number }>
+  getNote: (id: string) => Promise<ShardReaderNote | null>
+  search: (query: string, options?: ShardSearchOptions) => Promise<ShardSearchResult>
+  linksOf: (id: string) => Promise<ShardLink[]>
+  conceptsOf: (id: string) => Promise<ShardSkosConcept[]>
+  relationsOf: (conceptId: string) => Promise<ShardSkosRelation[]>
+  provenanceOf: (id: string) => Promise<ShardProvenanceEdge[]>
+  getNoteFull: (id: string) => Promise<ShardNoteFull | null>
+  semantic: (query: string, k?: number) => Promise<Array<{ note: ShardReaderNote; score: number }>>
+}
+```
+
+Opens a Knowledge Shard for in-place, read-only browsing and search without importing it into PGlite.
+
+#### `useRemote(config)`
+
+```typescript
+function useRemote(config: RemoteBackendConfig): {
+  backend: DataBackend
+  loading: boolean
+  error: Error | null
+  listNotes: (options?: BackendListOptions) => Promise<{ items: BackendNote[]; total: number }>
+  getNote: (id: string) => Promise<BackendNote | null>
+  search: (query: string, options?: BackendSearchQueryOptions) => Promise<BackendSearchResult>
+  getNoteFull: (id: string) => Promise<BackendNoteFull | null>
+  linksOf: (id: string) => Promise<BackendLink[]>
+  conceptsOf: (id: string) => Promise<BackendConcept[]>
+  provenanceOf: (id: string) => Promise<BackendProvenanceEdge[]>
+  semantic: (query: string, k?: number) => Promise<BackendSearchHit[]>
+  manageNote: (input: unknown) => Promise<unknown>
+}
+```
+
+Wraps `createRemoteBackend(config)` for React and exposes the Fortemi server-tier `DataBackend` surface with shared loading and error state.

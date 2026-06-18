@@ -14,7 +14,7 @@
     "pillars": [
       "@fortemi/core — browser-only data layer: PGlite, single-writer worker, MCP tools, job queue, and hybrid search.",
       "@fortemi/graph — framework-agnostic community-graph layout, filtering, neighborhood expansion, and snapshot serialization.",
-      "@fortemi/react — React 19 hooks and FortemiProvider (23 hooks) over @fortemi/core."
+      "@fortemi/react — React 19 hooks and FortemiProvider (30 hooks) over @fortemi/core."
     ],
     "checklist": [
       "Install @fortemi/react and wrap your app in FortemiProvider.",

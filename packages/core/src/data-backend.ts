@@ -6,11 +6,9 @@
  * that provides them.
  *
  * The seam sits one level above SQL: every adapter exposes the same read
- * operations (and optional write / semantic / full-content ops) regardless of
- * whether the data lives in a queryable PGlite instance or a set of static shard
- * files fetched over HTTP. A remote-server backend is a future adapter against
- * this same interface — deliberately deferred. See
- * `.aiwg/architecture/adr-backend-seam.md`.
+ * operations (and optional relationship, write, semantic, and full-content ops)
+ * regardless of whether the data lives in a queryable PGlite instance, a set of
+ * static shard files fetched over HTTP, or the Fortemi server tier.
  */
 
 import type { DatabaseClient } from './storage-backend.js'
@@ -31,7 +29,7 @@ import type { ShardLink, ShardProvenanceEdge, ShardSkosConcept } from './shard/t
  * - `cosine-small` — brute-force cosine over a small static vector set (#189)
  * - `ann-full` — prebuilt/queryable approximate-nearest-neighbour over the full
  *   corpus (PGlite + pgvector, or a prebuilt ANN snapshot)
- * - `server`   — delegated to a remote service (future remote backend)
+ * - `server`   — delegated to the remote Fortemi server backend
  */
 export type BackendSemanticTier = 'none' | 'cosine-small' | 'ann-full' | 'server'
 
