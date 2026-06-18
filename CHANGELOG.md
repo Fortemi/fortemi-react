@@ -4,6 +4,34 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.6.7 - 2026-06-17
+
+This release completes the SKOS and W3C PROV read/write surfaces across the static-shard, PGlite, and remote-server backend tiers, then refreshes documentation to match the current code surface.
+
+### `@fortemi/core` — SKOS/PROV backend and repository surfaces
+
+- Added shard-reader accessors for `relationsOf(conceptId)` and `provenanceOf(id)`, so static shard consumers can render SKOS hierarchy and W3C PROV provenance without importing into PGlite.
+- Expanded `DataBackend` with backend-neutral `linksOf`, `conceptsOf`, and `provenanceOf` accessors, and enriched full-note results with links, concepts, and provenance where available.
+- Added `SkosRepository.tagNote`, `SkosRepository.untagNote`, and `SkosRepository.conceptsForNote` for first-class note-to-concept associations.
+- Added `ProvenanceRepository.recordProvenance` and `ProvenanceRepository.forEntity` for first-class provenance writes and reads.
+- Added `createRemoteBackend(config)` for the Fortemi server tier, advertising read/write/merge/multi-user capabilities with server-side semantic search.
+
+### `@fortemi/react` — remote and shard hook parity
+
+- Added `useRemote(config)` for React access to the network-backed Fortemi server `DataBackend`.
+- Expanded `useShard(source, options?)` with passthrough accessors for `linksOf`, `conceptsOf`, `relationsOf`, and `provenanceOf`.
+
+### Docs and release metadata
+
+- Synchronized the API reference, package README, docsite config, and release manifest with the 30 exported React hooks and current backend surface.
+- Updated runtime `VERSION` constants to match package metadata.
+
+### Published Packages
+
+- `@fortemi/core@2026.6.7`
+- `@fortemi/graph@2026.6.7`
+- `@fortemi/react@2026.6.7`
+
 ## v2026.6.6 - 2026-06-17
 
 Documentation maintenance release. The published packages (`@fortemi/core`, `@fortemi/graph`, `@fortemi/react`) are unchanged in content from v2026.6.5 apart from the version number — there are no source, API, or behavior changes. Only repository documentation changed.
