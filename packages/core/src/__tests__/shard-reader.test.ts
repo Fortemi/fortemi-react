@@ -9,7 +9,9 @@ import type {
   ShardManifest,
   ShardNote,
   ShardNoteSkosTag,
+  ShardProvenanceEdge,
   ShardSkosConcept,
+  ShardSkosRelation,
 } from '../shard/types.js'
 
 const encoder = new TextEncoder()
@@ -49,6 +51,42 @@ const NOTE_SKOS: ShardNoteSkosTag[] = [
 ]
 const CONCEPTS: ShardSkosConcept[] = [
   { id: 'c1', scheme_id: 'sch1', pref_label: 'Networking', alt_labels: [], definition: null, created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-01T00:00:00.000Z' },
+  { id: 'c2', scheme_id: 'sch1', pref_label: 'Events', alt_labels: [], definition: null, created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-01T00:00:00.000Z' },
+]
+const RELATIONS: ShardSkosRelation[] = [
+  { id: 'r1', source_concept_id: 'c1', target_concept_id: 'c2', relation_type: 'broader', created_at: '2026-01-01T00:00:00.000Z' },
+]
+const PROVENANCE: ShardProvenanceEdge[] = [
+  {
+    id: 'p2',
+    entity_type: 'note',
+    entity_id: 'n1',
+    activity: 'frontmatter_backfilled',
+    agent: 'codex',
+    started_at: '2026-05-23T18:31:05-04:00',
+    ended_at: null,
+    attributes: { ref_id: 'REF-033', source: 'section9/research-papers' },
+  },
+  {
+    id: 'p1',
+    entity_type: 'note',
+    entity_id: 'n1',
+    activity: 'inducted',
+    agent: 'research-corpus',
+    started_at: '2026-01-25T03:11:13-05:00',
+    ended_at: null,
+    attributes: { ref_id: 'REF-033', title: 'SKOS Simple Knowledge Organization System Reference' },
+  },
+  {
+    id: 'p3',
+    entity_type: 'collection',
+    entity_id: 'n1',
+    activity: 'inducted',
+    agent: 'research-corpus',
+    started_at: '2026-01-25T02:36:43-05:00',
+    ended_at: null,
+    attributes: { ref_id: 'REF-062', title: 'W3C PROV Data Model' },
+  },
 ]
 
 function manifest(overrides: Partial<ShardManifest> = {}): ShardManifest {
@@ -57,7 +95,7 @@ function manifest(overrides: Partial<ShardManifest> = {}): ShardManifest {
     matric_version: '1.0.0',
     format: SHARD_FORMAT,
     created_at: '2026-01-01T00:00:00.000Z',
-    components: ['notes', 'links', 'note_skos_tags', 'skos_concepts'],
+    components: ['notes', 'links', 'note_skos_tags', 'skos_concepts', 'skos_relations', 'provenance_edges'],
     counts: { notes: NOTES.length },
     checksums: {},
     min_reader_version: '1.0.0',
@@ -71,6 +109,8 @@ function baseFiles(m: ShardManifest): Map<string, Uint8Array> {
   files.set('links.jsonl', encoder.encode(LINKS.map((l) => JSON.stringify(l)).join('\n')))
   files.set('note_skos_tags.jsonl', encoder.encode(NOTE_SKOS.map((t) => JSON.stringify(t)).join('\n')))
   files.set('skos_concepts.json', encoder.encode(JSON.stringify(CONCEPTS)))
+  files.set('skos_relations.jsonl', encoder.encode(RELATIONS.map((r) => JSON.stringify(r)).join('\n')))
+  files.set('provenance_edges.jsonl', encoder.encode(PROVENANCE.map((p) => JSON.stringify(p)).join('\n')))
   return files
 }
 
@@ -148,16 +188,21 @@ describe('openShard — in-place read surface (monolithic)', () => {
     expect(bySource.items.map((n) => n.id)).toEqual(['n1'])
   })
 
-  it('resolves links, concepts, and the full record lazily', async () => {
+  it('resolves links, concepts, SKOS relations, provenance, and the full record lazily', async () => {
     const reader = await openShard(monolithicShard())
     const links = await reader.linksOf('n1')
     expect(links.map((l) => l.id).sort()).toEqual(['l1', 'l2'])
     const concepts = await reader.conceptsOf('n1')
     expect(concepts.map((c) => c.pref_label)).toEqual(['Networking'])
+    const relations = await reader.relationsOf('c1')
+    expect(relations.map((r) => r.id)).toEqual(['r1'])
+    const provenance = await reader.provenanceOf('n1')
+    expect(provenance.map((p) => p.id)).toEqual(['p1', 'p2'])
     const full = await reader.getNoteFull('n1')
     expect(full?.note.id).toBe('n1')
     expect(full?.links).toHaveLength(2)
     expect(full?.concepts).toHaveLength(1)
+    expect(full?.provenance.map((p) => p.id)).toEqual(['p1', 'p2'])
     expect(await reader.getNoteFull('missing')).toBeNull()
   })
 
@@ -218,6 +263,13 @@ describe('openShard — static base URL source', () => {
     expect(requested).toContain('notes.jsonl')
     // links/skos not touched by a text search → lazy
     expect(requested).not.toContain('links.jsonl')
+    expect(requested).not.toContain('skos_relations.jsonl')
+    expect(requested).not.toContain('provenance_edges.jsonl')
+
+    await reader.provenanceOf('n1')
+    await reader.relationsOf('c1')
+    expect(requested).toContain('provenance_edges.jsonl')
+    expect(requested).toContain('skos_relations.jsonl')
   })
 })
 

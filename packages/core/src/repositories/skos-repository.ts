@@ -38,6 +38,13 @@ export interface SkosRelation {
   created_at: Date
 }
 
+export interface NoteSkosTag {
+  id: string
+  note_id: string
+  concept_id: string
+  created_at: Date
+}
+
 export class SkosRepository {
   constructor(private db: DatabaseClient) {}
 
@@ -124,6 +131,43 @@ export class SkosRepository {
     const result = await this.db.query<SkosRelation>(
       `SELECT * FROM skos_concept_relation WHERE source_concept_id = $1 OR target_concept_id = $1`,
       [conceptId],
+    )
+    return result.rows
+  }
+
+  // ── Note tagging ───────────────────────────────────────────────────────────
+
+  async tagNote(noteId: string, conceptId: string): Promise<NoteSkosTag> {
+    const existing = await this.db.query<NoteSkosTag>(
+      `SELECT * FROM note_skos_tag WHERE note_id = $1 AND concept_id = $2`,
+      [noteId, conceptId],
+    )
+    if (existing.rows.length > 0) return existing.rows[0]
+
+    const id = generateId()
+    await this.db.query(
+      `INSERT INTO note_skos_tag (id, note_id, concept_id) VALUES ($1, $2, $3)`,
+      [id, noteId, conceptId],
+    )
+    const result = await this.db.query<NoteSkosTag>(`SELECT * FROM note_skos_tag WHERE id = $1`, [id])
+    return result.rows[0]
+  }
+
+  async untagNote(noteId: string, conceptId: string): Promise<void> {
+    await this.db.query(
+      `DELETE FROM note_skos_tag WHERE note_id = $1 AND concept_id = $2`,
+      [noteId, conceptId],
+    )
+  }
+
+  async conceptsForNote(noteId: string): Promise<SkosConcept[]> {
+    const result = await this.db.query<SkosConcept>(
+      `SELECT c.*
+       FROM skos_concept c
+       INNER JOIN note_skos_tag nst ON nst.concept_id = c.id
+       WHERE nst.note_id = $1 AND c.deleted_at IS NULL
+       ORDER BY c.pref_label`,
+      [noteId],
     )
     return result.rows
   }

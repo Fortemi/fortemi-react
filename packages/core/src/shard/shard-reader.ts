@@ -19,7 +19,9 @@ import type {
   ShardManifest,
   ShardNote,
   ShardNoteSkosTag,
+  ShardProvenanceEdge,
   ShardSkosConcept,
+  ShardSkosRelation,
 } from './types.js'
 import { CURRENT_SHARD_VERSION } from './types.js'
 import { noteFromShard, type BrowserNoteExport } from './field-mapper.js'
@@ -90,6 +92,7 @@ export interface ShardNoteFull {
   note: ShardReaderNote
   links: ShardLink[]
   concepts: ShardSkosConcept[]
+  provenance: ShardProvenanceEdge[]
 }
 
 /**
@@ -260,6 +263,8 @@ export interface ShardReader {
   search(query: string, options?: ShardSearchOptions): Promise<ShardSearchResult>
   linksOf(id: string): Promise<ShardLink[]>
   conceptsOf(id: string): Promise<ShardSkosConcept[]>
+  relationsOf(conceptId: string): Promise<ShardSkosRelation[]>
+  provenanceOf(id: string): Promise<ShardProvenanceEdge[]>
   getNoteFull(id: string): Promise<ShardNoteFull | null>
   semantic(query: string, k?: number): Promise<Array<{ note: ShardReaderNote; score: number }>>
   close(): void
@@ -274,6 +279,8 @@ class ShardReaderImpl implements ShardReader {
   private links: ShardLink[] | null = null
   private noteSkos: ShardNoteSkosTag[] | null = null
   private concepts: Map<string, ShardSkosConcept> | null = null
+  private relations: ShardSkosRelation[] | null = null
+  private provenanceEdges: ShardProvenanceEdge[] | null = null
   private matchCache = new Map<string, ShardNote[]>()
   private maxCachedMatches: number
   private semanticPrepared = false
@@ -432,11 +439,43 @@ class ShardReaderImpl implements ShardReader {
     return out
   }
 
+  private async loadRelations(): Promise<ShardSkosRelation[]> {
+    if (!this.relations) {
+      this.relations = parseJsonlBytes<ShardSkosRelation>(await this.store.read('skos_relations.jsonl'))
+    }
+    return this.relations
+  }
+
+  async relationsOf(conceptId: string): Promise<ShardSkosRelation[]> {
+    const relations = await this.loadRelations()
+    return relations.filter(
+      (relation) => relation.source_concept_id === conceptId || relation.target_concept_id === conceptId,
+    )
+  }
+
+  private async loadProvenanceEdges(): Promise<ShardProvenanceEdge[]> {
+    if (!this.provenanceEdges) {
+      this.provenanceEdges = parseJsonlBytes<ShardProvenanceEdge>(await this.store.read('provenance_edges.jsonl'))
+    }
+    return this.provenanceEdges
+  }
+
+  async provenanceOf(id: string): Promise<ShardProvenanceEdge[]> {
+    const edges = await this.loadProvenanceEdges()
+    return edges
+      .filter((edge) => edge.entity_type === 'note' && edge.entity_id === id)
+      .sort((a, b) => a.started_at.localeCompare(b.started_at))
+  }
+
   async getNoteFull(id: string): Promise<ShardNoteFull | null> {
     const note = await this.getNote(id)
     if (!note) return null
-    const [links, concepts] = await Promise.all([this.linksOf(id), this.conceptsOf(id)])
-    return { note, links, concepts }
+    const [links, concepts, provenance] = await Promise.all([
+      this.linksOf(id),
+      this.conceptsOf(id),
+      this.provenanceOf(id),
+    ])
+    return { note, links, concepts, provenance }
   }
 
   async semantic(query: string, k = 10): Promise<Array<{ note: ShardReaderNote; score: number }>> {
@@ -464,6 +503,8 @@ class ShardReaderImpl implements ShardReader {
     this.links = null
     this.noteSkos = null
     this.concepts = null
+    this.relations = null
+    this.provenanceEdges = null
   }
 }
 

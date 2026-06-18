@@ -34,6 +34,7 @@ export {
   selectBackend,
   createPGliteBackend,
   createShardBackend,
+  createRemoteBackend,
 } from './data-backend.js'
 export type {
   DataBackend,
@@ -42,6 +43,9 @@ export type {
   BackendStartupCost,
   BackendNote,
   BackendNoteFull,
+  BackendLink,
+  BackendConcept,
+  BackendProvenanceEdge,
   BackendSearchHit,
   BackendSearchResult,
   BackendListOptions,
@@ -51,6 +55,8 @@ export type {
   BackendSelection,
   PGliteBackendOptions,
   ShardBackendOptions,
+  RemoteBackendConfig,
+  RemoteBackendPaths,
 } from './data-backend.js'
 
 export {
@@ -160,7 +166,9 @@ export type { CollectionRow, CollectionCreateInput } from './repositories/collec
 export { LinksRepository } from './repositories/links-repository.js'
 export type { LinkRow } from './repositories/links-repository.js'
 export { SkosRepository } from './repositories/skos-repository.js'
-export type { SkosScheme, SkosConcept, SkosRelation } from './repositories/skos-repository.js'
+export type { SkosScheme, SkosConcept, SkosRelation, NoteSkosTag } from './repositories/skos-repository.js'
+export { ProvenanceRepository } from './repositories/provenance-repository.js'
+export type { ProvenanceEdge, RecordProvenanceInput } from './repositories/provenance-repository.js'
 
 export { captureKnowledge, manageNote, searchTool } from './tools/index.js'
 export type { CaptureKnowledgeResult, ManageNoteResult } from './tools/index.js'

@@ -1178,15 +1178,15 @@ const reader = await openShard({ baseUrl: '/shards/notes' })
 
 const { items, total } = await reader.listNotes({ limit: 20 })
 const result = await reader.search('founder breakfast', { rank: true, snippets: true })
-const note = await reader.getNoteFull('note-id') // note + links + concepts, lazy
+const note = await reader.getNoteFull('note-id') // note + links + concepts + provenance, lazy
 ```
 
 | Reader method | Description |
 |---------------|-------------|
 | `listNotes(options?)` | Paginated browse (soft-deleted excluded; archived included by default). |
-| `getNote(id)` / `getNoteFull(id)` | A single note, or the note plus its links + SKOS concepts. |
+| `getNote(id)` / `getNoteFull(id)` | A single note, or the note plus its links + SKOS concepts + provenance. |
 | `search(query, options?)` | Full-text + facet search with **AND multi-word semantics** matching the PGlite text path, plus optional `rank`/`snippets`. A per-query match cache means paging the same query re-scans nothing (`fetchedClusters: 0`). |
-| `linksOf(id)` / `conceptsOf(id)` | Lazy relationship + concept resolution from the component files. |
+| `linksOf(id)` / `conceptsOf(id)` / `relationsOf(conceptId)` / `provenanceOf(id)` | Lazy relationship, SKOS, and W3C PROV resolution from component files. |
 | `semantic(query, k?)` | Opt-in (see below); returns `[]` when no provider is configured. |
 
 **Clustered layout (large corpora).** Emit notes as addressable cluster files so the reader fetches only what a query needs (the shard analog of the AIWG chunk parts):
@@ -1212,7 +1212,7 @@ const reader = await openShard('/shards/notes.shard', {
 const hits = await reader.semantic('founders meeting', 10)
 ```
 
-The React `useShard(source, options?)` hook mirrors `useAiwgIndex()` — it manages the async-opened reader and exposes `search`/`listNotes`/`getNote`/`getNoteFull`/`semantic` plus `manifest`/`loading`/`error`. Memoize `source` to avoid re-opening on every render.
+The React `useShard(source, options?)` hook mirrors `useAiwgIndex()` — it manages the async-opened reader and exposes `search`/`listNotes`/`getNote`/`getNoteFull`/`linksOf`/`conceptsOf`/`relationsOf`/`provenanceOf`/`semantic` plus `manifest`/`loading`/`error`. Memoize `source` to avoid re-opening on every render.
 
 ```tsx
 import { useMemo } from 'react'
@@ -1236,6 +1236,7 @@ from the capabilities a caller needs:
 ```ts
 import {
   createPGliteBackend,
+  createRemoteBackend,
   createShardBackend,
   selectBackend,
   openShard,
@@ -1247,23 +1248,37 @@ const pglite = createPGliteBackend(db) // read+write+merge, semantic 'ann-full' 
 // Instant, read-only, fetched on demand.
 const shard = createShardBackend(await openShard({ baseUrl: '/shards/notes' }))
 
+// Network-backed, multi-user server tier.
+const remote = createRemoteBackend({ baseUrl: 'https://fortemi.example', headers: () => getSessionHeaders() })
+
 // Ask for what the view needs; get the lightest backend that provides it.
-const { backend, missing } = selectBackend({ read: true }, [pglite, shard])
+const { backend, missing } = selectBackend({ read: true }, [pglite, shard, remote])
 // → backend.id === 'static-file' (instant beats index-build), missing === []
 
 const writable = selectBackend({ read: true, write: true }, [pglite, shard])
 // → writable.backend.id === 'pglite' (only it can write)
 
+const serverTier = selectBackend({ read: true, write: true, merge: true, multiUser: true, semantic: 'server' }, [pglite, shard, remote])
+// → serverTier.backend.id === 'remote-server'
+
 const results = await backend!.search('founder breakfast') // same call shape on either backend
 ```
 
-Every backend implements `listNotes` / `getNote` / `search`; `getNoteFull`,
-`semantic`, and `manageNote` are present only when the backend advertises them
+Every backend implements `listNotes` / `getNote` / `search`; readable backends
+also expose `getNoteFull`, `linksOf`, `conceptsOf`, and `provenanceOf`.
+`semantic` and `manageNote` are present only when the backend advertises them
 (`capabilities.write` gates `manageNote`, `capabilities.semantic !== 'none'`
-gates `semantic`). `selectBackend` prefers a fully-satisfying backend with the
-lightest `startupCost`; when none fully satisfy, it returns the fewest-missing
-candidate so the caller can degrade deliberately via `selection.missing`. A
-remote-server backend is a future adapter against this same interface.
+gates `semantic`). `createRemoteBackend(config)` proxies the same surface over
+HTTP for the full Fortemi server tier (`read`/`write`/`merge`/`multiUser`,
+`semantic: 'server'`, `startupCost: 'network'`). Pass session credentials via
+`headers` or `authToken`; do not put secrets in source.
+
+The React `useRemote(config)` hook wraps `createRemoteBackend` and exposes the
+same remote operations with `loading`/`error` state.
+
+`selectBackend` prefers a fully-satisfying backend with the lightest
+`startupCost`; when none fully satisfy, it returns the fewest-missing candidate
+so the caller can degrade deliberately via `selection.missing`.
 
 ---
 

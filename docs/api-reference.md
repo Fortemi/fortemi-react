@@ -487,22 +487,54 @@ class SkosRepository {
   createScheme(input: { uri: string; title: string }): Promise<{ id: string }>
   createConcept(input: { schemeId: string; prefLabel: string; uri?: string }): Promise<{ id: string }>
   createRelation(input: { conceptId: string; relationType: string; targetConceptId: string }): Promise<void>
+  tagNote(noteId: string, conceptId: string): Promise<NoteSkosTag>
+  untagNote(noteId: string, conceptId: string): Promise<void>
+  conceptsForNote(noteId: string): Promise<SkosConcept[]>
   getScheme(id: string): Promise<{ id: string; uri: string; title: string } | null>
   getConcept(id: string): Promise<{ id: string; schemeId: string; prefLabel: string; uri?: string } | null>
   listConcepts(schemeId: string): Promise<Array<{ id: string; prefLabel: string; uri?: string }>>
 }
 ```
 
-Supports a subset of the SKOS (Simple Knowledge Organization System) model for organizing note tags into hierarchical concept schemes.
+Supports a subset of the SKOS (Simple Knowledge Organization System) model for organizing note tags into hierarchical concept schemes and attaching concepts to notes.
 
 | Method | Description |
 |--------|-------------|
 | `createScheme(input)` | Create a top-level concept scheme identified by URI. |
 | `createConcept(input)` | Create a concept within a scheme. |
 | `createRelation(input)` | Assert a typed relation (e.g. `'broader'`, `'narrower'`, `'related'`) between concepts. |
+| `tagNote(noteId, conceptId)` | Attach a SKOS concept to a note idempotently. |
+| `untagNote(noteId, conceptId)` | Remove a note-to-concept assignment. |
+| `conceptsForNote(noteId)` | Read active SKOS concepts assigned to a note. |
 | `getScheme(id)` | Retrieve a scheme by ID. |
 | `getConcept(id)` | Retrieve a concept by ID. |
 | `listConcepts(schemeId)` | List all concepts belonging to a scheme. |
+
+---
+
+#### `ProvenanceRepository`
+
+```typescript
+class ProvenanceRepository {
+  constructor(db: PGlite)
+
+  recordProvenance(
+    entityType: string,
+    entityId: string,
+    input: {
+      activity: string
+      agent: string
+      startedAt?: Date | string
+      endedAt?: Date | string | null
+      attributes?: Record<string, unknown> | null
+    }
+  ): Promise<ProvenanceEdge>
+
+  forEntity(entityType: string, entityId: string): Promise<ProvenanceEdge[]>
+}
+```
+
+First-class W3C PROV write/read surface over `provenance_edge`, so consumers do not need raw SQL to record lifecycle events.
 
 ---
 
@@ -916,6 +948,25 @@ function listNotes(
 ```
 
 Retrieve a paginated, filtered note list.
+
+---
+
+#### `createRemoteBackend(config)`
+
+```typescript
+function createRemoteBackend(config: {
+  baseUrl: string
+  id?: string
+  fetchImpl?: typeof fetch
+  headers?: HeadersInit | (() => HeadersInit | Promise<HeadersInit>)
+  authToken?: string
+  paths?: Partial<RemoteBackendPaths>
+}): DataBackend
+```
+
+Creates the network-backed Fortemi server tier for `selectBackend`. The returned backend advertises `read`, `write`, `merge`, `multiUser`, `semantic: 'server'`, and `startupCost: 'network'`.
+
+Readable `DataBackend` implementations expose `listNotes`, `getNote`, `search`, `getNoteFull`, `linksOf`, `conceptsOf`, and `provenanceOf`; write-capable backends expose `manageNote`, and semantic-capable backends expose `semantic`.
 
 ---
 

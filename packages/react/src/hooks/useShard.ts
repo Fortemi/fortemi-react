@@ -10,6 +10,10 @@ import {
   type ShardSearchOptions,
   type ShardSearchResult,
   type ShardNoteFull,
+  type ShardLink,
+  type ShardSkosConcept,
+  type ShardSkosRelation,
+  type ShardProvenanceEdge,
 } from '@fortemi/core'
 
 export interface UseShardReturn {
@@ -21,6 +25,10 @@ export interface UseShardReturn {
   listNotes: (options?: ShardListOptions) => Promise<{ items: ShardReaderNote[]; total: number }>
   getNote: (id: string) => Promise<ShardReaderNote | null>
   search: (query: string, options?: ShardSearchOptions) => Promise<ShardSearchResult>
+  linksOf: (id: string) => Promise<ShardLink[]>
+  conceptsOf: (id: string) => Promise<ShardSkosConcept[]>
+  relationsOf: (conceptId: string) => Promise<ShardSkosRelation[]>
+  provenanceOf: (id: string) => Promise<ShardProvenanceEdge[]>
   getNoteFull: (id: string) => Promise<ShardNoteFull | null>
   semantic: (query: string, k?: number) => Promise<Array<{ note: ShardReaderNote; score: number }>>
 }
@@ -85,8 +93,26 @@ export function useShard(source: ShardReaderSource, options?: OpenShardOptions):
   const listNotes = useCallback((opts?: ShardListOptions) => requireReader().listNotes(opts), [requireReader])
   const getNote = useCallback((id: string) => requireReader().getNote(id), [requireReader])
   const search = useCallback((query: string, opts?: ShardSearchOptions) => requireReader().search(query, opts), [requireReader])
+  const linksOf = useCallback((id: string) => requireReader().linksOf(id), [requireReader])
+  const conceptsOf = useCallback((id: string) => requireReader().conceptsOf(id), [requireReader])
+  const relationsOf = useCallback((conceptId: string) => requireReader().relationsOf(conceptId), [requireReader])
+  const provenanceOf = useCallback((id: string) => requireReader().provenanceOf(id), [requireReader])
   const getNoteFull = useCallback((id: string) => requireReader().getNoteFull(id), [requireReader])
   const semantic = useCallback((query: string, k?: number) => requireReader().semantic(query, k), [requireReader])
 
-  return { reader, manifest, loading, error, listNotes, getNote, search, getNoteFull, semantic }
+  return {
+    reader,
+    manifest,
+    loading,
+    error,
+    listNotes,
+    getNote,
+    search,
+    linksOf,
+    conceptsOf,
+    relationsOf,
+    provenanceOf,
+    getNoteFull,
+    semantic,
+  }
 }

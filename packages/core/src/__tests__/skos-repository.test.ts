@@ -30,7 +30,15 @@ async function setupDb(): Promise<PGlite> {
   return db
 }
 
-// ── suite ──────────────────────────────────────────────────────────────────────
+  // ── suite ──────────────────────────────────────────────────────────────────────
+
+async function insertNote(db: PGlite, id: string): Promise<void> {
+  await db.query(
+    `INSERT INTO note (id, title, format, source, visibility, revision_mode)
+     VALUES ($1, $2, 'markdown', 'user', 'private', 'standard')`,
+    [id, id],
+  )
+}
 
 describe('SkosRepository', () => {
   let db: PGlite
@@ -263,6 +271,36 @@ describe('SkosRepository', () => {
       await repo.createRelation(c.id, a.id, 'narrower')
       const relations = await repo.getRelations(a.id)
       expect(relations).toHaveLength(2)
+    })
+  })
+
+  // ── note tagging ─────────────────────────────────────────────────────────────
+
+  describe('note SKOS tags', () => {
+    it('attaches a concept to a note idempotently and reads concepts for the note', async () => {
+      await insertNote(db, 'note-1')
+      const scheme = await repo.createScheme('Topics')
+      const concept = await repo.createConcept(scheme.id, 'Knowledge Graphs')
+
+      const tag = await repo.tagNote('note-1', concept.id)
+      const duplicate = await repo.tagNote('note-1', concept.id)
+      expect(duplicate.id).toBe(tag.id)
+
+      const concepts = await repo.conceptsForNote('note-1')
+      expect(concepts.map((c) => c.pref_label)).toEqual(['Knowledge Graphs'])
+
+      const rows = await db.query(`SELECT * FROM note_skos_tag WHERE note_id = $1`, ['note-1'])
+      expect(rows.rows).toHaveLength(1)
+    })
+
+    it('detaches a concept from a note', async () => {
+      await insertNote(db, 'note-1')
+      const scheme = await repo.createScheme('Topics')
+      const concept = await repo.createConcept(scheme.id, 'Provenance')
+      await repo.tagNote('note-1', concept.id)
+
+      await repo.untagNote('note-1', concept.id)
+      expect(await repo.conceptsForNote('note-1')).toEqual([])
     })
   })
 })
