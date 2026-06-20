@@ -97,7 +97,16 @@ describe('AIWG Fortemi index adapter', () => {
           },
           tags: ['docs', 'lookup'],
           concepts: ['static-index'],
-          relationships: [],
+          relationships: [
+            {
+              type: 'documents',
+              target_id: 'aiwg:artifact:.aiwg/architecture/0003-provenance-per-field.md',
+              label: 'Documents provenance model',
+              confidence: 0.94,
+              privacy: 'public',
+              metadata: { section: 'metadata' },
+            },
+          ],
           provenance: [
             {
               field: 'text',
@@ -105,6 +114,40 @@ describe('AIWG Fortemi index adapter', () => {
               path: '$.items[0].text',
               confidence: 'source',
               privacy: 'public',
+            },
+          ],
+          skos_concepts: [
+            {
+              id: 'concept:static-index',
+              prefLabel: 'Static Index',
+              definition: 'A prebuilt static search and metadata record set.',
+              scheme: 'fortemi-docs',
+              notation: 'IDX',
+              uri: 'https://example.test/concepts/static-index',
+              altLabels: ['aiwg index'],
+              metadata: { source: 'pagenary' },
+            },
+          ],
+          skos_relations: [
+            {
+              type: 'broader',
+              source_id: 'concept:static-index',
+              target_id: 'concept:documentation',
+              metadata: { confidence: 0.88 },
+            },
+          ],
+          provenance_events: [
+            {
+              id: 'prov:docs-page-import',
+              activity: 'generated',
+              agent: 'aiwg-index',
+              started_at: '2026-01-04T00:00:00.000Z',
+              ended_at: '2026-01-04T00:00:02.000Z',
+              source: 'docs/getting-started.md',
+              path: '$.items[0]',
+              confidence: 'source',
+              privacy: 'public',
+              attributes: { generator: 'pagenary' },
             },
           ],
           privacy: {
@@ -122,6 +165,37 @@ describe('AIWG Fortemi index adapter', () => {
     expect(validation.valid).toBe(true)
     expect(validation.counts).toMatchObject({ 'docs.page': 1 })
     expect(result.items[0]?.source.locator).toBe('section:getting-started')
+    expect(result.items[0]?.skos_concepts?.[0]?.prefLabel).toBe('Static Index')
+    expect(result.items[0]?.provenance_events?.[0]?.activity).toBe('generated')
+    expect(result.total).toBe(1)
+  })
+
+  it('keeps rich metadata optional and validates malformed rich fields when present', () => {
+    const optionalIndex: AiwgFortemiIndexExport = {
+      ...index,
+      items: [{ ...index.items[0] }],
+    }
+
+    const invalidIndex = {
+      ...index,
+      items: [
+        {
+          ...index.items[0],
+          skos_concepts: [{ id: 'concept:missing-label' }],
+          skos_relations: [{ type: 'broader', source_id: 'concept:a' }],
+          provenance_events: [{ agent: 'indexer' }],
+          relationships: [{ type: 'related', target_id: 'record:b', metadata: [] }],
+        },
+      ],
+    }
+
+    expect(validateAiwgFortemiIndexExport(optionalIndex).valid).toBe(true)
+    const invalid = validateAiwgFortemiIndexExport(invalidIndex)
+    expect(invalid.valid).toBe(false)
+    expect(invalid.errors).toContain('items[0].skos_concepts[0].prefLabel is required')
+    expect(invalid.errors).toContain('items[0].skos_relations[0].target_id is required')
+    expect(invalid.errors).toContain('items[0].provenance_events[0].activity is required')
+    expect(invalid.errors).toContain('items[0].relationships[0].metadata must be an object')
   })
 
   it('returns opt-in ranked results with plain text snippets and matches', () => {
@@ -475,7 +549,18 @@ describe('AIWG Fortemi chunked index — slim/projected parts (#168)', () => {
   }
 
   it('builds a projected manifest + slim parts + full detail records', () => {
-    const built = buildAiwgChunkedIndex(index, { partSize: 2, projection })
+    const richIndex: AiwgFortemiIndexExport = {
+      ...index,
+      items: [
+        {
+          ...index.items[0],
+          skos_concepts: [{ id: 'concept:rich', prefLabel: 'Rich Metadata' }],
+          provenance_events: [{ activity: 'generated', agent: 'aiwg-index' }],
+        },
+        ...index.items.slice(1),
+      ],
+    }
+    const built = buildAiwgChunkedIndex(richIndex, { partSize: 2, projection })
     expect(built.manifest.projection).toEqual(projection)
     expect(built.manifest.detail?.href).toBe('detail/{id}.json')
     // manifest facets computed from FULL records → exact global counts even though parts are slim
@@ -487,9 +572,12 @@ describe('AIWG Fortemi chunked index — slim/projected parts (#168)', () => {
     expect(firstItem.source).toBeUndefined()
     expect(firstItem.provenance).toBeUndefined()
     expect(firstItem.relationships).toBeUndefined()
+    expect(firstItem.skos_concepts).toBeUndefined()
+    expect(firstItem.provenance_events).toBeUndefined()
     // every record has a full detail entry
-    expect(built.details.length).toBe(index.items.length)
+    expect(built.details.length).toBe(richIndex.items.length)
     expect(built.details[0].record.provenance.length).toBeGreaterThan(0)
+    expect(built.details[0].record.skos_concepts?.[0]?.prefLabel).toBe('Rich Metadata')
   })
 
   it('builds whole-record parts (no projection, no detail) by default', () => {

@@ -126,6 +126,25 @@ Use this subpath for Pagenary-style command palettes, static docs search, and
 vanilla JavaScript review surfaces. The top-level `@fortemi/core` export remains
 available for full archive/runtime integrations.
 
+The record contract keeps the existing flat fields for filtering and search:
+`facets`, `tags`, `concepts`, `relationships`, and `provenance`. Static
+consumers that render metadata tabs can also read optional rich fields from full
+records:
+
+- `skos_concepts`: concept ids plus labels, definitions, schemes, notation, URIs,
+  alternate labels, and metadata.
+- `skos_relations`: `broader`, `narrower`, `related`, or project-specific SKOS
+  concept edges.
+- `provenance_events`: W3C PROV-style activity records with agents, timestamps,
+  source paths, confidence/privacy, and attributes.
+- `relationships[*].metadata`: optional relationship labels, confidence,
+  privacy, and structured metadata.
+
+These fields are additive to `aiwg.fortemi.index.record.v1`. Existing consumers
+can ignore them and continue querying the flat fields. Chunked indexes with a
+projection keep rich metadata in detail records; call `getRecord(id)` before
+rendering a metadata panel.
+
 Large static indexes can use the chunked browser path instead of downloading one
 full `aiwg.fortemi.index.export.v1` file. Host a manifest plus deterministic part
 files:
