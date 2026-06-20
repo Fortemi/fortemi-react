@@ -20,6 +20,10 @@ export interface AiwgFortemiRelationship {
   type: string
   target_id: string
   source_path?: string
+  label?: string
+  confidence?: number
+  privacy?: AiwgPrivacyClassification
+  metadata?: Record<string, unknown>
 }
 
 export interface AiwgFortemiProvenance {
@@ -28,6 +32,40 @@ export interface AiwgFortemiProvenance {
   path: string
   confidence: AiwgProvenanceConfidence
   privacy: AiwgPrivacyClassification
+}
+
+export type AiwgFortemiSkosRelationType = 'broader' | 'narrower' | 'related' | string
+
+export interface AiwgFortemiSkosConcept {
+  id: string
+  prefLabel: string
+  definition?: string
+  scheme?: string
+  notation?: string
+  uri?: string
+  altLabels?: string[]
+  metadata?: Record<string, unknown>
+}
+
+export interface AiwgFortemiSkosRelation {
+  type: AiwgFortemiSkosRelationType
+  source_id: string
+  target_id: string
+  source_path?: string
+  metadata?: Record<string, unknown>
+}
+
+export interface AiwgFortemiProvenanceEvent {
+  id?: string
+  activity: string
+  agent?: string
+  started_at?: string
+  ended_at?: string
+  source?: string
+  path?: string
+  confidence?: AiwgProvenanceConfidence
+  privacy?: AiwgPrivacyClassification
+  attributes?: Record<string, unknown>
 }
 
 export interface AiwgFortemiRecord {
@@ -42,6 +80,12 @@ export interface AiwgFortemiRecord {
   concepts: string[]
   relationships: AiwgFortemiRelationship[]
   provenance: AiwgFortemiProvenance[]
+  /** Optional rich SKOS metadata for static consumers that need labels/definitions without opening a shard. */
+  skos_concepts?: AiwgFortemiSkosConcept[]
+  /** Optional SKOS relationship edges among concepts referenced by this record. */
+  skos_relations?: AiwgFortemiSkosRelation[]
+  /** Optional W3C PROV-style activity chain for this record. */
+  provenance_events?: AiwgFortemiProvenanceEvent[]
   privacy: {
     classification: AiwgPrivacyClassification
     pii: boolean
@@ -349,6 +393,64 @@ function isFacetCounts(value: unknown): value is Record<string, Record<string, n
   ))
 }
 
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+function isOptionalStringArray(value: unknown): boolean {
+  return value === undefined || (Array.isArray(value) && value.every((item) => typeof item === 'string'))
+}
+
+function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: number, errors: string[]): void {
+  if (item.skos_concepts !== undefined) {
+    if (!Array.isArray(item.skos_concepts)) {
+      errors.push('items[' + index + '].skos_concepts must be an array when present')
+    } else {
+      for (const [conceptIndex, concept] of item.skos_concepts.entries()) {
+        if (!hasString(concept.id)) errors.push('items[' + index + '].skos_concepts[' + conceptIndex + '].id is required')
+        if (!hasString(concept.prefLabel)) errors.push('items[' + index + '].skos_concepts[' + conceptIndex + '].prefLabel is required')
+        if (!isOptionalStringArray(concept.altLabels)) errors.push('items[' + index + '].skos_concepts[' + conceptIndex + '].altLabels must be a string array')
+        if (concept.metadata !== undefined && !isPlainRecord(concept.metadata)) {
+          errors.push('items[' + index + '].skos_concepts[' + conceptIndex + '].metadata must be an object')
+        }
+      }
+    }
+  }
+  if (item.skos_relations !== undefined) {
+    if (!Array.isArray(item.skos_relations)) {
+      errors.push('items[' + index + '].skos_relations must be an array when present')
+    } else {
+      for (const [relationIndex, relation] of item.skos_relations.entries()) {
+        if (!hasString(relation.type)) errors.push('items[' + index + '].skos_relations[' + relationIndex + '].type is required')
+        if (!hasString(relation.source_id)) errors.push('items[' + index + '].skos_relations[' + relationIndex + '].source_id is required')
+        if (!hasString(relation.target_id)) errors.push('items[' + index + '].skos_relations[' + relationIndex + '].target_id is required')
+        if (relation.metadata !== undefined && !isPlainRecord(relation.metadata)) {
+          errors.push('items[' + index + '].skos_relations[' + relationIndex + '].metadata must be an object')
+        }
+      }
+    }
+  }
+  if (item.provenance_events !== undefined) {
+    if (!Array.isArray(item.provenance_events)) {
+      errors.push('items[' + index + '].provenance_events must be an array when present')
+    } else {
+      for (const [eventIndex, event] of item.provenance_events.entries()) {
+        if (!hasString(event.activity)) errors.push('items[' + index + '].provenance_events[' + eventIndex + '].activity is required')
+        if (event.attributes !== undefined && !isPlainRecord(event.attributes)) {
+          errors.push('items[' + index + '].provenance_events[' + eventIndex + '].attributes must be an object')
+        }
+      }
+    }
+  }
+  if (Array.isArray(item.relationships)) {
+    for (const [relationshipIndex, relationship] of item.relationships.entries()) {
+      if (relationship.metadata !== undefined && !isPlainRecord(relationship.metadata)) {
+        errors.push('items[' + index + '].relationships[' + relationshipIndex + '].metadata must be an object')
+      }
+    }
+  }
+}
+
 export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidationResult {
   const errors: string[] = []
   const counts: Partial<Record<AiwgFortemiRecordType, number>> = {}
@@ -389,6 +491,7 @@ export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidat
     if (!Array.isArray(item.provenance) || item.provenance.length === 0) {
       errors.push('items[' + index + '].provenance must be a non-empty array')
     }
+    validateOptionalRichMetadata(item, index, errors)
     if (!item.privacy || typeof item.privacy.pii !== 'boolean' || !hasString(item.privacy.classification)) {
       errors.push('items[' + index + '].privacy requires classification and pii')
     }
