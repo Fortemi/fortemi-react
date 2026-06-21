@@ -48,6 +48,26 @@ Static page records use the same source locator, facets, tags, concepts,
 provenance, privacy, ranking, and snippet behavior as CRM records, which lets a
 host replace bespoke documentation search without changing the query helper.
 
+## Rich Static Metadata
+
+The flat fields above remain the search and filter surface. Full records can
+also include optional rich metadata for documentation UIs that render Fortemi
+metadata in-page without opening or importing a Knowledge Shard:
+
+- `skos_concepts`: concept ids plus labels, definitions, schemes, notation, URIs,
+  alternate labels, and structured metadata.
+- `skos_relations`: `broader`, `narrower`, `related`, or project-specific SKOS
+  concept edges.
+- `provenance_events`: W3C PROV-style activity records with agents, timestamps,
+  source paths, confidence/privacy, and attributes.
+- `relationships[*].metadata`: optional relationship labels, confidence,
+  privacy, and structured metadata.
+
+These fields are additive to `aiwg.fortemi.index.record.v1`. Existing consumers
+can ignore them and continue querying the flat fields. Chunked indexes with a
+projection keep rich metadata in detail records; call `getRecord(id)` before
+rendering a metadata panel.
+
 ## Chunked Static Indexes
 
 For large browser-only indexes, host a chunk manifest and part files instead of

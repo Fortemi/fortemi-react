@@ -4,11 +4,21 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.6.8 - 2026-06-20
+
+This release extends the `aiwg-index` static export contract with optional rich SKOS and W3C PROV metadata for documentation consumers while preserving the existing v1 record schema and query behavior.
+
 ### `@fortemi/core` — richer `aiwg-index` static metadata (#204)
 
 - Extended `aiwg.fortemi.index.record.v1` with optional rich metadata fields for static consumers: `skos_concepts`, `skos_relations`, `provenance_events`, and structured relationship metadata.
 - Existing flat `facets`, `concepts`, `relationships`, and `provenance` remain required and continue to drive query/search behavior; rich metadata is detail-only unless hosts explicitly include it in chunk projections.
 - Migration guidance for vendored consumers such as Pagenary: no schema-version change or breaking migration is required. Continue validating and querying existing records as before, then opt in to rendering rich metadata by reading full records and checking each optional field for presence.
+
+### Published Packages
+
+- `@fortemi/core@2026.6.8`
+- `@fortemi/graph@2026.6.8`
+- `@fortemi/react@2026.6.8`
 
 ## v2026.6.7 - 2026-06-17
 
