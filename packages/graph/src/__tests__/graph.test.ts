@@ -39,6 +39,22 @@ function sampleGraph(): CommunityGraph {
 
 const EMPTY: CommunityGraph = { nodes: [], edges: [], communities: [] }
 
+/** A deterministic dense graph for settlement tests: `count` nodes, a ring plus
+ * chords, split across `groups` communities. */
+function denseGraph(count: number, groups = 4): CommunityGraph {
+  const nodes = Array.from({ length: count }, (_, i) => ({ id: `n${i}` }))
+  const edges = []
+  for (let i = 0; i < count; i++) {
+    edges.push({ source: `n${i}`, target: `n${(i + 1) % count}`, weight: 1 })
+    if (i % 3 === 0) edges.push({ source: `n${i}`, target: `n${(i + 5) % count}`, weight: 1 })
+  }
+  const communities = Array.from({ length: groups }, (_, g) => ({
+    id: `g${g}`,
+    nodes: nodes.filter((_, i) => i % groups === g).map((node) => node.id),
+  }))
+  return { nodes, edges, communities }
+}
+
 describe('computeDegrees', () => {
   it('counts undirected degree including isolated nodes', () => {
     const degrees = computeDegrees(sampleGraph())
@@ -161,6 +177,75 @@ describe('layoutCommunityGraph', () => {
     expect(positioned.nodes).toEqual([])
     expect(positioned.edges).toEqual([])
     expect(positioned.nodeIndex.size).toBe(0)
+    expect(positioned.communities).toEqual([])
+  })
+
+  it('force settlement is deterministic across seed + ticks', () => {
+    const graph = denseGraph(40)
+    const opts = { algorithm: 'force' as const, seed: 7, ticks: 120, width: 800, height: 600 }
+    const a = layoutCommunityGraph(graph, opts)
+    const b = layoutCommunityGraph(graph, opts)
+    expect(a.nodes.map((n) => [n.id, n.x, n.y])).toEqual(b.nodes.map((n) => [n.id, n.x, n.y]))
+    // A different seed should yield a different settled layout.
+    const c = layoutCommunityGraph(graph, { ...opts, seed: 99 })
+    expect(c.nodes.map((n) => [n.x, n.y])).not.toEqual(a.nodes.map((n) => [n.x, n.y]))
+  })
+
+  it('clamps every node within the padded canvas (boundsPadding)', () => {
+    const width = 800
+    const height = 600
+    const boundsPadding = 40
+    const positioned = layoutCommunityGraph(denseGraph(60), {
+      algorithm: 'force',
+      width,
+      height,
+      boundsPadding,
+    })
+    for (const node of positioned.nodes) {
+      expect(node.x).toBeGreaterThanOrEqual(boundsPadding)
+      expect(node.x).toBeLessThanOrEqual(width - boundsPadding)
+      expect(node.y).toBeGreaterThanOrEqual(boundsPadding)
+      expect(node.y).toBeLessThanOrEqual(height - boundsPadding)
+      expect(Number.isFinite(node.x)).toBe(true)
+      expect(Number.isFinite(node.y)).toBe(true)
+    }
+  })
+
+  it('derives a per-node radius by default and accepts overrides', () => {
+    // degree-derived default: node 'a' has degree 2 ⇒ nodeRadius(2) === 8
+    expect(layoutCommunityGraph(sampleGraph()).nodeIndex.get('a')?.r).toBe(8)
+
+    // fixed number
+    const fixed = layoutCommunityGraph(sampleGraph(), { nodeRadius: 11 })
+    for (const node of fixed.nodes) expect(node.r).toBe(11)
+
+    // NodeRadiusOptions ⇒ clamp(0 + degree*2, 0, 100); degree 2 ⇒ 4
+    const viaOpts = layoutCommunityGraph(sampleGraph(), {
+      nodeRadius: { base: 0, perDegree: 2, min: 0, max: 100 },
+    })
+    expect(viaOpts.nodeIndex.get('a')?.r).toBe(4)
+
+    // resolver function
+    const viaFn = layoutCommunityGraph(sampleGraph(), { nodeRadius: (degree) => degree * 3 })
+    expect(viaFn.nodeIndex.get('a')?.r).toBe(6) // degree 2 * 3
+  })
+
+  it('emits community centroids over the final positions', () => {
+    const positioned = layoutCommunityGraph(sampleGraph(), { width: 800, height: 600 })
+    expect(positioned.communities.map((c) => c.id)).toEqual(['c1', 'c2'])
+    const c1 = positioned.communities.find((c) => c.id === 'c1')!
+    expect(c1.size).toBe(3) // a, b, c
+    const members = ['a', 'b', 'c'].map((id) => positioned.nodeIndex.get(id)!)
+    const meanX = members.reduce((acc, n) => acc + n.x, 0) / members.length
+    const meanY = members.reduce((acc, n) => acc + n.y, 0) / members.length
+    expect(c1.x).toBeCloseTo(meanX, 6)
+    expect(c1.y).toBeCloseTo(meanY, 6)
+  })
+
+  it('settles distinct, non-coincident positions (force)', () => {
+    const positioned = layoutCommunityGraph(denseGraph(30), { algorithm: 'force' })
+    const seen = new Set(positioned.nodes.map((n) => `${n.x.toFixed(3)}:${n.y.toFixed(3)}`))
+    expect(seen.size).toBe(positioned.nodes.length)
   })
 })
 

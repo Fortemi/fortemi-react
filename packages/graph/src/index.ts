@@ -25,6 +25,7 @@ export type {
   CommunityGraph,
   GraphLayoutAlgorithm,
   PositionedGraphNode,
+  PositionedCommunity,
   PositionedGraph,
   GraphBounds,
   ViewportTransform,
@@ -39,7 +40,7 @@ export { filterCommunityGraph } from './filter.js'
 export type { GraphFilter } from './filter.js'
 
 export { layoutCommunityGraph } from './layout.js'
-export type { LayoutOptions } from './layout.js'
+export type { LayoutOptions, NodeRadiusResolver } from './layout.js'
 
 export { computeGraphBounds, fitGraphToViewport } from './bounds.js'
 export type { FitOptions } from './bounds.js'

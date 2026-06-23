@@ -4,7 +4,6 @@ import {
   colorForCommunity,
   filterCommunityGraph,
   layoutCommunityGraph,
-  nodeRadius,
 } from '@fortemi/graph'
 import type { GraphLayoutState } from '@fortemi/graph'
 
@@ -96,7 +95,7 @@ export function GraphView({
           {positioned.nodes.map((node) => {
             const selected = node.id === selectedNodeId
             const color = colorForCommunity(node.communityId)
-            const radius = nodeRadius(node.degree)
+            const radius = node.r
             return (
               <g key={node.id} transform={`translate(${node.x} ${node.y})`}>
                 <circle
