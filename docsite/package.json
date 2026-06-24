@@ -7,7 +7,7 @@
   "license": "AGPL-3.0",
   "scripts": {
     "prebuild:packages": "node prebuild-packages.mjs",
-    "docs:build": "node prebuild-packages.mjs && pagenary build:tenants fortemi-react-docs"
+    "docs:build": "node prebuild-packages.mjs && pagenary build:tenants react"
   },
   "devDependencies": {
     "@pagenary/publisher": "^2026.6.13"

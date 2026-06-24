@@ -23,6 +23,9 @@ name: Docsite Deploy
 on:
   push:
     tags: ['v*']
+  # Allow redeploying the docs site on demand (e.g. a docsite-only fix) without
+  # cutting a package release.
+  workflow_dispatch: {}
 
 concurrency:
   group: docsite-deploy
