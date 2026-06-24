@@ -2,6 +2,7 @@
   "name": "fortemi-react-docsite",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "description": "Documentation-site build tooling for fortemi-react, using the pagenary publisher. Isolated from the pnpm workspace (packages/*, apps/*).",
   "license": "AGPL-3.0",
   "scripts": {
@@ -9,6 +10,6 @@
     "docs:build": "node prebuild-packages.mjs && pagenary build:tenants fortemi-react-docs"
   },
   "devDependencies": {
-    "@pagenary/publisher": "^2026.5.4"
+    "@pagenary/publisher": "^2026.6.13"
   }
 }
