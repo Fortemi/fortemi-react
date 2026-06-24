@@ -4,6 +4,27 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.6.9 - 2026-06-24
+
+This release upgrades the `@fortemi/graph` community layout into a real deterministic force settlement and refreshes the documentation build tooling.
+
+### `@fortemi/graph` — deterministic force settlement for `layoutCommunityGraph` (#206)
+
+- The `force` algorithm now runs a fixed-iteration, seeded force settlement — spring link attraction, charge repulsion, collision spacing, community cohesion, centering, and per-tick bounds clamping — instead of a closed-form radial ring. Output stays deterministic for identical `(graph, options)` and is fully synchronous and headless (no animation frames), so settled coordinates are reproducible for static SVG generation, SSR, and browser rendering.
+- New optional `LayoutOptions`: `seed`, `ticks`, `nodeRadius`, `linkDistance`, `linkStrength`, `chargeStrength`, `collisionPadding`, `communityStrength`, `boundsPadding`, each with a documented default. The `radial`, `community`, and `manual` algorithms remain closed-form and now also honor `boundsPadding`.
+- Positioned nodes now carry a stable render radius `r` (degree-derived by default, overrideable via `nodeRadius`), and the result exposes `communities` centroids. Both fields are additive; the public export surface is otherwise unchanged.
+
+### Documentation
+
+- The documentation site builds with the latest `@pagenary/publisher` (2026.6.13) and emits no build warnings.
+- Synced documentation to code (graph package README layout section; `CLAUDE.md` version and count metrics).
+
+### Published Packages
+
+- `@fortemi/core@2026.6.9`
+- `@fortemi/graph@2026.6.9`
+- `@fortemi/react@2026.6.9`
+
 ## v2026.6.8 - 2026-06-20
 
 This release extends the `aiwg-index` static export contract with optional rich SKOS and W3C PROV metadata for documentation consumers while preserving the existing v1 record schema and query behavior.
