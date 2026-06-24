@@ -35,7 +35,7 @@ Rendering a knowledge graph usually means re-implementing layout math, community
 
 | Need | What Fortemi Graph provides |
 |---|---|
-| Deterministic layout | `layoutCommunityGraph` — closed-form `force`/`radial`/`community`/`manual` positions, no randomness |
+| Deterministic layout | `layoutCommunityGraph` — a seeded `force` settlement plus closed-form `radial`/`community`/`manual` positions; identical input always yields identical coordinates |
 | Visibility control | `filterCommunityGraph` — filter by community, edge kind, node allow-list, or predicate |
 | Readable encoding | Degree-based node sizing and deterministic community color assignment |
 | Viewport math | Bounding box plus a centered fit transform for SVG/canvas |
@@ -114,13 +114,32 @@ These shapes are structurally identical to the ones `@fortemi/core` produces (`G
 
 | Helper | Purpose |
 |---|---|
-| `layoutCommunityGraph(graph, opts?)` | Deterministic 2D positions (`force`/`radial`/`community`/`manual`) plus per-node degree and community |
+| `layoutCommunityGraph(graph, opts?)` | Deterministic 2D positions — a seeded `force` settlement (link attraction, charge repulsion, collision spacing, community cohesion, centering, bounds clamping) or closed-form `radial`/`community`/`manual`. Returns per-node `x, y, r`, degree, community, plus community centroids |
 | `filterCommunityGraph(graph, filter?)` | Filter by community, edge kind, node allow-list, or predicate; drops emptied communities |
 | `computeDegrees(graph)` / `nodeRadius(degree, opts?)` | Undirected degree map and degree → render radius |
 | `colorForCommunity(id, palette?)` | Deterministic community → color (themeable palette) |
 | `computeGraphBounds(nodes)` / `fitGraphToViewport(bounds, viewport, opts?)` | Bounding box and a centered fit transform |
 | `neighborsOf` / `expandNeighborhood` / `subgraphForNodes` / `neighborhoodSubgraph` / `buildAdjacency` | Selection and BFS neighborhood expansion |
 | `serializeGraphSnapshot` / `stringifyGraphSnapshot` / `deserializeGraphSnapshot` | Stable, reproducible static snapshots for JS-only hosts |
+
+### Layout options (`force`)
+
+The `force` algorithm runs a fixed-iteration, seeded settlement — fully synchronous and headless (no animation frames), so identical `(graph, options)` always yields identical coordinates. Suitable for static SVG generation, SSR, and browser rendering. The `radial`, `community`, and `manual` algorithms are closed-form and honor `width`/`height`/`boundsPadding` only.
+
+| Option | Default | Purpose |
+|---|---|---|
+| `algorithm` | `'force'` | `force` (settlement) · `radial` · `community` · `manual` (closed-form) |
+| `width` / `height` | `760` / `460` | Canvas size |
+| `seed` | `1` | PRNG seed for initial jitter (identical seed ⇒ identical output) |
+| `ticks` | `300` | Settlement iterations |
+| `nodeRadius` | degree-derived | Per-node radius: a fixed `number`, `NodeRadiusOptions`, or `(degree, node) => number` |
+| `linkDistance` / `linkStrength` | `60` / `0.08` | Spring target length and stiffness |
+| `chargeStrength` | `-240` | Repulsion magnitude (negative pushes apart) |
+| `collisionPadding` | `2` | Extra spacing beyond `r_i + r_j` |
+| `communityStrength` | `0.05` | Pull toward the node's community centroid |
+| `boundsPadding` | `24` | Keep every node center this many px from each edge |
+
+Each positioned node carries a stable render radius `r` (degree-derived by default, overrideable via `nodeRadius`), and the result includes `communities` centroids over the final positions.
 
 All helpers are pure: they never mutate their inputs and (except for an optional snapshot timestamp) produce identical output for identical input.
 
