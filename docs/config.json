@@ -22,9 +22,9 @@
       "Import/export Knowledge Shards for parity with the Fortémi server."
     ],
     "quickLinks": [
-      { "label": "Getting Started", "href": "#/getting-started" },
-      { "label": "API Reference", "href": "#/api-reference" },
-      { "label": "Packages", "href": "#/packages-core" }
+      { "label": "Getting Started", "href": "#getting-started" },
+      { "label": "API Reference", "href": "#api-reference" },
+      { "label": "Packages", "href": "#packages/core" }
     ]
   }
 }
