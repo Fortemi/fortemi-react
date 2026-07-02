@@ -126,10 +126,11 @@ Use this subpath for Pagenary-style command palettes, static docs search, and
 vanilla JavaScript review surfaces. The top-level `@fortemi/core` export remains
 available for full archive/runtime integrations.
 
-The record contract keeps the existing flat fields for filtering and search:
-`facets`, `tags`, `concepts`, `relationships`, and `provenance`. Static
-consumers that render metadata tabs can also read optional rich fields from full
-records:
+The AIWG index adapter accepts both `aiwg.fortemi.index.export.v1` and
+`aiwg.fortemi.index.export.v2` envelopes. The v1 record contract keeps the
+existing flat fields for filtering and search: `facets`, `tags`, `concepts`,
+`relationships`, and `provenance`. Static consumers that render metadata tabs
+can also read optional rich fields from full records:
 
 - `skos_concepts`: concept ids plus labels, definitions, schemes, notation, URIs,
   alternate labels, and metadata.
@@ -140,10 +141,14 @@ records:
 - `relationships[*].metadata`: optional relationship labels, confidence,
   privacy, and structured metadata.
 
-These fields are additive to `aiwg.fortemi.index.record.v1`. Existing consumers
-can ignore them and continue querying the flat fields. Chunked indexes with a
-projection keep rich metadata in detail records; call `getRecord(id)` before
-rendering a metadata panel.
+These fields are additive to `aiwg.fortemi.index.record.v1`. Version 2 records
+can also carry AIWG migration fields such as `search`, `chunks`, `embeddings`,
+`source.origin`, `source.generated`, `source.checksum`, `source.updated_at`,
+`privacy.locality`, and compatibility metadata. Query helpers use v2 `search`
+and `chunks` text when the old top-level `title`/`text` fields are absent.
+Existing consumers can ignore the v2 fields and continue querying the flat
+fields. Chunked indexes with a projection keep rich metadata in detail records;
+call `getRecord(id)` before rendering a metadata panel.
 
 Large static indexes can use the chunked browser path instead of downloading one
 full `aiwg.fortemi.index.export.v1` file. Host a manifest plus deterministic part
@@ -179,9 +184,11 @@ results, but the controller keeps only a bounded part cache and never sets a
 materialized full export in `getIndex()`.
 
 AIWG records can use project-specific string types such as `aiwg.skill`,
-`aiwg.command`, `aiwg.rule`, `aiwg.requirement`, and `research.ref`. Validation
-still enforces required record fields, but it does not require unknown AIWG,
-research, or documentation domains to collapse into `aiwg.artifact`.
+`aiwg.agent`, `aiwg.command`, `aiwg.rule`, `aiwg.flow`, `aiwg.bundle`,
+`aiwg.kb.page`, `aiwg.memory.entry`, `aiwg.issue`, `research.ref`, and
+`aiwg.research.profile`. Validation still enforces required record fields, but
+it does not require unknown AIWG, research, KB, memory, issue, or documentation
+domains to collapse into `aiwg.artifact`.
 
 For AIWG command-palette parity, opt into discovery ranking instead of the
 default deterministic substring lookup:
@@ -203,14 +210,19 @@ Chunked indexes also support graph navigation without loading a full export:
 const neighbors = await controller.neighbors('aiwg:requirement:search', {
   direction: 'both',
   relationshipType: 'cites',
+  relationshipDirection: 'downstream',
 })
 
 const graph = await controller.toCommunityGraphChunked()
 ```
 
-When scan parts are projected, relationship traversal scans the parts and
-lazy-loads detail records only when relationships are not present in the scan
-projection.
+Relationship edges preserve v2 `source_path`, `target_path`, and
+`direction: 'upstream' | 'downstream' | 'related'` values. Use
+`direction: 'in' | 'out' | 'both'` for graph orientation around a node and
+`relationshipDirection` for AIWG dependency/citation/profile/KB direction
+semantics. When scan parts are projected, relationship traversal scans the parts
+and lazy-loads detail records only when relationships are not present in the
+scan projection.
 
 Static semantic search uses an optional sidecar contract:
 

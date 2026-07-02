@@ -60,6 +60,40 @@ function record(id: string, type: string, title: string, text: string, overrides
   }
 }
 
+function v2Record(id: string, type: string, overrides: Partial<AiwgFortemiRecord> = {}): AiwgFortemiRecord {
+  return {
+    ...record(id, type, id, ''),
+    schema_version: 'aiwg.fortemi.index.record.v2',
+    source: {
+      path: `${id}.md`,
+      repo_relative_path: `${id}.md`,
+      locator: id,
+      origin: 'aiwg',
+      generated: true,
+      checksum: `sha256:${id}`,
+      updated_at: '2026-07-02T00:00:00.000Z',
+    },
+    search: {
+      title: id,
+      name: id.split(':').at(-1),
+      summary: '',
+      body: '',
+      triggers: [],
+      aliases: [],
+      capability: type,
+      tags: [],
+      phase: 'construction',
+      type,
+      frontmatter: {},
+    },
+    chunks: [],
+    embeddings: [],
+    compatibility: { v1_strategy: 'preserve-flat-fields' },
+    privacy: { classification: 'public', pii: false, locality: 'workspace' },
+    ...overrides,
+  }
+}
+
 function createChunkedFixture(partSize = 2): {
   manifest: AiwgFortemiChunkManifest
   parts: Map<string, AiwgFortemiChunkPart>
@@ -261,6 +295,95 @@ describe('AIWG Fortemi index adapter', () => {
     })
     expect(result.items.map((item) => item.type)).toEqual(['aiwg.skill', 'research.ref'])
     expect(result.facets.type).toMatchObject({ 'aiwg.skill': 1, 'research.ref': 1 })
+  })
+
+  it('accepts AIWG Fortemi v2 all-domain exports and queries v2 search/chunk projections', () => {
+    const v2Index: AiwgFortemiIndexExport = {
+      ...index,
+      schema_version: 'aiwg.fortemi.index.export.v2',
+      source: {
+        repo: 'Fortemi/fortemi-react',
+        privacy: 'public',
+        origin: 'aiwg',
+        generated: true,
+        checksum: 'sha256:v2-export',
+        updated_at: '2026-07-02T00:00:00.000Z',
+      },
+      compatibility: { v1_strategy: 'flat-fields-plus-v2-projection' },
+      items: [
+        v2Record('aiwg:agent:planner', 'aiwg.agent', {
+          title: undefined,
+          text: undefined,
+          search: {
+            title: 'Planner Agent',
+            name: 'planner',
+            summary: 'Coordinates construction phase work.',
+            body: 'Planner agent handles acceptance criteria and issue decomposition.',
+            triggers: ['plan implementation'],
+            aliases: ['planning agent'],
+            capability: 'planning',
+            tags: ['agent', 'sdlc'],
+            phase: 'construction',
+            type: 'aiwg.agent',
+            frontmatter: { owner: 'aiwg' },
+          },
+          chunks: [{ id: 'chunk-1', text: 'Chunked planner body for static search parity.' }],
+        }),
+        v2Record('aiwg:bundle:sdlc', 'aiwg.bundle', {
+          search: { title: 'SDLC Bundle', summary: 'Complete SDLC bundle.', body: 'Bundle record.', tags: ['bundle'] },
+        }),
+        v2Record('aiwg:command:address-issues', 'aiwg.command', {
+          search: { title: 'address-issues', body: 'Address open issues.', triggers: ['address the open issues'] },
+        }),
+        v2Record('aiwg:flow:release', 'aiwg.flow', {
+          search: { title: 'Release Flow', summary: 'Release orchestration.', body: 'Ship release.' },
+        }),
+        v2Record('aiwg:issue:219', 'aiwg.issue', {
+          search: { title: 'Issue 219', summary: 'Accept v2 records.', body: 'Fortemi v2 export acceptance.' },
+        }),
+        v2Record('aiwg:kb:page:index', 'aiwg.kb.page', {
+          search: { title: 'KB Index', summary: 'Knowledge base graph page.', body: 'Semantic memory and KB page.' },
+        }),
+        v2Record('aiwg:memory:entry:001', 'aiwg.memory.entry', {
+          search: { title: 'Memory Entry', summary: 'Memory graph entry.', body: 'Remember graph traversal.' },
+        }),
+        v2Record('aiwg:research:profile:alice', 'aiwg.research.profile', {
+          search: { title: 'Alice Profile', summary: 'Research profile.', body: 'Profile graph node.' },
+        }),
+        v2Record('aiwg:research:ref:001', 'aiwg.research.ref', {
+          search: { title: 'REF-001', summary: 'Research reference.', body: 'Citation graph reference.' },
+        }),
+        v2Record('aiwg:research:synthesis:001', 'aiwg.research.synthesis', {
+          search: { title: 'Synthesis', summary: 'Research synthesis.', body: 'Synthesized evidence.' },
+        }),
+        v2Record('aiwg:research:view:001', 'aiwg.research.view', {
+          search: { title: 'Research View', summary: 'Research view.', body: 'View projection.' },
+        }),
+        v2Record('aiwg:rule:delivery', 'aiwg.rule', {
+          search: { title: 'Delivery Rule', summary: 'Delivery policy.', body: 'PR required.' },
+        }),
+        v2Record('aiwg:skill:doctor', 'aiwg.skill', {
+          search: { title: 'AIWG Doctor', summary: 'Workspace health.', body: 'Doctor checks workspace.' },
+        }),
+      ].sort((left, right) => left.id.localeCompare(right.id)),
+    }
+
+    const validation = validateAiwgFortemiIndexExport(v2Index)
+    const projectionResult = queryAiwgFortemiIndex(v2Index, 'acceptance criteria', { searchProfile: 'aiwg-discovery' })
+    const chunkResult = queryAiwgFortemiIndex(v2Index, 'chunked planner body')
+
+    expect(validation.valid).toBe(true)
+    expect(validation.counts).toMatchObject({
+      'aiwg.agent': 1,
+      'aiwg.command': 1,
+      'aiwg.flow': 1,
+      'aiwg.kb.page': 1,
+      'aiwg.memory.entry': 1,
+      'aiwg.research.ref': 1,
+      'aiwg.skill': 1,
+    })
+    expect(projectionResult.items[0]?.id).toBe('aiwg:agent:planner')
+    expect(chunkResult.items[0]?.id).toBe('aiwg:agent:planner')
   })
 
   it('ranks AIWG discovery queries by canonical names, triggers, capabilities, and relaxed tokens', () => {
@@ -819,6 +942,130 @@ describe('AIWG Fortemi chunked index — slim/projected parts (#168)', () => {
     expect(relationshipSet.ids).toEqual(['aiwg:requirement:001', 'research:ref:001'])
     expect(graph.edges.map((edge) => edge.kind).sort()).toEqual(['cites', 'satisfies'])
     expect(detailFetches).toBeGreaterThan(0)
+  })
+
+  it('preserves v2 relationship direction and target paths across whole and chunked traversal', async () => {
+    const graphIndex: AiwgFortemiIndexExport = {
+      ...index,
+      schema_version: 'aiwg.fortemi.index.export.v2',
+      items: [
+        v2Record('aiwg:command:deploy', 'aiwg.command', {
+          search: { title: 'Deploy Command', body: 'Deployment command.' },
+          relationships: [
+            {
+              type: 'depends-on',
+              target_id: 'aiwg:skill:release',
+              source_path: 'commands/deploy.md',
+              target_path: 'skills/release/SKILL.md',
+              direction: 'upstream',
+            },
+          ],
+        }),
+        v2Record('aiwg:kb:page:graph', 'aiwg.kb.page', {
+          search: { title: 'Graph KB', body: 'KB graph page.' },
+          relationships: [
+            {
+              type: 'references',
+              target_id: 'aiwg:memory:entry:graph',
+              source_path: 'kb/graph.md',
+              target_path: 'memory/graph.md',
+              direction: 'related',
+            },
+          ],
+        }),
+        v2Record('aiwg:memory:entry:graph', 'aiwg.memory.entry', {
+          search: { title: 'Graph Memory', body: 'Memory graph entry.' },
+        }),
+        v2Record('aiwg:research:profile:alice', 'aiwg.research.profile', {
+          search: { title: 'Alice Profile', body: 'Research profile.' },
+          relationships: [
+            {
+              type: 'profiles',
+              target_id: 'aiwg:research:ref:001',
+              source_path: 'profiles/alice.md',
+              target_path: 'refs/ref-001.md',
+              direction: 'downstream',
+            },
+          ],
+        }),
+        v2Record('aiwg:research:ref:001', 'aiwg.research.ref', {
+          search: { title: 'REF-001', body: 'Research reference.' },
+          relationships: [
+            {
+              type: 'cites',
+              target_id: 'aiwg:skill:release',
+              source_path: 'refs/ref-001.md',
+              target_path: 'skills/release/SKILL.md',
+              direction: 'downstream',
+            },
+          ],
+        }),
+        v2Record('aiwg:skill:release', 'aiwg.skill', {
+          search: { title: 'Release Skill', body: 'Release skill.' },
+        }),
+      ].sort((left, right) => left.id.localeCompare(right.id)),
+    }
+    const controller = createAiwgIndexController(graphIndex)
+
+    const upstreamDeps = await controller.relationshipQuery({
+      relationshipType: 'depends-on',
+      relationshipDirection: 'upstream',
+    })
+    const profileNeighbors = await controller.neighbors('aiwg:research:profile:alice', {
+      direction: 'out',
+      relationshipType: 'profiles',
+      relationshipDirection: 'downstream',
+    })
+    const kbNeighbors = await controller.neighbors('aiwg:kb:page:graph', {
+      direction: 'out',
+      relationshipType: 'references',
+      relationshipDirection: 'related',
+    })
+
+    expect(upstreamDeps.edges).toEqual([
+      {
+        source_id: 'aiwg:command:deploy',
+        target_id: 'aiwg:skill:release',
+        type: 'depends-on',
+        source_path: 'commands/deploy.md',
+        target_path: 'skills/release/SKILL.md',
+        direction: 'upstream',
+      },
+    ])
+    expect(profileNeighbors.edges[0]).toMatchObject({
+      source_id: 'aiwg:research:profile:alice',
+      target_id: 'aiwg:research:ref:001',
+      type: 'profiles',
+      target_path: 'refs/ref-001.md',
+      direction: 'downstream',
+    })
+    expect(kbNeighbors.nodes.map((node) => node.id).sort()).toEqual(['aiwg:kb:page:graph', 'aiwg:memory:entry:graph'])
+
+    const built = buildAiwgChunkedIndex(graphIndex, { partSize: 2, projection: [...AIWG_SCAN_REQUIRED_FIELDS, 'relationships'] })
+    const partsByHref = new Map(built.parts.map((entry) => [entry.href, entry.part]))
+    const chunkedController = createAiwgIndexController()
+    chunkedController.loadChunkedIndex(built.manifest, async (part) => partsByHref.get(part.href))
+
+    const chunkedDeps = await chunkedController.relationshipQuery({
+      relationshipType: 'depends-on',
+      relationshipDirection: 'upstream',
+    })
+    const chunkedCitations = await chunkedController.relationshipQuery({
+      relationshipType: 'cites',
+      relationshipDirection: 'downstream',
+    })
+
+    expect(chunkedDeps.edges).toEqual(upstreamDeps.edges)
+    expect(chunkedCitations.edges).toEqual([
+      {
+        source_id: 'aiwg:research:ref:001',
+        target_id: 'aiwg:skill:release',
+        type: 'cites',
+        source_path: 'refs/ref-001.md',
+        target_path: 'skills/release/SKILL.md',
+        direction: 'downstream',
+      },
+    ])
   })
 
   it('rejects getRecord on a projected index without a detailLoader', async () => {
