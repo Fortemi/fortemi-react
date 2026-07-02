@@ -62,7 +62,9 @@ export type ManageNoteInput = z.infer<typeof ManageNoteInputSchema>
 
 export const SearchInputSchema = z.object({
   query: z.string(),
-  mode: z.enum(['text', 'semantic', 'hybrid']).default('text'),
+  mode: z.enum(['text', 'semantic', 'hybrid', 'auto']).default('text'),
+  query_embedding: z.array(z.number()).optional(),
+  embeddingSetId: z.string().optional(),
   limit: z.number().int().min(1).max(100).default(20),
   offset: z.number().int().min(0).default(0),
   tags: z.array(z.string()).optional(),

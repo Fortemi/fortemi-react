@@ -187,7 +187,9 @@ import { searchTool } from '@fortemi/core'
 // Via tool function (Zod-validated input)
 const results = await searchTool(db, {
   query: 'knowledge management',
-  mode: 'text',     // 'text' | 'semantic' | 'hybrid'
+  mode: 'auto',     // 'text' | 'semantic' | 'hybrid' | 'auto'
+  query_embedding: optionalQueryEmbedding,
+  embeddingSetId: 'optional-embedding-set',
   limit: 20,
   offset: 0,
   tags: ['research'],
@@ -198,7 +200,12 @@ const results = await searchTool(db, {
 })
 ```
 
-Note: The `searchTool` function currently only supports `mode: 'text'`. Semantic and hybrid modes through the tool interface are planned. Use `SearchRepository` directly for semantic/hybrid search.
+Text mode is always available. Forced `semantic` and `hybrid` modes require the
+host to pass `query_embedding`; without it the tool returns a descriptive error.
+`auto` uses semantic/hybrid search when a query embedding is supplied and falls
+back to deterministic text search otherwise. Bridge hosts should generate the
+query embedding through their semantic capability and pass the vector directly,
+which keeps heavyweight model dependencies out of the base core package.
 
 ## Search Response Format
 

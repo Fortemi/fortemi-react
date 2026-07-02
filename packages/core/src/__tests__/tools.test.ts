@@ -364,6 +364,23 @@ describe('searchTool', () => {
     return captureKnowledge(db, { action: 'create', content, title, tags }, events)
   }
 
+  async function addEmbedding(noteId: string, embeddingSetId = 'tool-emb-set') {
+    const vector = `[${new Array(384).fill(0).map((_, index) => (index === 0 ? 1 : 0)).join(',')}]`
+    await db.query(
+      `INSERT INTO embedding_set (id, model_name, dimensions) VALUES ($1, $2, $3)
+       ON CONFLICT (id) DO NOTHING`,
+      [embeddingSetId, 'tool-test-model', 384],
+    )
+    await db.query(
+      `INSERT INTO embedding (id, note_id, embedding_set_id, vector) VALUES ($1, $2, $3, $4::vector)`,
+      [`emb-${noteId}`, noteId, embeddingSetId, vector],
+    )
+    await db.query(
+      `INSERT INTO embedding_set_member (embedding_set_id, note_id, embedding_id) VALUES ($1, $2, $3)`,
+      [embeddingSetId, noteId, `emb-${noteId}`],
+    )
+  }
+
   describe('text mode search', () => {
     it('returns results matching the query', async () => {
       await createNote('The quick brown fox jumps over the lazy dog', 'Fox note')
@@ -416,17 +433,53 @@ describe('searchTool', () => {
     })
   })
 
-  describe('unsupported modes', () => {
-    it('throws for semantic mode', async () => {
+  describe('semantic and hybrid modes', () => {
+    it('throws for forced semantic mode without a query embedding', async () => {
       await expect(
         searchTool(db, { query: 'test', mode: 'semantic' }),
-      ).rejects.toThrow("Search mode 'semantic' is not available")
+      ).rejects.toThrow("Search mode 'semantic' requires query_embedding")
     })
 
-    it('throws for hybrid mode', async () => {
+    it('throws for forced hybrid mode without a query embedding', async () => {
       await expect(
         searchTool(db, { query: 'test', mode: 'hybrid' }),
-      ).rejects.toThrow("Search mode 'hybrid' is not available")
+      ).rejects.toThrow("Search mode 'hybrid' requires query_embedding")
+    })
+
+    it('falls back to text mode for auto when no query embedding is supplied', async () => {
+      await createNote('Auto fallback text note', 'Auto fallback')
+
+      const result = await searchTool(db, { query: 'fallback', mode: 'auto' })
+
+      expect(result.mode).toBe('text')
+      expect(result.semantic_available).toBe(false)
+    })
+
+    it('runs semantic and hybrid searches when a query embedding is supplied', async () => {
+      const created = await createNote('Semantic bridge searchable note', 'Semantic bridge')
+      const noteId = created.notes[0].id
+      await addEmbedding(noteId)
+      const queryEmbedding = new Array(384).fill(0).map((_, index) => (index === 0 ? 1 : 0))
+
+      const semantic = await searchTool(db, {
+        query: 'semantic bridge',
+        mode: 'semantic',
+        query_embedding: queryEmbedding,
+        embeddingSetId: 'tool-emb-set',
+      })
+      const hybrid = await searchTool(db, {
+        query: 'bridge',
+        mode: 'hybrid',
+        query_embedding: queryEmbedding,
+        embeddingSetId: 'tool-emb-set',
+      })
+
+      expect(semantic.mode).toBe('semantic')
+      expect(semantic.semantic_available).toBe(true)
+      expect(semantic.results[0]?.id).toBe(noteId)
+      expect(hybrid.mode).toBe('hybrid')
+      expect(hybrid.semantic_available).toBe(true)
+      expect(hybrid.results.map((result) => result.id)).toContain(noteId)
     })
   })
 

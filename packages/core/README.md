@@ -178,6 +178,55 @@ Unfiltered browse requests fetch only the part files intersecting the requested
 results, but the controller keeps only a bounded part cache and never sets a
 materialized full export in `getIndex()`.
 
+AIWG records can use project-specific string types such as `aiwg.skill`,
+`aiwg.command`, `aiwg.rule`, `aiwg.requirement`, and `research.ref`. Validation
+still enforces required record fields, but it does not require unknown AIWG,
+research, or documentation domains to collapse into `aiwg.artifact`.
+
+For AIWG command-palette parity, opt into discovery ranking instead of the
+default deterministic substring lookup:
+
+```ts
+const ranked = controller.query('address the open issues', {
+  searchProfile: 'aiwg-discovery',
+  rank: true,
+  includeMatches: true,
+})
+```
+
+The discovery profile normalizes hyphen/space variants, strips common stopwords,
+boosts trigger and capability facets, and returns match reasons for UI debugging.
+
+Chunked indexes also support graph navigation without loading a full export:
+
+```ts
+const neighbors = await controller.neighbors('aiwg:requirement:search', {
+  direction: 'both',
+  relationshipType: 'cites',
+})
+
+const graph = await controller.toCommunityGraphChunked()
+```
+
+When scan parts are projected, relationship traversal scans the parts and
+lazy-loads detail records only when relationships are not present in the scan
+projection.
+
+Static semantic search uses an optional sidecar contract:
+
+```ts
+import { queryAiwgHybridIndex } from '@fortemi/core/aiwg-index'
+
+const embeddingSet = await fetch('/search/aiwg-index/embeddings.json').then((res) => res.json())
+const queryEmbedding = await hostEmbed('workspace health check')
+const semanticResults = queryAiwgHybridIndex(index, embeddingSet, 'health check', queryEmbedding)
+```
+
+`aiwg.fortemi.embedding.set.v1` records the model, dimensions, granularity
+(`title-summary`, `body`, `chunked-body`, or a project value), source record IDs,
+and per-vector input hashes. Hosts provide query embeddings; `@fortemi/core` does
+not add a model runtime dependency for static AIWG search.
+
 ## What You Get
 
 | Surface | Description |

@@ -8,19 +8,57 @@ import {
   createAiwgIndexController,
   createAiwgReviewDecisionExport,
   encodeAiwgDetailId,
+  findAiwgStaticDuplicatePairs,
+  queryAiwgHybridIndex,
   queryAiwgFortemiIndex,
+  queryAiwgSemanticIndex,
   validateAiwgFortemiChunkManifest,
   validateAiwgFortemiChunkPart,
   validateAiwgFortemiIndexExport,
+  validateAiwgStaticEmbeddingSet,
   type AiwgChunkedIndexDetailLoader,
   type AiwgChunkedIndexLoader,
   type AiwgFortemiChunkManifest,
   type AiwgFortemiChunkPart,
   type AiwgFortemiIndexExport,
+  type AiwgFortemiRecord,
+  type AiwgStaticEmbeddingSet,
 } from '../aiwg-index.js'
 import fixture from '../../test/fixtures/sanitized-aiwg-fortemi-index.json' with { type: 'json' }
 
 const index = fixture as unknown as AiwgFortemiIndexExport
+
+function record(id: string, type: string, title: string, text: string, overrides: Partial<AiwgFortemiRecord> = {}): AiwgFortemiRecord {
+  return {
+    ...index.items[0],
+    schema_version: 'aiwg.fortemi.index.record.v1',
+    id,
+    type,
+    title,
+    text,
+    source: {
+      path: `${id}.md`,
+      repo_relative_path: `${id}.md`,
+      locator: id,
+    },
+    facets: {},
+    tags: [],
+    concepts: [],
+    relationships: [],
+    provenance: [
+      {
+        field: 'text',
+        source: `${id}.md`,
+        path: '$.text',
+        confidence: 'source',
+        privacy: 'public',
+      },
+    ],
+    privacy: { classification: 'public', pii: false },
+    updated_at: '2026-01-04T00:00:00.000Z',
+    ...overrides,
+  }
+}
 
 function createChunkedFixture(partSize = 2): {
   manifest: AiwgFortemiChunkManifest
@@ -196,6 +234,111 @@ describe('AIWG Fortemi index adapter', () => {
     expect(invalid.errors).toContain('items[0].skos_relations[0].target_id is required')
     expect(invalid.errors).toContain('items[0].provenance_events[0].activity is required')
     expect(invalid.errors).toContain('items[0].relationships[0].metadata must be an object')
+  })
+
+  it('accepts project-specific AIWG and research record types and facets them by type', () => {
+    const aiwgIndex: AiwgFortemiIndexExport = {
+      ...index,
+      items: [
+        record('aiwg:command:discover', 'aiwg.command', 'AIWG Discover', 'Find AIWG capabilities.'),
+        record('aiwg:requirement:search', 'aiwg.requirement', 'Search Requirement', 'Static search contract.'),
+        record('aiwg:rule:delivery', 'aiwg.rule', 'Delivery Rule', 'Delivery guardrails.'),
+        record('aiwg:skill:doctor', 'aiwg.skill', 'AIWG Doctor', 'Workspace health check.'),
+        record('research:ref:001', 'research.ref', 'REF-001', 'Research citation.'),
+      ],
+    }
+
+    const validation = validateAiwgFortemiIndexExport(aiwgIndex)
+    const result = queryAiwgFortemiIndex(aiwgIndex, '', { types: ['aiwg.skill', 'research.ref'] })
+
+    expect(validation.valid).toBe(true)
+    expect(validation.counts).toMatchObject({
+      'aiwg.command': 1,
+      'aiwg.requirement': 1,
+      'aiwg.rule': 1,
+      'aiwg.skill': 1,
+      'research.ref': 1,
+    })
+    expect(result.items.map((item) => item.type)).toEqual(['aiwg.skill', 'research.ref'])
+    expect(result.facets.type).toMatchObject({ 'aiwg.skill': 1, 'research.ref': 1 })
+  })
+
+  it('ranks AIWG discovery queries by canonical names, triggers, capabilities, and relaxed tokens', () => {
+    const discoveryIndex: AiwgFortemiIndexExport = {
+      ...index,
+      items: [
+        record('skill:aiwg-doctor', 'aiwg.skill', 'AIWG Doctor', 'Runs diagnostics.', {
+          facets: { trigger: ['check workspace health'], capability: ['doctor status health diagnostics'] },
+          tags: ['health'],
+        }),
+        record('command:address-issues', 'aiwg.command', 'Address Issues', 'Implements tracker issue loops.', {
+          facets: { trigger: ['address the open issues'], capability: ['issue thread implementation loop'] },
+          tags: ['issues'],
+        }),
+        record('docs:path-only', 'docs.page', 'Generated Command Directory', 'Path reference only.', {
+          source: { path: 'commands/address-issues.md', repo_relative_path: 'commands/address-issues.md', locator: 'path' },
+        }),
+      ],
+    }
+
+    const exact = queryAiwgFortemiIndex(discoveryIndex, 'aiwg doctor', {
+      rank: true,
+      includeMatches: true,
+      searchProfile: 'aiwg-discovery',
+    })
+    const trigger = queryAiwgFortemiIndex(discoveryIndex, 'please address the open issues', {
+      rank: true,
+      includeMatches: true,
+      searchProfile: 'aiwg-discovery',
+    })
+
+    expect(exact.items[0].id).toBe('skill:aiwg-doctor')
+    expect(exact.rankedItems?.[0]?.matches?.some((match) => match.reason?.includes('canonical'))).toBe(true)
+    expect(trigger.items[0].id).toBe('command:address-issues')
+    expect(trigger.items.at(-1)?.id).toBe('docs:path-only')
+    expect(trigger.rankedItems?.[0]?.matches?.some((match) => match.reason === 'trigger phrase')).toBe(true)
+  })
+
+  it('queries static AIWG embedding sets semantically, hybrid-ranks with lexical fallback, and reports duplicates', () => {
+    const semanticIndex: AiwgFortemiIndexExport = {
+      ...index,
+      items: [
+        record('aiwg:skill:search', 'aiwg.skill', 'Search Skill', 'Find static index entries.'),
+        record('aiwg:command:search', 'aiwg.command', 'Search Command', 'Run static search.'),
+        record('aiwg:rule:lexical', 'aiwg.rule', 'Lexical Only Rule', 'Lexical fallback without vectors.'),
+        record('research:ref:dedup', 'research.ref', 'Duplicate Research', 'Similar research body.'),
+      ],
+    }
+    const embeddingSet: AiwgStaticEmbeddingSet = {
+      schema_version: 'aiwg.fortemi.embedding.set.v1',
+      id: 'aiwg-static-test',
+      model: 'test-embed',
+      dimensions: 3,
+      generated_at: '2026-01-04T00:00:00.000Z',
+      granularity: 'body',
+      input_hash_algorithm: 'sha256',
+      embeddings: [
+        { record_id: 'aiwg:skill:search', embedding: [1, 0, 0], input_hash: 'hash-skill' },
+        { record_id: 'aiwg:command:search', embedding: [0.95, 0.05, 0], input_hash: 'hash-command' },
+        { record_id: 'research:ref:dedup', embedding: [0, 1, 0], input_hash: 'hash-ref' },
+      ],
+    }
+
+    const validation = validateAiwgStaticEmbeddingSet(embeddingSet)
+    const semantic = queryAiwgSemanticIndex(semanticIndex, embeddingSet, [1, 0, 0], { limit: 2 })
+    const hybrid = queryAiwgHybridIndex(semanticIndex, embeddingSet, 'lexical', [1, 0, 0], { limit: 4 })
+    const duplicates = findAiwgStaticDuplicatePairs(semanticIndex, embeddingSet, 0.94)
+    const invalid = validateAiwgStaticEmbeddingSet({
+      ...embeddingSet,
+      embeddings: [{ record_id: 'aiwg:skill:search', embedding: [1, 0, 0] }],
+    })
+
+    expect(validation).toEqual({ valid: true, errors: [] })
+    expect(semantic.map((entry) => entry.item.id)).toEqual(['aiwg:skill:search', 'aiwg:command:search'])
+    expect(hybrid.map((entry) => entry.item.id)).toContain('aiwg:rule:lexical')
+    expect(hybrid.find((entry) => entry.item.id === 'aiwg:rule:lexical')?.embedding).toBeUndefined()
+    expect(duplicates.map((pair) => [pair.left.id, pair.right.id])).toEqual([['aiwg:skill:search', 'aiwg:command:search']])
+    expect(invalid.errors).toContain('embeddings[0].input_hash is required')
   })
 
   it('returns opt-in ranked results with plain text snippets and matches', () => {
@@ -628,6 +771,54 @@ describe('AIWG Fortemi chunked index — slim/projected parts (#168)', () => {
     expect(detailFetches()).toBe(1)
     await controller.getRecord(chunked.items[0].id)
     expect(detailFetches()).toBe(1) // served from detail cache
+  })
+
+  it('traverses relationships and projects graphs from full and projected chunked indexes', async () => {
+    const graphIndex: AiwgFortemiIndexExport = {
+      ...index,
+      items: [
+        record('aiwg:adr:001', 'aiwg.adr', 'ADR 001', 'Architecture decision.', {
+          relationships: [{ type: 'satisfies', target_id: 'aiwg:requirement:001' }],
+        }),
+        record('aiwg:requirement:001', 'aiwg.requirement', 'Requirement 001', 'Search requirement.', {
+          relationships: [{ type: 'cites', target_id: 'research:ref:001' }],
+        }),
+        record('research:ref:001', 'research.ref', 'REF 001', 'Research reference.'),
+      ],
+    }
+    const controller = createAiwgIndexController(graphIndex)
+    const fullNeighbors = await controller.neighbors('aiwg:requirement:001', { direction: 'both' })
+    expect(fullNeighbors.edges.map((edge) => edge.type).sort()).toEqual(['cites', 'satisfies'])
+
+    const built = buildAiwgChunkedIndex(graphIndex, { partSize: 1, projection })
+    const partsByHref = new Map(built.parts.map((entry) => [entry.href, entry.part]))
+    const detailById = new Map(built.details.map((entry) => [entry.id, entry.record]))
+    let detailFetches = 0
+    const chunkedController = createAiwgIndexController()
+    chunkedController.loadChunkedIndex(
+      built.manifest,
+      async (part) => partsByHref.get(part.href),
+      {
+        detailLoader: async (id) => {
+          detailFetches += 1
+          return detailById.get(id)
+        },
+      },
+    )
+
+    const chunkedNeighbors = await chunkedController.neighbors('aiwg:requirement:001', { direction: 'out', relationshipType: 'cites' })
+    const relationshipSet = await chunkedController.relationshipSet({
+      op: 'union',
+      a: 'aiwg:adr:001',
+      b: 'aiwg:requirement:001',
+      direction: 'out',
+    })
+    const graph = await chunkedController.toCommunityGraphChunked()
+
+    expect(chunkedNeighbors.edges).toEqual([{ source_id: 'aiwg:requirement:001', target_id: 'research:ref:001', type: 'cites' }])
+    expect(relationshipSet.ids).toEqual(['aiwg:requirement:001', 'research:ref:001'])
+    expect(graph.edges.map((edge) => edge.kind).sort()).toEqual(['cites', 'satisfies'])
+    expect(detailFetches).toBeGreaterThan(0)
   })
 
   it('rejects getRecord on a projected index without a detailLoader', async () => {

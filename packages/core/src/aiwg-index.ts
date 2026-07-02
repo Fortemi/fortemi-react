@@ -1,10 +1,12 @@
-export type AiwgFortemiRecordType =
+export type AiwgFortemiKnownRecordType =
   | 'crm.contact'
   | 'crm.organization'
   | 'crm.event'
   | 'crm.interaction'
   | 'aiwg.artifact'
   | 'docs.page'
+
+export type AiwgFortemiRecordType = AiwgFortemiKnownRecordType | `aiwg.${string}` | `research.${string}` | `docs.${string}` | string
 
 export type AiwgPrivacyClassification = 'private' | 'sanitized' | 'public'
 export type AiwgProvenanceConfidence = 'source' | 'candidate' | 'reviewed' | 'rejected'
@@ -174,7 +176,7 @@ export interface AiwgFortemiChunkPart {
 export interface AiwgIndexValidationResult {
   valid: boolean
   errors: string[]
-  counts: Partial<Record<AiwgFortemiRecordType, number>>
+  counts: Partial<Record<string, number>>
 }
 
 export interface AiwgChunkedIndexValidationResult {
@@ -196,6 +198,7 @@ export interface AiwgIndexQueryOptions {
   snippetLength?: number
   weights?: Partial<AiwgIndexQueryWeights>
   includeMatches?: boolean
+  searchProfile?: 'default' | 'aiwg-discovery'
 }
 
 export interface AiwgIndexQueryWeights {
@@ -203,11 +206,16 @@ export interface AiwgIndexQueryWeights {
   text: number
   tag: number
   concept: number
+  facet: number
+  id: number
+  source: number
 }
 
 export interface AiwgIndexQueryMatch {
-  field: 'title' | 'text' | 'tag' | 'concept'
+  field: 'title' | 'text' | 'tag' | 'concept' | 'facet' | 'id' | 'source'
   value: string
+  score?: number
+  reason?: string
 }
 
 export interface AiwgIndexQueryRankedItem {
@@ -290,6 +298,97 @@ export interface AiwgIndexGraphOptions {
   includeDanglingRelationships?: boolean
 }
 
+export type AiwgRelationshipDirection = 'in' | 'out' | 'both'
+export type AiwgRelationshipSetOperation = 'intersection' | 'union' | 'difference'
+
+export interface AiwgRelationshipTraversalOptions {
+  direction?: AiwgRelationshipDirection
+  relationshipType?: string
+  limit?: number
+}
+
+export interface AiwgRelationshipQueryOptions extends AiwgRelationshipTraversalOptions {
+  sourceId?: string
+  targetId?: string
+  type?: string
+}
+
+export interface AiwgRelationshipEdgeSummary {
+  source_id: string
+  target_id: string
+  type: string
+  source_path?: string
+}
+
+export interface AiwgRelationshipNodeSummary {
+  id: string
+  type: AiwgFortemiRecordType
+  title: string
+}
+
+export interface AiwgRelationshipTraversalResult {
+  nodes: AiwgRelationshipNodeSummary[]
+  edges: AiwgRelationshipEdgeSummary[]
+  complete: boolean
+  scannedParts?: number
+  fetchedParts?: number
+}
+
+export interface AiwgRelationshipSetOptions extends AiwgRelationshipTraversalOptions {
+  op: AiwgRelationshipSetOperation
+  a: string
+  b: string
+}
+
+export interface AiwgRelationshipSetResult {
+  ids: string[]
+  op: AiwgRelationshipSetOperation
+}
+
+export interface AiwgStaticEmbeddingRecord {
+  record_id: string
+  embedding: number[]
+  embedding_id?: string
+  granularity?: string
+  input_hash: string
+  source_path?: string
+}
+
+export interface AiwgStaticEmbeddingSet {
+  schema_version: 'aiwg.fortemi.embedding.set.v1'
+  id: string
+  model: string
+  dimensions: number
+  generated_at: string
+  granularity: 'title-summary' | 'body' | 'chunked-body' | string
+  metric?: 'cosine' | 'dot' | 'euclidean'
+  input_hash_algorithm?: string
+  embeddings: AiwgStaticEmbeddingRecord[]
+}
+
+export interface AiwgStaticSemanticQueryOptions {
+  limit?: number
+  offset?: number
+  minScore?: number
+}
+
+export interface AiwgStaticSemanticResult {
+  item: AiwgFortemiRecord
+  score: number
+  embedding?: AiwgStaticEmbeddingRecord
+}
+
+export interface AiwgStaticHybridQueryOptions extends AiwgStaticSemanticQueryOptions, AiwgIndexQueryOptions {
+  lexicalWeight?: number
+  semanticWeight?: number
+}
+
+export interface AiwgStaticDuplicatePair {
+  left: AiwgFortemiRecord
+  right: AiwgFortemiRecord
+  score: number
+}
+
 export interface AiwgReviewInput {
   item_id: string
   action: AiwgReviewAction
@@ -326,8 +425,12 @@ export interface AiwgIndexController {
   // the detailLoader (bounded cache); for a whole-record index/parts, returns the
   // record from loaded data. Rejects if detail is unavailable.
   getRecord(id: string): Promise<AiwgFortemiRecord>
+  neighbors(id: string, options?: AiwgRelationshipTraversalOptions): Promise<AiwgRelationshipTraversalResult>
+  relationshipQuery(options?: AiwgRelationshipQueryOptions): Promise<AiwgRelationshipTraversalResult>
+  relationshipSet(options: AiwgRelationshipSetOptions): Promise<AiwgRelationshipSetResult>
   clearChunkCache(): void
   toCommunityGraph(options?: AiwgIndexGraphOptions): ReturnType<typeof aiwgFortemiIndexToCommunityGraph>
+  toCommunityGraphChunked(options?: AiwgIndexGraphOptions & { onProgress?: (progress: AiwgChunkedIndexProgress) => void }): Promise<ReturnType<typeof aiwgFortemiIndexToCommunityGraph>>
   setReviewDecision(input: AiwgReviewInput): AiwgReviewDecision
   clearReviewDecision(itemId: string): void
   createReviewDecisionExport(generatedAt?: string): AiwgReviewDecisionExport
@@ -350,20 +453,14 @@ const REQUIRED_RECORD_FIELDS: Array<keyof AiwgFortemiRecord> = [
   'updated_at',
 ]
 
-const VALID_TYPES = new Set<AiwgFortemiRecordType>([
-  'crm.contact',
-  'crm.organization',
-  'crm.event',
-  'crm.interaction',
-  'aiwg.artifact',
-  'docs.page',
-])
-
 const DEFAULT_QUERY_WEIGHTS: AiwgIndexQueryWeights = {
   title: 4,
   tag: 3,
   concept: 2,
   text: 1,
+  facet: 2,
+  id: 1,
+  source: 0.25,
 }
 
 function hasString(value: unknown): value is string {
@@ -453,7 +550,7 @@ function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: n
 
 export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidationResult {
   const errors: string[] = []
-  const counts: Partial<Record<AiwgFortemiRecordType, number>> = {}
+  const counts: Partial<Record<string, number>> = {}
   const data = value as Partial<AiwgFortemiIndexExport>
 
   if (data?.schema_version !== 'aiwg.fortemi.index.export.v1') {
@@ -480,7 +577,7 @@ export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidat
       errors.push('items must be sorted by id: ' + previousId + ' before ' + item.id)
     }
     if (hasString(item.id)) previousId = item.id
-    if (!VALID_TYPES.has(item.type)) errors.push('items[' + index + '].type is invalid')
+    if (!hasString(item.type)) errors.push('items[' + index + '].type must be a non-empty string')
     else counts[item.type] = (counts[item.type] ?? 0) + 1
     if (!hasString(item.source?.path)) errors.push('items[' + index + '].source.path is required')
     if (!hasString(item.source?.repo_relative_path)) errors.push('items[' + index + '].source.repo_relative_path is required')
@@ -588,7 +685,7 @@ function validateProjectedRecords(items: Array<Partial<AiwgFortemiRecord>>): str
       errors.push('items must be sorted by id: ' + previousId + ' before ' + item.id)
     }
     if (hasString(item.id)) previousId = item.id
-    if (!item.type || !VALID_TYPES.has(item.type)) errors.push('items[' + index + '].type is invalid')
+    if (!hasString(item.type)) errors.push('items[' + index + '].type must be a non-empty string')
     if (!hasString(item.title)) errors.push('items[' + index + '].title is required')
     if (typeof item.text !== 'string') errors.push('items[' + index + '].text is required')
     if (!item.facets || typeof item.facets !== 'object' || Array.isArray(item.facets)) {
@@ -820,8 +917,116 @@ function queryMatches(item: AiwgFortemiRecord, q: string): AiwgIndexQueryMatch[]
   return matches
 }
 
+const DISCOVERY_STOPWORDS = new Set([
+  'a',
+  'an',
+  'and',
+  'are',
+  'as',
+  'for',
+  'from',
+  'how',
+  'i',
+  'in',
+  'is',
+  'me',
+  'of',
+  'on',
+  'or',
+  'please',
+  'the',
+  'to',
+  'use',
+  'with',
+])
+
+function normalizeDiscoveryText(value: string): string {
+  return value.toLowerCase().replace(/[_/]+/g, ' ').replace(/[^a-z0-9.-]+/g, ' ').trim()
+}
+
+function canonicalDiscoveryName(value: string): string {
+  return normalizeDiscoveryText(value).replace(/[\s.-]+/g, '')
+}
+
+function discoveryTokens(value: string): string[] {
+  return normalizeDiscoveryText(value)
+    .split(/\s+/)
+    .filter((token) => token.length > 1 && !DISCOVERY_STOPWORDS.has(token))
+}
+
+function facetValues(item: AiwgFortemiRecord, names: string[]): string[] {
+  return names.flatMap((name) => item.facets[name] ?? [])
+}
+
+function addDiscoveryMatch(matches: AiwgIndexQueryMatch[], match: AiwgIndexQueryMatch) {
+  if (!matches.some((existing) => existing.field === match.field && existing.value === match.value && existing.reason === match.reason)) {
+    matches.push(match)
+  }
+}
+
+function tokenOverlapScore(tokens: string[], value: string): number {
+  if (tokens.length === 0 || !value) return 0
+  const normalized = normalizeDiscoveryText(value)
+  const hits = tokens.filter((token) => normalized.includes(token)).length
+  return hits / tokens.length
+}
+
+function discoveryMatches(item: AiwgFortemiRecord, query: string): AiwgIndexQueryMatch[] {
+  if (!query) return []
+  const matches: AiwgIndexQueryMatch[] = []
+  const tokens = discoveryTokens(query)
+  const canonicalQuery = canonicalDiscoveryName(query)
+  const idParts = item.id.split(/[:/]/)
+  const names = [
+    item.id,
+    item.title,
+    ...idParts,
+    ...facetValues(item, ['name', 'canonical_name', 'command', 'skill', 'agent', 'rule']),
+  ].filter(Boolean)
+  const triggers = facetValues(item, ['trigger', 'triggers', 'trigger_phrase', 'trigger_phrases'])
+  const capabilities = [
+    ...facetValues(item, ['capability', 'capabilities', 'summary', 'description']),
+    ...item.concepts,
+    ...item.tags,
+  ]
+  const sourceValues = [item.source?.path, item.source?.repo_relative_path, item.source?.locator].filter(Boolean)
+
+  for (const name of names) {
+    const canonicalName = canonicalDiscoveryName(name)
+    if (!canonicalName) continue
+    if (canonicalName === canonicalQuery) {
+      addDiscoveryMatch(matches, { field: 'id', value: name, score: 80, reason: 'exact canonical name' })
+    } else if (canonicalName.includes(canonicalQuery) || canonicalQuery.includes(canonicalName)) {
+      addDiscoveryMatch(matches, { field: 'id', value: name, score: 48, reason: 'near canonical name' })
+    }
+  }
+
+  const titleOverlap = tokenOverlapScore(tokens, item.title)
+  if (titleOverlap > 0) addDiscoveryMatch(matches, { field: 'title', value: item.title, score: 18 * titleOverlap, reason: 'title token overlap' })
+
+  for (const trigger of triggers) {
+    const overlap = tokenOverlapScore(tokens, trigger)
+    if (overlap > 0) addDiscoveryMatch(matches, { field: 'facet', value: trigger, score: 34 * overlap, reason: 'trigger phrase' })
+  }
+
+  for (const capability of capabilities) {
+    const overlap = tokenOverlapScore(tokens, capability)
+    if (overlap > 0) addDiscoveryMatch(matches, { field: 'concept', value: capability, score: 22 * overlap, reason: 'capability overlap' })
+  }
+
+  const textOverlap = tokenOverlapScore(tokens, item.text)
+  if (textOverlap > 0) addDiscoveryMatch(matches, { field: 'text', value: item.text, score: 8 * textOverlap, reason: 'body token overlap' })
+
+  for (const source of sourceValues) {
+    const overlap = tokenOverlapScore(tokens, source)
+    if (overlap > 0) addDiscoveryMatch(matches, { field: 'source', value: source, score: 2 * overlap, reason: 'path overlap' })
+  }
+
+  return matches
+}
+
 function rankMatches(matches: AiwgIndexQueryMatch[], weights: AiwgIndexQueryWeights): number {
-  return matches.reduce((total, match) => total + weights[match.field], 0)
+  return matches.reduce((total, match) => total + (match.score ?? weights[match.field]), 0)
 }
 
 function clipSnippet(value: string, q: string, maxLength: number): string {
@@ -862,7 +1067,12 @@ function createRankedEntries(
   ordinalBase = 0,
 ): AiwgRankedEntry[] {
   const weights = { ...DEFAULT_QUERY_WEIGHTS, ...options.weights }
-  return items.map((item, ordinal) => ({ item, ordinal: ordinalBase + ordinal, matches: queryMatches(item, q) }))
+  const profile = options.searchProfile ?? 'default'
+  return items.map((item, ordinal) => ({
+    item,
+    ordinal: ordinalBase + ordinal,
+    matches: profile === 'aiwg-discovery' ? discoveryMatches(item, q) : queryMatches(item, q),
+  }))
     .filter(({ item, matches }) => {
       if (q && matches.length === 0) return false
       if (options.types && !options.types.includes(item.type)) return false
@@ -922,7 +1132,135 @@ export function queryAiwgFortemiIndex(
   options: AiwgIndexQueryOptions = {},
 ): AiwgIndexQueryResult {
   const q = query.trim().toLowerCase()
-  return createQueryResultFromRankedEntries(createRankedEntries(index.items, q, options), q, options)
+  const entries = createRankedEntries(index.items, q, options)
+  if (entries.length === 0 && q && options.searchProfile === 'aiwg-discovery') {
+    const relaxed = discoveryTokens(q).join(' ')
+    return createQueryResultFromRankedEntries(createRankedEntries(index.items, relaxed, options), relaxed, options)
+  }
+  return createQueryResultFromRankedEntries(entries, q, options)
+}
+
+function cosineSimilarity(left: number[], right: number[]): number {
+  if (left.length !== right.length || left.length === 0) return 0
+  let dot = 0
+  let leftMag = 0
+  let rightMag = 0
+  for (let i = 0; i < left.length; i += 1) {
+    const l = left[i]
+    const r = right[i]
+    dot += l * r
+    leftMag += l * l
+    rightMag += r * r
+  }
+  if (leftMag === 0 || rightMag === 0) return 0
+  return dot / (Math.sqrt(leftMag) * Math.sqrt(rightMag))
+}
+
+export function validateAiwgStaticEmbeddingSet(value: unknown): AiwgChunkedIndexValidationResult {
+  const errors: string[] = []
+  const data = value as Partial<AiwgStaticEmbeddingSet>
+  if (data?.schema_version !== 'aiwg.fortemi.embedding.set.v1') errors.push('schema_version must be aiwg.fortemi.embedding.set.v1')
+  if (!hasString(data?.id)) errors.push('id is required')
+  if (!hasString(data?.model)) errors.push('model is required')
+  if (!hasPositiveInteger(data?.dimensions)) errors.push('dimensions must be a positive integer')
+  if (!hasString(data?.generated_at)) errors.push('generated_at is required')
+  if (!hasString(data?.granularity)) errors.push('granularity is required')
+  if (!Array.isArray(data?.embeddings)) errors.push('embeddings must be an array')
+  for (const [index, embedding] of (data.embeddings ?? []).entries()) {
+    if (!hasString(embedding.record_id)) errors.push('embeddings[' + index + '].record_id is required')
+    if (!hasString(embedding.input_hash)) errors.push('embeddings[' + index + '].input_hash is required')
+    if (!Array.isArray(embedding.embedding)) errors.push('embeddings[' + index + '].embedding must be an array')
+    else if (hasPositiveInteger(data?.dimensions) && embedding.embedding.length !== data.dimensions) {
+      errors.push('embeddings[' + index + '].embedding length must match dimensions')
+    } else if (!embedding.embedding.every((number) => typeof number === 'number' && Number.isFinite(number))) {
+      errors.push('embeddings[' + index + '].embedding must contain finite numbers')
+    }
+  }
+  return { valid: errors.length === 0, errors }
+}
+
+export function assertAiwgStaticEmbeddingSet(value: unknown): AiwgStaticEmbeddingSet {
+  const result = validateAiwgStaticEmbeddingSet(value)
+  if (!result.valid) throw new Error('Invalid AIWG Fortemi embedding set:\n' + result.errors.join('\n'))
+  return value as AiwgStaticEmbeddingSet
+}
+
+export function queryAiwgSemanticIndex(
+  index: AiwgFortemiIndexExport,
+  embeddingSet: AiwgStaticEmbeddingSet,
+  queryEmbedding: number[],
+  options: AiwgStaticSemanticQueryOptions = {},
+): AiwgStaticSemanticResult[] {
+  assertAiwgStaticEmbeddingSet(embeddingSet)
+  if (queryEmbedding.length !== embeddingSet.dimensions) throw new Error('query embedding length must match embedding set dimensions')
+  const byId = new Map(index.items.map((item) => [item.id, item]))
+  const offset = options.offset ?? 0
+  const limit = options.limit ?? 20
+  return embeddingSet.embeddings
+    .map((embedding): AiwgStaticSemanticResult | null => {
+      const item = byId.get(embedding.record_id)
+      if (!item) return null
+      return { item, embedding, score: cosineSimilarity(queryEmbedding, embedding.embedding) }
+    })
+    .filter((result): result is AiwgStaticSemanticResult => result !== null && result.score >= (options.minScore ?? -1))
+    .sort((left, right) => right.score - left.score || left.item.id.localeCompare(right.item.id))
+    .slice(offset, offset + limit)
+}
+
+export function queryAiwgHybridIndex(
+  index: AiwgFortemiIndexExport,
+  embeddingSet: AiwgStaticEmbeddingSet,
+  query: string,
+  queryEmbedding: number[],
+  options: AiwgStaticHybridQueryOptions = {},
+): AiwgStaticSemanticResult[] {
+  const lexical = queryAiwgFortemiIndex(index, query, { ...options, rank: true })
+  const semantic = queryAiwgSemanticIndex(index, embeddingSet, queryEmbedding, { limit: index.items.length })
+  const lexicalWeight = options.lexicalWeight ?? 0.5
+  const semanticWeight = options.semanticWeight ?? 0.5
+  const lexicalScores = new Map(lexical.rankedItems?.map((entry) => [entry.item.id, entry.rank]) ?? [])
+  const maxLexical = Math.max(1, ...lexicalScores.values())
+  const embeddingById = new Map(semantic.flatMap((entry) => entry.embedding ? [[entry.item.id, entry.embedding] as const] : []))
+  const semanticScores = new Map(semantic.map((entry) => [entry.item.id, entry.score]))
+  const ids = new Set([...lexicalScores.keys(), ...semanticScores.keys()])
+  const offset = options.offset ?? 0
+  const limit = options.limit ?? 20
+  return [...ids]
+    .map((id) => {
+      const item = index.items.find((candidate) => candidate.id === id)
+      const embedding = embeddingById.get(id)
+      if (!item) return null
+      return {
+        item,
+        ...(embedding ? { embedding } : {}),
+        score: ((lexicalScores.get(id) ?? 0) / maxLexical) * lexicalWeight + (semanticScores.get(id) ?? 0) * semanticWeight,
+      }
+    })
+    .filter((result): result is AiwgStaticSemanticResult => result !== null && result.score >= (options.minScore ?? -1))
+    .sort((left, right) => right.score - left.score || left.item.id.localeCompare(right.item.id))
+    .slice(offset, offset + limit)
+}
+
+export function findAiwgStaticDuplicatePairs(
+  index: AiwgFortemiIndexExport,
+  embeddingSet: AiwgStaticEmbeddingSet,
+  threshold = 0.9,
+): AiwgStaticDuplicatePair[] {
+  assertAiwgStaticEmbeddingSet(embeddingSet)
+  const byId = new Map(index.items.map((item) => [item.id, item]))
+  const pairs: AiwgStaticDuplicatePair[] = []
+  for (let leftIndex = 0; leftIndex < embeddingSet.embeddings.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < embeddingSet.embeddings.length; rightIndex += 1) {
+      const leftEmbedding = embeddingSet.embeddings[leftIndex]
+      const rightEmbedding = embeddingSet.embeddings[rightIndex]
+      const left = byId.get(leftEmbedding.record_id)
+      const right = byId.get(rightEmbedding.record_id)
+      if (!left || !right) continue
+      const score = cosineSimilarity(leftEmbedding.embedding, rightEmbedding.embedding)
+      if (score >= threshold) pairs.push({ left, right, score })
+    }
+  }
+  return pairs.sort((left, right) => right.score - left.score || left.left.id.localeCompare(right.left.id))
 }
 
 interface AiwgChunkedIndexRuntime {
@@ -1069,6 +1407,127 @@ async function getChunkRecord(runtime: AiwgChunkedIndexRuntime, id: string): Pro
     runtime.detailCache.delete(oldest)
   }
   return record
+}
+
+function relationshipTypeFilter(options?: AiwgRelationshipQueryOptions): string | undefined {
+  return options?.relationshipType ?? options?.type
+}
+
+function edgeFromRelationship(sourceId: string, relationship: AiwgFortemiRelationship): AiwgRelationshipEdgeSummary {
+  return {
+    source_id: sourceId,
+    target_id: relationship.target_id,
+    type: relationship.type,
+    ...(relationship.source_path ? { source_path: relationship.source_path } : {}),
+  }
+}
+
+function relationshipMatches(edge: AiwgRelationshipEdgeSummary, options: AiwgRelationshipQueryOptions = {}): boolean {
+  const type = relationshipTypeFilter(options)
+  const direction = options.direction ?? 'both'
+  if (type && edge.type !== type) return false
+  if (options.sourceId && edge.source_id !== options.sourceId) return false
+  if (options.targetId && edge.target_id !== options.targetId) return false
+  if (direction === 'out' && options.targetId && edge.target_id !== options.targetId) return false
+  if (direction === 'in' && options.sourceId && edge.source_id !== options.sourceId) return false
+  return true
+}
+
+function nodeSummary(item: AiwgFortemiProjectedRecord): AiwgRelationshipNodeSummary {
+  return { id: item.id, type: item.type, title: item.title }
+}
+
+function addNode(nodes: Map<string, AiwgRelationshipNodeSummary>, item: AiwgFortemiProjectedRecord | undefined) {
+  if (item) nodes.set(item.id, nodeSummary(item))
+}
+
+function relationshipResultFromRecords(
+  records: AiwgFortemiProjectedRecord[],
+  options: AiwgRelationshipQueryOptions = {},
+): AiwgRelationshipTraversalResult {
+  const byId = new Map(records.map((record) => [record.id, record]))
+  const edges: AiwgRelationshipEdgeSummary[] = []
+  for (const record of records) {
+    for (const relationship of record.relationships ?? []) {
+      const edge = edgeFromRelationship(record.id, relationship)
+      if (!relationshipMatches(edge, options)) continue
+      edges.push(edge)
+    }
+  }
+  const limitedEdges = (options.limit ? edges.slice(0, options.limit) : edges).sort((left, right) => (
+    left.source_id.localeCompare(right.source_id)
+    || left.target_id.localeCompare(right.target_id)
+    || left.type.localeCompare(right.type)
+  ))
+  const nodes = new Map<string, AiwgRelationshipNodeSummary>()
+  for (const edge of limitedEdges) {
+    addNode(nodes, byId.get(edge.source_id))
+    addNode(nodes, byId.get(edge.target_id))
+  }
+  return {
+    nodes: [...nodes.values()].sort((left, right) => left.id.localeCompare(right.id)),
+    edges: limitedEdges,
+    complete: true,
+  }
+}
+
+function neighborQueryOptions(id: string, options: AiwgRelationshipTraversalOptions = {}): AiwgRelationshipQueryOptions {
+  const direction = options.direction ?? 'both'
+  return {
+    ...options,
+    ...(direction === 'out' ? { sourceId: id } : {}),
+    ...(direction === 'in' ? { targetId: id } : {}),
+  }
+}
+
+function filterNeighborResult(id: string, result: AiwgRelationshipTraversalResult, options: AiwgRelationshipTraversalOptions = {}): AiwgRelationshipTraversalResult {
+  const direction = options.direction ?? 'both'
+  const edges = result.edges.filter((edge) => {
+    if (direction === 'out') return edge.source_id === id
+    if (direction === 'in') return edge.target_id === id
+    return edge.source_id === id || edge.target_id === id
+  })
+  const ids = new Set<string>()
+  for (const edge of edges) {
+    ids.add(edge.source_id)
+    ids.add(edge.target_id)
+  }
+  return {
+    ...result,
+    edges,
+    nodes: result.nodes.filter((node) => ids.has(node.id)),
+  }
+}
+
+async function recordsFromChunkedRuntime(
+  runtime: AiwgChunkedIndexRuntime,
+  onProgress?: (progress: AiwgChunkedIndexProgress) => void,
+): Promise<{ records: AiwgFortemiRecord[]; scannedParts: number; fetchedParts: number }> {
+  let scannedParts = 0
+  let fetchedParts = 0
+  const records: AiwgFortemiRecord[] = []
+  for (const partRef of runtime.manifest.parts) {
+    const loaded = await loadChunkPart(runtime, partRef)
+    if (loaded.fetched) fetchedParts += 1
+    scannedParts += 1
+    onProgress?.({ phase: 'part', done: scannedParts, total: runtime.manifest.parts.length, href: partRef.href })
+    for (const item of loaded.part.items) {
+      records.push(item.relationships ? item : await getChunkRecord(runtime, item.id))
+    }
+  }
+  return { records, scannedParts, fetchedParts }
+}
+
+async function relationshipResultFromChunkedRuntime(
+  runtime: AiwgChunkedIndexRuntime,
+  options: AiwgRelationshipQueryOptions = {},
+): Promise<AiwgRelationshipTraversalResult> {
+  const loaded = await recordsFromChunkedRuntime(runtime)
+  return {
+    ...relationshipResultFromRecords(loaded.records, options),
+    scannedParts: loaded.scannedParts,
+    fetchedParts: loaded.fetchedParts,
+  }
 }
 
 async function queryChunkedAiwgFortemiIndex(
@@ -1278,6 +1737,43 @@ export function createAiwgIndexController(initialIndex?: AiwgFortemiIndexExport)
       if (!found) throw new Error('Record not found: ' + id)
       return found
     },
+    async neighbors(id: string, options?: AiwgRelationshipTraversalOptions): Promise<AiwgRelationshipTraversalResult> {
+      try {
+        const queryOptions = neighborQueryOptions(id, options)
+        const result = chunked
+          ? await relationshipResultFromChunkedRuntime(chunked, queryOptions)
+          : relationshipResultFromRecords(requireIndex().items, queryOptions)
+        return filterNeighborResult(id, result, options)
+      } catch (err) {
+        error = err instanceof Error ? err : new Error(String(err))
+        notify()
+        throw error
+      }
+    },
+    async relationshipQuery(options?: AiwgRelationshipQueryOptions): Promise<AiwgRelationshipTraversalResult> {
+      try {
+        return chunked
+          ? await relationshipResultFromChunkedRuntime(chunked, options)
+          : relationshipResultFromRecords(requireIndex().items, options)
+      } catch (err) {
+        error = err instanceof Error ? err : new Error(String(err))
+        notify()
+        throw error
+      }
+    },
+    async relationshipSet(options: AiwgRelationshipSetOptions): Promise<AiwgRelationshipSetResult> {
+      const [left, right] = await Promise.all([
+        this.neighbors(options.a, options),
+        this.neighbors(options.b, options),
+      ])
+      const leftIds = new Set(left.nodes.map((node) => node.id).filter((id) => id !== options.a))
+      const rightIds = new Set(right.nodes.map((node) => node.id).filter((id) => id !== options.b))
+      let ids: string[]
+      if (options.op === 'intersection') ids = [...leftIds].filter((id) => rightIds.has(id))
+      else if (options.op === 'difference') ids = [...leftIds].filter((id) => !rightIds.has(id))
+      else ids = [...new Set([...leftIds, ...rightIds])]
+      return { op: options.op, ids: ids.sort() }
+    },
     clearChunkCache(): void {
       chunked?.partCache.clear()
       chunked?.detailCache.clear()
@@ -1287,6 +1783,16 @@ export function createAiwgIndexController(initialIndex?: AiwgFortemiIndexExport)
     },
     toCommunityGraph(options?: AiwgIndexGraphOptions) {
       return aiwgFortemiIndexToCommunityGraph(requireIndex(), options)
+    },
+    async toCommunityGraphChunked(options?: AiwgIndexGraphOptions & { onProgress?: (progress: AiwgChunkedIndexProgress) => void }) {
+      if (!chunked) return aiwgFortemiIndexToCommunityGraph(requireIndex(), options)
+      const loaded = await recordsFromChunkedRuntime(chunked, options?.onProgress)
+      return aiwgFortemiIndexToCommunityGraph({
+        schema_version: 'aiwg.fortemi.index.export.v1',
+        generated_at: chunked.manifest.generated_at,
+        source: chunked.manifest.source,
+        items: loaded.records,
+      }, options)
     },
     setReviewDecision(input: AiwgReviewInput): AiwgReviewDecision {
       const decision: AiwgReviewDecision = {
