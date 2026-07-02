@@ -4,6 +4,43 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.7.0 - 2026-07-01
+
+This release expands Fortemi's AIWG static index and bridge-search contracts so
+AIWG discovery, graph traversal, exported embeddings, and semantic/hybrid bridge
+search can share the browser-first `@fortemi/core` surface.
+
+### `@fortemi/core` — AIWG index and search contracts (#213, #214, #215, #216, #217)
+
+- AIWG static index record types are now extensible. Project-specific strings
+  such as `aiwg.skill`, `aiwg.command`, `aiwg.rule`, `aiwg.requirement`, and
+  `research.ref` validate and can be filtered directly without collapsing into
+  `aiwg.artifact`.
+- Added opt-in AIWG discovery ranking with hyphen/space normalization,
+  stopword-stripped verbose queries, trigger/capability weighting, fallback
+  matching, and match reasons for command-palette debugging.
+- Added relationship traversal helpers for full and chunked AIWG indexes,
+  including direction/type filters, neighbor set operations, and chunked
+  community graph projection without forcing full export materialization.
+- Added the `aiwg.fortemi.embedding.set.v1` static embedding sidecar contract,
+  semantic/hybrid query helpers, stale-vector input hashes, and duplicate-pair
+  reporting without adding a model runtime dependency to base core.
+- Exposed bridge search modes `text`, `semantic`, `hybrid`, and `auto` at the
+  tool boundary. Forced semantic/hybrid calls require host-provided
+  `query_embedding`; `auto` falls back to deterministic text search when no
+  embedding is supplied.
+
+### Documentation and release metadata
+
+- Synced API reference, integration docs, deployment CI wording, release note
+  indexes, and runtime version constants with the current code surface.
+
+### Published Packages
+
+- `@fortemi/core@2026.7.0`
+- `@fortemi/graph@2026.7.0`
+- `@fortemi/react@2026.7.0`
+
 ## v2026.6.9 - 2026-06-24
 
 This release upgrades the `@fortemi/graph` community layout into a real deterministic force settlement and refreshes the documentation build tooling.

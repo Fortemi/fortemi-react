@@ -23,6 +23,8 @@ import release20260605 from '../../../../docs/releases/v2026.6.5.md?raw'
 import release20260606 from '../../../../docs/releases/v2026.6.6.md?raw'
 import release20260607 from '../../../../docs/releases/v2026.6.7.md?raw'
 import release20260608 from '../../../../docs/releases/v2026.6.8.md?raw'
+import release20260609 from '../../../../docs/releases/v2026.6.9.md?raw'
+import release20260700 from '../../../../docs/releases/v2026.7.0.md?raw'
 import search from '../../../../docs/search.md?raw'
 import pluginContentSecurity from '../../../../docs/security/plugin-content-security.md?raw'
 import supplyChain from '../../../../docs/security/supply-chain.md?raw'
@@ -75,6 +77,8 @@ export const PROJECT_DOCS: ProjectDoc[] = [
   doc('docs/releases/v2026.6.6.md', release20260606, ['docs:release']),
   doc('docs/releases/v2026.6.7.md', release20260607, ['docs:release']),
   doc('docs/releases/v2026.6.8.md', release20260608, ['docs:release']),
+  doc('docs/releases/v2026.6.9.md', release20260609, ['docs:release']),
+  doc('docs/releases/v2026.7.0.md', release20260700, ['docs:release']),
   doc('docs/search.md', search, ['docs:search']),
   doc('docs/security/plugin-content-security.md', pluginContentSecurity, ['docs:security']),
   doc('docs/security/supply-chain.md', supplyChain, ['docs:security']),

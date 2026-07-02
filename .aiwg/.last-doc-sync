@@ -1,1 +1,1 @@
-2026-06-24 | code-to-docs | scope=CLAUDE.md,packages/graph/README.md | 8 drift items fixed
+2026-07-01 | code-to-docs | scope=packages/** apps/** docs/** README.md CHANGELOG.md | 6 drift items fixed | report=.aiwg/reports/doc-sync-audit-2026-07-01.md

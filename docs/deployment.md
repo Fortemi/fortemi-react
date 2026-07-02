@@ -441,7 +441,7 @@ The Gitea Actions workflow does not set `VITEST_MAX_WORKERS`, so it uses the def
 
 ### End-to-end tests
 
-E2E tests use Playwright and are not part of the default CI pipeline. They require a headed or headless Chromium/Firefox installation:
+E2E tests use Playwright and run in the default Gitea CI pipeline. They require a headed or headless Chromium/Firefox installation:
 
 ```bash
 # Install browser binaries (run once)
@@ -452,7 +452,7 @@ pnpm test:e2e:install
 pnpm test:e2e
 ```
 
-E2E tests are intentionally excluded from the automated pipeline because they require real browser WASM execution and take several minutes. Run them manually before releases or in a dedicated nightly job.
+The CI pipeline runs E2E tests in the Playwright container after `pnpm build`. Run them manually before releases when changing browser storage, PGlite/WASM loading, search, graph, or release wiring.
 
 ---
 
