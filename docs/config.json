@@ -7,6 +7,36 @@
   "accentColor": "#2563EB",
   "domain": "docs.fortemi.com",
   "seo": { "siteUrl": "https://docs.fortemi.com/react" },
+  "layout": "docs",
+  "theme": {
+    "surface": "#0a0f1e",
+    "surfaceAlt": "#111830",
+    "ink": "#e8eef9",
+    "inkMuted": "#9aa8c7",
+    "accent": "#2563EB",
+    "accentHover": "#3b82f6",
+    "border": "#1e2a4a",
+    "codeBackground": "#0d1424"
+  },
+  "pageToc": { "placement": "rail", "minHeadings": 2 },
+  "codeCopy": true,
+  "livingScroll": true,
+  "docsMap": { "enabled": true, "title": "Knowledge Map" },
+  "collections": [
+    {
+      "path": "posts",
+      "route": "/blog",
+      "title": "Blog",
+      "layout": "blog",
+      "manifest": true,
+      "feed": true,
+      "sortBy": "date",
+      "order": "desc",
+      "showDate": true,
+      "showSummary": true,
+      "showReadingTime": true
+    }
+  ],
   "welcome": {
     "eyebrow": "fortemi-react",
     "headline": "Knowledge Management in the Browser",
@@ -24,7 +54,8 @@
     "quickLinks": [
       { "label": "Getting Started", "href": "#getting-started" },
       { "label": "API Reference", "href": "#api-reference" },
-      { "label": "Packages", "href": "#packages/core" }
+      { "label": "Packages", "href": "#packages/core" },
+      { "label": "Blog", "href": "/blog" }
     ]
   }
 }
