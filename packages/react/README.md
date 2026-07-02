@@ -216,11 +216,11 @@ On Linux Chrome, local WebGPU inference commonly needs `--enable-unsafe-webgpu`.
 
 ## Documentation
 
-- [Getting started](https://github.com/Fortemi/fortemi-react/blob/main/docs/getting-started.md)
-- [API reference](https://github.com/Fortemi/fortemi-react/blob/main/docs/api-reference.md#fortemireact)
-- [Integration guide](https://github.com/Fortemi/fortemi-react/blob/main/docs/integration.md)
-- [Search guide](https://github.com/Fortemi/fortemi-react/blob/main/docs/search.md)
-- [Examples](https://github.com/Fortemi/fortemi-react/blob/main/docs/examples.md)
+- [Getting started](https://github.com/Fortemi/fortemi-react/blob/main/docs/content/getting-started.md)
+- [API reference](https://github.com/Fortemi/fortemi-react/blob/main/docs/content/api-reference.md#fortemireact)
+- [Integration guide](https://github.com/Fortemi/fortemi-react/blob/main/docs/content/guides/integration.md)
+- [Search guide](https://github.com/Fortemi/fortemi-react/blob/main/docs/content/guides/search.md)
+- [Examples](https://github.com/Fortemi/fortemi-react/blob/main/docs/content/guides/examples.md)
 
 ## License
 

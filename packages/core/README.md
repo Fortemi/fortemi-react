@@ -281,11 +281,11 @@ pnpm add @fortemi/react @fortemi/core react
 
 ## Documentation
 
-- [Repository API](https://github.com/Fortemi/fortemi-react/blob/main/docs/api-reference.md#repositories)
-- [Integration guide](https://github.com/Fortemi/fortemi-react/blob/main/docs/integration.md)
-- [Search guide](https://github.com/Fortemi/fortemi-react/blob/main/docs/search.md)
-- [Extending Fortemi](https://github.com/Fortemi/fortemi-react/blob/main/docs/extending.md)
-- [Supply-chain controls](https://github.com/Fortemi/fortemi-react/blob/main/docs/security/supply-chain.md)
+- [Repository API](https://github.com/Fortemi/fortemi-react/blob/main/docs/content/api-reference.md#repositories)
+- [Integration guide](https://github.com/Fortemi/fortemi-react/blob/main/docs/content/guides/integration.md)
+- [Search guide](https://github.com/Fortemi/fortemi-react/blob/main/docs/content/guides/search.md)
+- [Extending Fortemi](https://github.com/Fortemi/fortemi-react/blob/main/docs/content/advanced/extending.md)
+- [Supply-chain controls](https://github.com/Fortemi/fortemi-react/blob/main/docs/content/security/supply-chain.md)
 
 ## License
 

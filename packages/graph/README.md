@@ -234,8 +234,7 @@ Community *detection* lives in `@fortemi/core` (the base layer); this package on
 
 | Guide | Description |
 |---|---|
-| [API Reference](https://github.com/Fortemi/fortemi-react/blob/main/docs/api-reference.md) | Full `@fortemi/graph`, `@fortemi/core`, and `@fortemi/react` surface |
-| [Package Architecture](https://github.com/Fortemi/fortemi-react/blob/main/docs/architecture/package-architecture.md) | Diagram and capability tables for each package and how they layer |
+| [API Reference](https://github.com/Fortemi/fortemi-react/blob/main/docs/content/api-reference.md) | Full `@fortemi/graph`, `@fortemi/core`, and `@fortemi/react` surface |
 
 ## React Bindings
 

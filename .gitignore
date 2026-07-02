@@ -10,4 +10,4 @@ apps/standalone/test-results/
 .codex/
 
 # docsite (pagenary): generated per-package pages (READMEs are the source of truth)
-docs/packages/
+docs/content/packages/

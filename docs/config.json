@@ -5,6 +5,7 @@
   "tagline": "Browser-only knowledge management for React.",
   "description": "Documentation for the fortemi-react packages — @fortemi/core, @fortemi/graph, and @fortemi/react: PGlite data layer, hybrid search, SKOS tagging, and graph tooling.",
   "accentColor": "#2563EB",
+  "language": "en",
   "domain": "docs.fortemi.com",
   "seo": { "siteUrl": "https://docs.fortemi.com/react" },
   "layout": "docs",
@@ -36,26 +37,5 @@
       "showSummary": true,
       "showReadingTime": true
     }
-  ],
-  "welcome": {
-    "eyebrow": "fortemi-react",
-    "headline": "Knowledge Management in the Browser",
-    "lead": "A React port of Fortémi: a PGlite (PostgreSQL WASM) data layer, hybrid semantic search, W3C SKOS tagging, and graph tooling — with 100% JSON format parity with the Fortémi Rust server.",
-    "pillars": [
-      "@fortemi/core — browser-only data layer: PGlite, single-writer worker, MCP tools, job queue, and hybrid search.",
-      "@fortemi/graph — framework-agnostic community-graph layout, filtering, neighborhood expansion, and snapshot serialization.",
-      "@fortemi/react — React 19 hooks and FortemiProvider (30 hooks) over @fortemi/core."
-    ],
-    "checklist": [
-      "Install @fortemi/react and wrap your app in FortemiProvider.",
-      "Use hooks for notes, hybrid search, tags, collections, and SKOS concepts.",
-      "Import/export Knowledge Shards for parity with the Fortémi server."
-    ],
-    "quickLinks": [
-      { "label": "Getting Started", "href": "#getting-started" },
-      { "label": "API Reference", "href": "#api-reference" },
-      { "label": "Packages", "href": "#packages/core" },
-      { "label": "Blog", "href": "/blog" }
-    ]
-  }
+  ]
 }

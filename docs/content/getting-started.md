@@ -364,7 +364,7 @@ interface SearchResult {
 }
 ```
 
-Additional search hooks: `useSearchHistory()` persists recent queries to localStorage, and `useSearchSuggestions(history)` provides prefix-matched autocomplete from the note vocabulary. See [Search](./search.md) for details.
+Additional search hooks: `useSearchHistory()` persists recent queries to localStorage, and `useSearchSuggestions(history)` provides prefix-matched autocomplete from the note vocabulary. See [Search](./guides/search.md) for details.
 
 ---
 

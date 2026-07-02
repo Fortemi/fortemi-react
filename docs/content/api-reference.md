@@ -1302,7 +1302,7 @@ function registerSemanticCapabilityWorker(
 ): void
 ```
 
-Register the semantic capability backed by an off-main-thread transport, so embedding model load and per-query inference never touch the main thread (#180). Core round-trips each `{ texts }` request to the host-owned worker and awaits `number[][]`. Pairs with `handleEmbedRequests(port, embed)` (worker side) and `createWorkerEmbedFunction(port, options?)` (the lower-level primitive). Additive and opt-in; the main-thread `registerSemanticCapability` path is unchanged. See [Integration → Off-main-thread embedding transport](./integration.md#off-main-thread-embedding-transport).
+Register the semantic capability backed by an off-main-thread transport, so embedding model load and per-query inference never touch the main thread (#180). Core round-trips each `{ texts }` request to the host-owned worker and awaits `number[][]`. Pairs with `handleEmbedRequests(port, embed)` (worker side) and `createWorkerEmbedFunction(port, options?)` (the lower-level primitive). Additive and opt-in; the main-thread `registerSemanticCapability` path is unchanged. See [Integration → Off-main-thread embedding transport](./guides/integration.md#off-main-thread-embedding-transport).
 
 ---
 
