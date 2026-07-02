@@ -4,6 +4,21 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+### `@fortemi/core` — AIWG index export v2 compatibility (#219, #220)
+
+- `@fortemi/core/aiwg-index` now accepts both v1 and v2 AIWG static export
+  envelopes and record schema versions, including v2 all-domain record types,
+  source projection metadata, `search`, `chunks`, `embeddings`,
+  `privacy.locality`, and compatibility metadata.
+- Query helpers consume v2 `search` and `chunks` projections without requiring
+  AIWG domain records to collapse back to `aiwg.artifact`.
+- Relationship traversal preserves v2 `target_path` and
+  `direction: upstream | downstream | related` fields, and adds
+  `relationshipDirection` filtering alongside existing graph
+  `direction: in | out | both` traversal.
+- Added whole-index and chunked traversal coverage for dependency,
+  citation/profile, KB, and memory graph cases while keeping v1 fixtures valid.
+
 ## v2026.7.0 - 2026-07-01
 
 This release expands Fortemi's AIWG static index and bridge-search contracts so

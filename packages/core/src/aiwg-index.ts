@@ -8,20 +8,29 @@ export type AiwgFortemiKnownRecordType =
 
 export type AiwgFortemiRecordType = AiwgFortemiKnownRecordType | `aiwg.${string}` | `research.${string}` | `docs.${string}` | string
 
+export type AiwgFortemiRecordSchemaVersion = 'aiwg.fortemi.index.record.v1' | 'aiwg.fortemi.index.record.v2'
+export type AiwgFortemiIndexExportSchemaVersion = 'aiwg.fortemi.index.export.v1' | 'aiwg.fortemi.index.export.v2'
 export type AiwgPrivacyClassification = 'private' | 'sanitized' | 'public'
 export type AiwgProvenanceConfidence = 'source' | 'candidate' | 'reviewed' | 'rejected'
 export type AiwgReviewAction = 'accept' | 'reject' | 'defer'
+export type AiwgFortemiRelationshipDirection = 'upstream' | 'downstream' | 'related'
 
 export interface AiwgFortemiRecordSource {
   path: string
   repo_relative_path: string
   locator: string
+  origin?: string
+  generated?: boolean
+  checksum?: string
+  updated_at?: string
 }
 
 export interface AiwgFortemiRelationship {
   type: string
   target_id: string
   source_path?: string
+  target_path?: string
+  direction?: AiwgFortemiRelationshipDirection
   label?: string
   confidence?: number
   privacy?: AiwgPrivacyClassification
@@ -70,18 +79,56 @@ export interface AiwgFortemiProvenanceEvent {
   attributes?: Record<string, unknown>
 }
 
+export interface AiwgFortemiSearchProjection {
+  title?: string
+  name?: string
+  summary?: string
+  body?: string
+  triggers?: string[]
+  aliases?: string[]
+  capability?: string
+  tags?: string[]
+  phase?: string
+  type?: string
+  frontmatter?: Record<string, unknown>
+}
+
+export interface AiwgFortemiChunk {
+  id?: string
+  text?: string
+  body?: string
+  summary?: string
+  source_path?: string
+  metadata?: Record<string, unknown>
+}
+
+export interface AiwgFortemiRecordEmbedding {
+  id?: string
+  embedding?: number[]
+  vector?: number[]
+  model?: string
+  granularity?: string
+  input_hash?: string
+  source_path?: string
+  metadata?: Record<string, unknown>
+}
+
 export interface AiwgFortemiRecord {
-  schema_version: 'aiwg.fortemi.index.record.v1'
+  schema_version: AiwgFortemiRecordSchemaVersion
   id: string
   type: AiwgFortemiRecordType
   source: AiwgFortemiRecordSource
-  title: string
-  text: string
+  title?: string
+  text?: string
   facets: Record<string, string[]>
   tags: string[]
   concepts: string[]
   relationships: AiwgFortemiRelationship[]
   provenance: AiwgFortemiProvenance[]
+  search?: AiwgFortemiSearchProjection
+  chunks?: AiwgFortemiChunk[]
+  embeddings?: AiwgFortemiRecordEmbedding[]
+  compatibility?: Record<string, unknown>
   /** Optional rich SKOS metadata for static consumers that need labels/definitions without opening a shard. */
   skos_concepts?: AiwgFortemiSkosConcept[]
   /** Optional SKOS relationship edges among concepts referenced by this record. */
@@ -91,18 +138,24 @@ export interface AiwgFortemiRecord {
   privacy: {
     classification: AiwgPrivacyClassification
     pii: boolean
+    locality?: string
   }
   updated_at: string
 }
 
 export interface AiwgFortemiIndexExport {
-  schema_version: 'aiwg.fortemi.index.export.v1'
+  schema_version: AiwgFortemiIndexExportSchemaVersion
   generated_at: string
   source: {
     repo: string
     privacy: AiwgPrivacyClassification
+    origin?: string
+    generated?: boolean
+    checksum?: string
+    updated_at?: string
   }
   items: AiwgFortemiRecord[]
+  compatibility?: Record<string, unknown>
 }
 
 export interface AiwgFortemiChunkPartRef {
@@ -304,6 +357,7 @@ export type AiwgRelationshipSetOperation = 'intersection' | 'union' | 'differenc
 export interface AiwgRelationshipTraversalOptions {
   direction?: AiwgRelationshipDirection
   relationshipType?: string
+  relationshipDirection?: AiwgFortemiRelationshipDirection
   limit?: number
 }
 
@@ -318,6 +372,8 @@ export interface AiwgRelationshipEdgeSummary {
   target_id: string
   type: string
   source_path?: string
+  target_path?: string
+  direction?: AiwgFortemiRelationshipDirection
 }
 
 export interface AiwgRelationshipNodeSummary {
@@ -442,8 +498,6 @@ const REQUIRED_RECORD_FIELDS: Array<keyof AiwgFortemiRecord> = [
   'id',
   'type',
   'source',
-  'title',
-  'text',
   'facets',
   'tags',
   'concepts',
@@ -498,6 +552,14 @@ function isOptionalStringArray(value: unknown): boolean {
   return value === undefined || (Array.isArray(value) && value.every((item) => typeof item === 'string'))
 }
 
+function isSupportedIndexSchemaVersion(value: unknown): value is AiwgFortemiIndexExportSchemaVersion {
+  return value === 'aiwg.fortemi.index.export.v1' || value === 'aiwg.fortemi.index.export.v2'
+}
+
+function isSupportedRecordSchemaVersion(value: unknown): value is AiwgFortemiRecordSchemaVersion {
+  return value === 'aiwg.fortemi.index.record.v1' || value === 'aiwg.fortemi.index.record.v2'
+}
+
 function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: number, errors: string[]): void {
   if (item.skos_concepts !== undefined) {
     if (!Array.isArray(item.skos_concepts)) {
@@ -544,7 +606,61 @@ function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: n
       if (relationship.metadata !== undefined && !isPlainRecord(relationship.metadata)) {
         errors.push('items[' + index + '].relationships[' + relationshipIndex + '].metadata must be an object')
       }
+      if (
+        relationship.direction !== undefined &&
+        relationship.direction !== 'upstream' &&
+        relationship.direction !== 'downstream' &&
+        relationship.direction !== 'related'
+      ) {
+        errors.push('items[' + index + '].relationships[' + relationshipIndex + '].direction must be upstream, downstream, or related')
+      }
+      if (relationship.target_path !== undefined && typeof relationship.target_path !== 'string') {
+        errors.push('items[' + index + '].relationships[' + relationshipIndex + '].target_path must be a string')
+      }
     }
+  }
+  if (item.search !== undefined) {
+    if (!isPlainRecord(item.search)) {
+      errors.push('items[' + index + '].search must be an object')
+    } else {
+      if (!isOptionalStringArray(item.search.triggers)) errors.push('items[' + index + '].search.triggers must be a string array')
+      if (!isOptionalStringArray(item.search.aliases)) errors.push('items[' + index + '].search.aliases must be a string array')
+      if (!isOptionalStringArray(item.search.tags)) errors.push('items[' + index + '].search.tags must be a string array')
+      if (item.search.frontmatter !== undefined && !isPlainRecord(item.search.frontmatter)) {
+        errors.push('items[' + index + '].search.frontmatter must be an object')
+      }
+    }
+  }
+  if (item.chunks !== undefined) {
+    if (!Array.isArray(item.chunks)) {
+      errors.push('items[' + index + '].chunks must be an array when present')
+    } else {
+      for (const [chunkIndex, chunk] of item.chunks.entries()) {
+        if (!isPlainRecord(chunk)) errors.push('items[' + index + '].chunks[' + chunkIndex + '] must be an object')
+        if (chunk.metadata !== undefined && !isPlainRecord(chunk.metadata)) {
+          errors.push('items[' + index + '].chunks[' + chunkIndex + '].metadata must be an object')
+        }
+      }
+    }
+  }
+  if (item.embeddings !== undefined) {
+    if (!Array.isArray(item.embeddings)) {
+      errors.push('items[' + index + '].embeddings must be an array when present')
+    } else {
+      for (const [embeddingIndex, embedding] of item.embeddings.entries()) {
+        if (!isPlainRecord(embedding)) errors.push('items[' + index + '].embeddings[' + embeddingIndex + '] must be an object')
+        const vector = embedding.embedding ?? embedding.vector
+        if (vector !== undefined && (!Array.isArray(vector) || !vector.every((entry) => typeof entry === 'number'))) {
+          errors.push('items[' + index + '].embeddings[' + embeddingIndex + '].embedding/vector must be a number array')
+        }
+        if (embedding.metadata !== undefined && !isPlainRecord(embedding.metadata)) {
+          errors.push('items[' + index + '].embeddings[' + embeddingIndex + '].metadata must be an object')
+        }
+      }
+    }
+  }
+  if (item.compatibility !== undefined && !isPlainRecord(item.compatibility)) {
+    errors.push('items[' + index + '].compatibility must be an object')
   }
 }
 
@@ -553,13 +669,16 @@ export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidat
   const counts: Partial<Record<string, number>> = {}
   const data = value as Partial<AiwgFortemiIndexExport>
 
-  if (data?.schema_version !== 'aiwg.fortemi.index.export.v1') {
-    errors.push('schema_version must be aiwg.fortemi.index.export.v1')
+  if (!isSupportedIndexSchemaVersion(data?.schema_version)) {
+    errors.push('schema_version must be aiwg.fortemi.index.export.v1 or aiwg.fortemi.index.export.v2')
   }
   if (!hasString(data?.generated_at)) errors.push('generated_at is required')
   if (!hasString(data?.source?.repo)) errors.push('source.repo is required')
   if (!hasString(data?.source?.privacy)) errors.push('source.privacy is required')
   if (!Array.isArray(data?.items)) errors.push('items must be an array')
+  if (data.compatibility !== undefined && !isPlainRecord(data.compatibility)) {
+    errors.push('compatibility must be an object')
+  }
 
   const ids = new Set<string>()
   let previousId = ''
@@ -567,8 +686,8 @@ export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidat
     for (const field of REQUIRED_RECORD_FIELDS) {
       if (!(field in item)) errors.push('items[' + index + '].' + field + ' is required')
     }
-    if (item.schema_version !== 'aiwg.fortemi.index.record.v1') {
-      errors.push('items[' + index + '].schema_version must be aiwg.fortemi.index.record.v1')
+    if (!isSupportedRecordSchemaVersion(item.schema_version)) {
+      errors.push('items[' + index + '].schema_version must be aiwg.fortemi.index.record.v1 or aiwg.fortemi.index.record.v2')
     }
     if (!hasString(item.id)) errors.push('items[' + index + '].id is required')
     if (hasString(item.id) && ids.has(item.id)) errors.push('duplicate id: ' + item.id)
@@ -582,6 +701,12 @@ export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidat
     if (!hasString(item.source?.path)) errors.push('items[' + index + '].source.path is required')
     if (!hasString(item.source?.repo_relative_path)) errors.push('items[' + index + '].source.repo_relative_path is required')
     if (!hasString(item.source?.locator)) errors.push('items[' + index + '].source.locator is required')
+    if (typeof item.title !== 'string' && typeof item.search?.title !== 'string' && typeof item.search?.name !== 'string') {
+      errors.push('items[' + index + '].title or search.title/search.name is required')
+    }
+    if (typeof item.text !== 'string' && typeof item.search?.body !== 'string' && typeof item.search?.summary !== 'string') {
+      errors.push('items[' + index + '].text or search.body/search.summary is required')
+    }
     if (!Array.isArray(item.tags)) errors.push('items[' + index + '].tags must be an array')
     if (!Array.isArray(item.concepts)) errors.push('items[' + index + '].concepts must be an array')
     if (!Array.isArray(item.relationships)) errors.push('items[' + index + '].relationships must be an array')
@@ -675,8 +800,8 @@ function validateProjectedRecords(items: Array<Partial<AiwgFortemiRecord>>): str
   const ids = new Set<string>()
   let previousId = ''
   for (const [index, item] of items.entries()) {
-    if (item.schema_version !== 'aiwg.fortemi.index.record.v1') {
-      errors.push('items[' + index + '].schema_version must be aiwg.fortemi.index.record.v1')
+    if (!isSupportedRecordSchemaVersion(item.schema_version)) {
+      errors.push('items[' + index + '].schema_version must be aiwg.fortemi.index.record.v1 or aiwg.fortemi.index.record.v2')
     }
     if (!hasString(item.id)) errors.push('items[' + index + '].id is required')
     if (hasString(item.id) && ids.has(item.id)) errors.push('duplicate id: ' + item.id)
@@ -686,8 +811,12 @@ function validateProjectedRecords(items: Array<Partial<AiwgFortemiRecord>>): str
     }
     if (hasString(item.id)) previousId = item.id
     if (!hasString(item.type)) errors.push('items[' + index + '].type must be a non-empty string')
-    if (!hasString(item.title)) errors.push('items[' + index + '].title is required')
-    if (typeof item.text !== 'string') errors.push('items[' + index + '].text is required')
+    if (typeof item.title !== 'string' && typeof item.search?.title !== 'string' && typeof item.search?.name !== 'string') {
+      errors.push('items[' + index + '].title or search.title/search.name is required')
+    }
+    if (typeof item.text !== 'string' && typeof item.search?.body !== 'string' && typeof item.search?.summary !== 'string') {
+      errors.push('items[' + index + '].text or search.body/search.summary is required')
+    }
     if (!item.facets || typeof item.facets !== 'object' || Array.isArray(item.facets)) {
       errors.push('items[' + index + '].facets must be an object')
     }
@@ -809,6 +938,45 @@ export function getAiwgFortemiFacets(items: AiwgFortemiRecord[]): Record<string,
   return result
 }
 
+function recordTitle(item: AiwgFortemiProjectedRecord): string {
+  return item.title ?? item.search?.title ?? item.search?.name ?? item.id
+}
+
+function recordText(item: AiwgFortemiProjectedRecord): string {
+  return item.text
+    ?? item.search?.body
+    ?? item.search?.summary
+    ?? item.chunks?.map((chunk) => chunk.text ?? chunk.body ?? chunk.summary ?? '').filter(Boolean).join('\n')
+    ?? ''
+}
+
+function recordSearchValues(item: AiwgFortemiProjectedRecord): string[] {
+  const search = item.search
+  const values = [
+    item.id,
+    recordTitle(item),
+    recordText(item),
+    search?.title,
+    search?.name,
+    search?.summary,
+    search?.body,
+    search?.capability,
+    search?.phase,
+    search?.type,
+    ...(search?.triggers ?? []),
+    ...(search?.aliases ?? []),
+    ...(search?.tags ?? []),
+    ...(item.chunks ?? []).flatMap((chunk) => [chunk.text, chunk.body, chunk.summary, chunk.source_path]),
+  ]
+  if (search?.frontmatter) {
+    for (const value of Object.values(search.frontmatter)) {
+      if (typeof value === 'string') values.push(value)
+      else if (Array.isArray(value)) values.push(...value.filter((entry): entry is string => typeof entry === 'string'))
+    }
+  }
+  return values.filter((value): value is string => typeof value === 'string' && value.length > 0)
+}
+
 export interface AiwgChunkedIndexBuildOptions {
   partSize?: number
   // When set, scan parts carry only these fields; full records go to `details`.
@@ -906,13 +1074,20 @@ function matchesFacetFilters(item: AiwgFortemiRecord, filters: Record<string, st
 function queryMatches(item: AiwgFortemiRecord, q: string): AiwgIndexQueryMatch[] {
   if (!q) return []
   const matches: AiwgIndexQueryMatch[] = []
-  if (item.title.toLowerCase().includes(q)) matches.push({ field: 'title', value: item.title })
-  if (item.text.toLowerCase().includes(q)) matches.push({ field: 'text', value: item.text })
+  const title = recordTitle(item)
+  const text = recordText(item)
+  if (title.toLowerCase().includes(q)) matches.push({ field: 'title', value: title })
+  if (text.toLowerCase().includes(q)) matches.push({ field: 'text', value: text })
   for (const tag of item.tags) {
     if (tag.toLowerCase().includes(q)) matches.push({ field: 'tag', value: tag })
   }
   for (const concept of item.concepts) {
     if (concept.toLowerCase().includes(q)) matches.push({ field: 'concept', value: concept })
+  }
+  for (const value of recordSearchValues(item)) {
+    if (value !== title && value !== text && value.toLowerCase().includes(q)) {
+      matches.push({ field: 'text', value, score: DEFAULT_QUERY_WEIGHTS.text })
+    }
   }
   return matches
 }
@@ -979,17 +1154,28 @@ function discoveryMatches(item: AiwgFortemiRecord, query: string): AiwgIndexQuer
   const idParts = item.id.split(/[:/]/)
   const names = [
     item.id,
-    item.title,
+    recordTitle(item),
+    item.search?.name,
+    item.search?.title,
+    ...(item.search?.aliases ?? []),
     ...idParts,
     ...facetValues(item, ['name', 'canonical_name', 'command', 'skill', 'agent', 'rule']),
-  ].filter(Boolean)
-  const triggers = facetValues(item, ['trigger', 'triggers', 'trigger_phrase', 'trigger_phrases'])
+  ].filter((value): value is string => hasString(value))
+  const triggers = [
+    ...facetValues(item, ['trigger', 'triggers', 'trigger_phrase', 'trigger_phrases']),
+    ...(item.search?.triggers ?? []),
+  ]
   const capabilities = [
     ...facetValues(item, ['capability', 'capabilities', 'summary', 'description']),
+    item.search?.capability,
+    item.search?.summary,
+    item.search?.phase,
+    item.search?.type,
+    ...(item.search?.tags ?? []),
     ...item.concepts,
     ...item.tags,
-  ]
-  const sourceValues = [item.source?.path, item.source?.repo_relative_path, item.source?.locator].filter(Boolean)
+  ].filter((value): value is string => hasString(value))
+  const sourceValues = [item.source?.path, item.source?.repo_relative_path, item.source?.locator].filter((value): value is string => hasString(value))
 
   for (const name of names) {
     const canonicalName = canonicalDiscoveryName(name)
@@ -1001,8 +1187,9 @@ function discoveryMatches(item: AiwgFortemiRecord, query: string): AiwgIndexQuer
     }
   }
 
-  const titleOverlap = tokenOverlapScore(tokens, item.title)
-  if (titleOverlap > 0) addDiscoveryMatch(matches, { field: 'title', value: item.title, score: 18 * titleOverlap, reason: 'title token overlap' })
+  const title = recordTitle(item)
+  const titleOverlap = tokenOverlapScore(tokens, title)
+  if (titleOverlap > 0) addDiscoveryMatch(matches, { field: 'title', value: title, score: 18 * titleOverlap, reason: 'title token overlap' })
 
   for (const trigger of triggers) {
     const overlap = tokenOverlapScore(tokens, trigger)
@@ -1014,8 +1201,9 @@ function discoveryMatches(item: AiwgFortemiRecord, query: string): AiwgIndexQuer
     if (overlap > 0) addDiscoveryMatch(matches, { field: 'concept', value: capability, score: 22 * overlap, reason: 'capability overlap' })
   }
 
-  const textOverlap = tokenOverlapScore(tokens, item.text)
-  if (textOverlap > 0) addDiscoveryMatch(matches, { field: 'text', value: item.text, score: 8 * textOverlap, reason: 'body token overlap' })
+  const text = recordText(item)
+  const textOverlap = tokenOverlapScore(tokens, text)
+  if (textOverlap > 0) addDiscoveryMatch(matches, { field: 'text', value: text, score: 8 * textOverlap, reason: 'body token overlap' })
 
   for (const source of sourceValues) {
     const overlap = tokenOverlapScore(tokens, source)
@@ -1050,7 +1238,7 @@ function createSnippet(item: AiwgFortemiRecord, matches: AiwgIndexQueryMatch[], 
   const textMatch = matches.find((match) => match.field === 'text')
   const titleMatch = matches.find((match) => match.field === 'title')
   const firstMatch = textMatch ?? titleMatch ?? matches[0]
-  return clipSnippet(firstMatch?.value ?? item.text, q, maxLength)
+  return clipSnippet(firstMatch?.value ?? recordText(item), q, maxLength)
 }
 
 interface AiwgRankedEntry {
@@ -1419,6 +1607,8 @@ function edgeFromRelationship(sourceId: string, relationship: AiwgFortemiRelatio
     target_id: relationship.target_id,
     type: relationship.type,
     ...(relationship.source_path ? { source_path: relationship.source_path } : {}),
+    ...(relationship.target_path ? { target_path: relationship.target_path } : {}),
+    ...(relationship.direction ? { direction: relationship.direction } : {}),
   }
 }
 
@@ -1426,6 +1616,7 @@ function relationshipMatches(edge: AiwgRelationshipEdgeSummary, options: AiwgRel
   const type = relationshipTypeFilter(options)
   const direction = options.direction ?? 'both'
   if (type && edge.type !== type) return false
+  if (options.relationshipDirection && edge.direction !== options.relationshipDirection) return false
   if (options.sourceId && edge.source_id !== options.sourceId) return false
   if (options.targetId && edge.target_id !== options.targetId) return false
   if (direction === 'out' && options.targetId && edge.target_id !== options.targetId) return false
@@ -1434,7 +1625,7 @@ function relationshipMatches(edge: AiwgRelationshipEdgeSummary, options: AiwgRel
 }
 
 function nodeSummary(item: AiwgFortemiProjectedRecord): AiwgRelationshipNodeSummary {
-  return { id: item.id, type: item.type, title: item.title }
+  return { id: item.id, type: item.type, title: recordTitle(item) }
 }
 
 function addNode(nodes: Map<string, AiwgRelationshipNodeSummary>, item: AiwgFortemiProjectedRecord | undefined) {
