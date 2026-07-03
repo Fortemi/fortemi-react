@@ -4,6 +4,11 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.7.1 - 2026-07-02
+
+This release makes Fortemi's AIWG static index adapter compatible with the
+AIWG #1664 v2 export contract while preserving the existing v1 consumer surface.
+
 ### `@fortemi/core` — AIWG index export v2 compatibility (#219, #220)
 
 - `@fortemi/core/aiwg-index` now accepts both v1 and v2 AIWG static export
@@ -18,6 +23,17 @@ All notable changes to fortemi-react are documented here.
   `direction: in | out | both` traversal.
 - Added whole-index and chunked traversal coverage for dependency,
   citation/profile, KB, and memory graph cases while keeping v1 fixtures valid.
+
+### Release metadata
+
+- Synced package versions, runtime `VERSION` constants, docs references, and
+  release notes for `2026.7.1`.
+
+### Published Packages
+
+- `@fortemi/core@2026.7.1`
+- `@fortemi/graph@2026.7.1`
+- `@fortemi/react@2026.7.1`
 
 ## v2026.7.0 - 2026-07-01
 
