@@ -9,8 +9,31 @@
   "domain": "docs.fortemi.com",
   "seo": {
     "siteUrl": "https://docs.fortemi.com/react",
+    "discoverabilityProfile": "open",
+    "generateSitemap": true,
     "generateStaticPages": true,
-    "rootHtmlFallback": true
+    "rootHtmlFallback": true,
+    "generateRobotsTxt": true,
+    "generateLlmsTxt": true,
+    "generateCorpusArtifacts": true,
+    "noIndex": false,
+    "aiCrawlers": {
+      "search": true,
+      "aiInput": true,
+      "aiTrain": true
+    },
+    "robots": {
+      "allow": ["/react/", "/react/pages/", "/react/content-index.json", "/react/documents.jsonl", "/react/llms.txt", "/react/llms-full.txt"],
+      "disallow": ["/react/sections/", "/react/lib/", "/react/vendor/"],
+      "sitemap": true
+    },
+    "structuredData": {
+      "organizationName": "Fortémi"
+    }
+  },
+  "accessibility": {
+    "strict": true,
+    "report": { "enabled": true }
   },
   "layout": "docs",
   "theme": {
