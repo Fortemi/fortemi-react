@@ -389,7 +389,7 @@ class SearchRepository {
 The `search()` method routing logic:
 - Query text + embedding = **hybrid** (RRF fusion)
 - Embedding only (empty query) = **semantic** (vector cosine)
-- Query text only = **text** (BM25 tsvector)
+- Query text without embedding = **text** (BM25 tsvector)
 - Empty query, no embedding = **recent notes** (ordered by created_at DESC)
 
 #### `buildNoteConditions()`
