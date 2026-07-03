@@ -7,7 +7,11 @@
   "accentColor": "#2563EB",
   "language": "en",
   "domain": "docs.fortemi.com",
-  "seo": { "siteUrl": "https://docs.fortemi.com/react" },
+  "seo": {
+    "siteUrl": "https://docs.fortemi.com/react",
+    "generateStaticPages": true,
+    "rootHtmlFallback": true
+  },
   "layout": "docs",
   "theme": {
     "surface": "#0a0f1e",
