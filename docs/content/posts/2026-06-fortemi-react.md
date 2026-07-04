@@ -5,9 +5,14 @@ date: 2026-06-01
 author: Fortémi Team
 summary: "The Fortemi memory server now runs in your browser three ways — from a database, from plain files with no database, and from a ready-made snapshot — plus a new graph package and a docs site."
 tags: [report, fortemi-react, "2026-06", agent-memory]
+hero: "https://docs.fortemi.com/react/assets/images/posts/2026-06/fortemi-react-1600x900.png"
 ---
 
 # fortemi-react — June 2026
+
+![The same memory service rendered as a glowing knowledge node-graph inside a browser window on a laptop — local-first, no server, private on the device.](https://docs.fortemi.com/react/assets/images/posts/2026-06/fortemi-react-1600x900.png)
+
+*Hero image: AI-generated with ChatGPT from a brand-specified prompt; no text or logos are AI-rendered.*
 
 *fortemi-react is the Fortemi memory service, built to run inside your web browser. Fortemi keeps notes for an AI agent and lets the agent search them by meaning. fortemi-react does that same job with no separate server — it all runs in the browser, on your computer. (It is the server in the browser. HotM, a different project, is a client that talks to the server.)*
 
