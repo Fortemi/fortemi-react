@@ -227,17 +227,31 @@ scan projection.
 Static semantic search uses an optional sidecar contract:
 
 ```ts
-import { queryAiwgHybridIndex } from '@fortemi/core/aiwg-index'
+import { buildAiwgStaticEmbeddingSet, queryAiwgHybridIndex } from '@fortemi/core/aiwg-index'
 
 const embeddingSet = await fetch('/search/aiwg-index/embeddings.json').then((res) => res.json())
 const queryEmbedding = await hostEmbed('workspace health check')
 const semanticResults = queryAiwgHybridIndex(index, embeddingSet, 'health check', queryEmbedding)
+
+// Node/CLI generation path. Supply any Node-safe model backend; @fortemi/core
+// only writes the shared embedding-set graph format and does not require DOM or WebGL.
+const cliEmbeddingSet = await buildAiwgStaticEmbeddingSet(index, {
+  id: 'aiwg-cli-embeddings',
+  backend: {
+    model: 'local-node-embedder',
+    dimensions: 384,
+    embed: async (input) => nodeEmbed(input),
+  },
+})
 ```
 
 `aiwg.fortemi.embedding.set.v1` records the model, dimensions, granularity
 (`title-summary`, `body`, `chunked-body`, or a project value), source record IDs,
 and per-vector input hashes. Hosts provide query embeddings; `@fortemi/core` does
-not add a model runtime dependency for static AIWG search.
+not add a model runtime dependency for static AIWG search. The builder uses the
+same record text projection as static search, including attachment
+`extracted_text`, and records only attachment metadata references, never raw blob
+bytes.
 
 ## What You Get
 

@@ -13,6 +13,8 @@ export {
 export type {
   ShardManifest,
   ShardComponent,
+  ShardAttachmentReference,
+  ShardBinarySource,
   ExportOptions,
   ImportOptions,
   ImportProgress,

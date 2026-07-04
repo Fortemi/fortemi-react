@@ -4,6 +4,7 @@ import {
   aiwgDetailHrefForId,
   aiwgFortemiIndexToCommunityGraph,
   buildAiwgChunkedIndex,
+  buildAiwgStaticEmbeddingSet,
   createAiwgFetchDetailLoader,
   createAiwgIndexController,
   createAiwgReviewDecisionExport,
@@ -462,6 +463,61 @@ describe('AIWG Fortemi index adapter', () => {
     expect(hybrid.find((entry) => entry.item.id === 'aiwg:rule:lexical')?.embedding).toBeUndefined()
     expect(duplicates.map((pair) => [pair.left.id, pair.right.id])).toEqual([['aiwg:skill:search', 'aiwg:command:search']])
     expect(invalid.errors).toContain('embeddings[0].input_hash is required')
+  })
+
+  it('builds AIWG embedding-set sidecars from a headless backend and extracted attachment text', async () => {
+    const semanticIndex: AiwgFortemiIndexExport = {
+      ...index,
+      items: [
+        record('docs:page:invoice', 'docs.page', 'Invoice', 'Base note text', {
+          binary_sources: [
+            {
+              extracted_text: 'Attachment OCR total due',
+              attachment: {
+                id: 'att-1',
+                path: 'invoice.pdf',
+                mime: 'application/pdf',
+                checksum: 'sha256:abc',
+                bytes: 2048,
+              },
+            },
+          ],
+        }),
+      ],
+    }
+    const seenInputs: string[] = []
+    const embeddingSet = await buildAiwgStaticEmbeddingSet(semanticIndex, {
+      id: 'cli-headless',
+      generatedAt: '2026-07-04T00:00:00.000Z',
+      backend: {
+        model: 'node-test-embedder',
+        dimensions: 3,
+        embed(input) {
+          seenInputs.push(input)
+          return [input.includes('Attachment OCR') ? 1 : 0, 0, 0]
+        },
+      },
+    })
+
+    expect(globalThis.document).toBeUndefined()
+    expect(seenInputs[0]).toContain('Attachment OCR total due')
+    expect(validateAiwgStaticEmbeddingSet(embeddingSet)).toEqual({ valid: true, errors: [] })
+    expect(embeddingSet).toMatchObject({
+      schema_version: 'aiwg.fortemi.embedding.set.v1',
+      id: 'cli-headless',
+      model: 'node-test-embedder',
+      dimensions: 3,
+      granularity: 'body',
+      input_hash_algorithm: 'sha256',
+      embeddings: [
+        {
+          record_id: 'docs:page:invoice',
+          embedding: [1, 0, 0],
+          input_hash: expect.stringMatching(/^sha256:[0-9a-f]{64}$/),
+          source_path: 'docs:page:invoice.md',
+        },
+      ],
+    })
   })
 
   it('returns opt-in ranked results with plain text snippets and matches', () => {

@@ -8,6 +8,7 @@
 
 import type { DatabaseClient } from '../storage-backend.js'
 import { EmbeddingSetsRepository } from '../repositories/embedding-sets-repository.js'
+import { getNoteTextWithExtractedAttachments } from '../repositories/note-text.js'
 import { chunkText } from './chunking.js'
 
 /** Type for the embed function — injected by the semantic capability module */
@@ -52,14 +53,10 @@ export async function embeddingGenerationHandler(
   const fn = embedFn
   if (!fn) return { skipped: true, reason: 'no embed function registered' }
 
-  // Get note content
-  const noteResult = await db.query<{ content: string }>(
-    `SELECT content FROM note_revised_current WHERE note_id = $1`,
-    [job.note_id],
-  )
-  if (noteResult.rows.length === 0) throw new Error(`No content for note ${job.note_id}`)
+  const noteText = await getNoteTextWithExtractedAttachments(db, job.note_id)
+  if (!noteText) throw new Error(`No content for note ${job.note_id}`)
 
-  const content = noteResult.rows[0].content
+  const content = noteText.combined
   const chunks = chunkText(content)
 
   // Generate embeddings for all chunks

@@ -14,6 +14,7 @@ import type { DatabaseClient } from './storage-backend.js'
 import type { TypedEventBus } from './event-bus.js'
 import type { CapabilityManager, CapabilityName } from './capability-manager.js'
 import { getLlmFunction } from './capabilities/llm-handler.js'
+import { getNoteTextWithExtractedAttachments } from './repositories/note-text.js'
 import { generateId } from './uuid.js'
 
 export interface JobQueueOptions {
@@ -446,13 +447,10 @@ export function conceptTaggingHandler(job: Job, db: DatabaseClient): Promise<unk
     const llmFn = getLlmFunction()
     if (!llmFn) return { skipped: true, reason: 'no LLM function registered' }
 
-    const result = await db.query<{ content: string }>(
-      `SELECT content FROM note_revised_current WHERE note_id = $1`,
-      [job.note_id],
-    )
-    if (result.rows.length === 0) throw new Error(`No content found for note ${job.note_id}`)
+    const noteText = await getNoteTextWithExtractedAttachments(db, job.note_id)
+    if (!noteText) throw new Error(`No content found for note ${job.note_id}`)
 
-    const content = result.rows[0].content
+    const content = noteText.combined
 
     const prompt =
       `Task: Extract 3-5 topic tags from the text below.\n` +

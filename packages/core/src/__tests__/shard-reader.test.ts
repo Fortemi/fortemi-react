@@ -22,6 +22,7 @@ function note(overrides: Partial<ShardNote> & Pick<ShardNote, 'id'>): ShardNote 
     title: overrides.title ?? null,
     original_content: overrides.original_content ?? '',
     revised_content: overrides.revised_content ?? null,
+    binary_sources: overrides.binary_sources,
     format: overrides.format ?? 'markdown',
     source: overrides.source ?? 'manual',
     starred: overrides.starred ?? false,
@@ -169,6 +170,32 @@ describe('openShard — in-place read surface (monolithic)', () => {
     expect(result.rankedItems?.[0]?.note.id).toBe('n1') // 'Founder Breakfast' in title outranks n4
     expect(result.rankedItems?.[0]?.rank).toBeGreaterThan(result.rankedItems?.[1]?.rank ?? 0)
     expect(result.rankedItems?.[0]?.snippet).toContain('founder')
+  })
+
+  it('searches extracted attachment text without requiring blob bytes', async () => {
+    const files = baseFiles(manifest({ counts: { notes: 1 } }))
+    files.set('notes.jsonl', encoder.encode(JSON.stringify(note({
+      id: 'attachment-note',
+      title: 'Receipt',
+      original_content: 'Attached scan',
+      binary_sources: [
+        {
+          extracted_text: 'Quarterly compliance invoice',
+          attachment: {
+            id: 'att-1',
+            path: 'receipt.pdf',
+            mime: 'application/pdf',
+            checksum: 'sha256:abc',
+            bytes: 123,
+          },
+        },
+      ],
+    }))))
+    const reader = await openShard(packTarGz(files))
+    const result = await reader.search('compliance invoice', { rank: true, snippets: true })
+
+    expect(result.items.map((item) => item.id)).toEqual(['attachment-note'])
+    expect(result.rankedItems?.[0]?.snippet).toContain('compliance invoice')
   })
 
   it('computes tag + source facets over the matched set', async () => {

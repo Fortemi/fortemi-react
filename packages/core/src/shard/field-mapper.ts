@@ -7,6 +7,7 @@
 
 import type {
   ShardNote,
+  ShardBinarySource,
   ShardLink,
   ShardTag,
   ShardCollection,
@@ -37,6 +38,7 @@ export interface BrowserNoteExport {
   deleted_at: Date | string | null
   original_content: string
   revised_content: string | null
+  binary_sources?: ShardBinarySource[]
   tags: string[]
 }
 
@@ -47,6 +49,7 @@ export function noteToShard(note: BrowserNoteExport): ShardNote {
     title: note.title,
     original_content: note.original_content,
     revised_content: note.revised_content,
+    ...(note.binary_sources?.length ? { binary_sources: note.binary_sources } : {}),
     format: note.format,
     source: note.source,
     starred: note.is_starred,
@@ -69,6 +72,7 @@ export function noteFromShard(shard: ShardNote): BrowserNoteExport {
     is_archived: shard.archived,
     original_content: shard.original_content,
     revised_content: shard.revised_content,
+    binary_sources: shard.binary_sources,
     tags: shard.tags,
     created_at: shard.created_at,
     updated_at: shard.updated_at,

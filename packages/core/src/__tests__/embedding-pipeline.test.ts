@@ -212,6 +212,37 @@ describe('embeddingGenerationHandler', () => {
     expect(embResult.rows.length).toBe(1)
   })
 
+  it('embeds extracted attachment text without embedding raw blob bytes', async () => {
+    const capturedInputs: string[][] = []
+    setEmbedFunction(async (texts) => {
+      capturedInputs.push(texts)
+      return mockEmbed(texts)
+    })
+    const noteId = await insertNote(db, 'Carrier note body')
+    await db.query(
+      `INSERT INTO attachment_blob (id, content_hash, size_bytes) VALUES ($1, $2, $3)`,
+      ['blob-attachment-embedding', 'sha256:attachment-embedding', 'RAW-BINARY-SENTINEL'.length],
+    )
+    await db.query(
+      `INSERT INTO attachment (id, note_id, blob_id, filename, mime_type, extracted_text)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        'att-attachment-embedding',
+        noteId,
+        'blob-attachment-embedding',
+        'scan.pdf',
+        'application/pdf',
+        'Attachment OCR embedding text',
+      ],
+    )
+
+    await embeddingGenerationHandler(makeJob(noteId), db)
+
+    const embeddedText = capturedInputs.flat().join('\n')
+    expect(embeddedText).toContain('Attachment OCR embedding text')
+    expect(embeddedText).not.toContain('RAW-BINARY-SENTINEL')
+  })
+
   it('creates an embedding_set_member row', async () => {
     const noteId = await insertNote(db, 'Content for membership test.')
     await embeddingGenerationHandler(makeJob(noteId), db)
