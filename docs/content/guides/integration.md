@@ -890,7 +890,7 @@ const all = capabilityManager.listAll()
 
 ## 9. Attachment Handling
 
-Attachments are stored as binary blobs in the `BlobStore` (OPFS or IDB), with metadata in the `attachment` table. The `manageAttachments` tool handles the base64 encoding boundary so that data can be transported over JSON (MCP bridge, `postMessage`, etc.).
+Attachments are stored as binary blobs in the `BlobStore` (OPFS or IDB), with metadata in the `attachment` table. The `manageAttachments` tool handles the base64 encoding boundary so that data can be transported over JSON (MCP bridge, `postMessage`, etc.). Search, shard export, static AIWG index, and embedding-set surfaces use extracted text plus attachment references; they do not inline raw binary bytes or `data_base64`.
 
 ### Attaching a file from a file input
 
@@ -919,6 +919,7 @@ function AttachFileButton({ noteId }: { noteId: string }) {
       data_base64,
       filename: file.name,
       mime_type: file.type || 'application/octet-stream',
+      extracted_text: await extractTextForSearch(file),
       display_name: file.name,
     })
 
@@ -979,6 +980,23 @@ const exists = await blobStore.exists(hash)
 ```
 
 The `hash` used by the attachment system is computed from the file content using `computeHash` from `@fortemi/core`. Do not fabricate hash values — always let the `AttachmentsRepository` or `manageAttachments` tool manage them.
+
+Shard and AIWG index exports represent an attached binary as:
+
+```json
+{
+  "extracted_text": "OCR or parser text used for search and embeddings",
+  "attachment": {
+    "id": "attachment-id",
+    "path": "file.pdf",
+    "mime": "application/pdf",
+    "checksum": "sha256:...",
+    "bytes": 12345
+  }
+}
+```
+
+Use `get_blob` only when the user or host needs the original file bytes.
 
 ---
 

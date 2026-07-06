@@ -190,7 +190,11 @@ function tokenize(query: string): string[] {
 }
 
 function noteSearchText(note: ShardNote): string {
-  return `${note.title ?? ''} ${note.original_content} ${note.revised_content ?? ''}`.toLowerCase()
+  const extractedText = note.binary_sources
+    ?.map((source) => source.extracted_text)
+    .filter(Boolean)
+    .join(' ') ?? ''
+  return `${note.title ?? ''} ${note.original_content} ${note.revised_content ?? ''} ${extractedText}`.toLowerCase()
 }
 
 function countOccurrences(haystack: string, needle: string): number {
@@ -215,7 +219,11 @@ function noteMatchesTokens(note: ShardNote, tokens: string[]): boolean {
 function rankNote(note: ShardNote, tokens: string[], weights: ShardSearchWeights): number {
   if (tokens.length === 0) return 0
   const title = (note.title ?? '').toLowerCase()
-  const content = `${note.original_content} ${note.revised_content ?? ''}`.toLowerCase()
+  const extractedText = note.binary_sources
+    ?.map((source) => source.extracted_text)
+    .filter(Boolean)
+    .join(' ') ?? ''
+  const content = `${note.original_content} ${note.revised_content ?? ''} ${extractedText}`.toLowerCase()
   const tagText = note.tags.join(' ').toLowerCase()
   let score = 0
   for (const token of tokens) {
@@ -227,7 +235,11 @@ function rankNote(note: ShardNote, tokens: string[], weights: ShardSearchWeights
 }
 
 function makeSnippet(note: ShardNote, tokens: string[], length: number): string {
-  const content = `${note.original_content} ${note.revised_content ?? ''}`.trim()
+  const extractedText = note.binary_sources
+    ?.map((source) => source.extracted_text)
+    .filter(Boolean)
+    .join(' ') ?? ''
+  const content = `${note.original_content} ${note.revised_content ?? ''} ${extractedText}`.trim()
   if (tokens.length === 0) return content.slice(0, length)
   const lower = content.toLowerCase()
   const firstAt = tokens

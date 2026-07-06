@@ -6,6 +6,17 @@ import type { QueryExecutor } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
 import { computeHash } from '../hash.js'
 
+const ATTACHMENT_TEXT_JOIN = `
+       LEFT JOIN (
+         SELECT note_id,
+                string_agg(extracted_text, ' ' ORDER BY position, created_at)
+                  FILTER (WHERE extracted_text IS NOT NULL AND extracted_text <> '') as extracted_text
+         FROM attachment
+         WHERE deleted_at IS NULL
+         GROUP BY note_id
+       ) ax ON ax.note_id = n.id`
+const COMBINED_TEXT_VECTOR_SQL = `to_tsvector('english', (coalesce(c.content, '') || ' ' || coalesce(ax.extracted_text, '')))`
+
 export type EmbeddingSetKind = 'physical' | 'filter' | 'virtual'
 export type EmbeddingSetMode = 'auto' | 'manual' | 'mixed'
 
@@ -606,7 +617,7 @@ export class EmbeddingSetsRepository {
       params.push(criteria.updatedBefore)
     }
     if (criteria.query?.trim()) {
-      conditions.push(`(n.tsv @@ plainto_tsquery('english', $${idx}) OR to_tsvector('english', coalesce(c.content, '')) @@ plainto_tsquery('english', $${idx}))`)
+      conditions.push(`(n.tsv @@ plainto_tsquery('english', $${idx}) OR ${COMBINED_TEXT_VECTOR_SQL} @@ plainto_tsquery('english', $${idx}))`)
       params.push(criteria.query)
     }
 
@@ -615,6 +626,7 @@ export class EmbeddingSetsRepository {
        FROM embedding e
        JOIN note n ON n.id = e.note_id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
+       ${ATTACHMENT_TEXT_JOIN}
        WHERE ${conditions.join(' AND ')}
        ORDER BY e.note_id, e.created_at DESC`,
       params,

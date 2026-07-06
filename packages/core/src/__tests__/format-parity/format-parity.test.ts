@@ -193,9 +193,19 @@ describe('Format Parity', () => {
 
     const comparison = matchServerShape(result.rows[0], serverFixture[0])
 
+    // Server columns must never be dropped, renamed, or retyped — JSON output
+    // parity depends on them (missing/typeMismatch stay strict).
     expect(comparison.missing).toEqual([])
-    expect(comparison.extra).toEqual([])
     expect(comparison.typeMismatch).toEqual([])
+    // The browser adds two intentional, additive columns not present on the
+    // server (migration 0010): `mime_type` and `extracted_text`. Raw bytes stay
+    // in BlobStore; the browser denormalizes MIME and carries extracted text on
+    // the attachment row to feed local search/index/export. The server models
+    // MIME via document_type_id -> document_type.mime_type and does not persist
+    // extracted text, so these appear here as browser-only extras. Export JSON
+    // parity is preserved elsewhere (notes carry `binary_sources`, not attachment
+    // columns). Assert the exact allowed set so any *other* divergence still fails.
+    expect([...comparison.extra].sort()).toEqual(['extracted_text', 'mime_type'])
   })
 
   it('job_queue table shape matches server', async () => {

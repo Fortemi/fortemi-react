@@ -12,6 +12,7 @@ export const ManageAttachmentsInputSchema = z.object({
   data_base64: z.string().optional(),
   filename: z.string().optional(),
   mime_type: z.string().optional(),
+  extracted_text: z.string().optional(),
   display_name: z.string().optional(),
 })
 export type ManageAttachmentsInput = z.infer<typeof ManageAttachmentsInputSchema>
@@ -50,6 +51,7 @@ export async function manageAttachments(
         data,
         filename: input.filename,
         mimeType: input.mime_type,
+        extractedText: input.extracted_text,
         displayName: input.display_name,
       })
       return { action: 'attach', attachment, size_bytes: data.length }

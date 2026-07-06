@@ -14,6 +14,8 @@ import { NotesRepository } from '../../repositories/notes-repository.js'
 import { CollectionsRepository } from '../../repositories/collections-repository.js'
 import { LinksRepository } from '../../repositories/links-repository.js'
 import { EmbeddingSetsRepository } from '../../repositories/embedding-sets-repository.js'
+import { AttachmentsRepository } from '../../repositories/attachments-repository.js'
+import { MemoryBlobStore } from '../../blob-store.js'
 import { exportShard } from '../../shard/shard-export.js'
 import { unpackTarGz } from '../../shard/shard-tar.js'
 import { validateChecksums } from '../../shard/checksum.js'
@@ -116,6 +118,38 @@ describe('exportShard', () => {
 
     expect(shardNote.original_content).toBe('My content')
     expect(shardNote.revised_content).toBe('My content')
+  })
+
+  it('exports binary attachments as extracted text plus metadata references only', async () => {
+    const note = await notes.create({ content: 'Attachment carrier', title: 'Attachment note' })
+    const attachments = new AttachmentsRepository(db, new MemoryBlobStore())
+    const attachment = await attachments.attach({
+      noteId: note.id,
+      data: new TextEncoder().encode('RAW-BINARY-SENTINEL'),
+      filename: 'scan.pdf',
+      mimeType: 'application/pdf',
+      extractedText: 'Optical character recognition text for search',
+    })
+
+    const archive = await exportShard(db)
+    const files = unpackTarGz(archive)
+    const notesJsonl = new TextDecoder().decode(files.get('notes.jsonl')!)
+    const shardNote: ShardNote = JSON.parse(notesJsonl.split('\n')[0])
+
+    expect(shardNote.binary_sources).toEqual([
+      {
+        extracted_text: 'Optical character recognition text for search',
+        attachment: {
+          id: attachment.id,
+          path: 'scan.pdf',
+          mime: 'application/pdf',
+          checksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/),
+          bytes: 'RAW-BINARY-SENTINEL'.length,
+        },
+      },
+    ])
+    expect(notesJsonl).not.toContain('RAW-BINARY-SENTINEL')
+    expect(notesJsonl).not.toContain('data_base64')
   })
 
   it('exports tags as note-level arrays', async () => {

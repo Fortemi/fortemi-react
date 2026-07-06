@@ -1,3 +1,5 @@
+import { computeHash } from './hash.js'
+
 export type AiwgFortemiKnownRecordType =
   | 'crm.contact'
   | 'crm.organization'
@@ -113,6 +115,19 @@ export interface AiwgFortemiRecordEmbedding {
   metadata?: Record<string, unknown>
 }
 
+export interface AiwgFortemiAttachmentReference {
+  id: string
+  path: string
+  mime: string | null
+  checksum: string
+  bytes: number
+}
+
+export interface AiwgFortemiBinarySource {
+  extracted_text: string
+  attachment: AiwgFortemiAttachmentReference
+}
+
 export interface AiwgFortemiRecord {
   schema_version: AiwgFortemiRecordSchemaVersion
   id: string
@@ -127,6 +142,7 @@ export interface AiwgFortemiRecord {
   provenance: AiwgFortemiProvenance[]
   search?: AiwgFortemiSearchProjection
   chunks?: AiwgFortemiChunk[]
+  binary_sources?: AiwgFortemiBinarySource[]
   embeddings?: AiwgFortemiRecordEmbedding[]
   compatibility?: Record<string, unknown>
   /** Optional rich SKOS metadata for static consumers that need labels/definitions without opening a shard. */
@@ -420,6 +436,22 @@ export interface AiwgStaticEmbeddingSet {
   metric?: 'cosine' | 'dot' | 'euclidean'
   input_hash_algorithm?: string
   embeddings: AiwgStaticEmbeddingRecord[]
+}
+
+export interface AiwgHeadlessEmbeddingBackend {
+  model: string
+  dimensions: number
+  embed(input: string, record: AiwgFortemiRecord): number[] | Promise<number[]>
+}
+
+export interface BuildAiwgStaticEmbeddingSetOptions {
+  id: string
+  backend: AiwgHeadlessEmbeddingBackend
+  records?: AiwgFortemiRecord[]
+  generatedAt?: string | Date
+  granularity?: AiwgStaticEmbeddingSet['granularity']
+  metric?: AiwgStaticEmbeddingSet['metric']
+  textForRecord?: (record: AiwgFortemiRecord) => string
 }
 
 export interface AiwgStaticSemanticQueryOptions {
@@ -943,11 +975,69 @@ function recordTitle(item: AiwgFortemiProjectedRecord): string {
 }
 
 function recordText(item: AiwgFortemiProjectedRecord): string {
-  return item.text
+  const base = item.text
     ?? item.search?.body
     ?? item.search?.summary
     ?? item.chunks?.map((chunk) => chunk.text ?? chunk.body ?? chunk.summary ?? '').filter(Boolean).join('\n')
     ?? ''
+  const extractedText = 'binary_sources' in item
+    ? item.binary_sources?.map((source) => source.extracted_text).filter(Boolean).join('\n') ?? ''
+    : ''
+  return [base, extractedText].filter(Boolean).join('\n')
+}
+
+function defaultEmbeddingInput(record: AiwgFortemiRecord, granularity: AiwgStaticEmbeddingSet['granularity']): string {
+  const title = recordTitle(record)
+  const text = recordText(record)
+  if (granularity === 'title-summary') {
+    const extractedText = record.binary_sources?.map((source) => source.extracted_text).filter(Boolean).join('\n') ?? ''
+    return [title, record.search?.summary ?? '', extractedText].filter(Boolean).join('\n')
+  }
+  return [title, text].filter(Boolean).join('\n')
+}
+
+function generatedAtString(value: string | Date | undefined): string {
+  if (value instanceof Date) return value.toISOString()
+  return value ?? new Date().toISOString()
+}
+
+export async function buildAiwgStaticEmbeddingSet(
+  index: AiwgFortemiIndexExport,
+  options: BuildAiwgStaticEmbeddingSetOptions,
+): Promise<AiwgStaticEmbeddingSet> {
+  assertAiwgFortemiIndexExport(index)
+  const granularity = options.granularity ?? 'body'
+  const records = options.records ?? index.items
+  const embeddings: AiwgStaticEmbeddingRecord[] = []
+
+  for (const record of records) {
+    const input = options.textForRecord?.(record) ?? defaultEmbeddingInput(record, granularity)
+    const embedding = await options.backend.embed(input, record)
+    if (embedding.length !== options.backend.dimensions) {
+      throw new Error(`Embedding for ${record.id} has ${embedding.length} dimensions; expected ${options.backend.dimensions}`)
+    }
+    embeddings.push({
+      record_id: record.id,
+      embedding,
+      granularity,
+      input_hash: computeHash(new TextEncoder().encode(input)),
+      source_path: record.source.path,
+    })
+  }
+
+  const embeddingSet: AiwgStaticEmbeddingSet = {
+    schema_version: 'aiwg.fortemi.embedding.set.v1',
+    id: options.id,
+    model: options.backend.model,
+    dimensions: options.backend.dimensions,
+    generated_at: generatedAtString(options.generatedAt),
+    granularity,
+    ...(options.metric ? { metric: options.metric } : {}),
+    input_hash_algorithm: 'sha256',
+    embeddings,
+  }
+  assertAiwgStaticEmbeddingSet(embeddingSet)
+  return embeddingSet
 }
 
 function recordSearchValues(item: AiwgFortemiProjectedRecord): string[] {

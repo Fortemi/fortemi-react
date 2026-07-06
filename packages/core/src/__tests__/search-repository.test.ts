@@ -54,6 +54,19 @@ async function insertTag(db: PGlite, noteId: string, tag: string): Promise<void>
   )
 }
 
+async function insertAttachmentText(db: PGlite, noteId: string, text: string): Promise<void> {
+  const blobId = `blob-${noteId}`
+  await db.query(
+    `INSERT INTO attachment_blob (id, content_hash, size_bytes) VALUES ($1, $2, $3)`,
+    [blobId, `sha256:${noteId.padEnd(64, '0').slice(0, 64)}`, 128],
+  )
+  await db.query(
+    `INSERT INTO attachment (id, note_id, blob_id, filename, mime_type, extracted_text)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [`att-${noteId}`, noteId, blobId, 'scan.pdf', 'application/pdf', text],
+  )
+}
+
 async function insertCollection(db: PGlite, collectionId: string, noteId: string): Promise<void> {
   await db.query(
     `INSERT INTO collection (id, name) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
@@ -118,6 +131,15 @@ describe('SearchRepository', () => {
     expect(resp.results).toHaveLength(1)
     expect(resp.results[0].title).toBe('Rust memory safety')
     expect(resp.total).toBe(1)
+  })
+
+  it('returns matching notes when keyword is only in extracted attachment text', async () => {
+    const noteId = await insertNote(db, { title: 'Scanned attachment', content: 'body without target terms' })
+    await insertAttachmentText(db, noteId, 'quarterly compliance invoice')
+
+    const resp = await repo.search('compliance invoice')
+    expect(resp.results.map((result) => result.id)).toEqual([noteId])
+    expect(resp.results[0].snippet).toContain('<mark>compliance</mark>')
   })
 
   it('returns matching notes when keyword found in content', async () => {

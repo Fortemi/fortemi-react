@@ -8,6 +8,18 @@ import type { SearchResponse, SearchOptions, SearchFacets, SearchResult } from '
 import { buildNoteConditions } from './condition-builder.js'
 import { EmbeddingSetsRepository, type EmbeddingSetSelector, type ResolvedEmbeddingSet } from './embedding-sets-repository.js'
 
+const ATTACHMENT_TEXT_JOIN = `
+       LEFT JOIN (
+         SELECT note_id,
+                string_agg(extracted_text, ' ' ORDER BY position, created_at)
+                  FILTER (WHERE extracted_text IS NOT NULL AND extracted_text <> '') as extracted_text
+         FROM attachment
+         WHERE deleted_at IS NULL
+         GROUP BY note_id
+       ) ax ON ax.note_id = n.id`
+const COMBINED_TEXT_SQL = `(coalesce(c.content, '') || ' ' || coalesce(ax.extracted_text, ''))`
+const COMBINED_TEXT_VECTOR_SQL = `to_tsvector('english', ${COMBINED_TEXT_SQL})`
+
 export class SearchRepository {
   constructor(
     private db: DatabaseClient,
@@ -125,7 +137,7 @@ export class SearchRepository {
     const { conditions, params, nextIdx } = buildNoteConditions(options, 2)
     conditions.unshift(
       `(n.tsv @@ ${tsqFn}('english', $1) OR
-        to_tsvector('english', coalesce(c.content, '')) @@ ${tsqFn}('english', $1))`,
+        ${COMBINED_TEXT_VECTOR_SQL} @@ ${tsqFn}('english', $1))`,
     )
     let paramIdx = this.scopeToResolvedEmbeddingSet(conditions, params, nextIdx, resolvedEmbeddingSet)
     const allParams = [query, ...params]
@@ -135,6 +147,7 @@ export class SearchRepository {
       `SELECT COUNT(*) as count
        FROM note n
        LEFT JOIN note_revised_current c ON c.note_id = n.id
+       ${ATTACHMENT_TEXT_JOIN}
        WHERE ${where}`,
       allParams,
     )
@@ -151,17 +164,18 @@ export class SearchRepository {
     }>(
       `SELECT n.id, n.title, n.created_at, n.updated_at,
               ts_rank(
-                setweight(n.tsv, 'A') || setweight(to_tsvector('english', coalesce(c.content, '')), 'B'),
+                setweight(n.tsv, 'A') || setweight(${COMBINED_TEXT_VECTOR_SQL}, 'B'),
                 ${tsqFn}('english', $1)
               ) as rank,
               ts_headline(
                 'english',
-                coalesce(c.content, ''),
+                ${COMBINED_TEXT_SQL},
                 ${tsqFn}('english', $1),
                 'StartSel=<mark>, StopSel=</mark>, MaxWords=35, MinWords=15'
               ) as snippet
        FROM note n
        LEFT JOIN note_revised_current c ON c.note_id = n.id
+       ${ATTACHMENT_TEXT_JOIN}
        WHERE ${where}
        ORDER BY rank DESC, n.created_at DESC
        LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
@@ -179,6 +193,7 @@ export class SearchRepository {
       const idsResult = await this.db.query<{ id: string }>(
         `SELECT n.id FROM note n
          LEFT JOIN note_revised_current c ON c.note_id = n.id
+         ${ATTACHMENT_TEXT_JOIN}
          WHERE ${where}`,
         allParams,
       )
@@ -237,10 +252,11 @@ export class SearchRepository {
     }>(
       `SELECT n.id, n.title, n.created_at, n.updated_at,
               (e.vector <=> $${vecIdx}::vector) as distance,
-              LEFT(coalesce(c.content, ''), 200) as snippet
+              LEFT(${COMBINED_TEXT_SQL}, 200) as snippet
        FROM embedding e
        JOIN note n ON n.id = e.note_id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
+       ${ATTACHMENT_TEXT_JOIN}
        WHERE ${where}
        ORDER BY e.vector <=> $${vecIdx}::vector ASC
        LIMIT $${limIdx} OFFSET $${offIdx}`,
@@ -291,7 +307,7 @@ export class SearchRepository {
     const textConditions = [
       ...textCond.conditions,
       `(n.tsv @@ ${tsqFn}('english', $1) OR
-        to_tsvector('english', coalesce(c.content, '')) @@ ${tsqFn}('english', $1))`,
+        ${COMBINED_TEXT_VECTOR_SQL} @@ ${tsqFn}('english', $1))`,
     ]
     this.scopeToResolvedEmbeddingSet(textConditions, textCond.params, textCond.nextIdx, resolvedEmbeddingSet)
     const textWhere = textConditions.join(' AND ')
@@ -300,11 +316,12 @@ export class SearchRepository {
     const textResult = await this.db.query<{ id: string; rank: number }>(
       `SELECT n.id,
               ts_rank(
-                setweight(n.tsv, 'A') || setweight(to_tsvector('english', coalesce(c.content, '')), 'B'),
+                setweight(n.tsv, 'A') || setweight(${COMBINED_TEXT_VECTOR_SQL}, 'B'),
                 ${tsqFn}('english', $1)
               ) as rank
        FROM note n
        LEFT JOIN note_revised_current c ON c.note_id = n.id
+       ${ATTACHMENT_TEXT_JOIN}
        WHERE ${textWhere}
        ORDER BY rank DESC
        LIMIT 100`,
@@ -350,9 +367,10 @@ export class SearchRepository {
       snippet: string
     }>(
       `SELECT n.id, n.title, n.created_at, n.updated_at,
-              LEFT(coalesce(c.content, ''), 200) as snippet
+              LEFT(${COMBINED_TEXT_SQL}, 200) as snippet
        FROM note n
        LEFT JOIN note_revised_current c ON c.note_id = n.id
+       ${ATTACHMENT_TEXT_JOIN}
        WHERE n.id = ANY($1)`,
       [pageIds],
     )
@@ -413,9 +431,10 @@ export class SearchRepository {
       snippet: string
     }>(
       `SELECT n.id, n.title, n.created_at, n.updated_at,
-              LEFT(coalesce(c.content, ''), 200) as snippet
+              LEFT(${COMBINED_TEXT_SQL}, 200) as snippet
        FROM note n
        LEFT JOIN note_revised_current c ON c.note_id = n.id
+       ${ATTACHMENT_TEXT_JOIN}
        WHERE ${where}
        ORDER BY n.created_at DESC
        LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,

@@ -35,6 +35,7 @@ import type {
   ShardComponent,
   ShardClusterRef,
   ShardLayout,
+  ShardBinarySource,
 } from './types.js'
 
 const encoder = new TextEncoder()
@@ -130,9 +131,50 @@ export async function exportShard(
     tagsByNote.set(row.note_id, tags)
   }
 
+  const attachmentRows = await db.query<{
+    note_id: string
+    id: string
+    filename: string
+    mime_type: string | null
+    extracted_text: string | null
+    content_hash: string
+    size_bytes: number
+    storage_path: string | null
+  }>(
+    `SELECT a.note_id,
+            a.id,
+            a.filename,
+            a.mime_type,
+            a.extracted_text,
+            b.content_hash,
+            b.size_bytes,
+            b.storage_path
+       FROM attachment a
+       JOIN attachment_blob b ON b.id = a.blob_id
+       WHERE a.deleted_at IS NULL
+       ORDER BY a.note_id, a.position, a.created_at`,
+  )
+  const binarySourcesByNote = new Map<string, ShardBinarySource[]>()
+  for (const row of attachmentRows.rows) {
+    const source: ShardBinarySource = {
+      extracted_text: row.extracted_text ?? '',
+      attachment: {
+        id: row.id,
+        path: row.storage_path ?? row.filename,
+        mime: row.mime_type,
+        checksum: row.content_hash,
+        bytes: Number(row.size_bytes),
+      },
+    }
+    const sources = binarySourcesByNote.get(row.note_id) ?? []
+    sources.push(source)
+    binarySourcesByNote.set(row.note_id, sources)
+  }
+
   const notes: BrowserNoteExport[] = noteRows.rows.map((row) => ({
     ...row,
     tags: tagsByNote.get(row.id) ?? [],
+    binary_sources: binarySourcesByNote.get(row.id),
   }))
 
   // Collect exported note IDs for scoping related data

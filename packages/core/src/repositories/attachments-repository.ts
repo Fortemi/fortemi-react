@@ -21,6 +21,8 @@ export interface AttachmentRow {
   note_id: string
   blob_id: string
   document_type_id: string | null
+  mime_type: string | null
+  extracted_text: string | null
   filename: string
   display_name: string | null
   position: number
@@ -41,6 +43,7 @@ export interface AttachInput {
   data: Uint8Array
   filename: string
   mimeType?: string
+  extractedText?: string
   displayName?: string
 }
 
@@ -86,9 +89,17 @@ export class AttachmentsRepository {
     // ── attachment record ───────────────────────────────────────────────────
     const attachmentId = generateId()
     await this.db.query(
-      `INSERT INTO attachment (id, note_id, blob_id, filename, display_name)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [attachmentId, input.noteId, blobId, input.filename, input.displayName ?? null],
+      `INSERT INTO attachment (id, note_id, blob_id, filename, display_name, mime_type, extracted_text)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        attachmentId,
+        input.noteId,
+        blobId,
+        input.filename,
+        input.displayName ?? null,
+        input.mimeType ?? null,
+        input.extractedText ?? null,
+      ],
     )
 
     return this.get(attachmentId)

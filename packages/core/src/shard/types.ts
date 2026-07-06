@@ -28,6 +28,19 @@ export type ShardComponent =
   | 'graph_edges'
   | 'graph_sources'
 
+export interface ShardAttachmentReference {
+  id: string
+  path: string
+  mime: string | null
+  checksum: string
+  bytes: number
+}
+
+export interface ShardBinarySource {
+  extracted_text: string
+  attachment: ShardAttachmentReference
+}
+
 /**
  * Reference to one cluster file of a component split across addressable files
  * (`notes/000.jsonl`, `notes/001.jsonl`, …). `offset`/`count` are the record
@@ -156,6 +169,7 @@ export interface ShardNote {
   title: string | null
   original_content: string
   revised_content: string | null
+  binary_sources?: ShardBinarySource[]
   format: string
   source: string
   starred: boolean

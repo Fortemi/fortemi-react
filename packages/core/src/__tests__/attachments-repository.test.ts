@@ -108,6 +108,22 @@ describe('AttachmentsRepository', () => {
       expect(att.display_name).toBe('My Document')
     })
 
+    it('stores MIME type and extracted text metadata without changing blob storage', async () => {
+      const att = await repo.attach({
+        noteId: 'note-1',
+        data: makeBytes('%PDF binary payload'),
+        filename: 'invoice.pdf',
+        mimeType: 'application/pdf',
+        extractedText: 'Invoice total is 42 credits',
+      })
+
+      expect(att.mime_type).toBe('application/pdf')
+      expect(att.extracted_text).toBe('Invoice total is 42 credits')
+
+      const blob = await repo.getBlob(att.id)
+      expect(new TextDecoder().decode(blob!)).toBe('%PDF binary payload')
+    })
+
     it('deduplicates blobs — same content reuses existing blob row', async () => {
       const data = makeBytes('identical content')
 
