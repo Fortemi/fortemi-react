@@ -14,6 +14,7 @@ All notable changes to fortemi-react are documented here.
   SEO profile, machine-readable corpus artifacts, `llms.txt` extracts,
   permissive content signals, and accessibility report output for bot and
   human-readable discovery.
+- Updated the docsite to `@pagenary/publisher@2026.7.16`.
 
 ## v2026.7.1 - 2026-07-02
 
