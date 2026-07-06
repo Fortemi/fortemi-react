@@ -10,6 +10,7 @@ import {
   createAiwgReviewDecisionExport,
   encodeAiwgDetailId,
   findAiwgStaticDuplicatePairs,
+  resolveAiwgFetchUrl,
   queryAiwgHybridIndex,
   queryAiwgFortemiIndex,
   queryAiwgSemanticIndex,
@@ -1229,5 +1230,62 @@ describe('AIWG Fortemi chunked index — path-safe detail id encoding (#177)', (
       detail: { href: 'detail/{id}.json', encoding: 'uri' },
     })
     expect(uriOk.valid).toBe(true)
+  })
+})
+
+describe('SEC2: fetch loader SSRF hardening (#241)', () => {
+  it('resolves a relative href against a same-origin base', () => {
+    expect(resolveAiwgFetchUrl('parts/0.json', 'https://host.example/idx/')).toBe(
+      'https://host.example/idx/parts/0.json',
+    )
+  })
+
+  it('rejects an absolute cross-origin href even with a base', () => {
+    expect(() => resolveAiwgFetchUrl('https://evil.example/x.json', 'https://host.example/idx/')).toThrow(
+      /cross-origin/i,
+    )
+  })
+
+  it('rejects disallowed schemes', () => {
+    expect(() => resolveAiwgFetchUrl('file:///etc/passwd', 'https://host.example/')).toThrow(/scheme/i)
+    expect(() => resolveAiwgFetchUrl('file:///etc/passwd')).toThrow(/scheme/i)
+  })
+
+  it('passes through a bare relative href when no base is given', () => {
+    expect(resolveAiwgFetchUrl('parts/0.json')).toBe('parts/0.json')
+  })
+})
+
+describe('SEC5: duplicate-scan DoS cap (#241)', () => {
+  const semanticIndex: AiwgFortemiIndexExport = {
+    ...index,
+    items: [
+      record('a', 'aiwg.skill', 'A', 'a'),
+      record('b', 'aiwg.skill', 'B', 'b'),
+    ],
+  }
+  const embeddingSet: AiwgStaticEmbeddingSet = {
+    schema_version: 'aiwg.fortemi.embedding.set.v1',
+    id: 'cap-test',
+    model: 'test-embed',
+    dimensions: 3,
+    generated_at: '2026-01-04T00:00:00.000Z',
+    granularity: 'body',
+    input_hash_algorithm: 'sha256',
+    embeddings: [
+      { record_id: 'a', embedding: [1, 0, 0], input_hash: 'ha' },
+      { record_id: 'b', embedding: [0.99, 0.01, 0], input_hash: 'hb' },
+    ],
+  }
+
+  it('throws when the embedding set exceeds the cap', () => {
+    expect(() => findAiwgStaticDuplicatePairs(semanticIndex, embeddingSet, 0.9, { maxEmbeddings: 1 })).toThrow(
+      /too large/i,
+    )
+  })
+
+  it('scans normally within the cap', () => {
+    const pairs = findAiwgStaticDuplicatePairs(semanticIndex, embeddingSet, 0.9, { maxEmbeddings: 10 })
+    expect(pairs.map((p) => [p.left.id, p.right.id])).toEqual([['a', 'b']])
   })
 })

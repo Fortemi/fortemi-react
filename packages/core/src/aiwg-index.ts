@@ -914,9 +914,46 @@ export function assertAiwgFortemiChunkPart(
   return value as AiwgFortemiChunkPart
 }
 
+// Schemes an index fetch may target. Blocks file:, ftp:, ws:, etc. so a
+// manifest-controlled href cannot pivot the browser into a non-web protocol.
+const ALLOWED_AIWG_FETCH_SCHEMES = new Set(['http:', 'https:', 'blob:', 'data:'])
+
+function tryParseUrl(value: string): URL | null {
+  try {
+    return new URL(value)
+  } catch {
+    return null
+  }
+}
+
+// Resolve and vet a manifest-controlled fetch target (SEC2 — SSRF).
+// - With a baseUrl: the href is resolved against it and MUST stay same-origin,
+//   so an absolute `href` (which `new URL` would otherwise honor, ignoring the
+//   base) cannot redirect the fetch to an attacker origin.
+// - Without a baseUrl: the caller opted into a bare href; only the scheme is
+//   vetted (relative hrefs are passed through unchanged).
+export function resolveAiwgFetchUrl(href: string, baseUrl?: string | URL): string {
+  if (baseUrl === undefined) {
+    const absolute = tryParseUrl(href)
+    if (absolute && !ALLOWED_AIWG_FETCH_SCHEMES.has(absolute.protocol)) {
+      throw new Error('Refusing AIWG index fetch with disallowed scheme: ' + absolute.protocol)
+    }
+    return href
+  }
+  const base = new URL(baseUrl)
+  const resolved = new URL(href, base)
+  if (!ALLOWED_AIWG_FETCH_SCHEMES.has(resolved.protocol)) {
+    throw new Error('Refusing AIWG index fetch with disallowed scheme: ' + resolved.protocol)
+  }
+  if (resolved.origin !== base.origin) {
+    throw new Error('Refusing cross-origin AIWG index fetch: ' + resolved.origin + ' != ' + base.origin)
+  }
+  return resolved.toString()
+}
+
 export function createAiwgFetchChunkLoader(baseUrl?: string | URL): AiwgChunkedIndexLoader {
   return async (part) => {
-    const href = baseUrl ? new URL(part.href, baseUrl).toString() : part.href
+    const href = resolveAiwgFetchUrl(part.href, baseUrl)
     const response = await fetch(href)
     if (!response.ok) throw new Error('Failed to fetch AIWG index chunk ' + href + ': ' + response.status)
     return response.json()
@@ -949,7 +986,7 @@ export function createAiwgFetchDetailLoader(baseUrl?: string | URL): AiwgChunked
   return async (id, manifest) => {
     if (!manifest.detail?.href) throw new Error('Manifest has no detail.href for record resolution')
     const relative = aiwgDetailHrefForId(manifest.detail, id)
-    const href = baseUrl ? new URL(relative, baseUrl).toString() : relative
+    const href = resolveAiwgFetchUrl(relative, baseUrl)
     const response = await fetch(href)
     if (!response.ok) throw new Error('Failed to fetch AIWG index detail ' + href + ': ' + response.status)
     return response.json()
@@ -1519,12 +1556,26 @@ export function queryAiwgHybridIndex(
     .slice(offset, offset + limit)
 }
 
+// Default cap for the pairwise duplicate scan. The scan is O(n²) in the number
+// of embeddings, so an unbounded attacker-supplied set is a CPU DoS (SEC5). At
+// the default of 5000 the worst case is ~12.5M cosine comparisons; callers with
+// a trusted, larger set can raise the cap explicitly.
+export const DEFAULT_AIWG_DUPLICATE_SCAN_MAX_EMBEDDINGS = 5000
+
 export function findAiwgStaticDuplicatePairs(
   index: AiwgFortemiIndexExport,
   embeddingSet: AiwgStaticEmbeddingSet,
   threshold = 0.9,
+  options?: { maxEmbeddings?: number },
 ): AiwgStaticDuplicatePair[] {
   assertAiwgStaticEmbeddingSet(embeddingSet)
+  const maxEmbeddings = options?.maxEmbeddings ?? DEFAULT_AIWG_DUPLICATE_SCAN_MAX_EMBEDDINGS
+  if (embeddingSet.embeddings.length > maxEmbeddings) {
+    throw new Error(
+      'Embedding set too large for duplicate scan: ' + embeddingSet.embeddings.length +
+        ' > ' + maxEmbeddings + ' (raise options.maxEmbeddings to override for trusted input)',
+    )
+  }
   const byId = new Map(index.items.map((item) => [item.id, item]))
   const pairs: AiwgStaticDuplicatePair[] = []
   for (let leftIndex = 0; leftIndex < embeddingSet.embeddings.length; leftIndex += 1) {
