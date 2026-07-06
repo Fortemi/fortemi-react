@@ -2,19 +2,49 @@
 
 All notable changes to fortemi-react are documented here.
 
-## Unreleased
+## v2026.7.2 - 2026-07-05
+
+This release brings the browser edition's binary-attachment handling into parity
+with the Fortemi server contract and adds a headless embedding path so CLI and
+Node consumers can build embedding sets without a browser.
+
+### `@fortemi/core` — binary attachment extraction and headless embeddings (#227, #228)
+
+- Attachment rows now carry `mime_type` and `extracted_text` (migration `0010`).
+  Binary attachments are represented in the search, index, export, and
+  embedding-set surfaces via extracted text plus a content-addressed attachment
+  reference — never raw binary bytes. Raw bytes stay in `BlobStore`.
+- Extracted attachment text feeds live search, the static shard-reader search,
+  embedding generation, virtual embedding-set query criteria, and concept
+  tagging, so a note's attached documents are findable by their contents.
+- Added `buildAiwgStaticEmbeddingSet` — a Node/headless entrypoint that generates
+  `aiwg.fortemi.embedding.set.v1` sidecars from any Node-safe model backend, with
+  no DOM or WebGL dependency. This unblocks CLI index building (for example
+  AIWG's `index embed`).
+- Notes carry `binary_sources` in the Knowledge Shard export, so attachment
+  metadata and extracted text travel with the note while raw bytes do not.
 
 ### Documentation
 
-- Updated the docsite to `@pagenary/publisher@2026.7.11`.
-- Explicitly enabled Pagenary static page generation and root HTML fallback so
-  no-JavaScript readers, accessibility tooling, and automation can consume the
-  docs without waiting for the SPA runtime.
-- Updated the docsite to `@pagenary/publisher@2026.7.12` and enabled the open
-  SEO profile, machine-readable corpus artifacts, `llms.txt` extracts,
-  permissive content signals, and accessibility report output for bot and
-  human-readable discovery.
-- Updated the docsite to `@pagenary/publisher@2026.7.16`.
+- Backfilled the monthly blog reports for 2026-03 (inception), 2026-04, and
+  2026-05, matching the June report structure and public-facts-only bar (#230).
+- Published the June report hero image and removed a duplicate.
+- Enabled Pagenary root HTML fallback and static page generation, and the open
+  SEO profile (machine-readable corpus artifacts, `llms.txt` extracts,
+  accessibility report). Updated the docsite to `@pagenary/publisher@2026.7.16`.
+- Documented the attachment extraction contract and the CLI embedding-set
+  generation path.
+
+### Release metadata
+
+- Synced package versions, runtime `VERSION` constants, docs references, and
+  release notes for `2026.7.2`.
+
+### Published Packages
+
+- `@fortemi/core@2026.7.2`
+- `@fortemi/graph@2026.7.2`
+- `@fortemi/react@2026.7.2`
 
 ## v2026.7.1 - 2026-07-02
 
