@@ -14,6 +14,8 @@ import { NotesRepository } from '../../repositories/notes-repository.js'
 import { CollectionsRepository } from '../../repositories/collections-repository.js'
 import { LinksRepository } from '../../repositories/links-repository.js'
 import { TagsRepository } from '../../repositories/tags-repository.js'
+import { AttachmentsRepository } from '../../repositories/attachments-repository.js'
+import { MemoryBlobStore } from '../../blob-store.js'
 import { exportShard } from '../../shard/shard-export.js'
 import { importShard } from '../../shard/shard-import.js'
 import { packTarGz } from '../../shard/shard-tar.js'
@@ -366,5 +368,53 @@ describe('importShard', { timeout: 30_000 }, () => {
 
     expect(result.success).toBe(true)
     expect(result.counts.notes).toBe(2)
+  })
+})
+
+describe('importShard — E1 attachment round-trip (#237)', { timeout: 30_000 }, () => {
+  it('surfaces dropped attachments as an explicit warning instead of silent data loss', async () => {
+    // Source DB with one note carrying a real attachment.
+    const sourceDb = await createTestDb()
+    const notes = new NotesRepository(sourceDb)
+    const attachments = new AttachmentsRepository(sourceDb, new MemoryBlobStore())
+    const note = await notes.create({ content: 'Has attachment', title: 'Doc', tags: [] })
+    await attachments.attach({
+      noteId: note.id,
+      data: encoder.encode('binary-payload-bytes'),
+      filename: 'report.pdf',
+      mimeType: 'application/pdf',
+      extractedText: 'report text',
+    })
+
+    // The export carries the attachment *reference* (S1: binary_sources).
+    const archive = await exportShard(sourceDb)
+    await sourceDb.close()
+
+    // Import into a fresh DB.
+    const targetDb = await createTestDb()
+    const result = await importShard(targetDb, archive)
+
+    expect(result.success).toBe(true)
+    expect(result.counts.notes).toBe(1)
+
+    // Attachment bytes are not packaged in the shard, so nothing is persisted —
+    // but the loss is now reported, not silent (E1).
+    const rows = await targetDb.query<{ n: number }>('SELECT COUNT(*)::int AS n FROM attachment')
+    expect(rows.rows[0].n).toBe(0)
+    expect(result.warnings.some((w) => /attachment\(s\).*were not imported/.test(w))).toBe(true)
+    expect(result.warnings.some((w) => w.includes('#237'))).toBe(true)
+
+    await targetDb.close()
+  })
+
+  it('emits no attachment warning when a shard has no attachments', async () => {
+    const { archive, sourceDb } = await createTestShard()
+    const targetDb = await createTestDb()
+    const result = await importShard(targetDb, archive)
+    await sourceDb.close()
+
+    expect(result.warnings.some((w) => /were not imported/.test(w))).toBe(false)
+
+    await targetDb.close()
   })
 })
