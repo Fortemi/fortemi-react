@@ -554,8 +554,17 @@ function hasString(value: unknown): value is string {
 }
 
 function pushFacet(counts: Record<string, Record<string, number>>, name: string, value: string) {
-  counts[name] ??= {}
-  counts[name][value] = (counts[name][value] ?? 0) + 1
+  // `name`/`value` come from untrusted index records (item.facets). Using a
+  // prototype-bearing accumulator would let a key such as `__proto__` (or any
+  // inherited name like `toString`) read through the prototype chain and mutate
+  // shared built-ins. Null-prototype buckets make every access own-property
+  // only, so exotic keys are counted as plain data. See SEC1 / #236.
+  let bucket = counts[name]
+  if (bucket === undefined) {
+    bucket = Object.create(null) as Record<string, number>
+    counts[name] = bucket
+  }
+  bucket[value] = (bucket[value] ?? 0) + 1
 }
 
 function hasNonNegativeInteger(value: unknown): value is number {
@@ -957,7 +966,10 @@ export function createAiwgFetchDetailLoader(baseUrl?: string | URL): AiwgChunked
 }
 
 export function getAiwgFortemiFacets(items: AiwgFortemiRecord[]): Record<string, Record<string, number>> {
-  const result: Record<string, Record<string, number>> = {}
+  // Null-prototype accumulator: untrusted facet names must never resolve to an
+  // inherited property (see pushFacet / SEC1 / #236). Round-trips to a plain
+  // object through JSON serialization, so no downstream consumer is affected.
+  const result: Record<string, Record<string, number>> = Object.create(null)
   for (const item of items) {
     pushFacet(result, 'type', item.type)
     pushFacet(result, 'privacy', item.privacy.classification)
