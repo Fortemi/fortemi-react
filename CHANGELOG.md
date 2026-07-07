@@ -2,6 +2,58 @@
 
 All notable changes to fortemi-react are documented here.
 
+## v2026.7.3 - 2026-07-07
+
+Security-hardening release for the AIWG portable-schema surface (epic #235). The
+AIWG index, chunk manifests, and Knowledge Shard archives are treated as
+untrusted input loaded from a URL or file; this release closes a critical
+prototype-pollution vector and a bundle of SSRF / decompression-bomb /
+path-traversal / DoS issues, and makes index and embedding-set generation
+privacy-safe by default.
+
+### `@fortemi/core` — security hardening
+
+- **Prototype pollution fixed (SEC1, #236):** facet aggregation
+  (`getAiwgFortemiFacets` / `pushFacet`) built its counters on a prototype-bearing
+  object, so an untrusted index record with a facet key of `__proto__` — or any
+  inherited name such as `toString` — mutated shared built-ins during an ordinary
+  `useAiwgIndex().search()`. Aggregation now uses null-prototype accumulators;
+  exotic keys are counted as plain data. **Critical, zero-interaction.**
+- **Untrusted index/shard hardening (SEC2–SEC5, #241):**
+  - *SSRF:* the chunk/detail fetch loaders enforce same-origin against the base
+    URL plus an http/https/blob/data scheme allowlist, so an absolute manifest
+    `href` can no longer redirect fetches off-origin.
+  - *Decompression bomb:* `unpackTarGz` rejects archives whose gzip footer
+    declares more than a 256 MiB (overridable) decompressed size, before
+    allocating.
+  - *Path traversal:* shard component reads reject `..`, absolute, backslash,
+    scheme, and null-byte paths (cluster subdirs like `notes/000.jsonl` still
+    allowed).
+  - *Algorithmic DoS:* the duplicate-pair scan is capped at 5000 embeddings by
+    default (overridable), bounding its O(n²) cost.
+- **Privacy/PII enforced at generation (SEC6, #243):**
+  `buildAiwgStaticEmbeddingSet` and `buildAiwgChunkedIndex` now exclude
+  `private`-classified and `pii`-flagged records by default (opt back in via
+  `privacy: { includePrivate, includePii }`), so a leaked embedding set or scan
+  part no longer carries private/PII-derived vectors. New export
+  `filterAiwgRecordsByPrivacy`.
+- **Checksum trust model documented (SEC7, #243):** in-archive checksums detect
+  transport corruption, not tampering; provenance-sensitive imports should verify
+  integrity out of band (a signed manifest, or `prefetchShard`'s `expectedSha256`).
+- **Shard attachment data-loss surfaced (E1, #237):** shard import now emits an
+  explicit warning when a note's attachment references cannot be restored —
+  attachment bytes are not yet packaged in shards — instead of silently dropping
+  them. The full attachment round-trip stays tracked in #237 pending the shard
+  binary-packaging contract.
+
+### Compatibility
+
+Additive and security-focused, with one deliberate default change: the index and
+embedding-set *builders* now filter `private`/`pii` records by default — callers
+that need those records must opt in via `privacy: { includePrivate, includePii }`.
+No schema, migration, or wire-format change; existing Knowledge Shards, embedding
+sets, and static indexes remain valid.
+
 ## v2026.7.2 - 2026-07-05
 
 This release brings the browser edition's binary-attachment handling into parity
