@@ -9,6 +9,7 @@ import {
   createAiwgIndexController,
   createAiwgReviewDecisionExport,
   encodeAiwgDetailId,
+  filterAiwgRecordsByPrivacy,
   findAiwgStaticDuplicatePairs,
   getAiwgFortemiFacets,
   queryAiwgHybridIndex,
@@ -859,7 +860,13 @@ describe('AIWG Fortemi chunked index — slim/projected parts (#168)', () => {
   const projection = AIWG_SCAN_REQUIRED_FIELDS
 
   function projectedRuntime(partSize = 2) {
-    const built = buildAiwgChunkedIndex(index, { partSize, projection })
+    // Projection tests exercise the full fixture; opt in past the SEC6 default
+    // privacy filter (#243) so private/pii fixture records are still projected.
+    const built = buildAiwgChunkedIndex(index, {
+      partSize,
+      projection,
+      privacy: { includePrivate: true, includePii: true },
+    })
     const partsByHref = new Map(built.parts.map((entry) => [entry.href, entry.part]))
     const detailById = new Map(built.details.map((entry) => [entry.id, entry.record]))
     let detailFetches = 0
@@ -883,7 +890,11 @@ describe('AIWG Fortemi chunked index — slim/projected parts (#168)', () => {
         ...index.items.slice(1),
       ],
     }
-    const built = buildAiwgChunkedIndex(richIndex, { partSize: 2, projection })
+    const built = buildAiwgChunkedIndex(richIndex, {
+      partSize: 2,
+      projection,
+      privacy: { includePrivate: true, includePii: true },
+    })
     expect(built.manifest.projection).toEqual(projection)
     expect(built.manifest.detail?.href).toBe('detail/{id}.json')
     // manifest facets computed from FULL records → exact global counts even though parts are slim
@@ -1272,5 +1283,53 @@ describe('SEC1: prototype pollution via facet aggregation (#236)', () => {
     expect(({} as Record<string, unknown>).x).toBeUndefined()
     expect(({} as Record<string, unknown>).z).toBeUndefined()
     expect(result.facets['__proto__']).toEqual({ x: 1 })
+  })
+})
+
+describe('SEC6: privacy/PII filtered at generation (#243)', () => {
+  const backend = {
+    model: 'test-embed',
+    dimensions: 3,
+    embed: () => [1, 0, 0],
+  }
+  // Items must be sorted by id for a valid export (pii < prv < pub).
+  const mixed: AiwgFortemiIndexExport = {
+    ...index,
+    items: [
+      record('pii', 'aiwg.skill', 'Pii', 'ssn body', { privacy: { classification: 'public', pii: true } }),
+      record('prv', 'aiwg.skill', 'Private', 'secret body', { privacy: { classification: 'private', pii: false } }),
+      record('pub', 'aiwg.skill', 'Public', 'public body', { privacy: { classification: 'public', pii: false } }),
+    ],
+  }
+
+  it('filterAiwgRecordsByPrivacy drops private/pii by default and honors opt-in', () => {
+    expect(filterAiwgRecordsByPrivacy(mixed.items).map((r) => r.id)).toEqual(['pub'])
+    expect(filterAiwgRecordsByPrivacy(mixed.items, { includePrivate: true }).map((r) => r.id).sort()).toEqual(['prv', 'pub'])
+    expect(filterAiwgRecordsByPrivacy(mixed.items, { includePii: true }).map((r) => r.id).sort()).toEqual(['pii', 'pub'])
+    expect(
+      filterAiwgRecordsByPrivacy(mixed.items, { includePrivate: true, includePii: true }).map((r) => r.id).sort(),
+    ).toEqual(['pii', 'prv', 'pub'])
+  })
+
+  it('buildAiwgStaticEmbeddingSet excludes private/pii by default', async () => {
+    const safe = await buildAiwgStaticEmbeddingSet(mixed, { id: 'safe', backend })
+    expect(safe.embeddings.map((e) => e.record_id)).toEqual(['pub'])
+
+    const full = await buildAiwgStaticEmbeddingSet(mixed, {
+      id: 'full',
+      backend,
+      privacy: { includePrivate: true, includePii: true },
+    })
+    expect(full.embeddings.map((e) => e.record_id).sort()).toEqual(['pii', 'prv', 'pub'])
+  })
+
+  it('buildAiwgChunkedIndex excludes private/pii from parts and facet counts by default', () => {
+    const built = buildAiwgChunkedIndex(mixed, { partSize: 10 })
+    const ids = built.parts.flatMap((p) => p.part.items.map((i) => i.id))
+    expect(ids).toEqual(['pub'])
+    expect(built.manifest.total).toBe(1)
+
+    const full = buildAiwgChunkedIndex(mixed, { partSize: 10, privacy: { includePrivate: true, includePii: true } })
+    expect(full.manifest.total).toBe(3)
   })
 })

@@ -20,6 +20,15 @@ export async function sha256Hex(data: Uint8Array): Promise<string> {
 /**
  * Validate checksums listed in a shard manifest against actual file contents.
  *
+ * SECURITY (SEC7 — trust model): these checksums live *inside* the same archive
+ * as the files they hash, so they detect **transport corruption**, not
+ * **tampering**. An attacker who controls the archive controls both the file
+ * bytes and the manifest hashes, so a passing result proves the archive is
+ * internally consistent — nothing more. For provenance-sensitive imports, verify
+ * integrity out-of-band: a signed manifest, or a caller-supplied expected digest
+ * checked against the whole archive (see `prefetchShard`'s `expectedSha256`,
+ * which is real integrity because the hash arrives on a separate channel).
+ *
  * @returns Object with `valid` flag and list of failed filenames.
  */
 export async function validateChecksums(
