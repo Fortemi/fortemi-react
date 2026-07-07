@@ -2,3 +2,5 @@
 ## [2026-06-12 16:14] deploy | aiwg use all --provider codex
 ## [2026-06-13 21:20] deploy | aiwg use all
 ## [2026-06-13 21:20] deploy | aiwg use all --provider codex
+## [2026-07-06 03:33] create | AIWG portable-schema audit report + ADR-010/011 + security appendix in .aiwg/
+## [2026-07-06 03:33] update | SAD.md R-002 mitigation corrected (parity suite guards DB tables, not portable contract)

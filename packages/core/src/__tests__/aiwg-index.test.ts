@@ -10,6 +10,7 @@ import {
   createAiwgReviewDecisionExport,
   encodeAiwgDetailId,
   findAiwgStaticDuplicatePairs,
+  getAiwgFortemiFacets,
   resolveAiwgFetchUrl,
   queryAiwgHybridIndex,
   queryAiwgFortemiIndex,
@@ -1287,5 +1288,47 @@ describe('SEC5: duplicate-scan DoS cap (#241)', () => {
   it('scans normally within the cap', () => {
     const pairs = findAiwgStaticDuplicatePairs(semanticIndex, embeddingSet, 0.9, { maxEmbeddings: 10 })
     expect(pairs.map((p) => [p.left.id, p.right.id])).toEqual([['a', 'b']])
+  })
+})
+
+describe('SEC1: prototype pollution via facet aggregation (#236)', () => {
+  afterEach(() => {
+    // Scrub any accidental pollution so a failure here cannot leak into other tests.
+    for (const key of ['x', 'y', 'z', 'polluted']) {
+      delete (Object.prototype as Record<string, unknown>)[key]
+    }
+  })
+
+  // Object literals treat `__proto__:` as a prototype directive, so the only
+  // faithful reproduction of the attack is JSON.parse — exactly how an untrusted
+  // index is loaded from a URL or file.
+  const maliciousFacets = () =>
+    JSON.parse('{"__proto__":["x"],"constructor":["y"],"toString":["z"]}') as Record<string, string[]>
+
+  it('does not pollute Object.prototype from getAiwgFortemiFacets', () => {
+    const item = record('sec1', 'aiwg.skill', 'Malicious', 'body', { facets: maliciousFacets() })
+
+    const facets = getAiwgFortemiFacets([item])
+
+    expect(({} as Record<string, unknown>).x).toBeUndefined()
+    expect(({} as Record<string, unknown>).y).toBeUndefined()
+    expect(({} as Record<string, unknown>).z).toBeUndefined()
+    expect(Object.prototype.hasOwnProperty.call(Object.prototype, 'x')).toBe(false)
+    // Built-ins remain intact (the `??=`/`+ 1` path previously corrupted toString).
+    expect(typeof ({}).toString).toBe('function')
+    // Exotic keys are still counted as plain data on the null-prototype accumulator.
+    expect(facets['__proto__']).toEqual({ x: 1 })
+    expect(facets.toString).toEqual({ z: 1 })
+  })
+
+  it('does not pollute Object.prototype through the public search path', () => {
+    const item = record('sec1-search', 'aiwg.skill', 'Malicious', 'body', { facets: maliciousFacets() })
+    const maliciousIndex = { ...index, items: [item] } as AiwgFortemiIndexExport
+
+    const result = queryAiwgFortemiIndex(maliciousIndex)
+
+    expect(({} as Record<string, unknown>).x).toBeUndefined()
+    expect(({} as Record<string, unknown>).z).toBeUndefined()
+    expect(result.facets['__proto__']).toEqual({ x: 1 })
   })
 })
