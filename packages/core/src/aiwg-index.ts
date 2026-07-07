@@ -444,6 +444,34 @@ export interface AiwgHeadlessEmbeddingBackend {
   embed(input: string, record: AiwgFortemiRecord): number[] | Promise<number[]>
 }
 
+// Privacy filtering for generated index/embedding artifacts (SEC6). Generation
+// is default-safe: records classified `private`, or flagged `pii`, are excluded
+// unless the caller explicitly opts them in. This keeps the query-time privacy
+// gate from being the *only* enforcement point — a leaked embedding set or scan
+// part can no longer carry private/PII-derived vectors by default.
+export interface AiwgPrivacyFilterOptions {
+  /** Include records classified `private` (default false). */
+  includePrivate?: boolean
+  /** Include records flagged `pii` (default false). */
+  includePii?: boolean
+}
+
+function isPrivacyExcluded(record: AiwgFortemiRecord, options?: AiwgPrivacyFilterOptions): boolean {
+  const privacy = record.privacy
+  if (!privacy) return false
+  if (privacy.classification === 'private' && !options?.includePrivate) return true
+  if (privacy.pii && !options?.includePii) return true
+  return false
+}
+
+/** Drop `private`/`pii` records unless explicitly opted in (SEC6, default-safe). */
+export function filterAiwgRecordsByPrivacy(
+  records: AiwgFortemiRecord[],
+  options?: AiwgPrivacyFilterOptions,
+): AiwgFortemiRecord[] {
+  return records.filter((record) => !isPrivacyExcluded(record, options))
+}
+
 export interface BuildAiwgStaticEmbeddingSetOptions {
   id: string
   backend: AiwgHeadlessEmbeddingBackend
@@ -452,6 +480,8 @@ export interface BuildAiwgStaticEmbeddingSetOptions {
   granularity?: AiwgStaticEmbeddingSet['granularity']
   metric?: AiwgStaticEmbeddingSet['metric']
   textForRecord?: (record: AiwgFortemiRecord) => string
+  /** Privacy filtering (SEC6). Default-safe: excludes `private`/`pii` records. */
+  privacy?: AiwgPrivacyFilterOptions
 }
 
 export interface AiwgStaticSemanticQueryOptions {
@@ -1056,7 +1086,8 @@ export async function buildAiwgStaticEmbeddingSet(
 ): Promise<AiwgStaticEmbeddingSet> {
   assertAiwgFortemiIndexExport(index)
   const granularity = options.granularity ?? 'body'
-  const records = options.records ?? index.items
+  // SEC6: default-safe privacy filter over the source records.
+  const records = filterAiwgRecordsByPrivacy(options.records ?? index.items, options.privacy)
   const embeddings: AiwgStaticEmbeddingRecord[] = []
 
   for (const record of records) {
@@ -1126,6 +1157,8 @@ export interface AiwgChunkedIndexBuildOptions {
   // works for ids containing '/'; see #177).
   idEncoding?: AiwgDetailIdEncoding
   generatedAt?: string
+  /** Privacy filtering (SEC6). Default-safe: excludes `private`/`pii` records. */
+  privacy?: AiwgPrivacyFilterOptions
 }
 
 export interface AiwgChunkedIndexBuildResult {
@@ -1149,7 +1182,9 @@ export function buildAiwgChunkedIndex(
   const projection = options.projection
   const idEncoding = options.idEncoding ?? 'base64url'
   const detailHref = options.detailHref ?? 'detail/{id}.json'
-  const items = index.items
+  // SEC6: default-safe privacy filter — `private`/`pii` records never enter the
+  // generated scan parts, detail files, or manifest facet counts.
+  const items = filterAiwgRecordsByPrivacy(index.items, options.privacy)
   const pad = (value: number): string => String(value).padStart(4, '0')
   const project = (record: AiwgFortemiRecord): AiwgFortemiRecord => {
     if (!projection) return record
