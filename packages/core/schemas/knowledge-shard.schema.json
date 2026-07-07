@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fortemi.dev/schemas/knowledge-shard.schema.json",
+  "title": "Knowledge Shard (matric-shard) conformance schema",
+  "description": "Structural authority for the Knowledge Shard interchange contract shared between the Fortemi server (GET /api/v1/backup/knowledge-shard) and @fortemi/core. SPIKE #238 minimal proof: covers the manifest and the note component (the S1-S9 audit surface). Remaining components (collections, tags, links, embedding_sets, skos_*, provenance_edges, graph_*, communities) are a backlog item — see .aiwg/spikes/238-shard-conformance-harness.md.",
+  "type": "object",
+  "$defs": {
+    "isoDateTime": {
+      "type": "string",
+      "description": "ISO 8601 timestamp",
+      "minLength": 1
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "matric_version",
+        "format",
+        "created_at",
+        "components",
+        "counts",
+        "checksums",
+        "min_reader_version"
+      ],
+      "properties": {
+        "version": { "type": "string", "minLength": 1 },
+        "matric_version": { "type": "string", "minLength": 1 },
+        "format": { "const": "matric-shard" },
+        "created_at": { "$ref": "#/$defs/isoDateTime" },
+        "components": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "notes",
+              "collections",
+              "tags",
+              "links",
+              "embedding_sets",
+              "embedding_set_members",
+              "embedding_configs",
+              "embeddings",
+              "skos_schemes",
+              "skos_concepts",
+              "skos_relations",
+              "note_skos_tags",
+              "provenance_edges",
+              "community_assignments",
+              "communities",
+              "graph_edges",
+              "graph_sources"
+            ]
+          }
+        },
+        "counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "checksums": {
+          "type": "object",
+          "description": "filename -> sha256 hex",
+          "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        },
+        "min_reader_version": { "type": "string", "minLength": 1 },
+        "layout": { "type": "object" }
+      }
+    },
+    "attachmentReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "mime", "checksum", "bytes"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "mime": { "type": ["string", "null"] },
+        "checksum": { "type": "string", "minLength": 1 },
+        "bytes": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "binarySource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["extracted_text", "attachment"],
+      "properties": {
+        "extracted_text": { "type": "string" },
+        "attachment": { "$ref": "#/$defs/attachmentReference" }
+      }
+    },
+    "note": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "One row of the shard `notes` component. Field names are the server shard contract, not the PGlite table column names.",
+      "required": [
+        "id",
+        "title",
+        "original_content",
+        "revised_content",
+        "format",
+        "source",
+        "starred",
+        "archived",
+        "tags",
+        "created_at",
+        "updated_at",
+        "deleted_at"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": ["string", "null"] },
+        "original_content": { "type": "string" },
+        "revised_content": { "type": ["string", "null"] },
+        "binary_sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/binarySource" }
+        },
+        "format": { "type": "string" },
+        "source": { "type": "string" },
+        "starred": { "type": "boolean" },
+        "archived": { "type": "boolean" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "created_at": { "$ref": "#/$defs/isoDateTime" },
+        "updated_at": { "$ref": "#/$defs/isoDateTime" },
+        "deleted_at": { "type": ["string", "null"] }
+      }
+    }
+  }
+}
