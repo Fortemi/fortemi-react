@@ -6,7 +6,7 @@ export type AiwgFortemiKnownRecordType =
   | 'crm.event'
   | 'crm.interaction'
   | 'aiwg.artifact'
-  | 'docs.page'
+  | 'aiwg.kb.page'
 
 export type AiwgFortemiRecordType = AiwgFortemiKnownRecordType | `aiwg.${string}` | `research.${string}` | `docs.${string}` | string
 
@@ -165,12 +165,11 @@ export interface AiwgFortemiIndexExport {
   source: {
     repo: string
     privacy: AiwgPrivacyClassification
-    origin?: string
-    generated?: boolean
-    checksum?: string
-    updated_at?: string
+    // v2-only graph metadata block; the validator gates its presence to export.v2.
+    graph?: Record<string, unknown>
   }
   items: AiwgFortemiRecord[]
+  // v2-only; the validator gates its presence to export.v2.
   compatibility?: Record<string, unknown>
 }
 
@@ -224,6 +223,10 @@ export interface AiwgFortemiChunkManifest {
   schema_version: 'aiwg.fortemi.index.chunk-manifest.v1'
   generated_at: string
   source: AiwgFortemiIndexExport['source']
+  // The schema_version of the source index export this manifest was built from,
+  // so chunked consumers (e.g. review-decision export) can report the true source
+  // version rather than assuming v1 (#239 E8). Optional for backward compatibility.
+  source_export_schema_version?: AiwgFortemiIndexExportSchemaVersion
   total: number
   part_size: number
   facets?: Record<string, Record<string, number>>
@@ -735,6 +738,68 @@ function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: n
   }
 }
 
+function isPrivacyClassification(value: unknown): value is AiwgPrivacyClassification {
+  return value === 'private' || value === 'sanitized' || value === 'public'
+}
+
+function isProvenanceConfidence(value: unknown): value is AiwgProvenanceConfidence {
+  return value === 'source' || value === 'candidate' || value === 'reviewed' || value === 'rejected'
+}
+
+// Provenance item shape + enum validation (#239 A4). Each item requires
+// field/source/path and enum-valid confidence/privacy — the schema marks all five
+// required, but the parser previously only checked "non-empty array".
+function validateProvenanceItems(item: Partial<AiwgFortemiRecord>, index: number, errors: string[]): void {
+  if (!Array.isArray(item.provenance)) return
+  for (const [provIndex, prov] of item.provenance.entries()) {
+    const at = 'items[' + index + '].provenance[' + provIndex + ']'
+    if (!isPlainRecord(prov)) {
+      errors.push(at + ' must be an object')
+      continue
+    }
+    if (!hasString(prov.field)) errors.push(at + '.field is required')
+    if (!hasString(prov.source)) errors.push(at + '.source is required')
+    if (!hasString(prov.path)) errors.push(at + '.path is required')
+    if (!isProvenanceConfidence(prov.confidence)) errors.push(at + '.confidence must be one of source, candidate, reviewed, rejected')
+    if (!isPrivacyClassification(prov.privacy)) errors.push(at + '.privacy must be one of private, sanitized, public')
+  }
+}
+
+// v1/v2 field forbiddance (#239 A2): a record.v1 record must not carry fields the
+// schema defines only for record.v2. Keeps the parser as strict as the schema, so
+// a too-loose generator output is rejected rather than silently accepted.
+const V2_ONLY_RECORD_FIELDS = ['search', 'chunks', 'embeddings', 'skos_concepts', 'skos_relations', 'compatibility'] as const
+const V2_ONLY_SOURCE_FIELDS = ['origin', 'generated', 'checksum', 'updated_at'] as const
+const V2_ONLY_RELATIONSHIP_FIELDS = ['target_path', 'direction', 'metadata'] as const
+
+function forbidV2FieldsOnV1Record(item: Partial<AiwgFortemiRecord>, index: number, errors: string[]): void {
+  if (item.schema_version !== 'aiwg.fortemi.index.record.v1') return
+  const at = 'items[' + index + ']'
+  const bag = item as Record<string, unknown>
+  const v2msg = ' is a v2-only field and must be absent on a record.v1 record'
+  for (const field of V2_ONLY_RECORD_FIELDS) {
+    if (bag[field] !== undefined) errors.push(at + '.' + field + v2msg)
+  }
+  if (isPlainRecord(item.source)) {
+    const src = item.source as Record<string, unknown>
+    for (const field of V2_ONLY_SOURCE_FIELDS) {
+      if (src[field] !== undefined) errors.push(at + '.source.' + field + v2msg)
+    }
+  }
+  if (isPlainRecord(item.privacy) && (item.privacy as Record<string, unknown>).locality !== undefined) {
+    errors.push(at + '.privacy.locality' + v2msg)
+  }
+  if (Array.isArray(item.relationships)) {
+    for (const [relIndex, rel] of item.relationships.entries()) {
+      if (!isPlainRecord(rel)) continue
+      const relBag = rel as Record<string, unknown>
+      for (const field of V2_ONLY_RELATIONSHIP_FIELDS) {
+        if (relBag[field] !== undefined) errors.push(at + '.relationships[' + relIndex + '].' + field + v2msg)
+      }
+    }
+  }
+}
+
 export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidationResult {
   const errors: string[] = []
   const counts: Partial<Record<string, number>> = {}
@@ -746,9 +811,21 @@ export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidat
   if (!hasString(data?.generated_at)) errors.push('generated_at is required')
   if (!hasString(data?.source?.repo)) errors.push('source.repo is required')
   if (!hasString(data?.source?.privacy)) errors.push('source.privacy is required')
+  else if (!isPrivacyClassification(data?.source?.privacy)) {
+    errors.push('source.privacy must be one of private, sanitized, public')
+  }
   if (!Array.isArray(data?.items)) errors.push('items must be an array')
   if (data.compatibility !== undefined && !isPlainRecord(data.compatibility)) {
     errors.push('compatibility must be an object')
+  }
+  // A5: export-level v1/v2 gating — source.graph and compatibility are v2-only.
+  if (data?.schema_version === 'aiwg.fortemi.index.export.v1') {
+    if (isPlainRecord(data.source) && (data.source as Record<string, unknown>).graph !== undefined) {
+      errors.push('source.graph is a v2-only field and must be absent on an export.v1 export')
+    }
+    if (data.compatibility !== undefined) {
+      errors.push('compatibility is a v2-only field and must be absent on an export.v1 export')
+    }
   }
 
   const ids = new Set<string>()
@@ -785,8 +862,12 @@ export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidat
       errors.push('items[' + index + '].provenance must be a non-empty array')
     }
     validateOptionalRichMetadata(item, index, errors)
+    validateProvenanceItems(item, index, errors)
+    forbidV2FieldsOnV1Record(item, index, errors)
     if (!item.privacy || typeof item.privacy.pii !== 'boolean' || !hasString(item.privacy.classification)) {
       errors.push('items[' + index + '].privacy requires classification and pii')
+    } else if (!isPrivacyClassification(item.privacy.classification)) {
+      errors.push('items[' + index + '].privacy.classification must be one of private, sanitized, public')
     }
   }
 
@@ -811,6 +892,9 @@ export function validateAiwgFortemiChunkManifest(value: unknown): AiwgChunkedInd
   if (!hasString(data?.generated_at)) errors.push('generated_at is required')
   if (!hasString(data?.source?.repo)) errors.push('source.repo is required')
   if (!hasString(data?.source?.privacy)) errors.push('source.privacy is required')
+  if (data?.source_export_schema_version !== undefined && !isSupportedIndexSchemaVersion(data.source_export_schema_version)) {
+    errors.push('source_export_schema_version must be aiwg.fortemi.index.export.v1 or aiwg.fortemi.index.export.v2 when present')
+  }
   if (!hasNonNegativeInteger(data?.total)) errors.push('total must be a non-negative integer')
   if (!hasPositiveInteger(data?.part_size)) errors.push('part_size must be a positive integer')
   if (data.facets !== undefined && !isFacetCounts(data.facets)) {
@@ -1214,6 +1298,7 @@ export function buildAiwgChunkedIndex(
     schema_version: 'aiwg.fortemi.index.chunk-manifest.v1',
     generated_at: options.generatedAt ?? index.generated_at,
     source: index.source,
+    source_export_schema_version: index.schema_version,
     total: items.length,
     part_size: partSize,
     facets: getAiwgFortemiFacets(items),
@@ -2195,7 +2280,10 @@ export function createAiwgIndexController(initialIndex?: AiwgFortemiIndexExport)
       // The review-decisions export only needs the export schema_version, not the
       // items — so it works in chunked mode by synthesizing a minimal source (#178).
       const source: Pick<AiwgFortemiIndexExport, 'schema_version'> | null =
-        index ?? (chunked ? { schema_version: 'aiwg.fortemi.index.export.v1' } : null)
+        index ??
+        (chunked
+          ? { schema_version: chunked.manifest.source_export_schema_version ?? 'aiwg.fortemi.index.export.v1' }
+          : null)
       if (!source) throw new Error('No AIWG index export or chunked manifest loaded')
       return createAiwgReviewDecisionExport(source, reviewDecisions, generatedAt)
     },
