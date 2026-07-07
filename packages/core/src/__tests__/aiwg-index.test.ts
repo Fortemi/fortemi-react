@@ -157,7 +157,7 @@ describe('AIWG Fortemi index adapter', () => {
       ...index,
       items: [
         {
-          schema_version: 'aiwg.fortemi.index.record.v1',
+          schema_version: 'aiwg.fortemi.index.record.v2',
           id: 'docs:page:pagenary/getting-started',
           type: 'docs.page',
           source: {
@@ -308,10 +308,7 @@ describe('AIWG Fortemi index adapter', () => {
       source: {
         repo: 'Fortemi/fortemi-react',
         privacy: 'public',
-        origin: 'aiwg',
-        generated: true,
-        checksum: 'sha256:v2-export',
-        updated_at: '2026-07-02T00:00:00.000Z',
+        graph: { communities: 2 },
       },
       compatibility: { v1_strategy: 'flat-fields-plus-v2-projection' },
       items: [
@@ -1389,5 +1386,94 @@ describe('SEC6: privacy/PII filtered at generation (#243)', () => {
 
     const full = buildAiwgChunkedIndex(mixed, { partSize: 10, privacy: { includePrivate: true, includePii: true } })
     expect(full.manifest.total).toBe(3)
+  })
+})
+
+describe('#239 validator conformance — v1/v2 forbiddance, enums, source gating, review-decision version', () => {
+  const exportV1 = (items: AiwgFortemiRecord[]): unknown => ({ ...index, schema_version: 'aiwg.fortemi.index.export.v1', items })
+
+  it('A2 — rejects a record.v1 carrying record-level v2-only fields', () => {
+    const cases: Array<[string, Partial<AiwgFortemiRecord>]> = [
+      ['search', { search: { title: 'x' } }],
+      ['chunks', { chunks: [] }],
+      ['embeddings', { embeddings: [] }],
+      ['skos_concepts', { skos_concepts: [] }],
+      ['skos_relations', { skos_relations: [] }],
+      ['compatibility', { compatibility: {} }],
+    ]
+    for (const [field, extra] of cases) {
+      const res = validateAiwgFortemiIndexExport(exportV1([record('r', 'aiwg.skill', 'R', 'body', extra)]))
+      expect(res.valid, field).toBe(false)
+      expect(res.errors.join('\n'), field).toContain('.' + field + ' is a v2-only field')
+    }
+  })
+
+  it('A2 — rejects a record.v1 carrying nested v2-only fields (source, privacy.locality, relationship)', () => {
+    const withSource = record('r', 'aiwg.skill', 'R', 'body', {
+      source: { path: 'r.md', repo_relative_path: 'r.md', locator: 'r', origin: 'aiwg' },
+    })
+    expect(validateAiwgFortemiIndexExport(exportV1([withSource])).errors.join('\n')).toContain('.source.origin is a v2-only field')
+
+    const withLocality = record('r', 'aiwg.skill', 'R', 'body', { privacy: { classification: 'public', pii: false, locality: 'workspace' } })
+    expect(validateAiwgFortemiIndexExport(exportV1([withLocality])).errors.join('\n')).toContain('.privacy.locality is a v2-only field')
+
+    const withRel = record('r', 'aiwg.skill', 'R', 'body', { relationships: [{ type: 'documents', target_id: 't', direction: 'upstream' }] })
+    expect(validateAiwgFortemiIndexExport(exportV1([withRel])).errors.join('\n')).toContain('.relationships[0].direction is a v2-only field')
+  })
+
+  it('A2 — a record.v2 carrying the same fields is accepted', () => {
+    const v2 = v2Record('aiwg:agent:planner', 'aiwg.agent', {
+      search: { title: 'Planner' },
+      chunks: [],
+      skos_concepts: [{ id: 'c', prefLabel: 'C' }],
+      relationships: [{ type: 'documents', target_id: 't', direction: 'upstream' }],
+      source: { path: 'p.md', repo_relative_path: 'p.md', locator: 'p', origin: 'aiwg', generated: true },
+    })
+    const res = validateAiwgFortemiIndexExport({ ...index, schema_version: 'aiwg.fortemi.index.export.v2', items: [v2] })
+    expect(res.errors).toEqual([])
+    expect(res.valid).toBe(true)
+  })
+
+  it('A4 — rejects invalid privacy.classification and provenance shape/enum', () => {
+    const badClass = record('r', 'aiwg.skill', 'R', 'body', { privacy: { classification: 'secret' as unknown as 'public', pii: false } })
+    expect(validateAiwgFortemiIndexExport(exportV1([badClass])).errors.join('\n')).toContain('privacy.classification must be one of')
+
+    const badConf = record('r', 'aiwg.skill', 'R', 'body', {
+      provenance: [{ field: 'text', source: 'r.md', path: '$.text', confidence: 'bogus' as unknown as 'source', privacy: 'public' }],
+    })
+    expect(validateAiwgFortemiIndexExport(exportV1([badConf])).errors.join('\n')).toContain('provenance[0].confidence must be one of')
+
+    const missingField = record('r', 'aiwg.skill', 'R', 'body', {
+      provenance: [{ source: 'r.md', path: '$.text', confidence: 'source', privacy: 'public' } as unknown as AiwgFortemiRecord['provenance'][number]],
+    })
+    expect(validateAiwgFortemiIndexExport(exportV1([missingField])).errors.join('\n')).toContain('provenance[0].field is required')
+  })
+
+  it('A5 — source.graph and compatibility are gated to export.v2', () => {
+    const rec = record('r', 'aiwg.skill', 'R', 'body')
+    const v1Graph = { ...index, schema_version: 'aiwg.fortemi.index.export.v1', source: { repo: 'x/y', privacy: 'public', graph: {} }, items: [rec] }
+    expect(validateAiwgFortemiIndexExport(v1Graph).errors.join('\n')).toContain('source.graph is a v2-only field')
+    const v1Compat = { ...index, schema_version: 'aiwg.fortemi.index.export.v1', compatibility: {}, items: [rec] }
+    expect(validateAiwgFortemiIndexExport(v1Compat).errors.join('\n')).toContain('compatibility is a v2-only field')
+    const v2Ok = { ...index, schema_version: 'aiwg.fortemi.index.export.v2', source: { repo: 'x/y', privacy: 'public', graph: { communities: 1 } }, compatibility: {}, items: [v2Record('r', 'aiwg.skill')] }
+    expect(validateAiwgFortemiIndexExport(v2Ok).valid).toBe(true)
+  })
+
+  it('E8 — chunked manifest carries the true source export version; review-decision reports it', () => {
+    const v2Index: AiwgFortemiIndexExport = {
+      ...index,
+      schema_version: 'aiwg.fortemi.index.export.v2',
+      source: { repo: 'x/y', privacy: 'public' },
+      items: [v2Record('r', 'aiwg.skill')],
+    }
+    const built = buildAiwgChunkedIndex(v2Index)
+    expect(built.manifest.source_export_schema_version).toBe('aiwg.fortemi.index.export.v2')
+    expect(validateAiwgFortemiChunkManifest(built.manifest).valid).toBe(true)
+
+    const exported = createAiwgReviewDecisionExport(
+      { schema_version: built.manifest.source_export_schema_version ?? 'aiwg.fortemi.index.export.v1' },
+      [],
+    )
+    expect(exported.source_export_schema_version).toBe('aiwg.fortemi.index.export.v2')
   })
 })
