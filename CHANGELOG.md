@@ -46,6 +46,31 @@ privacy-safe by default.
   them. The full attachment round-trip stays tracked in #237 pending the shard
   binary-packaging contract.
 
+### `@fortemi/core` — AIWG index & shard conformance
+
+- **Index validator hardened (A2–A6/E8, #239):** `validateAiwgFortemiIndexExport` —
+  the enforcement point AIWG re-imports to validate its own generator output — now
+  rejects a `record.v1` that carries v2-only fields (`search`/`chunks`/`embeddings`/
+  `skos_*`/`compatibility`, v2 relationship/source fields, `privacy.locality`),
+  enforces the `privacy.classification` and provenance `confidence` enums, validates
+  provenance item shape, and gates `source.graph`/`compatibility` to `export.v2`. The
+  `AiwgFortemiIndexExport['source']` type was corrected (dropped phantom record-level
+  `origin`/`generated`/`checksum`/`updated_at`, added the v2 `graph` block), and
+  chunked review-decision exports report the true source version. Stale known-type
+  constant `docs.page` renamed to `aiwg.kb.page`.
+- **Shard conformance harness spiked (#238):** a committed structural authority for
+  the Knowledge Shard contract (`packages/core/schemas/knowledge-shard.schema.json`)
+  plus a CI-runnable proof that catches the shard field-drift breaks the
+  `format-parity` suite could not. Full schema + AJV + golden fixtures and the
+  `format-parity` rename are backlogged (#255, #256); SAD R-002 now points at the
+  real conformance surfaces.
+
+### Documentation
+
+- **Standalone docs index completed (#253):** the in-app docs browser bundles the
+  v2026.7.3 release note (`apps/standalone/src/data/project-docs.ts`), which the
+  release bump had missed.
+
 ### Compatibility
 
 Additive and security-focused, with one deliberate default change: the index and
