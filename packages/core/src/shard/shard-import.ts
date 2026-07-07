@@ -81,6 +81,11 @@ export async function importShard(
   const report = options?.onProgress
   const warnings: string[] = []
   const errors: string[] = []
+  // E1 (#237): shards carry attachment *references* (metadata + checksum), not
+  // the binary content, so attachments cannot yet be restored on import. Track
+  // the drop so it surfaces as an explicit warning instead of silent data loss.
+  let droppedAttachmentCount = 0
+  let notesWithDroppedAttachments = 0
   const counts: ImportCounts = {
     notes: 0,
     collections: 0,
@@ -341,9 +346,24 @@ export async function importShard(
           )
         }
 
+        // E1 (#237): attachment references survive on the note but their bytes
+        // are not packaged in the shard, so they cannot be persisted here.
+        if (note.binary_sources?.length) {
+          droppedAttachmentCount += note.binary_sources.length
+          notesWithDroppedAttachments++
+        }
+
         counts.notes++
         report?.({ phase: 'notes', done: index + 1, total: parsedNotes.length })
         await maybeYield(index + 1, batchSize)
+      }
+
+      if (droppedAttachmentCount > 0) {
+        warnings.push(
+          `${droppedAttachmentCount} attachment(s) across ${notesWithDroppedAttachments} note(s) were not imported: ` +
+            'shards currently carry attachment references (metadata + checksum) but not the binary content, ' +
+            'so attachment bytes cannot be restored. Tracking: #237 (attachment round-trip) / server #1013 (binary contract).',
+        )
       }
 
       // Import SKOS schemes and concepts before note concept assignments.
