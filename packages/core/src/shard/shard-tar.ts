@@ -155,12 +155,51 @@ export function packTarGz(files: Map<string, Uint8Array>): Uint8Array {
 }
 
 /**
+ * Default cap on decompressed archive size (256 MiB). A gzip "bomb" is a tiny
+ * compressed payload that expands to gigabytes; without a cap `gunzipSync`
+ * allocates the whole thing before any checksum check runs (SEC3). Callers that
+ * genuinely need larger archives can raise the cap explicitly.
+ */
+export const DEFAULT_MAX_DECOMPRESSED_BYTES = 256 * 1024 * 1024
+
+/**
  * Unpack a gzip-compressed tar archive.
  *
+ * Before decompressing, the gzip ISIZE footer (declared uncompressed size) is
+ * checked against `maxDecompressedBytes` and rejected if it exceeds the cap.
+ * fflate independently verifies the actual output length against ISIZE, so a
+ * lying footer fails during decompression — together this bounds the memory a
+ * malicious archive can force us to allocate.
+ *
  * @param data Compressed archive bytes
+ * @param opts.maxDecompressedBytes Cap on decompressed size (default 256 MiB)
  * @returns Map of filename → file contents
  */
-export function unpackTarGz(data: Uint8Array): Map<string, Uint8Array> {
+export function unpackTarGz(
+  data: Uint8Array,
+  opts?: { maxDecompressedBytes?: number },
+): Map<string, Uint8Array> {
+  const cap = opts?.maxDecompressedBytes ?? DEFAULT_MAX_DECOMPRESSED_BYTES
+  // gzip footer: last 4 bytes are ISIZE (uncompressed size mod 2^32, LE).
+  if (data.byteLength < 18) {
+    throw new Error('Invalid gzip archive: too short')
+  }
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength)
+  const declaredSize = view.getUint32(data.byteLength - 4, true)
+  if (declaredSize > cap) {
+    throw new Error(
+      'Refusing to decompress archive: declared size ' + declaredSize +
+        ' exceeds cap ' + cap + ' bytes',
+    )
+  }
   const tarData = gunzipSync(data)
+  if (tarData.byteLength > cap) {
+    // Defense against a footer that wrapped past 2^32; fflate would normally
+    // have thrown on the ISIZE mismatch, but guard the boundary explicitly.
+    throw new Error(
+      'Refusing to decompress archive: decompressed size ' + tarData.byteLength +
+        ' exceeds cap ' + cap + ' bytes',
+    )
+  }
   return decodeTar(tarData)
 }

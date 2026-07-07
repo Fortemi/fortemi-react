@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { openShard } from '../shard/shard-reader.js'
+import { openShard, assertSafeComponentName } from '../shard/shard-reader.js'
 import { createCosineSemanticProvider } from '../shard/semantic-providers.js'
 import { packTarGz } from '../shard/shard-tar.js'
 import { CURRENT_SHARD_VERSION, SHARD_FORMAT } from '../shard/types.js'
@@ -336,5 +336,26 @@ describe('openShard — reader version guard', () => {
     const files = baseFiles(manifest({ min_reader_version: '99.0.0' }))
     files.set('notes.jsonl', encoder.encode(NOTES.map((n) => JSON.stringify(n)).join('\n')))
     await expect(openShard(packTarGz(files))).rejects.toThrow(/requires reader version/)
+  })
+})
+
+describe('SEC4: shard component path traversal (#241)', () => {
+  it('accepts plain and cluster-subdir component names', () => {
+    expect(() => assertSafeComponentName('notes.jsonl')).not.toThrow()
+    expect(() => assertSafeComponentName('notes/000.jsonl')).not.toThrow()
+  })
+
+  it('rejects traversal, absolute, scheme, and backslash paths', () => {
+    for (const bad of [
+      '../secrets.json',
+      'notes/../../etc/passwd',
+      '/etc/passwd',
+      'a\\b.json',
+      'https://evil.example/x.json',
+      'file:///etc/passwd',
+      '',
+    ]) {
+      expect(() => assertSafeComponentName(bad), bad).toThrow(/unsafe shard component path/i)
+    }
   })
 })

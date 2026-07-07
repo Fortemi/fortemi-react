@@ -447,7 +447,7 @@ After Elaboration Iteration 1 PoC:
 | Risk | Residual Concern | Mitigation |
 |---|---|---|
 | R-001 | Safari 17 OPFS sync in practice | Tested in PoC; documented in ADR-005 |
-| R-002 | Schema drift from server | Format parity test suite (ongoing) |
+| R-002 | Schema drift from server (**materialized** — audit 2026-07-05) | The `format-parity` suite guards PGlite DB **table** shapes only, **not** the shard/index portable contract, which has diverged (shard parity broken both directions). Real conformance suites + single source-of-truth tracked in #235, ADR-010, ADR-011. See `.aiwg/reports/aiwg-portable-schema-audit-2026-07-05.md`. |
 | R-004 | WASM download UX | Capability module system (opt-in, progress bar) |
 | R-005 | OPFS storage quota | Warn at 80%; guide user to purge |
 
