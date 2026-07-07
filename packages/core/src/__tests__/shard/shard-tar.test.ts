@@ -104,3 +104,27 @@ describe('shard-tar', () => {
     ])
   })
 })
+
+describe('shard-tar SEC3: decompression bomb cap (#241)', () => {
+  it('rejects an archive whose declared size exceeds the cap', () => {
+    const files = new Map<string, Uint8Array>()
+    files.set('big.txt', new TextEncoder().encode('x'.repeat(4096)))
+    const packed = packTarGz(files)
+
+    // Declared uncompressed size (>= 4096) far exceeds a 16-byte cap.
+    expect(() => unpackTarGz(packed, { maxDecompressedBytes: 16 })).toThrow(/exceeds cap/i)
+  })
+
+  it('unpacks normally under the default cap', () => {
+    const files = new Map<string, Uint8Array>()
+    files.set('ok.txt', new TextEncoder().encode('hello'))
+    const packed = packTarGz(files)
+
+    const out = unpackTarGz(packed)
+    expect(new TextDecoder().decode(out.get('ok.txt')!)).toBe('hello')
+  })
+
+  it('rejects a too-short input', () => {
+    expect(() => unpackTarGz(new Uint8Array([0x1f, 0x8b, 0x08]))).toThrow(/too short/i)
+  })
+})

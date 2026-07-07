@@ -29,6 +29,27 @@ import { unpackTarGz } from './shard-tar.js'
 
 const decoder = new TextDecoder()
 
+/**
+ * Reject manifest-controlled component filenames that could escape the shard
+ * base URL (SEC4 — path traversal). Component names are relative paths that may
+ * contain a cluster subdirectory (`notes/000.jsonl`), but never a `..` segment,
+ * an absolute/root path, a backslash, a URL scheme, or a null byte — any of
+ * which would let a hostile manifest read outside the shard on same-origin or
+ * multi-tenant static hosting.
+ */
+export function assertSafeComponentName(filename: string): void {
+  if (
+    filename.length === 0 ||
+    filename.startsWith('/') ||
+    filename.includes('\\') ||
+    filename.includes('\0') ||
+    filename.includes(':') ||
+    filename.split('/').some((segment) => segment === '..')
+  ) {
+    throw new Error(`Refusing to read unsafe shard component path: ${JSON.stringify(filename)}`)
+  }
+}
+
 function parseJsonlBytes<T>(data: Uint8Array | undefined): T[] {
   if (!data || data.byteLength === 0) return []
   return decoder.decode(data)
@@ -154,6 +175,7 @@ class UrlComponentStore implements ShardComponentStore {
     this.manifest = manifest
   }
   async read(filename: string): Promise<Uint8Array | undefined> {
+    assertSafeComponentName(filename)
     if (this.cache.has(filename)) return this.cache.get(filename)
     const response = await this.fetchImpl(`${this.baseUrl}/${filename}`)
     if (!response.ok) {
