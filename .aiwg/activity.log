@@ -4,3 +4,7 @@
 ## [2026-06-13 21:20] deploy | aiwg use all --provider codex
 ## [2026-07-06 03:33] create | AIWG portable-schema audit report + ADR-010/011 + security appendix in .aiwg/
 ## [2026-07-06 03:33] update | SAD.md R-002 mitigation corrected (parity suite guards DB tables, not portable contract)
+## [2026-07-08 03:22] update | aiwg index build
+## [2026-07-08 05:13] deploy | aiwg use all --provider codex
+## [2026-07-08 05:13] update | aiwg index stats --json
+## [2026-07-08 05:13] deploy | aiwg refresh --all --provider openai
