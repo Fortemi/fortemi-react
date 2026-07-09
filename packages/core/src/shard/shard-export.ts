@@ -15,6 +15,7 @@ import {
   tagsToShard,
   embeddingSetToShard,
   embeddingSetMemberToShard,
+  embeddingConfigToShard,
   embeddingToShard,
   skosSchemeToShard,
   skosConceptToShard,
@@ -36,6 +37,7 @@ import type {
   ShardClusterRef,
   ShardLayout,
   ShardAttachmentProjection,
+  ShardEmbeddingConfig,
 } from './types.js'
 
 const encoder = new TextEncoder()
@@ -402,6 +404,18 @@ export async function exportShard(
     files.set('embedding_sets.json', encoder.encode(JSON.stringify(shardEmbSets)))
     components.push('embedding_sets')
     counts.embedding_sets = shardEmbSets.length
+
+    const embeddingConfigRows = await db.query<ShardEmbeddingConfig>(
+      `SELECT id, name, description, model, dimension, chunk_size, chunk_overlap, is_default
+       FROM embedding_config
+       ORDER BY name, id`,
+    )
+    if (embeddingConfigRows.rows.length > 0) {
+      const shardEmbeddingConfigs = embeddingConfigRows.rows.map((row) => embeddingConfigToShard(row))
+      files.set('embedding_configs.json', encoder.encode(JSON.stringify(shardEmbeddingConfigs)))
+      components.push('embedding_configs')
+      counts.embedding_configs = shardEmbeddingConfigs.length
+    }
 
     const embMemberRows = await db.query<{
       embedding_set_id: string

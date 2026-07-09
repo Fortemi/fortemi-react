@@ -11,6 +11,7 @@ import {
   embeddingSetToShard,
   embeddingSetFromShard,
   embeddingSetMemberToShard,
+  embeddingConfigToShard,
   embeddingToShard,
   embeddingFromShard,
 } from '../../shard/field-mapper.js'
@@ -237,6 +238,30 @@ describe('field-mapper: embeddings', () => {
       added_by: null,
     })
     expect(shard).not.toHaveProperty('embedding_id')
+  })
+
+  it('exports embedding configs with server field names', () => {
+    const shard = embeddingConfigToShard({
+      id: 'cfg-1',
+      name: 'default',
+      description: null,
+      model: 'nomic-embed-text',
+      dimension: 768,
+      chunk_size: 1500,
+      chunk_overlap: 200,
+      is_default: true,
+    })
+
+    expect(shard).toEqual({
+      id: 'cfg-1',
+      name: 'default',
+      description: null,
+      model: 'nomic-embed-text',
+      dimension: 768,
+      chunk_size: 1500,
+      chunk_overlap: 200,
+      is_default: true,
+    })
   })
 
   it('converts PGlite vector string to number array', () => {

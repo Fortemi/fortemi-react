@@ -430,14 +430,18 @@ describe('importShard', { timeout: 30_000 }, () => {
     expect(result.success).toBe(true)
     expect(result.counts.notes).toBe(180)
     expect(result.counts.embedding_sets).toBe(1)
+    expect(result.counts.embedding_configs).toBe(8)
     expect(result.counts.embedding_set_members).toBe(180)
     expect(result.skipped.embedding_set_members ?? 0).toBe(0)
     expect(result.warnings).toContain('templates.json skipped (not supported in browser)')
-    expect(result.warnings).toContain('embedding_configs.json skipped (not supported in browser)')
+    expect(result.warnings).not.toContain('embedding_configs.json skipped (not supported in browser)')
     expect(result.warnings.some((warning) => warning.includes('embedding_set_member row(s) were not imported'))).toBe(false)
 
     const notes = await db.query<{ n: number }>('SELECT COUNT(*)::int AS n FROM note')
     const embeddingSets = await db.query<{ n: number }>('SELECT COUNT(*)::int AS n FROM embedding_set')
+    const embeddingConfigs = await db.query<{ n: number; default_count: number }>(
+      `SELECT COUNT(*)::int AS n, COUNT(*) FILTER (WHERE is_default)::int AS default_count FROM embedding_config`,
+    )
     const embeddingSetMembers = await db.query<{
       n: number
       null_embeddings: number
@@ -451,9 +455,17 @@ describe('importShard', { timeout: 30_000 }, () => {
     )
     expect(notes.rows[0].n).toBe(180)
     expect(embeddingSets.rows[0].n).toBe(1)
+    expect(embeddingConfigs.rows[0]).toEqual({ n: 8, default_count: 1 })
     expect(embeddingSetMembers.rows[0].n).toBe(180)
     expect(embeddingSetMembers.rows[0].null_embeddings).toBe(180)
     expect(embeddingSetMembers.rows[0].membership_type).toBe('auto')
+
+    const exported = unpackTarGz(await exportShard(db, { includeEmbeddings: true }))
+    const exportedConfigs = JSON.parse(
+      new TextDecoder().decode(exported.get('embedding_configs.json')!),
+    ) as Array<{ id: string; name: string; model: string }>
+    expect(exportedConfigs).toHaveLength(8)
+    expect(exportedConfigs.some((config) => config.name === 'default' && config.model === 'nomic-embed-text')).toBe(true)
   })
 
   it('imports legacy React embedding_set_member rows that still carry embedding_id', async () => {

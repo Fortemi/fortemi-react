@@ -28,6 +28,7 @@ import type {
   ShardCollection,
   ShardTag,
   ShardEmbeddingSet,
+  ShardEmbeddingConfig,
   ShardEmbeddingSetMember,
   ShardEmbedding,
   ShardSkosScheme,
@@ -92,6 +93,7 @@ export async function importShard(
     tags: 0,
     links: 0,
     embedding_sets: 0,
+    embedding_configs: 0,
     embedding_set_members: 0,
     embeddings: 0,
     skos_schemes: 0,
@@ -197,6 +199,7 @@ export async function importShard(
   parseJsonArray<ShardTag>(files.get('tags.json')) // parsed for validation, not used directly
   const parsedLinks = parseJsonl<ShardLink>(files.get('links.jsonl'))
   const parsedEmbSets = parseJsonArray<ShardEmbeddingSet>(files.get('embedding_sets.json'))
+  const parsedEmbConfigs = parseJsonArray<ShardEmbeddingConfig>(files.get('embedding_configs.json'))
   const parsedEmbMembers = parseJsonl<ShardEmbeddingSetMember>(
     files.get('embedding_set_members.jsonl'),
   )
@@ -240,9 +243,6 @@ export async function importShard(
   }
   if (files.has('templates.json')) {
     warnings.push('templates.json skipped (not supported in browser)')
-  }
-  if (files.has('embedding_configs.json')) {
-    warnings.push('embedding_configs.json skipped (not supported in browser)')
   }
 
   // ── Step 5: Transactional insert ──────────────────────────────────────
@@ -509,6 +509,33 @@ export async function importShard(
         }
         counts.provenance_edges++
         report?.({ phase: 'provenance', done: index + 1, total: parsedProvenanceEdges.length })
+        await maybeYield(index + 1, batchSize)
+      }
+
+      // Import embedding configs
+      report?.({ phase: 'embedding_configs', done: 0, total: parsedEmbConfigs.length })
+      for (const [index, config] of parsedEmbConfigs.entries()) {
+        await tx.query(
+          `INSERT INTO embedding_config (
+             id, name, description, model, dimension, chunk_size, chunk_overlap, is_default
+           )
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           ${strategy === 'replace'
+             ? 'ON CONFLICT (id) DO UPDATE SET name = $2, description = $3, model = $4, dimension = $5, chunk_size = $6, chunk_overlap = $7, is_default = $8'
+             : conflictClause}`,
+          [
+            config.id,
+            config.name,
+            config.description,
+            config.model,
+            config.dimension,
+            config.chunk_size,
+            config.chunk_overlap,
+            config.is_default,
+          ],
+        )
+        counts.embedding_configs++
+        report?.({ phase: 'embedding_configs', done: index + 1, total: parsedEmbConfigs.length })
         await maybeYield(index + 1, batchSize)
       }
 

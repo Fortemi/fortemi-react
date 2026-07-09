@@ -141,6 +141,7 @@ export type ImportProgressPhase =
   | 'links'
   | 'provenance'
   | 'embedding_sets'
+  | 'embedding_configs'
   | 'embeddings'
   | 'embedding_set_members'
   | 'graph'
@@ -160,6 +161,7 @@ export interface ImportCounts {
   tags: number
   links: number
   embedding_sets: number
+  embedding_configs: number
   embedding_set_members: number
   embeddings: number
   skos_schemes: number
@@ -268,6 +270,18 @@ export interface ShardEmbeddingSetMember {
   membership_type: string
   added_at: string
   added_by: string | null
+}
+
+/** Embedding config as serialized in the shard JSON array. */
+export interface ShardEmbeddingConfig {
+  id: string
+  name: string
+  description: string | null
+  model: string
+  dimension: number
+  chunk_size: number
+  chunk_overlap: number
+  is_default: boolean
 }
 
 /** Embedding as serialized in the shard JSONL. */

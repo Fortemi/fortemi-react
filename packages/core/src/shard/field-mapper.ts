@@ -14,6 +14,7 @@ import type {
   ShardEmbeddingSet,
   ShardEmbeddingSetMember,
   ShardEmbedding,
+  ShardEmbeddingConfig,
   ShardSkosScheme,
   ShardSkosConcept,
   ShardSkosRelation,
@@ -266,6 +267,20 @@ export function embeddingSetMemberToShard(member: {
     membership_type: member.membership_type ?? 'materialized',
     added_at: toISOString(member.added_at ?? new Date()),
     added_by: member.added_by ?? null,
+  }
+}
+
+/** Convert a browser embedding_config row to shard format. */
+export function embeddingConfigToShard(config: ShardEmbeddingConfig): ShardEmbeddingConfig {
+  return {
+    id: config.id,
+    name: config.name,
+    description: config.description ?? null,
+    model: config.model,
+    dimension: config.dimension,
+    chunk_size: config.chunk_size,
+    chunk_overlap: config.chunk_overlap,
+    is_default: config.is_default,
   }
 }
 
