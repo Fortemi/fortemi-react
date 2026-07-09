@@ -114,8 +114,7 @@
         "archived",
         "tags",
         "created_at",
-        "updated_at",
-        "deleted_at"
+        "updated_at"
       ],
       "properties": {
         "id": { "type": "string", "minLength": 1 },

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { PGlite } from '@electric-sql/pglite'
 import { vector } from '@electric-sql/pglite/vector'
+import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { resolve } from 'node:path'
 import { MigrationRunner } from '../../migration-runner.js'
 import { allMigrations } from '../../migrations/index.js'
 import { NotesRepository } from '../../repositories/notes-repository.js'
@@ -15,6 +19,12 @@ import {
 } from '../../shard/schema-validator.js'
 
 const iso = '2026-07-09T00:00:00.000Z'
+const testDir = fileURLToPath(new URL('.', import.meta.url))
+const goldenFixturePath = resolve(
+  testDir,
+  'fixtures/golden/server-2026.2.9-fortemi-docs.shard',
+)
+const goldenReceiptPath = `${goldenFixturePath}.receipt.json`
 
 async function createTestDb(): Promise<PGlite> {
   const db = await PGlite.create({ extensions: { vector } })
@@ -89,6 +99,20 @@ describe('knowledge shard AJV schema validator (#255)', () => {
     } finally {
       await db.close()
     }
+  })
+
+  it('validates the committed pinned server golden shard fixture', () => {
+    const bytes = readFileSync(goldenFixturePath)
+    const receipt = JSON.parse(readFileSync(goldenReceiptPath, 'utf8')) as {
+      bytes: number
+      sha256: string
+      pinned_version: string
+    }
+
+    expect(receipt.pinned_version).toBe('2026.2.9')
+    expect(receipt.bytes).toBe(bytes.byteLength)
+    expect(receipt.sha256).toBe(createHash('sha256').update(bytes).digest('hex'))
+    expect(validateShardArchive(bytes)).toEqual({ valid: true, errors: [] })
   })
 
   it('rejects legacy binary_sources and missing server fields', () => {

@@ -194,7 +194,12 @@ export function validateShardArchive(input: Uint8Array | ArrayBuffer | ShardFile
     errors.push(...manifestResult.errors.map((error) => `manifest.json ${error}`))
   }
 
-  for (const component of manifest.components) {
+  const componentsToValidate = new Set<ShardComponent>(manifest.components)
+  for (const [component, spec] of Object.entries(COMPONENT_FILES) as Array<[ShardComponent, { file: string; encoding: 'json-array' | 'jsonl' }]>) {
+    if (files.has(spec.file)) componentsToValidate.add(component)
+  }
+
+  for (const component of componentsToValidate) {
     const spec = COMPONENT_FILES[component]
     if (!spec) continue
     if (component === 'notes' && manifest.layout?.clusters?.notes?.length) {
