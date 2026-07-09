@@ -350,6 +350,7 @@ export {
   exportShard,
   importShard,
   getKnowledgeShardSchema,
+  validateShardArchive,
   validateShardManifest,
   validateShardComponentRecord,
   assertShardComponentRecord,

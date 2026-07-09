@@ -1,12 +1,28 @@
 import { describe, expect, it } from 'vitest'
+import { PGlite } from '@electric-sql/pglite'
+import { vector } from '@electric-sql/pglite/vector'
+import { MigrationRunner } from '../../migration-runner.js'
+import { allMigrations } from '../../migrations/index.js'
+import { NotesRepository } from '../../repositories/notes-repository.js'
+import { LinksRepository } from '../../repositories/links-repository.js'
+import { exportShard } from '../../shard/shard-export.js'
 import {
   assertShardComponentRecord,
   getKnowledgeShardSchema,
+  validateShardArchive,
   validateShardComponentRecord,
   validateShardManifest,
 } from '../../shard/schema-validator.js'
 
 const iso = '2026-07-09T00:00:00.000Z'
+
+async function createTestDb(): Promise<PGlite> {
+  const db = await PGlite.create({ extensions: { vector } })
+  await db.exec('CREATE EXTENSION IF NOT EXISTS vector')
+  const runner = new MigrationRunner(db)
+  await runner.apply(allMigrations)
+  return db
+}
 
 describe('knowledge shard AJV schema validator (#255)', () => {
   it('compiles the committed schema and validates a manifest', () => {
@@ -57,6 +73,24 @@ describe('knowledge shard AJV schema validator (#255)', () => {
     expect(result).toEqual({ valid: true, errors: [] })
   })
 
+  it('validates a real React-exported shard archive for aligned components', async () => {
+    const db = await createTestDb()
+    try {
+      const notes = new NotesRepository(db)
+      const links = new LinksRepository(db)
+      const first = await notes.create({ content: 'First note', title: 'First', tags: ['alpha'] })
+      const second = await notes.create({ content: 'Second note', title: 'Second', tags: ['beta'] })
+      await links.create(first.id, second.id, 'related')
+
+      const archive = await exportShard(db)
+      const result = validateShardArchive(archive)
+
+      expect(result).toEqual({ valid: true, errors: [] })
+    } finally {
+      await db.close()
+    }
+  })
+
   it('rejects legacy binary_sources and missing server fields', () => {
     const result = validateShardComponentRecord('notes', {
       id: 'note-1',
@@ -105,4 +139,3 @@ describe('knowledge shard AJV schema validator (#255)', () => {
     }
   })
 })
-

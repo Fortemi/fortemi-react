@@ -80,6 +80,7 @@ export { importShard } from './shard-import.js'
 // Schema validation
 export {
   getKnowledgeShardSchema,
+  validateShardArchive,
   validateShardManifest,
   validateShardComponentRecord,
   assertShardComponentRecord,
