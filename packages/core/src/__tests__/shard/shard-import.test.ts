@@ -20,6 +20,7 @@ import { exportShard } from '../../shard/shard-export.js'
 import { importShard } from '../../shard/shard-import.js'
 import { packTarGz } from '../../shard/shard-tar.js'
 import { sha256Hex } from '../../shard/checksum.js'
+import { compareShardVersions } from '../../shard/types.js'
 import type { ImportProgress, ShardManifest } from '../../shard/types.js'
 
 const encoder = new TextEncoder()
@@ -258,6 +259,13 @@ describe('importShard', { timeout: 30_000 }, () => {
 
     expect(result.success).toBe(false)
     expect(result.errors[0]).toContain('reader version')
+  })
+
+  it('compares shard reader versions numerically', () => {
+    expect(compareShardVersions('1.10.0', '1.9.0')).toBeGreaterThan(0)
+    expect(compareShardVersions('1.0.10', '1.0.2')).toBeGreaterThan(0)
+    expect(compareShardVersions('1.0.0', '1.0')).toBe(0)
+    expect(compareShardVersions('1.2.0', '1.10.0')).toBeLessThan(0)
   })
 
   it('warns about unknown components', async () => {
