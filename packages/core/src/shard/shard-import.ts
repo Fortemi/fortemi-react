@@ -455,11 +455,25 @@ export async function importShard(
       for (const [index, shardLink] of parsedLinks.entries()) {
         const link = linkFromShard(shardLink)
         if (!link.target_note_id) {
-          skipped.links = (skipped.links ?? 0) + 1
-          warnings.push(
-            `URL-only shard link skipped: ${link.id} points to ${shardLink.to_url ?? '(missing URL)'}; ` +
-              'the browser link table currently supports note-to-note links only.',
+          if (!link.to_url) {
+            skipped.links = (skipped.links ?? 0) + 1
+            warnings.push(`Shard link skipped: ${link.id} has neither to_note_id nor to_url.`)
+            report?.({ phase: 'links', done: index + 1, total: parsedLinks.length })
+            await maybeYield(index + 1, batchSize)
+            continue
+          }
+          const metadata = link.metadata == null ? null : JSON.stringify(link.metadata)
+          await tx.query(
+            `INSERT INTO link_url_target (
+               id, source_note_id, to_url, link_type, confidence, metadata_json, created_at
+             )
+             VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
+             ${strategy === 'replace'
+               ? 'ON CONFLICT (id) DO UPDATE SET source_note_id = $2, to_url = $3, link_type = $4, confidence = $5, metadata_json = $6::jsonb, created_at = $7'
+               : conflictClause}`,
+            [link.id, link.source_note_id, link.to_url, link.link_type, link.confidence, metadata, link.created_at],
           )
+          counts.links++
           report?.({ phase: 'links', done: index + 1, total: parsedLinks.length })
           await maybeYield(index + 1, batchSize)
           continue

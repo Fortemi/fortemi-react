@@ -11,6 +11,7 @@ import { sha256Hex } from './checksum.js'
 import {
   noteToShard,
   linkToShard,
+  urlLinkToShard,
   collectionToShard,
   tagsToShard,
   templateToShard,
@@ -286,10 +287,26 @@ export async function exportShard(
   const filteredLinks = (options?.tag || options?.collectionId)
     ? linkRows.rows.filter((l) => exportedNoteIds.has(l.source_note_id) && exportedNoteIds.has(l.target_note_id))
     : linkRows.rows
-  const linksJsonl = filteredLinks.map((l) => JSON.stringify(linkToShard(l))).join('\n')
+  const urlLinkRows = await db.query<{
+    id: string
+    source_note_id: string
+    to_url: string
+    link_type: string
+    confidence: number | null
+    metadata_json: Record<string, unknown> | string | null
+    created_at: Date
+  }>(`SELECT * FROM link_url_target WHERE deleted_at IS NULL ORDER BY created_at`)
+  const filteredUrlLinks = (options?.tag || options?.collectionId)
+    ? urlLinkRows.rows.filter((l) => exportedNoteIds.has(l.source_note_id))
+    : urlLinkRows.rows
+  const shardLinks = [
+    ...filteredLinks.map((l) => linkToShard(l)),
+    ...filteredUrlLinks.map((l) => urlLinkToShard(l)),
+  ]
+  const linksJsonl = shardLinks.map((l) => JSON.stringify(l)).join('\n')
   files.set('links.jsonl', encoder.encode(linksJsonl))
   components.push('links')
-  counts.links = filteredLinks.length
+  counts.links = shardLinks.length
 
 
   // ── Query SKOS (scoped to exported notes when filtered) ─────────────

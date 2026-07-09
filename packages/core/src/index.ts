@@ -332,6 +332,7 @@ export {
   noteToShard,
   noteFromShard,
   linkToShard,
+  urlLinkToShard,
   linkFromShard,
   collectionToShard,
   collectionFromShard,

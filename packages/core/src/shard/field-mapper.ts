@@ -102,22 +102,51 @@ export function linkToShard(link: LinkRow): ShardLink {
   }
 }
 
+/** Convert a browser URL-target link row to shard format. */
+export function urlLinkToShard(link: {
+  id: string
+  source_note_id: string
+  to_url: string
+  link_type: string
+  confidence: number | null
+  metadata_json?: Record<string, unknown> | string | null
+  created_at: Date | string
+}): ShardLink {
+  const metadata = typeof link.metadata_json === 'string'
+    ? JSON.parse(link.metadata_json) as Record<string, unknown>
+    : link.metadata_json ?? null
+  return {
+    id: link.id,
+    from_note_id: link.source_note_id,
+    to_note_id: null,
+    to_url: link.to_url,
+    kind: link.link_type,
+    score: link.confidence,
+    created_at: toISOString(link.created_at),
+    metadata,
+  }
+}
+
 /** Convert a shard link back to browser-insertable format. */
 export function linkFromShard(shard: ShardLink): {
   id: string
   source_note_id: string
   target_note_id: string | null
+  to_url: string | null
   link_type: string
   confidence: number | null
   created_at: string
+  metadata: Record<string, unknown> | null
 } {
   return {
     id: shard.id,
     source_note_id: shard.from_note_id,
     target_note_id: shard.to_note_id,
+    to_url: shard.to_url,
     link_type: shard.kind,
     confidence: shard.score,
     created_at: shard.created_at,
+    metadata: shard.metadata,
   }
 }
 

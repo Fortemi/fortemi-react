@@ -12,6 +12,7 @@ import { migration0010 } from './0010_attachment_text_metadata.js'
 import { migration0011 } from './0011_embedding_member_metadata.js'
 import { migration0012 } from './0012_embedding_configs.js'
 import { migration0013 } from './0013_templates.js'
+import { migration0014 } from './0014_url_links.js'
 
 export const allMigrations: Migration[] = [
   migration0001,
@@ -27,4 +28,5 @@ export const allMigrations: Migration[] = [
   migration0011,
   migration0012,
   migration0013,
+  migration0014,
 ]

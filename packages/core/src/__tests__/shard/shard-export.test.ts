@@ -196,11 +196,26 @@ describe('exportShard', () => {
     const note1 = await notes.create({ content: 'Note A' })
     const note2 = await notes.create({ content: 'Note B' })
     await links.create(note1.id, note2.id, 'related')
+    await db.query(
+      `INSERT INTO link_url_target (id, source_note_id, to_url, link_type, confidence, metadata_json, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        'link-url-1',
+        note1.id,
+        'https://example.test',
+        'reference',
+        0.5,
+        JSON.stringify({ label: 'Example' }),
+        '2026-01-01T00:00:00.000Z',
+      ],
+    )
 
     const archive = await exportShard(db)
     const files = unpackTarGz(archive)
     const linksJsonl = new TextDecoder().decode(files.get('links.jsonl')!)
-    const shardLink: ShardLink = JSON.parse(linksJsonl.split('\n')[0])
+    const shardLinks = linksJsonl.split('\n').map((line) => JSON.parse(line) as ShardLink)
+    const shardLink = shardLinks.find((link) => link.id !== 'link-url-1')!
+    const shardUrlLink = shardLinks.find((link) => link.id === 'link-url-1')!
 
     expect(shardLink).toHaveProperty('from_note_id')
     expect(shardLink).toHaveProperty('to_note_id')
@@ -216,6 +231,15 @@ describe('exportShard', () => {
     expect(shardLink.kind).toBe('related')
     expect(shardLink.metadata).toBeNull()
     expect(validateShardComponentRecord('links', shardLink)).toEqual({ valid: true, errors: [] })
+    expect(shardUrlLink).toMatchObject({
+      from_note_id: note1.id,
+      to_note_id: null,
+      to_url: 'https://example.test',
+      kind: 'reference',
+      score: 0.5,
+      metadata: { label: 'Example' },
+    })
+    expect(validateShardComponentRecord('links', shardUrlLink)).toEqual({ valid: true, errors: [] })
   })
 
   it('JSONL format: one valid JSON per line', async () => {

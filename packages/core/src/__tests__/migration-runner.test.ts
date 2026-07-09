@@ -90,6 +90,7 @@ describe('MigrationRunner', () => {
     expect(tableNames).toContain('embedding_set_member')
     expect(tableNames).toContain('embedding_config')
     expect(tableNames).toContain('template')
+    expect(tableNames).toContain('link_url_target')
   })
 
   it('is idempotent — running twice applies only once', async () => {

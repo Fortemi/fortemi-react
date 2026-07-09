@@ -25,7 +25,7 @@ import { importShard } from '../../shard/shard-import.js'
 import { packTarGz, unpackTarGz } from '../../shard/shard-tar.js'
 import { sha256Hex } from '../../shard/checksum.js'
 import { compareShardVersions } from '../../shard/types.js'
-import type { ImportProgress, ShardManifest } from '../../shard/types.js'
+import type { ImportProgress, ShardLink, ShardManifest } from '../../shard/types.js'
 
 const encoder = new TextEncoder()
 const testDir = fileURLToPath(new URL('.', import.meta.url))
@@ -155,7 +155,7 @@ describe('importShard', { timeout: 30_000 }, () => {
     expect(linkRows.rows[0].link_type).toBe('related')
   })
 
-  it('skips URL-only server links with an explicit warning', async () => {
+  it('imports and re-exports URL-only server links', async () => {
     const linkData = encoder.encode(JSON.stringify({
       id: 'link-url-1',
       from_note_id: 'note-1',
@@ -164,7 +164,7 @@ describe('importShard', { timeout: 30_000 }, () => {
       kind: 'reference',
       score: null,
       created_at: '2026-01-01T00:00:00.000Z',
-      metadata: null,
+      metadata: { label: 'Example' },
     }))
     const manifest: ShardManifest = {
       version: '1.0.0',
@@ -182,12 +182,31 @@ describe('importShard', { timeout: 30_000 }, () => {
 
     const result = await importShard(db, packTarGz(files))
     const linkRows = await db.query<{ n: number }>('SELECT COUNT(*)::int AS n FROM link')
+    const urlLinkRows = await db.query<{ n: number; to_url: string; metadata: string }>(
+      `SELECT COUNT(*)::int AS n, MIN(to_url) AS to_url, MIN(metadata_json::text) AS metadata FROM link_url_target`,
+    )
 
     expect(result.success).toBe(true)
-    expect(result.counts.links).toBe(0)
-    expect(result.skipped.links).toBe(1)
-    expect(result.warnings.some((warning) => warning.includes('URL-only shard link skipped: link-url-1'))).toBe(true)
+    expect(result.counts.links).toBe(1)
+    expect(result.skipped.links ?? 0).toBe(0)
+    expect(result.warnings.some((warning) => warning.includes('URL-only shard link skipped: link-url-1'))).toBe(false)
     expect(linkRows.rows[0].n).toBe(0)
+    expect(urlLinkRows.rows[0].n).toBe(1)
+    expect(urlLinkRows.rows[0].to_url).toBe('https://example.test')
+    expect(JSON.parse(urlLinkRows.rows[0].metadata)).toEqual({ label: 'Example' })
+
+    const exported = unpackTarGz(await exportShard(db))
+    const exportedLink = JSON.parse(
+      new TextDecoder().decode(exported.get('links.jsonl')!),
+    ) as ShardLink
+    expect(exportedLink).toMatchObject({
+      id: 'link-url-1',
+      from_note_id: 'note-1',
+      to_note_id: null,
+      to_url: 'https://example.test',
+      kind: 'reference',
+      metadata: { label: 'Example' },
+    })
   })
 
   it('skip strategy: existing records untouched', async () => {
