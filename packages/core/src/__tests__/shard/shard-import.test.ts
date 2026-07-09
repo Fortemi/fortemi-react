@@ -16,12 +16,13 @@ import { allMigrations } from '../../migrations/index.js'
 import { NotesRepository } from '../../repositories/notes-repository.js'
 import { CollectionsRepository } from '../../repositories/collections-repository.js'
 import { LinksRepository } from '../../repositories/links-repository.js'
+import { EmbeddingSetsRepository } from '../../repositories/embedding-sets-repository.js'
 import { TagsRepository } from '../../repositories/tags-repository.js'
 import { AttachmentsRepository } from '../../repositories/attachments-repository.js'
 import { MemoryBlobStore } from '../../blob-store.js'
 import { exportShard } from '../../shard/shard-export.js'
 import { importShard } from '../../shard/shard-import.js'
-import { packTarGz } from '../../shard/shard-tar.js'
+import { packTarGz, unpackTarGz } from '../../shard/shard-tar.js'
 import { sha256Hex } from '../../shard/checksum.js'
 import { compareShardVersions } from '../../shard/types.js'
 import type { ImportProgress, ShardManifest } from '../../shard/types.js'
@@ -429,15 +430,68 @@ describe('importShard', { timeout: 30_000 }, () => {
     expect(result.success).toBe(true)
     expect(result.counts.notes).toBe(180)
     expect(result.counts.embedding_sets).toBe(1)
-    expect(result.skipped.embedding_set_members).toBe(180)
+    expect(result.counts.embedding_set_members).toBe(180)
+    expect(result.skipped.embedding_set_members ?? 0).toBe(0)
     expect(result.warnings).toContain('templates.json skipped (not supported in browser)')
     expect(result.warnings).toContain('embedding_configs.json skipped (not supported in browser)')
-    expect(result.warnings.some((warning) => warning.includes('embedding_set_member row(s) were not imported'))).toBe(true)
+    expect(result.warnings.some((warning) => warning.includes('embedding_set_member row(s) were not imported'))).toBe(false)
 
     const notes = await db.query<{ n: number }>('SELECT COUNT(*)::int AS n FROM note')
     const embeddingSets = await db.query<{ n: number }>('SELECT COUNT(*)::int AS n FROM embedding_set')
+    const embeddingSetMembers = await db.query<{
+      n: number
+      null_embeddings: number
+      membership_type: string | null
+    }>(
+      `SELECT
+         COUNT(*)::int AS n,
+         COUNT(*) FILTER (WHERE embedding_id IS NULL)::int AS null_embeddings,
+         MIN(membership_type) AS membership_type
+       FROM embedding_set_member`,
+    )
     expect(notes.rows[0].n).toBe(180)
     expect(embeddingSets.rows[0].n).toBe(1)
+    expect(embeddingSetMembers.rows[0].n).toBe(180)
+    expect(embeddingSetMembers.rows[0].null_embeddings).toBe(180)
+    expect(embeddingSetMembers.rows[0].membership_type).toBe('auto')
+  })
+
+  it('imports legacy React embedding_set_member rows that still carry embedding_id', async () => {
+    const sourceDb = await createTestDb()
+    const sourceNotes = new NotesRepository(sourceDb)
+    const sourceSets = new EmbeddingSetsRepository(sourceDb)
+    const note = await sourceNotes.create({ content: 'Embedded note' })
+    const set = await sourceSets.create({ name: 'Legacy set' })
+    const embedding = await sourceSets.putEmbedding({
+      note_id: note.id,
+      embedding_set_id: set.id,
+      vector: [1, ...Array(383).fill(0)],
+    })
+
+    const currentArchive = await exportShard(sourceDb, { includeEmbeddings: true })
+    const files = unpackTarGz(currentArchive)
+    const legacyMembers = encoder.encode(JSON.stringify({
+      embedding_set_id: set.id,
+      note_id: note.id,
+      embedding_id: embedding.id,
+    }))
+    files.set('embedding_set_members.jsonl', legacyMembers)
+
+    const manifest: ShardManifest = JSON.parse(new TextDecoder().decode(files.get('manifest.json')!))
+    manifest.checksums['embedding_set_members.jsonl'] = await sha256Hex(legacyMembers)
+    files.set('manifest.json', encoder.encode(JSON.stringify(manifest)))
+
+    const result = await importShard(db, packTarGz(files))
+    await sourceDb.close()
+
+    expect(result.success).toBe(true)
+    expect(result.counts.embedding_set_members).toBe(1)
+
+    const rows = await db.query<{ embedding_id: string | null; membership_type: string }>(
+      `SELECT embedding_id, membership_type FROM embedding_set_member WHERE embedding_set_id = $1 AND note_id = $2`,
+      [set.id, note.id],
+    )
+    expect(rows.rows[0]).toEqual({ embedding_id: embedding.id, membership_type: 'materialized' })
   })
 })
 

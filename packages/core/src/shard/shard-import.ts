@@ -655,26 +655,36 @@ export async function importShard(
       // Import embedding set members
       report?.({ phase: 'embedding_set_members', done: 0, total: parsedEmbMembers.length })
       for (const [index, member] of parsedEmbMembers.entries()) {
-        if (!member.embedding_id) {
-          skipped.embedding_set_members = (skipped.embedding_set_members ?? 0) + 1
-          report?.({ phase: 'embedding_set_members', done: index + 1, total: parsedEmbMembers.length })
-          await maybeYield(index + 1, batchSize)
-          continue
+        let embeddingId = member.embedding_id ?? null
+        if (!embeddingId) {
+          const resolvedEmbedding = await tx.query<{ id: string }>(
+            `SELECT id FROM embedding WHERE embedding_set_id = $1 AND note_id = $2 ORDER BY created_at DESC LIMIT 1`,
+            [member.embedding_set_id, member.note_id],
+          )
+          embeddingId = resolvedEmbedding.rows[0]?.id ?? null
         }
         await tx.query(
-          `INSERT INTO embedding_set_member (embedding_set_id, note_id, embedding_id)
-           VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
-          [member.embedding_set_id, member.note_id, member.embedding_id],
+          `INSERT INTO embedding_set_member (
+             embedding_set_id, note_id, embedding_id, membership_type, added_at, added_by
+           )
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (embedding_set_id, note_id) DO UPDATE SET
+             embedding_id = COALESCE(EXCLUDED.embedding_id, embedding_set_member.embedding_id),
+             membership_type = EXCLUDED.membership_type,
+             added_at = EXCLUDED.added_at,
+             added_by = EXCLUDED.added_by`,
+          [
+            member.embedding_set_id,
+            member.note_id,
+            embeddingId,
+            member.membership_type ?? 'materialized',
+            member.added_at ?? manifest.created_at,
+            member.added_by ?? null,
+          ],
         )
         counts.embedding_set_members++
         report?.({ phase: 'embedding_set_members', done: index + 1, total: parsedEmbMembers.length })
         await maybeYield(index + 1, batchSize)
-      }
-      if (skipped.embedding_set_members) {
-        warnings.push(
-          `${skipped.embedding_set_members} embedding_set_member row(s) were not imported: ` +
-            'server shard membership records do not carry the local embedding_id foreign key.',
-        )
       }
     })
     report?.({ phase: 'index', done: 1, total: 1 })

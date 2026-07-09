@@ -256,12 +256,16 @@ export function embeddingSetFromShard(shard: ShardEmbeddingSet, fallbackCreatedA
 export function embeddingSetMemberToShard(member: {
   embedding_set_id: string
   note_id: string
-  embedding_id: string
+  membership_type?: string | null
+  added_at?: Date | string | null
+  added_by?: string | null
 }): ShardEmbeddingSetMember {
   return {
     embedding_set_id: member.embedding_set_id,
     note_id: member.note_id,
-    embedding_id: member.embedding_id,
+    membership_type: member.membership_type ?? 'materialized',
+    added_at: toISOString(member.added_at ?? new Date()),
+    added_by: member.added_by ?? null,
   }
 }
 

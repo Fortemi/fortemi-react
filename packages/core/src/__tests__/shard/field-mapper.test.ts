@@ -10,6 +10,7 @@ import {
   tagsFromShard,
   embeddingSetToShard,
   embeddingSetFromShard,
+  embeddingSetMemberToShard,
   embeddingToShard,
   embeddingFromShard,
 } from '../../shard/field-mapper.js'
@@ -217,6 +218,25 @@ describe('field-mapper: embeddings', () => {
     const back = embeddingSetFromShard(shard, '2026-01-15T10:00:00.000Z')
     expect(back.model_name).toBe('all-MiniLM-L6-v2')
     expect(back.dimensions).toBe(384)
+  })
+
+  it('exports embedding set members with server membership metadata', () => {
+    const shard = embeddingSetMemberToShard({
+      embedding_set_id: 'es-1',
+      note_id: 'note-1',
+      membership_type: 'auto',
+      added_at: '2026-01-01T00:00:00.000Z',
+      added_by: null,
+    })
+
+    expect(shard).toEqual({
+      embedding_set_id: 'es-1',
+      note_id: 'note-1',
+      membership_type: 'auto',
+      added_at: '2026-01-01T00:00:00.000Z',
+      added_by: null,
+    })
+    expect(shard).not.toHaveProperty('embedding_id')
   })
 
   it('converts PGlite vector string to number array', () => {

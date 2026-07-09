@@ -263,10 +263,11 @@ export interface ShardEmbeddingSet {
 export interface ShardEmbeddingSetMember {
   embedding_set_id: string
   note_id: string
+  /** Legacy React shard field; new exports use server membership metadata instead. */
   embedding_id?: string
-  membership_type?: string
-  added_at?: string
-  added_by?: string | null
+  membership_type: string
+  added_at: string
+  added_by: string | null
 }
 
 /** Embedding as serialized in the shard JSONL. */

@@ -406,7 +406,10 @@ export async function exportShard(
     const embMemberRows = await db.query<{
       embedding_set_id: string
       note_id: string
-      embedding_id: string
+      embedding_id: string | null
+      membership_type: string | null
+      added_at: Date | string | null
+      added_by: string | null
     }>(
       `SELECT * FROM embedding_set_member
        ${setScoped ? 'WHERE embedding_set_id = ANY($1)' : ''}`,
@@ -437,7 +440,9 @@ export async function exportShard(
        ORDER BY created_at`,
       setScoped ? [embeddingSetIds] : [],
     )
-    const memberEmbeddingIds = new Set(scopedEmbMemberRows.map((member) => member.embedding_id))
+    const memberEmbeddingIds = new Set(
+      scopedEmbMemberRows.map((member) => member.embedding_id).filter((id): id is string => Boolean(id)),
+    )
     const scopedEmbRows = embRows.rows.filter((embedding) =>
       exportedSetIds.has(embedding.embedding_set_id) &&
       exportedNoteIds.has(embedding.note_id) &&
