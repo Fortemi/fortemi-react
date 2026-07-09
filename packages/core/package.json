@@ -53,6 +53,8 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:db-table-parity": "vitest run src/__tests__/db-table-parity",
+    "test:portable-contract": "vitest run src/__tests__/aiwg-index.test.ts src/__tests__/shard/shard-conformance.spike.test.ts",
     "test:watch": "vitest",
     "prepack": "pnpm build"
   },

@@ -5,7 +5,14 @@ import { MigrationRunner } from '../../migration-runner.js'
 import { allMigrations } from '../../migrations/index.js'
 import { loadServerFixture, matchServerShape } from './helpers.js'
 
-describe('Format Parity', () => {
+/**
+ * DB table parity guard.
+ *
+ * This suite compares PGlite table row shapes against server database fixtures.
+ * It does not validate the portable Knowledge Shard or AIWG index JSON
+ * contracts; those are covered by the portable-contract CI gate.
+ */
+describe('DB Table Parity', () => {
   let db: PGlite
 
   beforeAll(async () => {
