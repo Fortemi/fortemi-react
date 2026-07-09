@@ -394,7 +394,7 @@ describe('importShard — E1 attachment round-trip (#237)', { timeout: 30_000 },
       extractedText: 'report text',
     })
 
-    // The export carries the attachment *reference* (S1: binary_sources).
+    // The export carries the attachment reference (S1: server `attachments` field).
     const archive = await exportShard(sourceDb)
     await sourceDb.close()
 
@@ -411,6 +411,29 @@ describe('importShard — E1 attachment round-trip (#237)', { timeout: 30_000 },
     expect(rows.rows[0].n).toBe(0)
     expect(result.warnings.some((w) => /attachment\(s\).*were not imported/.test(w))).toBe(true)
     expect(result.warnings.some((w) => w.includes('#237'))).toBe(true)
+
+    await targetDb.close()
+  })
+
+  it('restores note collection membership from collection_id', async () => {
+    const sourceDb = await createTestDb()
+    const notes = new NotesRepository(sourceDb)
+    const collections = new CollectionsRepository(sourceDb)
+    const collection = await collections.create({ name: 'Imported collection' })
+    const note = await notes.create({ content: 'Collection member', title: 'Member', tags: [] })
+    await collections.assignNote(collection.id, note.id)
+
+    const archive = await exportShard(sourceDb)
+    await sourceDb.close()
+
+    const targetDb = await createTestDb()
+    const result = await importShard(targetDb, archive)
+    const rows = await targetDb.query<{ collection_id: string; note_id: string }>(
+      'SELECT collection_id, note_id FROM collection_note',
+    )
+
+    expect(result.success).toBe(true)
+    expect(rows.rows).toEqual([{ collection_id: collection.id, note_id: note.id }])
 
     await targetDb.close()
   })

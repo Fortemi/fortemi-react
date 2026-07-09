@@ -346,10 +346,19 @@ export async function importShard(
           )
         }
 
+        if (note.collection_id) {
+          await tx.query(
+            `INSERT INTO collection_note (collection_id, note_id)
+             VALUES ($1, $2)
+             ON CONFLICT (collection_id, note_id) DO NOTHING`,
+            [note.collection_id, note.id],
+          )
+        }
+
         // E1 (#237): attachment references survive on the note but their bytes
         // are not packaged in the shard, so they cannot be persisted here.
-        if (note.binary_sources?.length) {
-          droppedAttachmentCount += note.binary_sources.length
+        if (note.attachments?.length) {
+          droppedAttachmentCount += note.attachments.length
           notesWithDroppedAttachments++
         }
 

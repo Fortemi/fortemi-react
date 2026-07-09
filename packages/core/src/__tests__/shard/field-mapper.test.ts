@@ -56,10 +56,11 @@ describe('field-mapper: notes', () => {
     expect(shard.tags).toEqual(['science', 'physics'])
   })
 
-  it('round-trips: browser → shard → browser produces identical data', () => {
+  it('round-trips: browser → shard → browser preserves browser note fields', () => {
     const shard = noteToShard(browserNote)
     const roundTripped = noteFromShard(shard)
-    expect(roundTripped).toEqual(browserNote)
+    expect(roundTripped).toMatchObject(browserNote)
+    expect(roundTripped.collection_id).toBeNull()
   })
 
   it('handles Date objects for timestamps', () => {

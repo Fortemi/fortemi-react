@@ -35,7 +35,7 @@ import type {
   ShardComponent,
   ShardClusterRef,
   ShardLayout,
-  ShardBinarySource,
+  ShardAttachmentProjection,
 } from './types.js'
 
 const encoder = new TextEncoder()
@@ -73,7 +73,8 @@ export async function exportShard(
     noteQuery = `SELECT n.id, n.title, n.format, n.source, n.is_starred, n.is_archived,
               n.created_at, n.updated_at, n.deleted_at,
               o.content as original_content,
-              c.content as revised_content
+              c.content as revised_content,
+              $1::text as collection_id
        FROM note n
        LEFT JOIN note_original o ON o.note_id = n.id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
@@ -85,7 +86,14 @@ export async function exportShard(
     noteQuery = `SELECT n.id, n.title, n.format, n.source, n.is_starred, n.is_archived,
               n.created_at, n.updated_at, n.deleted_at,
               o.content as original_content,
-              c.content as revised_content
+              c.content as revised_content,
+              (
+                SELECT cn.collection_id
+                FROM collection_note cn
+                WHERE cn.note_id = n.id
+                ORDER BY cn.position, cn.added_at
+                LIMIT 1
+              ) as collection_id
        FROM note n
        LEFT JOIN note_original o ON o.note_id = n.id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
@@ -97,7 +105,14 @@ export async function exportShard(
     noteQuery = `SELECT n.id, n.title, n.format, n.source, n.is_starred, n.is_archived,
               n.created_at, n.updated_at, n.deleted_at,
               o.content as original_content,
-              c.content as revised_content
+              c.content as revised_content,
+              (
+                SELECT cn.collection_id
+                FROM collection_note cn
+                WHERE cn.note_id = n.id
+                ORDER BY cn.position, cn.added_at
+                LIMIT 1
+              ) as collection_id
        FROM note n
        LEFT JOIN note_original o ON o.note_id = n.id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
@@ -118,6 +133,7 @@ export async function exportShard(
     deleted_at: Date | null
     original_content: string
     revised_content: string | null
+    collection_id: string | null
   }>(noteQuery, noteParams)
 
   // Fetch tags per note
@@ -154,9 +170,9 @@ export async function exportShard(
        WHERE a.deleted_at IS NULL
        ORDER BY a.note_id, a.position, a.created_at`,
   )
-  const binarySourcesByNote = new Map<string, ShardBinarySource[]>()
+  const attachmentsByNote = new Map<string, ShardAttachmentProjection[]>()
   for (const row of attachmentRows.rows) {
-    const source: ShardBinarySource = {
+    const source: ShardAttachmentProjection = {
       extracted_text: row.extracted_text ?? '',
       attachment: {
         id: row.id,
@@ -166,15 +182,15 @@ export async function exportShard(
         bytes: Number(row.size_bytes),
       },
     }
-    const sources = binarySourcesByNote.get(row.note_id) ?? []
+    const sources = attachmentsByNote.get(row.note_id) ?? []
     sources.push(source)
-    binarySourcesByNote.set(row.note_id, sources)
+    attachmentsByNote.set(row.note_id, sources)
   }
 
   const notes: BrowserNoteExport[] = noteRows.rows.map((row) => ({
     ...row,
     tags: tagsByNote.get(row.id) ?? [],
-    binary_sources: binarySourcesByNote.get(row.id),
+    attachments: attachmentsByNote.get(row.id),
   }))
 
   // Collect exported note IDs for scoping related data

@@ -7,7 +7,7 @@
 
 import type {
   ShardNote,
-  ShardBinarySource,
+  ShardAttachmentProjection,
   ShardLink,
   ShardTag,
   ShardCollection,
@@ -38,7 +38,8 @@ export interface BrowserNoteExport {
   deleted_at: Date | string | null
   original_content: string
   revised_content: string | null
-  binary_sources?: ShardBinarySource[]
+  collection_id?: string | null
+  attachments?: ShardAttachmentProjection[]
   tags: string[]
 }
 
@@ -49,7 +50,8 @@ export function noteToShard(note: BrowserNoteExport): ShardNote {
     title: note.title,
     original_content: note.original_content,
     revised_content: note.revised_content,
-    ...(note.binary_sources?.length ? { binary_sources: note.binary_sources } : {}),
+    collection_id: note.collection_id ?? null,
+    ...(note.attachments?.length ? { attachments: note.attachments } : {}),
     format: note.format,
     source: note.source,
     starred: note.is_starred,
@@ -63,6 +65,7 @@ export function noteToShard(note: BrowserNoteExport): ShardNote {
 
 /** Convert a shard note back to browser-insertable format. */
 export function noteFromShard(shard: ShardNote): BrowserNoteExport {
+  const attachments = shard.attachments ?? shard.binary_sources
   return {
     id: shard.id,
     title: shard.title,
@@ -72,7 +75,8 @@ export function noteFromShard(shard: ShardNote): BrowserNoteExport {
     is_archived: shard.archived,
     original_content: shard.original_content,
     revised_content: shard.revised_content,
-    binary_sources: shard.binary_sources,
+    collection_id: shard.collection_id ?? null,
+    attachments,
     tags: shard.tags,
     created_at: shard.created_at,
     updated_at: shard.updated_at,

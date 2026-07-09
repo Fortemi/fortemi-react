@@ -136,7 +136,7 @@ describe('exportShard', () => {
     const notesJsonl = new TextDecoder().decode(files.get('notes.jsonl')!)
     const shardNote: ShardNote = JSON.parse(notesJsonl.split('\n')[0])
 
-    expect(shardNote.binary_sources).toEqual([
+    expect(shardNote.attachments).toEqual([
       {
         extracted_text: 'Optical character recognition text for search',
         attachment: {
@@ -148,6 +148,7 @@ describe('exportShard', () => {
         },
       },
     ])
+    expect(shardNote).not.toHaveProperty('binary_sources')
     expect(notesJsonl).not.toContain('RAW-BINARY-SENTINEL')
     expect(notesJsonl).not.toContain('data_base64')
   })
@@ -175,6 +176,19 @@ describe('exportShard', () => {
     expect(collectionsJson).toHaveLength(1)
     expect(collectionsJson[0].name).toBe('Research')
     expect(collectionsJson[0].description).toBe('Papers')
+  })
+
+  it('exports note collection_id from collection membership', async () => {
+    const collection = await collections.create({ name: 'Research' })
+    const note = await notes.create({ content: 'Collection note' })
+    await collections.assignNote(collection.id, note.id)
+
+    const archive = await exportShard(db)
+    const files = unpackTarGz(archive)
+    const notesJsonl = new TextDecoder().decode(files.get('notes.jsonl')!)
+    const shardNote: ShardNote = JSON.parse(notesJsonl.split('\n')[0])
+
+    expect(shardNote.collection_id).toBe(collection.id)
   })
 
   it('exports links with shard field names', async () => {

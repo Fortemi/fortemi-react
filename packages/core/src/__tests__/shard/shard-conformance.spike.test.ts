@@ -116,6 +116,26 @@ describe('#238 spike — shard conformance schema (minimal proof)', () => {
     expect(errors.join('\n')).toContain('.content is not an allowed property')
   })
 
+  it('S-class: rejects legacy binary_sources in favor of server attachments', () => {
+    const drifted = {
+      ...conformantNote,
+      binary_sources: [
+        {
+          extracted_text: 'ocr',
+          attachment: {
+            id: 'att-1',
+            path: 'scan.pdf',
+            mime: 'application/pdf',
+            checksum: 'sha256:' + 'a'.repeat(64),
+            bytes: 10,
+          },
+        },
+      ],
+    }
+    const errors = validate(defs.note, drifted)
+    expect(errors.join('\n')).toContain('.binary_sources is not an allowed property')
+  })
+
   it('S-class: rejects a missing required field and a wrong type', () => {
     const noStarred: Partial<ShardNote> = { ...conformantNote }
     delete noStarred.starred

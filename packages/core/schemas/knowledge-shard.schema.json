@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://fortemi.dev/schemas/knowledge-shard.schema.json",
   "title": "Knowledge Shard (matric-shard) conformance schema",
-  "description": "Structural authority for the Knowledge Shard interchange contract shared between the Fortemi server (GET /api/v1/backup/knowledge-shard) and @fortemi/core. SPIKE #238 minimal proof: covers the manifest and the note component (the S1-S9 audit surface). Remaining components (collections, tags, links, embedding_sets, skos_*, provenance_edges, graph_*, communities) are a backlog item — see .aiwg/spikes/238-shard-conformance-harness.md.",
+  "description": "Structural authority for the Knowledge Shard interchange contract shared between the Fortemi server (GET /api/v1/backup/knowledge-shard) and @fortemi/core. Covers the manifest and note component S1/S2 attachment and collection-id contract surface; remaining components are tracked by issue #255.",
   "type": "object",
   "$defs": {
     "isoDateTime": {
@@ -77,7 +77,7 @@
         "bytes": { "type": "integer", "minimum": 0 }
       }
     },
-    "binarySource": {
+    "attachmentProjection": {
       "type": "object",
       "additionalProperties": false,
       "required": ["extracted_text", "attachment"],
@@ -109,9 +109,10 @@
         "title": { "type": ["string", "null"] },
         "original_content": { "type": "string" },
         "revised_content": { "type": ["string", "null"] },
-        "binary_sources": {
+        "collection_id": { "type": ["string", "null"] },
+        "attachments": {
           "type": "array",
-          "items": { "$ref": "#/$defs/binarySource" }
+          "items": { "$ref": "#/$defs/attachmentProjection" }
         },
         "format": { "type": "string" },
         "source": { "type": "string" },

@@ -55,10 +55,13 @@ export interface ShardAttachmentReference {
   bytes: number
 }
 
-export interface ShardBinarySource {
+export interface ShardAttachmentProjection {
   extracted_text: string
   attachment: ShardAttachmentReference
 }
+
+/** @deprecated Legacy React shard field name. Server shards use `attachments`. */
+export type ShardBinarySource = ShardAttachmentProjection
 
 /**
  * Reference to one cluster file of a component split across addressable files
@@ -188,6 +191,9 @@ export interface ShardNote {
   title: string | null
   original_content: string
   revised_content: string | null
+  collection_id?: string | null
+  attachments?: ShardAttachmentProjection[]
+  /** @deprecated Legacy React shard field name. Use `attachments`. */
   binary_sources?: ShardBinarySource[]
   format: string
   source: string

@@ -210,7 +210,7 @@ describe('DB Table Parity', () => {
     // the attachment row to feed local search/index/export. The server models
     // MIME via document_type_id -> document_type.mime_type and does not persist
     // extracted text, so these appear here as browser-only extras. Export JSON
-    // parity is preserved elsewhere (notes carry `binary_sources`, not attachment
+    // parity is preserved elsewhere (notes carry `attachments`, not attachment
     // columns). Assert the exact allowed set so any *other* divergence still fails.
     expect([...comparison.extra].sort()).toEqual(['extracted_text', 'mime_type'])
   })
