@@ -10,6 +10,18 @@
       "description": "ISO 8601 timestamp",
       "minLength": 1
     },
+    "jsonObject": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "nullableJsonObject": {
+      "type": ["object", "null"],
+      "additionalProperties": true
+    },
+    "stringArray": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
     "manifest": {
       "type": "object",
       "additionalProperties": false,
@@ -35,6 +47,7 @@
               "notes",
               "collections",
               "tags",
+              "templates",
               "links",
               "embedding_sets",
               "embedding_set_members",
@@ -122,6 +135,275 @@
         "created_at": { "$ref": "#/$defs/isoDateTime" },
         "updated_at": { "$ref": "#/$defs/isoDateTime" },
         "deleted_at": { "type": ["string", "null"] }
+      }
+    },
+    "collection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "description", "parent_id", "created_at"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string" },
+        "description": { "type": ["string", "null"] },
+        "parent_id": { "type": ["string", "null"] },
+        "created_at": { "$ref": "#/$defs/isoDateTime" },
+        "note_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "tag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "created_at"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "created_at": { "$ref": "#/$defs/isoDateTime" }
+      }
+    },
+    "template": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "description", "content", "format", "default_tags", "collection_id", "created_at", "updated_at"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string" },
+        "description": { "type": ["string", "null"] },
+        "content": { "type": "string" },
+        "format": { "type": "string" },
+        "default_tags": { "$ref": "#/$defs/stringArray" },
+        "collection_id": { "type": ["string", "null"] },
+        "created_at": { "$ref": "#/$defs/isoDateTime" },
+        "updated_at": { "$ref": "#/$defs/isoDateTime" }
+      }
+    },
+    "link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "from_note_id", "to_note_id", "to_url", "kind", "score", "created_at", "metadata"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "from_note_id": { "type": "string", "minLength": 1 },
+        "to_note_id": { "type": ["string", "null"] },
+        "to_url": { "type": ["string", "null"] },
+        "kind": { "type": "string" },
+        "score": { "type": ["number", "null"] },
+        "created_at": { "$ref": "#/$defs/isoDateTime" },
+        "metadata": { "$ref": "#/$defs/nullableJsonObject" }
+      }
+    },
+    "embeddingSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "slug", "description", "purpose", "document_count", "embedding_count", "is_system", "keywords", "model", "dimension"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string" },
+        "slug": { "type": ["string", "null"] },
+        "description": { "type": ["string", "null"] },
+        "purpose": { "type": ["string", "null"] },
+        "document_count": { "type": "integer", "minimum": 0 },
+        "embedding_count": { "type": "integer", "minimum": 0 },
+        "is_system": { "type": "boolean" },
+        "keywords": { "$ref": "#/$defs/stringArray" },
+        "model": { "type": "string" },
+        "dimension": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "embeddingSetMember": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["embedding_set_id", "note_id", "membership_type", "added_at", "added_by"],
+      "properties": {
+        "embedding_set_id": { "type": "string", "minLength": 1 },
+        "note_id": { "type": "string", "minLength": 1 },
+        "membership_type": { "type": "string" },
+        "added_at": { "$ref": "#/$defs/isoDateTime" },
+        "added_by": { "type": ["string", "null"] }
+      }
+    },
+    "embeddingConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "description", "model", "dimension", "chunk_size", "chunk_overlap", "is_default"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string" },
+        "description": { "type": ["string", "null"] },
+        "model": { "type": "string" },
+        "dimension": { "type": "integer", "minimum": 1 },
+        "chunk_size": { "type": "integer", "minimum": 1 },
+        "chunk_overlap": { "type": "integer", "minimum": 0 },
+        "is_default": { "type": "boolean" }
+      }
+    },
+    "embedding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "note_id", "chunk_index", "text", "vector", "model"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "note_id": { "type": "string", "minLength": 1 },
+        "chunk_index": { "type": "integer", "minimum": 0 },
+        "text": { "type": "string" },
+        "vector": { "type": "array", "items": { "type": "number" } },
+        "model": { "type": "string" }
+      }
+    },
+    "skosScheme": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "description", "created_at", "updated_at"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string" },
+        "description": { "type": ["string", "null"] },
+        "created_at": { "$ref": "#/$defs/isoDateTime" },
+        "updated_at": { "$ref": "#/$defs/isoDateTime" }
+      }
+    },
+    "skosConcept": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "scheme_id", "pref_label", "alt_labels", "definition", "created_at", "updated_at"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "scheme_id": { "type": "string", "minLength": 1 },
+        "pref_label": { "type": "string" },
+        "alt_labels": { "$ref": "#/$defs/stringArray" },
+        "definition": { "type": ["string", "null"] },
+        "created_at": { "$ref": "#/$defs/isoDateTime" },
+        "updated_at": { "$ref": "#/$defs/isoDateTime" }
+      }
+    },
+    "skosRelation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "source_concept_id", "target_concept_id", "relation_type", "created_at"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "source_concept_id": { "type": "string", "minLength": 1 },
+        "target_concept_id": { "type": "string", "minLength": 1 },
+        "relation_type": { "enum": ["broader", "narrower", "related"] },
+        "created_at": { "$ref": "#/$defs/isoDateTime" }
+      }
+    },
+    "noteSkosTag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "note_id", "concept_id", "created_at"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "note_id": { "type": "string", "minLength": 1 },
+        "concept_id": { "type": "string", "minLength": 1 },
+        "created_at": { "$ref": "#/$defs/isoDateTime" }
+      }
+    },
+    "provenanceEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "entity_type", "entity_id", "activity", "agent", "started_at", "ended_at", "attributes"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "entity_type": { "type": "string" },
+        "entity_id": { "type": "string", "minLength": 1 },
+        "activity": { "type": "string" },
+        "agent": { "type": "string" },
+        "started_at": { "$ref": "#/$defs/isoDateTime" },
+        "ended_at": { "type": ["string", "null"] },
+        "attributes": { "$ref": "#/$defs/nullableJsonObject" }
+      }
+    },
+    "artifactFreshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["fresh", "stale", "unknown"] },
+        "checked_at": { "$ref": "#/$defs/isoDateTime" },
+        "stale_reason": { "type": "string" },
+        "source_hashes": { "$ref": "#/$defs/jsonObject" }
+      }
+    },
+    "graphSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "kind", "input_hash", "freshness", "created_at"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string" },
+        "kind": { "enum": ["link", "similarity", "search", "manual", "imported"] },
+        "source_table": { "type": ["string", "null"] },
+        "embedding_set_id": { "type": ["string", "null"] },
+        "virtual_set_id": { "type": ["string", "null"] },
+        "model": { "type": ["string", "null"] },
+        "dimension": { "type": ["integer", "null"], "minimum": 1 },
+        "truncate_dimension": { "type": ["integer", "null"], "minimum": 1 },
+        "metric": { "type": ["string", "null"] },
+        "algorithm": { "type": ["string", "null"] },
+        "parameters": { "$ref": "#/$defs/jsonObject" },
+        "input_hash": { "type": "string" },
+        "freshness": { "$ref": "#/$defs/artifactFreshness" },
+        "created_at": { "$ref": "#/$defs/isoDateTime" }
+      }
+    },
+    "graphEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["graph_source_id", "from_note_id", "to_note_id", "weight", "kind"],
+      "properties": {
+        "graph_source_id": { "type": "string", "minLength": 1 },
+        "from_note_id": { "type": "string", "minLength": 1 },
+        "to_note_id": { "type": "string", "minLength": 1 },
+        "weight": { "type": "number" },
+        "kind": { "enum": ["link", "similarity", "manual"] },
+        "rank": { "type": ["integer", "null"], "minimum": 0 },
+        "metadata": { "$ref": "#/$defs/jsonObject" }
+      }
+    },
+    "community": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": { "type": ["string", "null"] },
+        "rank": { "type": ["integer", "null"], "minimum": 0 },
+        "size": { "type": ["integer", "null"], "minimum": 0 },
+        "confidence": { "type": ["number", "null"] },
+        "representative_note_ids": { "$ref": "#/$defs/stringArray" },
+        "metadata": { "$ref": "#/$defs/jsonObject" }
+      }
+    },
+    "communitySet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "graph_source_id", "name", "source_type", "input_hash", "freshness", "communities", "created_at"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "graph_source_id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string" },
+        "source_type": { "enum": ["precomputed", "dynamic-snapshot", "user-authored", "imported"] },
+        "algorithm": { "type": ["string", "null"] },
+        "parameters": { "$ref": "#/$defs/jsonObject" },
+        "input_hash": { "type": "string" },
+        "freshness": { "$ref": "#/$defs/artifactFreshness" },
+        "communities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/community" }
+        },
+        "created_at": { "$ref": "#/$defs/isoDateTime" }
+      }
+    },
+    "communityAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["community_set_id", "community_id", "note_id", "source_type"],
+      "properties": {
+        "community_set_id": { "type": "string", "minLength": 1 },
+        "community_id": { "type": "string", "minLength": 1 },
+        "note_id": { "type": "string", "minLength": 1 },
+        "confidence": { "type": ["number", "null"] },
+        "source_type": { "enum": ["precomputed", "dynamic-snapshot", "user-authored", "imported"] },
+        "metadata": { "$ref": "#/$defs/jsonObject" }
       }
     }
   }

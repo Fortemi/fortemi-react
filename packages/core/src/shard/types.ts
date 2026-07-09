@@ -32,6 +32,7 @@ export type ShardComponent =
   | 'notes'
   | 'collections'
   | 'tags'
+  | 'templates'
   | 'links'
   | 'embedding_sets'
   | 'embedding_set_members'

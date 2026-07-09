@@ -349,6 +349,10 @@ export {
   provenanceEdgeToShard,
   exportShard,
   importShard,
+  getKnowledgeShardSchema,
+  validateShardManifest,
+  validateShardComponentRecord,
+  assertShardComponentRecord,
   openShard,
   createCosineSemanticProvider,
   prefetchShard,
@@ -357,6 +361,7 @@ export {
   getPrefetchedSha256,
   clearPrefetchedShard,
 } from './shard/index.js'
+export type { ShardSchemaValidationResult } from './shard/index.js'
 export type {
   ShardReader,
   ShardReaderSource,

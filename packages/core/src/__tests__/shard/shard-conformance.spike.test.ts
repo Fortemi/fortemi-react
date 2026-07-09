@@ -6,10 +6,10 @@
  * breaks the audit found — the `db-table-parity` suite cannot, because it
  * validates PGlite table shapes, not the shard JSON contract.
  *
- * This uses a compact JSON-Schema-subset checker so the proof stays zero-dep. The
- * full implementation should swap in AJV against the same committed schema (and
- * add golden fixtures from a real server) — see
- * .aiwg/spikes/238-shard-conformance-harness.md.
+ * This keeps the original compact JSON-Schema-subset checker as a lightweight
+ * regression sentinel. The production AJV validator is covered in
+ * schema-validator.test.ts; golden fixtures from a real server remain tracked by
+ * #255.
  */
 import { describe, expect, it } from 'vitest'
 import type { ShardNote } from '../../shard/types.js'

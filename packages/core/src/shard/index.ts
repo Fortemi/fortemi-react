@@ -77,6 +77,15 @@ export { exportShard } from './shard-export.js'
 // Import pipeline
 export { importShard } from './shard-import.js'
 
+// Schema validation
+export {
+  getKnowledgeShardSchema,
+  validateShardManifest,
+  validateShardComponentRecord,
+  assertShardComponentRecord,
+} from './schema-validator.js'
+export type { ShardSchemaValidationResult } from './schema-validator.js'
+
 // In-place reader (static-file backend, issue #189)
 export { openShard } from './shard-reader.js'
 export type {
