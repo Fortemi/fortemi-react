@@ -154,6 +154,37 @@ describe('exportShard', () => {
     expect(notesJsonl).not.toContain('data_base64')
   })
 
+  it('exports pending attachment extraction as a bounded null-text projection', async () => {
+    const note = await notes.create({ content: 'Attachment carrier', title: 'Pending extraction' })
+    const attachments = new AttachmentsRepository(db, new MemoryBlobStore())
+    const attachment = await attachments.attach({
+      noteId: note.id,
+      data: new TextEncoder().encode('PENDING-BINARY-SENTINEL'),
+      filename: 'video.mp4',
+      mimeType: 'video/mp4',
+    })
+
+    const archive = await exportShard(db)
+    const files = unpackTarGz(archive)
+    const notesJsonl = new TextDecoder().decode(files.get('notes.jsonl')!)
+    const shardNote: ShardNote = JSON.parse(notesJsonl.split('\n')[0])
+
+    expect(shardNote.attachments).toEqual([
+      {
+        extracted_text: null,
+        attachment: {
+          id: attachment.id,
+          path: 'video.mp4',
+          mime: 'video/mp4',
+          checksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/),
+          bytes: 'PENDING-BINARY-SENTINEL'.length,
+        },
+      },
+    ])
+    expect(notesJsonl).not.toContain('PENDING-BINARY-SENTINEL')
+    expect(notesJsonl).not.toContain('data_base64')
+  })
+
   it('exports tags as note-level arrays', async () => {
     await notes.create({ content: 'Tagged note', tags: ['physics', 'math'] })
 

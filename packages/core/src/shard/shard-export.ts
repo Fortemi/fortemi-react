@@ -177,7 +177,7 @@ export async function exportShard(
   const attachmentsByNote = new Map<string, ShardAttachmentProjection[]>()
   for (const row of attachmentRows.rows) {
     const source: ShardAttachmentProjection = {
-      extracted_text: row.extracted_text ?? '',
+      extracted_text: row.extracted_text,
       attachment: {
         id: row.id,
         path: row.storage_path ?? row.filename,

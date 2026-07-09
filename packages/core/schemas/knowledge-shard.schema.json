@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://fortemi.dev/schemas/knowledge-shard.schema.json",
   "title": "Knowledge Shard (matric-shard) conformance schema",
-  "description": "Structural authority for the Knowledge Shard interchange contract shared between the Fortemi server (GET /api/v1/backup/knowledge-shard) and @fortemi/core. Covers the manifest and note component S1/S2 attachment and collection-id contract surface; remaining components are tracked by issue #255.",
+  "description": "Structural authority for the Knowledge Shard interchange contract shared between the Fortemi server (GET /api/v1/backup/knowledge-shard) and @fortemi/core. Covers the manifest, server-owned shard components, and React extension components tracked by issue #255.",
   "type": "object",
   "$defs": {
     "isoDateTime": {
