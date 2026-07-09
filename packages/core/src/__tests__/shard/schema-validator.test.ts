@@ -83,6 +83,38 @@ describe('knowledge shard AJV schema validator (#255)', () => {
     expect(result).toEqual({ valid: true, errors: [] })
   })
 
+  it('allows pending attachment extraction records to carry null extracted_text', () => {
+    const result = validateShardComponentRecord('notes', {
+      id: 'note-1',
+      title: 'Note',
+      original_content: 'original',
+      revised_content: null,
+      collection_id: null,
+      attachments: [
+        {
+          extracted_text: null,
+          attachment: {
+            id: 'att-1',
+            path: 'video.mp4',
+            mime: 'video/mp4',
+            checksum: 'sha256:' + 'c'.repeat(64),
+            bytes: 1024,
+          },
+        },
+      ],
+      format: 'markdown',
+      source: 'manual',
+      starred: false,
+      archived: false,
+      tags: [],
+      created_at: iso,
+      updated_at: iso,
+      deleted_at: null,
+    })
+
+    expect(result).toEqual({ valid: true, errors: [] })
+  })
+
   it('validates a real React-exported shard archive for aligned components', async () => {
     const db = await createTestDb()
     try {

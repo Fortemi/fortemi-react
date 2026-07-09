@@ -83,11 +83,8 @@ export async function importShard(
   const report = options?.onProgress
   const warnings: string[] = []
   const errors: string[] = []
-  // E1 (#237): shards carry attachment *references* (metadata + checksum), not
-  // the binary content, so attachments cannot yet be restored on import. Track
-  // the drop so it surfaces as an explicit warning instead of silent data loss.
-  let droppedAttachmentCount = 0
-  let notesWithDroppedAttachments = 0
+  let importedAttachmentReferenceCount = 0
+  let notesWithImportedAttachmentReferences = 0
   const counts: ImportCounts = {
     notes: 0,
     collections: 0,
@@ -385,11 +382,52 @@ export async function importShard(
           )
         }
 
-        // E1 (#237): attachment references survive on the note but their bytes
-        // are not packaged in the shard, so they cannot be persisted here.
+        // Shard projections carry extracted text plus attachment metadata. They
+        // intentionally do not carry the raw blob payload, so import preserves
+        // the reference rows and leaves BlobStore hydration to an out-of-band
+        // source that owns the bytes.
         if (note.attachments?.length) {
-          droppedAttachmentCount += note.attachments.length
-          notesWithDroppedAttachments++
+          notesWithImportedAttachmentReferences++
+          for (let position = 0; position < note.attachments.length; position += 1) {
+            const projection = note.attachments[position]
+            const ref = projection.attachment
+            const existingBlob = await tx.query<{ id: string }>(
+              `SELECT id FROM attachment_blob WHERE content_hash = $1`,
+              [ref.checksum],
+            )
+            const blobId = existingBlob.rows[0]?.id ?? generateId()
+            if (!existingBlob.rows.length) {
+              await tx.query(
+                `INSERT INTO attachment_blob (id, content_hash, size_bytes, storage_path)
+                 VALUES ($1, $2, $3, $4)
+                 ON CONFLICT (content_hash) DO NOTHING`,
+                [blobId, ref.checksum, ref.bytes, ref.path],
+              )
+            }
+            const filename = ref.path.split('/').filter(Boolean).pop() ?? ref.path
+            if (strategy === 'replace') {
+              await tx.query(
+                `INSERT INTO attachment (id, note_id, blob_id, filename, mime_type, extracted_text, position)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)
+                 ON CONFLICT (id) DO UPDATE SET
+                   note_id = $2,
+                   blob_id = $3,
+                   filename = $4,
+                   mime_type = $5,
+                   extracted_text = $6,
+                   position = $7,
+                   deleted_at = NULL`,
+                [ref.id, note.id, blobId, filename, ref.mime, projection.extracted_text, position],
+              )
+            } else {
+              await tx.query(
+                `INSERT INTO attachment (id, note_id, blob_id, filename, mime_type, extracted_text, position)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7) ${conflictClause}`,
+                [ref.id, note.id, blobId, filename, ref.mime, projection.extracted_text, position],
+              )
+            }
+            importedAttachmentReferenceCount++
+          }
         }
 
         counts.notes++
@@ -397,11 +435,11 @@ export async function importShard(
         await maybeYield(index + 1, batchSize)
       }
 
-      if (droppedAttachmentCount > 0) {
+      if (importedAttachmentReferenceCount > 0) {
         warnings.push(
-          `${droppedAttachmentCount} attachment(s) across ${notesWithDroppedAttachments} note(s) were not imported: ` +
-            'shards currently carry attachment references (metadata + checksum) but not the binary content, ' +
-            'so attachment bytes cannot be restored. Tracking: #237 (attachment round-trip) / server #1013 (binary contract).',
+          `${importedAttachmentReferenceCount} attachment reference(s) across ${notesWithImportedAttachmentReferences} note(s) were imported as metadata only: ` +
+            'Knowledge Shard projections carry extracted text plus attachment metadata, not raw binary payloads, ' +
+            'so BlobStore bytes remain unavailable unless provided by an out-of-band attachment source. Tracking: #237 / server #1013.',
         )
       }
 

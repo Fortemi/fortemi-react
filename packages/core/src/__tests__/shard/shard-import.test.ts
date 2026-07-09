@@ -25,9 +25,10 @@ import { importShard } from '../../shard/shard-import.js'
 import { packTarGz, unpackTarGz } from '../../shard/shard-tar.js'
 import { sha256Hex } from '../../shard/checksum.js'
 import { compareShardVersions } from '../../shard/types.js'
-import type { ImportProgress, ShardLink, ShardManifest } from '../../shard/types.js'
+import type { ImportProgress, ShardLink, ShardManifest, ShardNote } from '../../shard/types.js'
 
 const encoder = new TextEncoder()
+const decoder = new TextDecoder()
 const testDir = fileURLToPath(new URL('.', import.meta.url))
 const goldenFixturePath = resolve(
   testDir,
@@ -555,7 +556,7 @@ describe('importShard', { timeout: 30_000 }, () => {
 })
 
 describe('importShard — E1 attachment round-trip (#237)', { timeout: 30_000 }, () => {
-  it('surfaces dropped attachments as an explicit warning instead of silent data loss', async () => {
+  it('preserves attachment metadata and byte counts without inlining raw blob payloads', async () => {
     // Source DB with one note carrying a real attachment.
     const sourceDb = await createTestDb()
     const notes = new NotesRepository(sourceDb)
@@ -580,11 +581,54 @@ describe('importShard — E1 attachment round-trip (#237)', { timeout: 30_000 },
     expect(result.success).toBe(true)
     expect(result.counts.notes).toBe(1)
 
-    // Attachment bytes are not packaged in the shard, so nothing is persisted —
-    // but the loss is now reported, not silent (E1).
-    const rows = await targetDb.query<{ n: number }>('SELECT COUNT(*)::int AS n FROM attachment')
-    expect(rows.rows[0].n).toBe(0)
-    expect(result.warnings.some((w) => /attachment\(s\).*were not imported/.test(w))).toBe(true)
+    // Shards preserve extracted text plus attachment metadata. They do not carry
+    // the raw payload, so BlobStore bytes are unavailable after import unless an
+    // external attachment source hydrates them separately.
+    const rows = await targetDb.query<{
+      id: string
+      filename: string
+      mime_type: string | null
+      extracted_text: string | null
+      content_hash: string
+      size_bytes: number
+      storage_path: string | null
+    }>(
+      `SELECT a.id, a.filename, a.mime_type, a.extracted_text, b.content_hash, b.size_bytes, b.storage_path
+         FROM attachment a
+         JOIN attachment_blob b ON b.id = a.blob_id`,
+    )
+    expect(rows.rows).toHaveLength(1)
+    expect(rows.rows[0]).toMatchObject({
+      filename: 'report.pdf',
+      mime_type: 'application/pdf',
+      extracted_text: 'report text',
+      size_bytes: 'binary-payload-bytes'.length,
+      storage_path: 'report.pdf',
+    })
+    expect(rows.rows[0].content_hash).toMatch(/^sha256:[0-9a-f]{64}$/)
+
+    const importedAttachments = new AttachmentsRepository(targetDb, new MemoryBlobStore())
+    await expect(importedAttachments.getBlob(rows.rows[0].id)).resolves.toBeNull()
+
+    const reexported = await exportShard(targetDb)
+    const reexportedFiles = unpackTarGz(reexported)
+    const reexportedNote: ShardNote = JSON.parse(
+      decoder.decode(reexportedFiles.get('notes.jsonl')!).split('\n')[0],
+    )
+    expect(reexportedNote.attachments).toEqual([
+      {
+        extracted_text: 'report text',
+        attachment: {
+          id: rows.rows[0].id,
+          path: 'report.pdf',
+          mime: 'application/pdf',
+          checksum: rows.rows[0].content_hash,
+          bytes: 'binary-payload-bytes'.length,
+        },
+      },
+    ])
+    expect(decoder.decode(reexportedFiles.get('notes.jsonl')!)).not.toContain('binary-payload-bytes')
+    expect(result.warnings.some((w) => /metadata only/.test(w))).toBe(true)
     expect(result.warnings.some((w) => w.includes('#237'))).toBe(true)
 
     await targetDb.close()

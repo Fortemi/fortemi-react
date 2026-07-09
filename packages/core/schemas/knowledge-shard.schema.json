@@ -95,7 +95,7 @@
       "additionalProperties": false,
       "required": ["extracted_text", "attachment"],
       "properties": {
-        "extracted_text": { "type": "string" },
+        "extracted_text": { "type": ["string", "null"] },
         "attachment": { "$ref": "#/$defs/attachmentReference" }
       }
     },

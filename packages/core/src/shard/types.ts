@@ -57,7 +57,7 @@ export interface ShardAttachmentReference {
 }
 
 export interface ShardAttachmentProjection {
-  extracted_text: string
+  extracted_text: string | null
   attachment: ShardAttachmentReference
 }
 
