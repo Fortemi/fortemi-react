@@ -19,6 +19,7 @@ import { MemoryBlobStore } from '../../blob-store.js'
 import { exportShard } from '../../shard/shard-export.js'
 import { unpackTarGz } from '../../shard/shard-tar.js'
 import { validateChecksums } from '../../shard/checksum.js'
+import { validateShardComponentRecord } from '../../shard/schema-validator.js'
 import type { ShardManifest, ShardNote, ShardLink, ShardCollection } from '../../shard/types.js'
 
 async function createTestDb(): Promise<PGlite> {
@@ -203,13 +204,18 @@ describe('exportShard', () => {
 
     expect(shardLink).toHaveProperty('from_note_id')
     expect(shardLink).toHaveProperty('to_note_id')
+    expect(shardLink).toHaveProperty('to_url')
     expect(shardLink).toHaveProperty('kind')
+    expect(shardLink).toHaveProperty('metadata')
     expect(shardLink).not.toHaveProperty('source_note_id')
     expect(shardLink).not.toHaveProperty('target_note_id')
     expect(shardLink).not.toHaveProperty('link_type')
     expect(shardLink.from_note_id).toBe(note1.id)
     expect(shardLink.to_note_id).toBe(note2.id)
+    expect(shardLink.to_url).toBeNull()
     expect(shardLink.kind).toBe('related')
+    expect(shardLink.metadata).toBeNull()
+    expect(validateShardComponentRecord('links', shardLink)).toEqual({ valid: true, errors: [] })
   })
 
   it('JSONL format: one valid JSON per line', async () => {

@@ -424,6 +424,16 @@ export async function importShard(
       report?.({ phase: 'links', done: 0, total: parsedLinks.length })
       for (const [index, shardLink] of parsedLinks.entries()) {
         const link = linkFromShard(shardLink)
+        if (!link.target_note_id) {
+          skipped.links = (skipped.links ?? 0) + 1
+          warnings.push(
+            `URL-only shard link skipped: ${link.id} points to ${shardLink.to_url ?? '(missing URL)'}; ` +
+              'the browser link table currently supports note-to-note links only.',
+          )
+          report?.({ phase: 'links', done: index + 1, total: parsedLinks.length })
+          await maybeYield(index + 1, batchSize)
+          continue
+        }
         if (strategy === 'replace') {
           await tx.query(
             `INSERT INTO link (id, source_note_id, target_note_id, link_type, confidence, created_at)

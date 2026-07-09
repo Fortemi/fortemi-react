@@ -146,6 +146,41 @@ describe('importShard', { timeout: 30_000 }, () => {
     expect(linkRows.rows[0].link_type).toBe('related')
   })
 
+  it('skips URL-only server links with an explicit warning', async () => {
+    const linkData = encoder.encode(JSON.stringify({
+      id: 'link-url-1',
+      from_note_id: 'note-1',
+      to_note_id: null,
+      to_url: 'https://example.test',
+      kind: 'reference',
+      score: null,
+      created_at: '2026-01-01T00:00:00.000Z',
+      metadata: null,
+    }))
+    const manifest: ShardManifest = {
+      version: '1.0.0',
+      matric_version: '2026.3.0',
+      format: 'matric-shard',
+      created_at: new Date().toISOString(),
+      components: ['links'],
+      counts: { links: 1 },
+      checksums: { 'links.jsonl': await sha256Hex(linkData) },
+      min_reader_version: '1.0.0',
+    }
+    const files = new Map<string, Uint8Array>()
+    files.set('manifest.json', encoder.encode(JSON.stringify(manifest)))
+    files.set('links.jsonl', linkData)
+
+    const result = await importShard(db, packTarGz(files))
+    const linkRows = await db.query<{ n: number }>('SELECT COUNT(*)::int AS n FROM link')
+
+    expect(result.success).toBe(true)
+    expect(result.counts.links).toBe(0)
+    expect(result.skipped.links).toBe(1)
+    expect(result.warnings.some((warning) => warning.includes('URL-only shard link skipped: link-url-1'))).toBe(true)
+    expect(linkRows.rows[0].n).toBe(0)
+  })
+
   it('skip strategy: existing records untouched', async () => {
     const { archive, sourceDb } = await createTestShard()
 

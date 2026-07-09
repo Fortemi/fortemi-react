@@ -92,9 +92,11 @@ export function linkToShard(link: LinkRow): ShardLink {
     id: link.id,
     from_note_id: link.source_note_id,
     to_note_id: link.target_note_id,
+    to_url: null,
     kind: link.link_type,
     score: link.confidence,
     created_at: toISOString(link.created_at),
+    metadata: null,
   }
 }
 
@@ -102,7 +104,7 @@ export function linkToShard(link: LinkRow): ShardLink {
 export function linkFromShard(shard: ShardLink): {
   id: string
   source_note_id: string
-  target_note_id: string
+  target_note_id: string | null
   link_type: string
   confidence: number | null
   created_at: string

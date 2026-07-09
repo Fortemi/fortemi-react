@@ -226,11 +226,12 @@ export interface ShardTag {
 export interface ShardLink {
   id: string
   from_note_id: string
-  to_note_id: string
+  to_note_id: string | null
+  to_url: string | null
   kind: string
   score: number | null
   created_at: string
-  metadata?: Record<string, unknown>
+  metadata: Record<string, unknown> | null
 }
 
 /** Embedding set as serialized in the shard JSON array. */
