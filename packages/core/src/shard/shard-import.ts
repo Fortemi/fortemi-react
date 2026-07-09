@@ -27,6 +27,7 @@ import type {
   ShardLink,
   ShardCollection,
   ShardTag,
+  ShardTemplate,
   ShardEmbeddingSet,
   ShardEmbeddingConfig,
   ShardEmbeddingSetMember,
@@ -90,6 +91,7 @@ export async function importShard(
   const counts: ImportCounts = {
     notes: 0,
     collections: 0,
+    templates: 0,
     tags: 0,
     links: 0,
     embedding_sets: 0,
@@ -197,6 +199,7 @@ export async function importShard(
   const parsedCollections = parseJsonArray<ShardCollection>(files.get('collections.json'))
   // Tags are embedded in notes as arrays — the global tags.json is informational only
   parseJsonArray<ShardTag>(files.get('tags.json')) // parsed for validation, not used directly
+  const parsedTemplates = parseJsonArray<ShardTemplate>(files.get('templates.json'))
   const parsedLinks = parseJsonl<ShardLink>(files.get('links.jsonl'))
   const parsedEmbSets = parseJsonArray<ShardEmbeddingSet>(files.get('embedding_sets.json'))
   const parsedEmbConfigs = parseJsonArray<ShardEmbeddingConfig>(files.get('embedding_configs.json'))
@@ -241,10 +244,6 @@ export async function importShard(
       warnings.push(`Unknown component skipped: ${filename}`)
     }
   }
-  if (files.has('templates.json')) {
-    warnings.push('templates.json skipped (not supported in browser)')
-  }
-
   // ── Step 5: Transactional insert ──────────────────────────────────────
   const conflictClause = strategy === 'skip' ? 'ON CONFLICT DO NOTHING' : ''
 
@@ -270,6 +269,34 @@ export async function importShard(
         }
         counts.collections++
         report?.({ phase: 'collections', done: index + 1, total: parsedCollections.length })
+        await maybeYield(index + 1, batchSize)
+      }
+
+      // Import templates
+      report?.({ phase: 'templates', done: 0, total: parsedTemplates.length })
+      for (const [index, template] of parsedTemplates.entries()) {
+        await tx.query(
+          `INSERT INTO template (
+             id, name, description, content, format, default_tags, collection_id, created_at, updated_at
+           )
+           VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9)
+           ${strategy === 'replace'
+             ? 'ON CONFLICT (id) DO UPDATE SET name = $2, description = $3, content = $4, format = $5, default_tags = $6::jsonb, collection_id = $7, created_at = $8, updated_at = $9'
+             : conflictClause}`,
+          [
+            template.id,
+            template.name,
+            template.description,
+            template.content,
+            template.format,
+            JSON.stringify(template.default_tags),
+            template.collection_id,
+            template.created_at,
+            template.updated_at,
+          ],
+        )
+        counts.templates++
+        report?.({ phase: 'templates', done: index + 1, total: parsedTemplates.length })
         await maybeYield(index + 1, batchSize)
       }
 

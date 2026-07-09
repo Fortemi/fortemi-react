@@ -138,6 +138,7 @@ export type ImportProgressPhase =
   | 'collections'
   | 'notes'
   | 'skos'
+  | 'templates'
   | 'links'
   | 'provenance'
   | 'embedding_sets'
@@ -158,6 +159,7 @@ export interface ImportProgress {
 export interface ImportCounts {
   notes: number
   collections: number
+  templates: number
   tags: number
   links: number
   embedding_sets: number
@@ -222,6 +224,19 @@ export interface ShardCollection {
 export interface ShardTag {
   name: string
   created_at: string
+}
+
+/** Template as serialized in the shard JSON array. */
+export interface ShardTemplate {
+  id: string
+  name: string
+  description: string | null
+  content: string
+  format: string
+  default_tags: string[]
+  collection_id: string | null
+  created_at: string
+  updated_at: string
 }
 
 /** Link as serialized in the shard JSONL. */

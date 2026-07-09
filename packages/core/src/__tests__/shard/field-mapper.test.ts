@@ -8,6 +8,7 @@ import {
   collectionFromShard,
   tagsToShard,
   tagsFromShard,
+  templateToShard,
   embeddingSetToShard,
   embeddingSetFromShard,
   embeddingSetMemberToShard,
@@ -190,6 +191,34 @@ describe('field-mapper: tags', () => {
     ]
     const names = tagsFromShard(shardTags)
     expect(names).toEqual(['physics', 'math'])
+  })
+})
+
+describe('field-mapper: templates', () => {
+  it('exports templates with server field names', () => {
+    const shard = templateToShard({
+      id: 'tmpl-1',
+      name: 'Research brief',
+      description: null,
+      content: 'Body',
+      format: 'markdown',
+      default_tags: '["research","brief"]',
+      collection_id: 'col-1',
+      created_at: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-02T00:00:00.000Z',
+    })
+
+    expect(shard).toEqual({
+      id: 'tmpl-1',
+      name: 'Research brief',
+      description: null,
+      content: 'Body',
+      format: 'markdown',
+      default_tags: ['research', 'brief'],
+      collection_id: 'col-1',
+      created_at: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-02T00:00:00.000Z',
+    })
   })
 })
 

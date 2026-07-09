@@ -335,16 +335,28 @@ describe('importShard', { timeout: 30_000 }, () => {
     expect(result.warnings).toContain('Unknown component skipped: custom_data.json')
   })
 
-  it('warns about skipped templates.json', async () => {
-    const templatesData = encoder.encode('[]')
+  it('imports and re-exports templates.json', async () => {
+    const templatesData = encoder.encode(JSON.stringify([
+      {
+        id: 'tmpl-1',
+        name: 'Research brief',
+        description: 'Reusable research note',
+        content: '# {{title}}',
+        format: 'markdown',
+        default_tags: ['research', 'brief'],
+        collection_id: null,
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-02T00:00:00.000Z',
+      },
+    ]))
     const templatesHash = await sha256Hex(templatesData)
     const manifest: ShardManifest = {
       version: '1.0.0',
       matric_version: '2026.3.0',
       format: 'matric-shard',
       created_at: new Date().toISOString(),
-      components: [],
-      counts: {},
+      components: ['templates'],
+      counts: { templates: 1 },
       checksums: { 'templates.json': templatesHash },
       min_reader_version: '1.0.0',
     }
@@ -357,7 +369,22 @@ describe('importShard', { timeout: 30_000 }, () => {
     const result = await importShard(db, archive)
 
     expect(result.success).toBe(true)
-    expect(result.warnings).toContain('templates.json skipped (not supported in browser)')
+    expect(result.counts.templates).toBe(1)
+    expect(result.warnings).not.toContain('templates.json skipped (not supported in browser)')
+
+    const rows = await db.query<{ name: string; tags: string }>(
+      `SELECT name, default_tags::text AS tags FROM template WHERE id = 'tmpl-1'`,
+    )
+    expect(rows.rows[0].name).toBe('Research brief')
+    expect(JSON.parse(rows.rows[0].tags)).toEqual(['research', 'brief'])
+
+    const exported = unpackTarGz(await exportShard(db))
+    const exportedTemplates = JSON.parse(
+      new TextDecoder().decode(exported.get('templates.json')!),
+    ) as Array<{ id: string; default_tags: string[] }>
+    expect(exportedTemplates).toEqual([
+      expect.objectContaining({ id: 'tmpl-1', default_tags: ['research', 'brief'] }),
+    ])
   })
 
   it('entire import is atomic (transaction rollback on failure)', async () => {
@@ -429,11 +456,12 @@ describe('importShard', { timeout: 30_000 }, () => {
 
     expect(result.success).toBe(true)
     expect(result.counts.notes).toBe(180)
+    expect(result.counts.templates).toBe(0)
     expect(result.counts.embedding_sets).toBe(1)
     expect(result.counts.embedding_configs).toBe(8)
     expect(result.counts.embedding_set_members).toBe(180)
     expect(result.skipped.embedding_set_members ?? 0).toBe(0)
-    expect(result.warnings).toContain('templates.json skipped (not supported in browser)')
+    expect(result.warnings).not.toContain('templates.json skipped (not supported in browser)')
     expect(result.warnings).not.toContain('embedding_configs.json skipped (not supported in browser)')
     expect(result.warnings.some((warning) => warning.includes('embedding_set_member row(s) were not imported'))).toBe(false)
 

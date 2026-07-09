@@ -13,6 +13,7 @@ import {
   linkToShard,
   collectionToShard,
   tagsToShard,
+  templateToShard,
   embeddingSetToShard,
   embeddingSetMemberToShard,
   embeddingConfigToShard,
@@ -257,6 +258,25 @@ export async function exportShard(
   files.set('tags.json', encoder.encode(JSON.stringify(shardTags)))
   components.push('tags')
   counts.tags = shardTags.length
+
+  // ── Query templates ─────────────────────────────────────────────────
+  const templateRows = await db.query<{
+    id: string
+    name: string
+    description: string | null
+    content: string
+    format: string
+    default_tags: string[] | string
+    collection_id: string | null
+    created_at: Date
+    updated_at: Date
+  }>(`SELECT * FROM template ORDER BY created_at, id`)
+  if (templateRows.rows.length > 0) {
+    const shardTemplates = templateRows.rows.map((template) => templateToShard(template))
+    files.set('templates.json', encoder.encode(JSON.stringify(shardTemplates)))
+    components.push('templates')
+    counts.templates = shardTemplates.length
+  }
 
   // ── Query links (scoped to exported notes) ──────────────────────────
   const linkRows = await db.query<LinkRow>(

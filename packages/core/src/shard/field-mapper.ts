@@ -11,6 +11,7 @@ import type {
   ShardLink,
   ShardTag,
   ShardCollection,
+  ShardTemplate,
   ShardEmbeddingSet,
   ShardEmbeddingSetMember,
   ShardEmbedding,
@@ -175,6 +176,35 @@ export function tagsToShard(
  */
 export function tagsFromShard(shardTags: ShardTag[]): string[] {
   return [...new Set(shardTags.map((t) => t.name))]
+}
+
+// ── Templates ────────────────────────────────────────────────────────────
+
+/** Convert a browser template row to shard format. */
+export function templateToShard(template: {
+  id: string
+  name: string
+  description: string | null
+  content: string
+  format: string
+  default_tags: string[] | string
+  collection_id: string | null
+  created_at: Date | string
+  updated_at: Date | string
+}): ShardTemplate {
+  return {
+    id: template.id,
+    name: template.name,
+    description: template.description,
+    content: template.content,
+    format: template.format,
+    default_tags: Array.isArray(template.default_tags)
+      ? template.default_tags
+      : JSON.parse(template.default_tags) as string[],
+    collection_id: template.collection_id,
+    created_at: toISOString(template.created_at),
+    updated_at: toISOString(template.updated_at),
+  }
 }
 
 // ── Embeddings ───────────────────────────────────────────────────────────
