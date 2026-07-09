@@ -87,6 +87,32 @@ C4Context
     Rel(browser_app, external_llm, "AI revision (optional)", "HTTPS")
 ```
 
+### 3.1 Portable Contract Data Flow
+
+The audit behind ADR-010/011 split the former "AIWG -> React -> server"
+story into two independent portable contracts. They do not share a bridge,
+owner, or version cadence.
+
+```mermaid
+flowchart LR
+    aiwg[AIWG generator] -->|AIWG Fortemi index export v1/v2| react_index[@fortemi/core index reader]
+    aiwg_schema[AIWG JSON Schema] -->|source of truth| react_index
+    react_index -->|query/projection only| react_ui[React/graph consumers]
+
+    react_shard[@fortemi/core shard export/import] <-->|Knowledge Shard matric-shard v1.0.0| server[fortemi Rust server]
+    server_schema[Server-produced shard schema + golden fixtures] -->|source of truth| react_shard
+
+    react_index -. no sync/import bridge .- react_shard
+```
+
+Contract ownership:
+
+| Contract | Hop | Authority | Enforcement |
+|---|---|---|---|
+| AIWG Fortemi index | AIWG <-> React | AIWG JSON Schema (`aiwg-fortemi-index-export`) | `validateAiwgFortemiIndexExport` plus `test:portable-contract` index conformance |
+| Knowledge Shard | React <-> Server | Server shard export format, captured as committed schema + server golden fixtures | `knowledge-shard.schema.json`, shard conformance proof now, full AJV/golden-fixture suite under #255 |
+| DB table parity | Browser DB <-> server DB fixture shapes | Server database fixtures | `db-table-parity` suite; storage-shape guard only |
+
 ---
 
 ## 4. Container Architecture (C4 Level 2)
@@ -447,7 +473,7 @@ After Elaboration Iteration 1 PoC:
 | Risk | Residual Concern | Mitigation |
 |---|---|---|
 | R-001 | Safari 17 OPFS sync in practice | Tested in PoC; documented in ADR-005 |
-| R-002 | Schema drift from server (**materialized** — audit 2026-07-05; mitigation in progress) | The `format-parity` suite guards PGlite DB **table** shapes only, **not** the portable shard/index contract. Mitigation is now concrete, not just tracked: **(1) index contract** — `validateAiwgFortemiIndexExport` is the enforcement point AIWG re-imports to check its own generator output, hardened to reject v1/v2 field drift, bad enums, and version-gating breaks (#239). **(2) shard contract** — the committed `packages/core/schemas/knowledge-shard.schema.json` is the structural authority; the CI-runnable conformance proof (`src/__tests__/shard/shard-conformance.spike.test.ts`) catches the S1–S9 field breaks `format-parity` cannot (#238 spike, `.aiwg/spikes/238-shard-conformance-harness.md`). **(3) remaining** — full multi-component shard schema + AJV, golden server fixtures with a pinned-version refresh, and renaming `format-parity` → DB-table-parity so the shard/index suites become the real "nothing ships" gate (backlog under #235, ADR-010/011). See `.aiwg/reports/aiwg-portable-schema-audit-2026-07-05.md`. |
+| R-002 | Schema drift across portable contracts (**materialized** — audit 2026-07-05; mitigation active) | ADR-010/011 replace the old single "format parity" mitigation with two explicit contract gates. **(1) AIWG index contract** — AIWG's index JSON Schema is the authority; `validateAiwgFortemiIndexExport` is the enforcement point AIWG re-imports, with conformance coverage for v1/v2 field drift, enum constraints, version gating, and discovery-ranking parity (#239/#240). **(2) Knowledge Shard contract** — the committed `packages/core/schemas/knowledge-shard.schema.json` and current CI-runnable shard conformance proof guard the server shard shape until #255 adds the full AJV + server golden-fixture suite. **(3) Storage shape guard** — `packages/core/src/__tests__/db-table-parity/` guards PGlite DB table rows only and is not the portable contract gate. CI now exposes the shard + AIWG index `portable-contract` job as the "nothing ships if it breaks" gate (#256). Remaining high-risk work is tracked under #237/#255. |
 | R-004 | WASM download UX | Capability module system (opt-in, progress bar) |
 | R-005 | OPFS storage quota | Warn at 80%; guide user to purge |
 

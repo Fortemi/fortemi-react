@@ -1,7 +1,8 @@
 # ADR-010: Portable-schema topology and schema source-of-truth
 
-- **Status**: Proposed (pending review)
+- **Status**: Accepted
 - **Date**: 2026-07-05
+- **Accepted**: 2026-07-09
 - **Issue**: #235 (audit epic)
 - **Relates**: ADR-006 (public-API-first), ADR-009 (pluggable storage), `adr-backend-seam.md`; supersedes the R-002 mitigation in `SAD.md:450`
 
@@ -16,7 +17,7 @@ Observed failure modes traceable to the missing topology + source-of-truth:
 
 - The schema is hand-maintained in **three** places (AIWG generator TS, AIWG JSON Schema, fortemi-react validator TS) and has already diverged (title/text required-vs-optional; `input_hash`; version-string naming). AIWG declares `@fortemi/core` as a dependency but **never imports it** — it reinvents the schema.
 - fortemi-react's validator does not enforce the AIWG schema's v1/v2 field-forbiddance or enum constraints, so a real generator bug (audit A1) is invisible to both sides.
-- The "100% format parity" claim has **no mechanical enforcement** — the `format-parity` suite guards PGlite table shapes, not either portable contract.
+- The "100% format parity" claim had **no mechanical enforcement** — the suite now named `db-table-parity` guards PGlite table shapes, not either portable contract.
 - There is no ADR or diagram explaining any of this; the SAD lists "schema drift" as an accepted risk with an ineffective mitigation.
 
 ## Decision
@@ -28,7 +29,7 @@ Observed failure modes traceable to the missing topology + source-of-truth:
 - **Index contract**: AIWG's `aiwg/schemas/aiwg-fortemi-index-export.json` is the authority. fortemi-react's validator MUST be regenerated from, or conformance-tested against, that schema — not hand-maintained independently. Concretely: vendor the schema (or a pinned copy) into `@fortemi/core`, drive validation from it (AJV or generated guards), and add a CI check that fails when the vendored schema drifts from the upstream `$id` version. This closes A1/A2/A4/A5 by construction.
 - **Shard contract**: the server's shard format is the authority. Because it is hand-rolled in `main.rs`, the shared artifact must be a **committed shard JSON Schema + golden fixtures** produced from a real server export, consumed by both sides. See ADR-011 for the shard specifics; this ADR ratifies the principle.
 
-**3. The `format-parity` test suite is re-scoped and the R-002 mitigation is replaced.** `format-parity` remains the DB-table-shape guard (rename to reflect that). Two new conformance suites are introduced — index-vs-AIWG-schema and shard-vs-server-fixtures — and become the actual "if it breaks, nothing ships" gate. SAD R-002's mitigation is updated to point at these.
+**3. DB-table parity is re-scoped and the R-002 mitigation is replaced.** `db-table-parity` remains the DB-table-shape guard only. Two conformance gates — index-vs-AIWG-schema and shard-vs-server-fixtures — are the actual "if it breaks, nothing ships" surfaces. SAD R-002's mitigation is updated to point at these.
 
 **4. Discovery-ranking parity gets an anchor.** `discoveryMatches` must be validated against AIWG's real `query-engine.ts` scorer via a golden cross-repo corpus test. The short-term implementation mirrors the pinned AIWG scorer semantics in `@fortemi/core`: exact-name and exact-trigger sentinels, near-name matching, stopword-stripped content phrases, the token-overlap gate, bounded 0-1 scores, and the same field weights. The preferred long-term shape remains a single shared scorer or a published ranking spec owned by AIWG and consumed by `@fortemi/core`; the local mirror is a regression gate until that package boundary exists (tracked under #240/#235).
 
