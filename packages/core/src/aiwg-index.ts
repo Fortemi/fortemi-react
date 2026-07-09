@@ -383,6 +383,7 @@ export interface AiwgRelationshipTraversalOptions {
 export interface AiwgRelationshipQueryOptions extends AiwgRelationshipTraversalOptions {
   sourceId?: string
   targetId?: string
+  endpointId?: string
   type?: string
 }
 
@@ -1661,7 +1662,10 @@ export function queryAiwgHybridIndex(
   queryEmbedding: number[],
   options: AiwgStaticHybridQueryOptions = {},
 ): AiwgStaticSemanticResult[] {
-  const lexical = queryAiwgFortemiIndex(index, query, { ...options, rank: true })
+  const lexicalOptions: AiwgStaticHybridQueryOptions = { ...options }
+  delete lexicalOptions.limit
+  delete lexicalOptions.offset
+  const lexical = queryAiwgFortemiIndex(index, query, { ...lexicalOptions, rank: true })
   const semantic = queryAiwgSemanticIndex(index, embeddingSet, queryEmbedding, { limit: index.items.length })
   const lexicalWeight = options.lexicalWeight ?? 0.5
   const semanticWeight = options.semanticWeight ?? 0.5
@@ -1771,6 +1775,7 @@ function matchSetCacheKey(q: string, options: AiwgIndexQueryOptions): string {
     concepts: options.concepts ?? null,
     privacy: options.privacy ?? null,
     rel: options.relationshipTargetId ?? null,
+    searchProfile: options.searchProfile ?? 'default',
     weights: { ...DEFAULT_QUERY_WEIGHTS, ...options.weights },
   })
 }
@@ -1892,6 +1897,7 @@ function relationshipMatches(edge: AiwgRelationshipEdgeSummary, options: AiwgRel
   if (options.relationshipDirection && edge.direction !== options.relationshipDirection) return false
   if (options.sourceId && edge.source_id !== options.sourceId) return false
   if (options.targetId && edge.target_id !== options.targetId) return false
+  if (options.endpointId && edge.source_id !== options.endpointId && edge.target_id !== options.endpointId) return false
   if (direction === 'out' && options.targetId && edge.target_id !== options.targetId) return false
   if (direction === 'in' && options.sourceId && edge.source_id !== options.sourceId) return false
   return true
@@ -1918,11 +1924,12 @@ function relationshipResultFromRecords(
       edges.push(edge)
     }
   }
-  const limitedEdges = (options.limit ? edges.slice(0, options.limit) : edges).sort((left, right) => (
+  const sortedEdges = edges.sort((left, right) => (
     left.source_id.localeCompare(right.source_id)
     || left.target_id.localeCompare(right.target_id)
     || left.type.localeCompare(right.type)
   ))
+  const limitedEdges = options.limit ? sortedEdges.slice(0, options.limit) : sortedEdges
   const nodes = new Map<string, AiwgRelationshipNodeSummary>()
   for (const edge of limitedEdges) {
     addNode(nodes, byId.get(edge.source_id))
@@ -1941,6 +1948,7 @@ function neighborQueryOptions(id: string, options: AiwgRelationshipTraversalOpti
     ...options,
     ...(direction === 'out' ? { sourceId: id } : {}),
     ...(direction === 'in' ? { targetId: id } : {}),
+    ...(direction === 'both' ? { endpointId: id } : {}),
   }
 }
 

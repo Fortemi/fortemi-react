@@ -8,6 +8,25 @@
 export const CURRENT_SHARD_VERSION = '1.0.0'
 export const SHARD_FORMAT = 'matric-shard'
 
+function parseVersion(value: string): number[] {
+  return value.split('.').map((segment) => {
+    const match = segment.match(/^\d+/)
+    return match ? Number.parseInt(match[0], 10) : 0
+  })
+}
+
+export function compareShardVersions(left: string, right: string): number {
+  const leftParts = parseVersion(left)
+  const rightParts = parseVersion(right)
+  const length = Math.max(leftParts.length, rightParts.length)
+  for (let index = 0; index < length; index += 1) {
+    const leftValue = leftParts[index] ?? 0
+    const rightValue = rightParts[index] ?? 0
+    if (leftValue !== rightValue) return leftValue > rightValue ? 1 : -1
+  }
+  return 0
+}
+
 /** Components that can appear in a shard archive. */
 export type ShardComponent =
   | 'notes'

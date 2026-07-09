@@ -465,6 +465,44 @@ describe('AIWG Fortemi index adapter', () => {
     expect(invalid.errors).toContain('embeddings[0].input_hash is required')
   })
 
+  it('hybrid-ranks before applying pagination', () => {
+    const semanticIndex: AiwgFortemiIndexExport = {
+      ...index,
+      items: [
+        record('aiwg:rule:lexical-top', 'aiwg.rule', 'Alpha policy', 'alpha body'),
+        record('aiwg:skill:semantic-top', 'aiwg.skill', 'Alpha runner', 'body'),
+      ],
+    }
+    const embeddingSet: AiwgStaticEmbeddingSet = {
+      schema_version: 'aiwg.fortemi.embedding.set.v1',
+      id: 'aiwg-static-hybrid-pagination',
+      model: 'test-embed',
+      dimensions: 1,
+      generated_at: '2026-01-04T00:00:00.000Z',
+      granularity: 'body',
+      input_hash_algorithm: 'sha256',
+      embeddings: [
+        { record_id: 'aiwg:rule:lexical-top', embedding: [0], input_hash: 'hash-lexical' },
+        { record_id: 'aiwg:skill:semantic-top', embedding: [1], input_hash: 'hash-semantic' },
+      ],
+    }
+
+    const full = queryAiwgHybridIndex(semanticIndex, embeddingSet, 'alpha', [1], {
+      lexicalWeight: 0.9,
+      semanticWeight: 0.1,
+      limit: 10,
+    })
+    const secondPage = queryAiwgHybridIndex(semanticIndex, embeddingSet, 'alpha', [1], {
+      lexicalWeight: 0.9,
+      semanticWeight: 0.1,
+      limit: 1,
+      offset: 1,
+    })
+
+    expect(full.map((entry) => entry.item.id)).toEqual(['aiwg:rule:lexical-top', 'aiwg:skill:semantic-top'])
+    expect(secondPage.map((entry) => entry.item.id)).toEqual(['aiwg:skill:semantic-top'])
+  })
+
   it('builds AIWG embedding-set sidecars from a headless backend and extracted attachment text', async () => {
     const semanticIndex: AiwgFortemiIndexExport = {
       ...index,
@@ -816,6 +854,32 @@ describe('AIWG Fortemi chunked index — match-set page cache (#179)', () => {
     expect(again.fetchedParts).toBe(0)
   })
 
+  it('does not serve a cached set when the search profile changes', async () => {
+    const { manifest, parts } = createChunkedFixture(2)
+    const { loader, calls } = countingLoader(parts)
+    const controller = createAiwgIndexController()
+    controller.loadChunkedIndex(manifest, loader, { maxCachedParts: manifest.parts.length })
+
+    await controller.queryChunked('Example', { rank: true, limit: 2 })
+    const callsAfterDefault = calls.length
+
+    const discovery = await controller.queryChunked('Example', {
+      rank: true,
+      limit: 2,
+      searchProfile: 'aiwg-discovery',
+    })
+    const expected = queryAiwgFortemiIndex(index, 'Example', {
+      rank: true,
+      limit: 2,
+      searchProfile: 'aiwg-discovery',
+    })
+
+    expect(discovery.scannedParts).toBe(manifest.parts.length)
+    expect(discovery.fetchedParts).toBe(0)
+    expect(calls.length).toBe(callsAfterDefault)
+    expect(discovery.items.map((item) => item.id)).toEqual(expected.items.map((item) => item.id))
+  })
+
   it('clearChunkCache drops the match set so the next query re-scans', async () => {
     const { manifest, parts } = createChunkedFixture(2)
     const { loader, calls } = countingLoader(parts)
@@ -1008,6 +1072,51 @@ describe('AIWG Fortemi chunked index — slim/projected parts (#168)', () => {
     expect(relationshipSet.ids).toEqual(['aiwg:requirement:001', 'research:ref:001'])
     expect(graph.edges.map((edge) => edge.kind).sort()).toEqual(['cites', 'satisfies'])
     expect(detailFetches).toBeGreaterThan(0)
+  })
+
+  it('scopes both-direction neighbors before sorting and limiting', async () => {
+    const graphIndex: AiwgFortemiIndexExport = {
+      ...index,
+      items: [
+        record('z:unrelated', 'aiwg.adr', 'Unrelated', 'No neighbor.', {
+          relationships: [{ type: 'mentions', target_id: 'z:other' }],
+        }),
+        record('b:source', 'aiwg.adr', 'B Source', 'Neighbor B.', {
+          relationships: [{ type: 'mentions', target_id: 'center' }],
+        }),
+        record('a:source', 'aiwg.adr', 'A Source', 'Neighbor A.', {
+          relationships: [{ type: 'mentions', target_id: 'center' }],
+        }),
+        record('center', 'aiwg.requirement', 'Center', 'Target.'),
+        record('z:other', 'aiwg.requirement', 'Other', 'Other target.'),
+      ],
+    }
+    const controller = createAiwgIndexController(graphIndex)
+
+    const result = await controller.neighbors('center', { direction: 'both', limit: 1 })
+
+    expect(result.edges).toEqual([{ source_id: 'a:source', target_id: 'center', type: 'mentions' }])
+    expect(result.nodes.map((node) => node.id).sort()).toEqual(['a:source', 'center'])
+  })
+
+  it('sorts relationship queries before applying limit', async () => {
+    const graphIndex: AiwgFortemiIndexExport = {
+      ...index,
+      items: [
+        record('b:source', 'aiwg.adr', 'B Source', 'B.', {
+          relationships: [{ type: 'mentions', target_id: 'target' }],
+        }),
+        record('a:source', 'aiwg.adr', 'A Source', 'A.', {
+          relationships: [{ type: 'mentions', target_id: 'target' }],
+        }),
+        record('target', 'aiwg.requirement', 'Target', 'Target.'),
+      ],
+    }
+    const controller = createAiwgIndexController(graphIndex)
+
+    const result = await controller.relationshipQuery({ limit: 1 })
+
+    expect(result.edges).toEqual([{ source_id: 'a:source', target_id: 'target', type: 'mentions' }])
   })
 
   it('preserves v2 relationship direction and target paths across whole and chunked traversal', async () => {

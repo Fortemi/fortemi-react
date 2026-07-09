@@ -17,7 +17,7 @@ import {
 } from './field-mapper.js'
 import { generateId } from '../uuid.js'
 import { computeHash } from '../hash.js'
-import { CURRENT_SHARD_VERSION } from './types.js'
+import { compareShardVersions, CURRENT_SHARD_VERSION } from './types.js'
 import type {
   ShardManifest,
   ImportOptions,
@@ -154,7 +154,7 @@ export async function importShard(
   }
 
   // Version compatibility check
-  if (manifest.min_reader_version && manifest.min_reader_version > CURRENT_SHARD_VERSION) {
+  if (manifest.min_reader_version && compareShardVersions(manifest.min_reader_version, CURRENT_SHARD_VERSION) > 0) {
     return {
       success: false,
       counts,
