@@ -75,6 +75,31 @@
           "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
         },
         "min_reader_version": { "type": "string", "minLength": 1 },
+        "migrated_from": {
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "migration_history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from_version",
+              "to_version",
+              "migrated_at",
+              "migrated_by",
+              "changes"
+            ],
+            "properties": {
+              "from_version": { "type": "string", "minLength": 1 },
+              "to_version": { "type": "string", "minLength": 1 },
+              "migrated_at": { "$ref": "#/$defs/isoDateTime" },
+              "migrated_by": { "type": "string", "minLength": 1 },
+              "changes": { "$ref": "#/$defs/stringArray" }
+            }
+          }
+        },
         "layout": { "type": "object" }
       }
     },

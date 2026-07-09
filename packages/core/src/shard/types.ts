@@ -86,6 +86,14 @@ export interface ShardLayout {
   clusters?: Partial<Record<ShardComponent, ShardClusterRef[]>>
 }
 
+export interface ShardMigrationHistoryEntry {
+  from_version: string
+  to_version: string
+  migrated_at: string
+  migrated_by: string
+  changes: string[]
+}
+
 /** Manifest included in every shard as manifest.json. */
 export interface ShardManifest {
   version: string
@@ -96,6 +104,8 @@ export interface ShardManifest {
   counts: Partial<Record<ShardComponent | 'community_sets', number>>
   checksums: Record<string, string> // filename → sha256 hex
   min_reader_version: string
+  migrated_from?: string | null
+  migration_history?: ShardMigrationHistoryEntry[]
   /** Clustered component layout for partial fetch (issue #189). Absent → monolithic. */
   layout?: ShardLayout
 }

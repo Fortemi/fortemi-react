@@ -46,6 +46,33 @@ describe('knowledge shard AJV schema validator (#255)', () => {
       counts: { notes: 1, collections: 0, tags: 0, templates: 0, links: 0 },
       checksums: { 'notes.jsonl': 'a'.repeat(64) },
       min_reader_version: '1.0.0',
+      migrated_from: null,
+      migration_history: [],
+    })
+
+    expect(result).toEqual({ valid: true, errors: [] })
+  })
+
+  it('validates server manifest migration metadata', () => {
+    const result = validateShardManifest({
+      version: '1.1.0',
+      matric_version: '2026.2.0',
+      format: 'matric-shard',
+      created_at: '2026-02-01T12:00:00Z',
+      components: ['notes', 'embeddings'],
+      counts: { notes: 10, embeddings: 10 },
+      checksums: { 'notes.jsonl': 'b'.repeat(64), 'embeddings.jsonl': 'c'.repeat(64) },
+      min_reader_version: '2026.1.0',
+      migrated_from: '1.0.0',
+      migration_history: [
+        {
+          from_version: '1.0.0',
+          to_version: '1.1.0',
+          migrated_at: '2026-02-01T12:00:00Z',
+          migrated_by: 'matric-memory/2026.2.0',
+          changes: ['Added MRL embedding support with truncate_dim field'],
+        },
+      ],
     })
 
     expect(result).toEqual({ valid: true, errors: [] })

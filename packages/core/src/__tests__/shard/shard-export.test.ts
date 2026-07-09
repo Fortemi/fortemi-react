@@ -73,6 +73,8 @@ describe('exportShard', () => {
     expect(manifest.matric_version).toBeTruthy()
     expect(manifest.created_at).toBeTruthy()
     expect(manifest.min_reader_version).toBe('1.0.0')
+    expect(manifest.migrated_from).toBeNull()
+    expect(manifest.migration_history).toEqual([])
     expect(manifest.components).toContain('notes')
     expect(manifest.counts.notes).toBe(1)
   })

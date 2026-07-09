@@ -721,6 +721,8 @@ export async function exportShard(
     counts,
     checksums,
     min_reader_version: '1.0.0',
+    migrated_from: null,
+    migration_history: [],
     ...(layout ? { layout } : {}),
   }
   files.set('manifest.json', encoder.encode(JSON.stringify(manifest, null, 2)))
