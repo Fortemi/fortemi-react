@@ -233,6 +233,16 @@ describe('field-mapper: embeddings', () => {
     const shard = embeddingSetToShard(set)
     expect(shard.model).toBe('all-MiniLM-L6-v2')
     expect(shard.dimension).toBe(384)
+    expect(shard).toMatchObject({
+      name: 'all-MiniLM-L6-v2',
+      slug: 'all-minilm-l6-v2',
+      description: null,
+      purpose: null,
+      document_count: 0,
+      embedding_count: 0,
+      is_system: false,
+      keywords: [],
+    })
     expect(shard).not.toHaveProperty('model_name')
     expect(shard).not.toHaveProperty('dimensions')
   })
@@ -240,12 +250,39 @@ describe('field-mapper: embeddings', () => {
   it('round-trips embedding set fields', () => {
     const set = {
       id: 'es-1',
+      name: 'Default',
+      slug: 'default',
+      description: 'Primary embedding set',
+      purpose: 'General semantic search',
+      document_count: 2,
+      embedding_count: 1,
+      is_system: true,
+      keywords_json: '["all","default"]',
       model_name: 'all-MiniLM-L6-v2',
       dimensions: 384,
       created_at: '2026-01-01T00:00:00.000Z',
     }
     const shard = embeddingSetToShard(set)
     const back = embeddingSetFromShard(shard, '2026-01-15T10:00:00.000Z')
+    expect(shard).toMatchObject({
+      name: 'Default',
+      slug: 'default',
+      description: 'Primary embedding set',
+      purpose: 'General semantic search',
+      document_count: 2,
+      embedding_count: 1,
+      is_system: true,
+      keywords: ['all', 'default'],
+    })
+    expect(back).toMatchObject({
+      slug: 'default',
+      description: 'Primary embedding set',
+      purpose: 'General semantic search',
+      document_count: 2,
+      embedding_count: 1,
+      is_system: true,
+      keywords_json: '["all","default"]',
+    })
     expect(back.model_name).toBe('all-MiniLM-L6-v2')
     expect(back.dimensions).toBe(384)
   })

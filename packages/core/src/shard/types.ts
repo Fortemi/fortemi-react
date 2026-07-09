@@ -254,14 +254,14 @@ export interface ShardLink {
 /** Embedding set as serialized in the shard JSON array. */
 export interface ShardEmbeddingSet {
   id: string
-  name?: string
-  slug?: string | null
-  description?: string | null
-  purpose?: string | null
-  document_count?: number
-  embedding_count?: number
-  is_system?: boolean
-  keywords?: string[]
+  name: string
+  slug: string | null
+  description: string | null
+  purpose: string | null
+  document_count: number
+  embedding_count: number
+  is_system: boolean
+  keywords: string[]
   model: string
   dimension: number
   kind?: 'physical' | 'filter' | 'virtual'

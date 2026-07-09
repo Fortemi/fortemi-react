@@ -407,7 +407,13 @@ export async function exportShard(
     const embSetRows = await db.query<{
       id: string
       name: string
+      slug: string | null
+      description: string | null
       purpose: string | null
+      document_count: number | null
+      embedding_count: number | null
+      is_system: boolean
+      keywords_json: unknown | null
       model_name: string
       dimensions: number
       kind?: 'physical' | 'filter' | 'virtual'
@@ -421,9 +427,27 @@ export async function exportShard(
       created_at: Date
       updated_at?: Date
     }>(
-      `SELECT * FROM embedding_set
-       ${setScoped ? 'WHERE id = ANY($1)' : ''}
-       ORDER BY created_at`,
+      `SELECT
+         es.id, es.name, es.slug, es.description, es.purpose,
+         COALESCE(es.document_count, member_counts.document_count, 0)::int AS document_count,
+         COALESCE(es.embedding_count, embedding_counts.embedding_count, 0)::int AS embedding_count,
+         es.is_system, es.keywords_json,
+         es.model_name, es.dimensions, es.kind, es.mode, es.truncate_dimension,
+         es.criteria_json, es.source_json, es.compatibility_json, es.materialization_json,
+         es.freshness_json, es.created_at, es.updated_at
+       FROM embedding_set es
+       LEFT JOIN (
+         SELECT embedding_set_id, COUNT(*)::int AS document_count
+         FROM embedding_set_member
+         GROUP BY embedding_set_id
+       ) member_counts ON member_counts.embedding_set_id = es.id
+       LEFT JOIN (
+         SELECT embedding_set_id, COUNT(*)::int AS embedding_count
+         FROM embedding
+         GROUP BY embedding_set_id
+       ) embedding_counts ON embedding_counts.embedding_set_id = es.id
+       ${setScoped ? 'WHERE es.id = ANY($1)' : ''}
+       ORDER BY es.created_at`,
       setScoped ? [embeddingSetIds] : [],
     )
     const exportedSetIds = new Set(embSetRows.rows.map((row) => row.id))

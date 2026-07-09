@@ -23,6 +23,7 @@ import { MemoryBlobStore } from '../../blob-store.js'
 import { exportShard } from '../../shard/shard-export.js'
 import { importShard } from '../../shard/shard-import.js'
 import { packTarGz, unpackTarGz } from '../../shard/shard-tar.js'
+import { validateShardArchive } from '../../shard/schema-validator.js'
 import { sha256Hex } from '../../shard/checksum.js'
 import { compareShardVersions } from '../../shard/types.js'
 import type { ImportProgress, ShardLink, ShardManifest, ShardNote } from '../../shard/types.js'
@@ -508,7 +509,22 @@ describe('importShard', { timeout: 30_000 }, () => {
     expect(embeddingSetMembers.rows[0].null_embeddings).toBe(180)
     expect(embeddingSetMembers.rows[0].membership_type).toBe('auto')
 
-    const exported = unpackTarGz(await exportShard(db, { includeEmbeddings: true }))
+    const exportedArchive = await exportShard(db, { includeEmbeddings: true })
+    expect(validateShardArchive(exportedArchive)).toEqual({ valid: true, errors: [] })
+
+    const exported = unpackTarGz(exportedArchive)
+    const exportedManifest: ShardManifest = JSON.parse(decoder.decode(exported.get('manifest.json')!))
+    expect(exportedManifest.components).toEqual(expect.arrayContaining([
+      'notes',
+      'embedding_sets',
+      'embedding_configs',
+      'embedding_set_members',
+    ]))
+    expect(exportedManifest.counts.notes).toBe(180)
+    expect(exportedManifest.counts.embedding_sets).toBe(1)
+    expect(exportedManifest.counts.embedding_configs).toBe(8)
+    expect(exportedManifest.counts.embedding_set_members).toBe(180)
+
     const exportedConfigs = JSON.parse(
       new TextDecoder().decode(exported.get('embedding_configs.json')!),
     ) as Array<{ id: string; name: string; model: string }>

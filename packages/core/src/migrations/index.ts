@@ -13,6 +13,7 @@ import { migration0011 } from './0011_embedding_member_metadata.js'
 import { migration0012 } from './0012_embedding_configs.js'
 import { migration0013 } from './0013_templates.js'
 import { migration0014 } from './0014_url_links.js'
+import { migration0015 } from './0015_embedding_set_server_metadata.js'
 
 export const allMigrations: Migration[] = [
   migration0001,
@@ -29,4 +30,5 @@ export const allMigrations: Migration[] = [
   migration0012,
   migration0013,
   migration0014,
+  migration0015,
 ]

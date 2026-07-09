@@ -204,7 +204,17 @@
         "is_system": { "type": "boolean" },
         "keywords": { "$ref": "#/$defs/stringArray" },
         "model": { "type": "string" },
-        "dimension": { "type": "integer", "minimum": 1 }
+        "dimension": { "type": "integer", "minimum": 1 },
+        "kind": { "enum": ["physical", "filter", "virtual"] },
+        "mode": { "type": ["string", "null"] },
+        "truncate_dimension": { "type": ["integer", "null"], "minimum": 1 },
+        "criteria": { "$ref": "#/$defs/nullableJsonObject" },
+        "source": { "$ref": "#/$defs/nullableJsonObject" },
+        "compatibility": { "$ref": "#/$defs/nullableJsonObject" },
+        "materialization": { "$ref": "#/$defs/nullableJsonObject" },
+        "freshness": { "$ref": "#/$defs/nullableJsonObject" },
+        "created_at": { "$ref": "#/$defs/isoDateTime" },
+        "updated_at": { "$ref": "#/$defs/isoDateTime" }
       }
     },
     "embeddingSetMember": {

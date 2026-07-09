@@ -242,7 +242,13 @@ export function templateToShard(template: {
 export function embeddingSetToShard(set: {
   id: string
   name?: string
+  slug?: string | null
+  description?: string | null
   purpose?: string | null
+  document_count?: number | null
+  embedding_count?: number | null
+  is_system?: boolean | null
+  keywords_json?: unknown | null
   model_name: string
   dimensions: number
   kind?: 'physical' | 'filter' | 'virtual'
@@ -256,10 +262,17 @@ export function embeddingSetToShard(set: {
   created_at: Date | string
   updated_at?: Date | string
 }): ShardEmbeddingSet {
+  const name = set.name ?? set.model_name
   return {
     id: set.id,
-    name: set.name ?? set.model_name,
+    name,
+    slug: set.slug ?? slugifyEmbeddingSet(name),
+    description: set.description ?? null,
     purpose: set.purpose ?? null,
+    document_count: set.document_count ?? 0,
+    embedding_count: set.embedding_count ?? 0,
+    is_system: set.is_system ?? false,
+    keywords: jsonStringArray(set.keywords_json),
     model: set.model_name,
     dimension: set.dimensions,
     kind: set.kind ?? 'physical',
@@ -279,7 +292,13 @@ export function embeddingSetToShard(set: {
 export function embeddingSetFromShard(shard: ShardEmbeddingSet, fallbackCreatedAt: string): {
   id: string
   name: string
+  slug: string | null
+  description: string | null
   purpose: string | null
+  document_count: number | null
+  embedding_count: number | null
+  is_system: boolean
+  keywords_json: string | null
   model_name: string
   dimensions: number
   kind: 'physical' | 'filter' | 'virtual'
@@ -296,7 +315,13 @@ export function embeddingSetFromShard(shard: ShardEmbeddingSet, fallbackCreatedA
   return {
     id: shard.id,
     name: shard.name ?? shard.model,
+    slug: shard.slug ?? null,
+    description: shard.description ?? null,
     purpose: shard.purpose ?? null,
+    document_count: shard.document_count ?? null,
+    embedding_count: shard.embedding_count ?? null,
+    is_system: shard.is_system ?? false,
+    keywords_json: jsonString(shard.keywords ?? []),
     model_name: shard.model,
     dimensions: shard.dimension,
     kind: shard.kind ?? 'physical',
@@ -497,6 +522,16 @@ function parseJsonObjectField(value: Record<string, unknown> | string | null): R
   return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : null
 }
 
+function jsonStringArray(value: unknown): string[] {
+  if (value == null) return []
+  if (Array.isArray(value)) return value.map(String)
+  if (typeof value === 'string') {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed.map(String) : []
+  }
+  return []
+}
+
 function jsonObject(value: unknown): Record<string, unknown> | null {
   if (value == null) return null
   if (typeof value === 'string') return JSON.parse(value) as Record<string, unknown>
@@ -505,4 +540,13 @@ function jsonObject(value: unknown): Record<string, unknown> | null {
 
 function jsonString(value: unknown): string | null {
   return value == null ? null : JSON.stringify(value)
+}
+
+function slugifyEmbeddingSet(value: string): string {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return slug || 'embedding-set'
 }

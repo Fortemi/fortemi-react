@@ -625,21 +625,25 @@ export async function importShard(
         if (strategy === 'replace') {
           await tx.query(
             `INSERT INTO embedding_set (
-               id, name, purpose, model_name, dimensions, kind, mode, truncate_dimension,
+               id, name, slug, description, purpose, document_count, embedding_count, is_system, keywords_json,
+               model_name, dimensions, kind, mode, truncate_dimension,
                criteria_json, source_json, compatibility_json, materialization_json, freshness_json, created_at, updated_at
-             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14, COALESCE($15::timestamptz, $14::timestamptz))
-             ON CONFLICT (id) DO UPDATE SET name = $2, purpose = $3, model_name = $4, dimensions = $5,
-               kind = $6, mode = $7, truncate_dimension = $8, criteria_json = $9::jsonb, source_json = $10::jsonb,
-               compatibility_json = $11::jsonb, materialization_json = $12::jsonb, freshness_json = $13::jsonb, updated_at = COALESCE($15::timestamptz, $14::timestamptz)`,
-            [set.id, set.name, set.purpose, set.model_name, set.dimensions, set.kind, set.mode, set.truncate_dimension, set.criteria_json, set.source_json, set.compatibility_json, set.materialization_json, set.freshness_json, set.created_at, set.updated_at],
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12, $13, $14, $15::jsonb, $16::jsonb, $17::jsonb, $18::jsonb, $19::jsonb, $20, COALESCE($21::timestamptz, $20::timestamptz))
+             ON CONFLICT (id) DO UPDATE SET name = $2, slug = $3, description = $4, purpose = $5,
+               document_count = $6, embedding_count = $7, is_system = $8, keywords_json = $9::jsonb,
+               model_name = $10, dimensions = $11, kind = $12, mode = $13, truncate_dimension = $14,
+               criteria_json = $15::jsonb, source_json = $16::jsonb, compatibility_json = $17::jsonb,
+               materialization_json = $18::jsonb, freshness_json = $19::jsonb, updated_at = COALESCE($21::timestamptz, $20::timestamptz)`,
+            [set.id, set.name, set.slug, set.description, set.purpose, set.document_count, set.embedding_count, set.is_system, set.keywords_json, set.model_name, set.dimensions, set.kind, set.mode, set.truncate_dimension, set.criteria_json, set.source_json, set.compatibility_json, set.materialization_json, set.freshness_json, set.created_at, set.updated_at],
           )
         } else {
           await tx.query(
             `INSERT INTO embedding_set (
-               id, name, purpose, model_name, dimensions, kind, mode, truncate_dimension,
+               id, name, slug, description, purpose, document_count, embedding_count, is_system, keywords_json,
+               model_name, dimensions, kind, mode, truncate_dimension,
                criteria_json, source_json, compatibility_json, materialization_json, freshness_json, created_at, updated_at
-             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14, COALESCE($15::timestamptz, $14::timestamptz)) ${conflictClause}`,
-            [set.id, set.name, set.purpose, set.model_name, set.dimensions, set.kind, set.mode, set.truncate_dimension, set.criteria_json, set.source_json, set.compatibility_json, set.materialization_json, set.freshness_json, set.created_at, set.updated_at],
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12, $13, $14, $15::jsonb, $16::jsonb, $17::jsonb, $18::jsonb, $19::jsonb, $20, COALESCE($21::timestamptz, $20::timestamptz)) ${conflictClause}`,
+            [set.id, set.name, set.slug, set.description, set.purpose, set.document_count, set.embedding_count, set.is_system, set.keywords_json, set.model_name, set.dimensions, set.kind, set.mode, set.truncate_dimension, set.criteria_json, set.source_json, set.compatibility_json, set.materialization_json, set.freshness_json, set.created_at, set.updated_at],
           )
         }
         counts.embedding_sets++
