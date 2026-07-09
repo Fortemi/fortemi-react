@@ -55,6 +55,7 @@
     "test": "vitest run",
     "test:db-table-parity": "vitest run src/__tests__/db-table-parity",
     "test:portable-contract": "vitest run src/__tests__/aiwg-index.test.ts src/__tests__/shard/shard-conformance.spike.test.ts src/__tests__/shard/schema-validator.test.ts",
+    "shard:refresh-golden": "node scripts/refresh-knowledge-shard-golden.mjs",
     "test:watch": "vitest",
     "prepack": "pnpm build"
   },
