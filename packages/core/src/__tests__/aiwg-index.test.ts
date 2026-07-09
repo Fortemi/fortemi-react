@@ -423,6 +423,88 @@ describe('AIWG Fortemi index adapter', () => {
     expect(trigger.rankedItems?.[0]?.matches?.some((match) => match.reason === 'trigger phrase')).toBe(true)
   })
 
+  it('matches the AIWG query-engine golden discovery ordering (#240)', () => {
+    const discoveryIndex: AiwgFortemiIndexExport = {
+      ...index,
+      items: [
+        record('aiwg:skill:address-issues', 'aiwg.skill', 'Address Issues', 'Issue-thread-driven agent loops.', {
+          search: {
+            name: 'address-issues',
+            title: 'Address Issues',
+            summary: 'Address open issues using issue-thread-driven agent loops with 2-way human-AI collaboration',
+            body: 'Tracker implementation loop with cycle comments and verification.',
+            triggers: ['address issues 17, 18, and 19', 'fix open issues'],
+            capability: 'Address open issues using issue-thread-driven agent loops',
+            tags: ['issues', 'tracker'],
+            type: 'skill',
+          },
+          tags: ['issues', 'tracker'],
+        }),
+        record('aiwg:skill:issue-audit', 'aiwg.skill', 'Issue Audit', 'Read-only backlog triage.', {
+          search: {
+            name: 'issue-audit',
+            title: 'Issue Audit',
+            summary: 'Audit open issues without implementing fixes',
+            body: 'Summarize issue backlog health and closure candidates.',
+            triggers: ['audit open issues'],
+            capability: 'Read-only issue triage',
+            tags: ['issues', 'audit'],
+            type: 'skill',
+          },
+          tags: ['issues', 'audit'],
+        }),
+        record('aiwg:skill:aiwg-doctor', 'aiwg.skill', 'AIWG Doctor', 'Workspace diagnostics.', {
+          search: {
+            name: 'aiwg-doctor',
+            title: 'AIWG Doctor',
+            summary: 'Run workspace health diagnostics',
+            body: 'Checks AIWG installation and project wiring.',
+            triggers: ['aiwg doctor', 'workspace health'],
+            capability: 'Workspace health check',
+            tags: ['health'],
+            type: 'skill',
+          },
+          tags: ['health'],
+        }),
+        record('docs:commands:address-issues', 'docs.page', 'Generated command directory', 'Path-only command reference.', {
+          source: {
+            path: 'commands/address-issues.md',
+            repo_relative_path: 'commands/address-issues.md',
+            locator: 'commands/address-issues.md',
+          },
+        }),
+      ],
+    }
+
+    const issueLoop = queryAiwgFortemiIndex(discoveryIndex, 'find a skill that handles issue loops', {
+      rank: true,
+      includeMatches: true,
+      searchProfile: 'aiwg-discovery',
+    })
+    const exact = queryAiwgFortemiIndex(discoveryIndex, 'aiwg doctor', {
+      rank: true,
+      includeMatches: true,
+      searchProfile: 'aiwg-discovery',
+    })
+    const typo = queryAiwgFortemiIndex(discoveryIndex, 'aiwg doctro', {
+      rank: true,
+      includeMatches: true,
+      searchProfile: 'aiwg-discovery',
+    })
+
+    expect(issueLoop.items.map((item) => item.id)).toEqual([
+      'aiwg:skill:address-issues',
+      'aiwg:skill:issue-audit',
+      'docs:commands:address-issues',
+    ])
+    expect(issueLoop.rankedItems?.[0]?.rank).toBeLessThanOrEqual(1)
+    expect(issueLoop.rankedItems?.[0]?.matches?.some((match) => match.reason === 'capability overlap')).toBe(true)
+    expect(exact.items[0].id).toBe('aiwg:skill:aiwg-doctor')
+    expect(exact.rankedItems?.[0]?.rank).toBe(1.001)
+    expect(typo.items[0].id).toBe('aiwg:skill:aiwg-doctor')
+    expect(typo.rankedItems?.[0]?.rank).toBe(0.951)
+  })
+
   it('queries static AIWG embedding sets semantically, hybrid-ranks with lexical fallback, and reports duplicates', () => {
     const semanticIndex: AiwgFortemiIndexExport = {
       ...index,

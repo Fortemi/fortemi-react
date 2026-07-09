@@ -30,7 +30,7 @@ Observed failure modes traceable to the missing topology + source-of-truth:
 
 **3. The `format-parity` test suite is re-scoped and the R-002 mitigation is replaced.** `format-parity` remains the DB-table-shape guard (rename to reflect that). Two new conformance suites are introduced — index-vs-AIWG-schema and shard-vs-server-fixtures — and become the actual "if it breaks, nothing ships" gate. SAD R-002's mitigation is updated to point at these.
 
-**4. Discovery-ranking parity gets an anchor.** `discoveryMatches` must be validated against AIWG's real `query-engine.ts` scorer via a golden cross-repo corpus test; the preferred long-term shape is a single shared scorer or a published ranking spec (tracked as a spike under #235).
+**4. Discovery-ranking parity gets an anchor.** `discoveryMatches` must be validated against AIWG's real `query-engine.ts` scorer via a golden cross-repo corpus test. The short-term implementation mirrors the pinned AIWG scorer semantics in `@fortemi/core`: exact-name and exact-trigger sentinels, near-name matching, stopword-stripped content phrases, the token-overlap gate, bounded 0-1 scores, and the same field weights. The preferred long-term shape remains a single shared scorer or a published ranking spec owned by AIWG and consumed by `@fortemi/core`; the local mirror is a regression gate until that package boundary exists (tracked under #240/#235).
 
 ## Consequences
 

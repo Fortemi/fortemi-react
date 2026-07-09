@@ -1353,39 +1353,26 @@ function queryMatches(item: AiwgFortemiRecord, q: string): AiwgIndexQueryMatch[]
 }
 
 const DISCOVERY_STOPWORDS = new Set([
-  'a',
-  'an',
-  'and',
-  'are',
-  'as',
-  'for',
-  'from',
-  'how',
-  'i',
-  'in',
-  'is',
-  'me',
-  'of',
-  'on',
-  'or',
-  'please',
-  'the',
-  'to',
-  'use',
-  'with',
+  'the', 'a', 'an', 'and', 'or', 'of', 'for', 'to', 'in', 'on',
+  'with', 'into', 'from', 'is', 'are', 'be', 'i', 'we', 'my',
+  'it', 'you', 'me', 'us', 'your', 'our', 'this', 'that', 'these', 'those',
+  'there', 'here', 'some', 'any', 'all', 'also', 'please', 'about',
+  'how', 'what', 'which', 'where', 'when', 'who', 'why',
+  'find', 'give', 'show', 'need', 'want', 'looking', 'look', 'help',
+  'do', 'does', 'did', 'can', 'could', 'should', 'would', 'will',
+  'handle', 'handles', 'handling',
+  'aiwg', 'skill', 'skills', 'agent', 'agents', 'command', 'commands',
+  'rule', 'rules', 'flow', 'flows', 'workflow', 'workflows',
 ])
 
-function normalizeDiscoveryText(value: string): string {
-  return value.toLowerCase().replace(/[_/]+/g, ' ').replace(/[^a-z0-9.-]+/g, ' ').trim()
-}
-
-function canonicalDiscoveryName(value: string): string {
-  return normalizeDiscoveryText(value).replace(/[\s.-]+/g, '')
+function normalizeDiscoveryName(value: string): string {
+  return value.toLowerCase().replace(/[-_\s]+/g, ' ').trim()
 }
 
 function discoveryTokens(value: string): string[] {
-  return normalizeDiscoveryText(value)
-    .split(/\s+/)
+  return value
+    .toLowerCase()
+    .split(/[^a-z0-9-]+/)
     .filter((token) => token.length > 1 && !DISCOVERY_STOPWORDS.has(token))
 }
 
@@ -1399,18 +1386,71 @@ function addDiscoveryMatch(matches: AiwgIndexQueryMatch[], match: AiwgIndexQuery
   }
 }
 
-function tokenOverlapScore(tokens: string[], value: string): number {
-  if (tokens.length === 0 || !value) return 0
-  const normalized = normalizeDiscoveryText(value)
-  const hits = tokens.filter((token) => normalized.includes(token)).length
-  return hits / tokens.length
+function damerauLevenshteinAtMostOne(left: string, right: string): boolean {
+  if (left === right) return true
+  if (Math.abs(left.length - right.length) > 1) return false
+
+  if (left.length === right.length) {
+    let firstDiff = -1
+    let diffCount = 0
+    for (let index = 0; index < left.length; index += 1) {
+      if (left[index] !== right[index]) {
+        if (firstDiff < 0) firstDiff = index
+        diffCount += 1
+      }
+    }
+    if (diffCount === 1) return true
+    return diffCount === 2
+      && firstDiff + 1 < left.length
+      && left[firstDiff] === right[firstDiff + 1]
+      && left[firstDiff + 1] === right[firstDiff]
+  }
+
+  const shorter = left.length < right.length ? left : right
+  const longer = left.length < right.length ? right : left
+  let shorterIndex = 0
+  let longerIndex = 0
+  let edits = 0
+  while (shorterIndex < shorter.length && longerIndex < longer.length) {
+    if (shorter[shorterIndex] === longer[longerIndex]) {
+      shorterIndex += 1
+      longerIndex += 1
+    } else {
+      edits += 1
+      if (edits > 1) return false
+      longerIndex += 1
+    }
+  }
+  return true
 }
 
-function discoveryMatches(item: AiwgFortemiRecord, query: string): AiwgIndexQueryMatch[] {
+function nearDiscoveryNameMatch(query: string, name: string): boolean {
+  const queryParts = normalizeDiscoveryName(query).split(/\s+/).filter(Boolean)
+  const nameParts = normalizeDiscoveryName(name).split(/\s+/).filter(Boolean)
+  if (queryParts.length !== nameParts.length) return false
+
+  return queryParts.every((part, index) => {
+    const target = nameParts[index]
+    if (part === target) return true
+    if (part.length < 5 || target.length < 5) return false
+    return damerauLevenshteinAtMostOne(part, target)
+  })
+}
+
+function lowerValues(values: string[]): string[] {
+  return values.map((value) => value.toLowerCase())
+}
+
+interface DiscoveryScoringOptions {
+  relaxOverlap?: boolean
+}
+
+function discoveryMatches(item: AiwgFortemiRecord, query: string, options: DiscoveryScoringOptions = {}): AiwgIndexQueryMatch[] {
   if (!query) return []
   const matches: AiwgIndexQueryMatch[] = []
   const tokens = discoveryTokens(query)
-  const canonicalQuery = canonicalDiscoveryName(query)
+  const lower = tokens.length > 0 ? tokens.join(' ') : query.toLowerCase().trim()
+  const rawLower = query.toLowerCase().trim()
   const idParts = item.id.split(/[:/]/)
   const names = [
     item.id,
@@ -1436,39 +1476,78 @@ function discoveryMatches(item: AiwgFortemiRecord, query: string): AiwgIndexQuer
     ...item.tags,
   ].filter((value): value is string => hasString(value))
   const sourceValues = [item.source?.path, item.source?.repo_relative_path, item.source?.locator].filter((value): value is string => hasString(value))
+  const title = recordTitle(item)
+  const summary = [item.search?.summary, recordText(item)].filter((value): value is string => hasString(value)).join('\n')
+  const type = item.search?.type ?? item.type
+  const tags = [...(item.search?.tags ?? []), ...item.tags]
+  const useMultiToken = tokens.length > 1
+  const minHits = useMultiToken ? (options.relaxOverlap ? 1 : Math.ceil(tokens.length / 2)) : 1
+  const overlapOK = (hits: number): boolean => useMultiToken && hits >= minHits
+
+  const addInfo = (match: AiwgIndexQueryMatch) => addDiscoveryMatch(matches, { ...match, score: 0 })
+  const addScore = (score: number) => {
+    if (score > 0) addDiscoveryMatch(matches, { field: 'id', value: item.id, score, reason: 'aiwg discovery score' })
+  }
 
   for (const name of names) {
-    const canonicalName = canonicalDiscoveryName(name)
-    if (!canonicalName) continue
-    if (canonicalName === canonicalQuery) {
-      addDiscoveryMatch(matches, { field: 'id', value: name, score: 80, reason: 'exact canonical name' })
-    } else if (canonicalName.includes(canonicalQuery) || canonicalQuery.includes(canonicalName)) {
-      addDiscoveryMatch(matches, { field: 'id', value: name, score: 48, reason: 'near canonical name' })
+    if (normalizeDiscoveryName(query) === normalizeDiscoveryName(name)) {
+      addInfo({ field: 'id', value: name, reason: 'exact canonical name' })
+      addScore(1.001)
+      return matches
+    }
+    if (nearDiscoveryNameMatch(query, name)) {
+      addInfo({ field: 'id', value: name, reason: 'near canonical name' })
+      addScore(0.951)
+      return matches
     }
   }
 
-  const title = recordTitle(item)
-  const titleOverlap = tokenOverlapScore(tokens, title)
-  if (titleOverlap > 0) addDiscoveryMatch(matches, { field: 'title', value: title, score: 18 * titleOverlap, reason: 'title token overlap' })
+  let score = 0
+  const scoreText = (
+    field: AiwgIndexQueryMatch['field'],
+    value: string,
+    reason: string,
+    exactScore: number,
+    overlapScore: number,
+    weight: number,
+    exactBonus = 0,
+  ) => {
+    const normalized = value.toLowerCase()
+    if (normalized.includes(lower)) {
+      score += exactScore * weight
+      if (normalized === lower) score += exactBonus
+      addInfo({ field, value, reason })
+    } else if (useMultiToken) {
+      const hits = tokens.filter((token) => normalized.includes(token)).length
+      if (overlapOK(hits)) {
+        score += overlapScore * weight * (hits / tokens.length)
+        addInfo({ field, value, reason })
+      }
+    }
+  }
 
+  for (const trigger of lowerValues(triggers)) {
+    if (trigger === lower || trigger === rawLower) {
+      addInfo({ field: 'facet', value: trigger, reason: 'trigger phrase' })
+      addScore(1.0008)
+      return matches
+    }
+  }
   for (const trigger of triggers) {
-    const overlap = tokenOverlapScore(tokens, trigger)
-    if (overlap > 0) addDiscoveryMatch(matches, { field: 'facet', value: trigger, score: 34 * overlap, reason: 'trigger phrase' })
+    scoreText('facet', trigger, 'trigger phrase', 0.25, 0.06, 4)
   }
-
-  for (const capability of capabilities) {
-    const overlap = tokenOverlapScore(tokens, capability)
-    if (overlap > 0) addDiscoveryMatch(matches, { field: 'concept', value: capability, score: 22 * overlap, reason: 'capability overlap' })
-  }
-
-  const text = recordText(item)
-  const textOverlap = tokenOverlapScore(tokens, text)
-  if (textOverlap > 0) addDiscoveryMatch(matches, { field: 'text', value: text, score: 8 * textOverlap, reason: 'body token overlap' })
-
+  for (const capability of capabilities) scoreText('concept', capability, 'capability overlap', 0.2, 0.1, 2)
+  scoreText('title', title, 'title token overlap', 0.3, 0.08, 3, 0.2)
+  for (const tag of tags) scoreText('tag', tag, 'tag token overlap', 0.2, 0.05, 2)
+  if (summary) scoreText('text', summary, 'body token overlap', 0.15, 0.04, 1)
   for (const source of sourceValues) {
-    const overlap = tokenOverlapScore(tokens, source)
-    if (overlap > 0) addDiscoveryMatch(matches, { field: 'source', value: source, score: 2 * overlap, reason: 'path overlap' })
+    scoreText('source', source, 'path overlap', 0.1, 0.03, 1)
   }
+  if (type.toLowerCase().includes(lower)) {
+    score += 0.1
+    addInfo({ field: 'facet', value: type, reason: 'type overlap' })
+  }
+  addScore(Math.min(score, 1.0))
 
   return matches
 }
@@ -1513,13 +1592,14 @@ function createRankedEntries(
   q: string,
   options: AiwgIndexQueryOptions,
   ordinalBase = 0,
+  discoveryOptions: DiscoveryScoringOptions = {},
 ): AiwgRankedEntry[] {
   const weights = { ...DEFAULT_QUERY_WEIGHTS, ...options.weights }
   const profile = options.searchProfile ?? 'default'
   return items.map((item, ordinal) => ({
     item,
     ordinal: ordinalBase + ordinal,
-    matches: profile === 'aiwg-discovery' ? discoveryMatches(item, q) : queryMatches(item, q),
+    matches: profile === 'aiwg-discovery' ? discoveryMatches(item, q, discoveryOptions) : queryMatches(item, q),
   }))
     .filter(({ item, matches }) => {
       if (q && matches.length === 0) return false
@@ -1582,8 +1662,7 @@ export function queryAiwgFortemiIndex(
   const q = query.trim().toLowerCase()
   const entries = createRankedEntries(index.items, q, options)
   if (entries.length === 0 && q && options.searchProfile === 'aiwg-discovery') {
-    const relaxed = discoveryTokens(q).join(' ')
-    return createQueryResultFromRankedEntries(createRankedEntries(index.items, relaxed, options), relaxed, options)
+    return createQueryResultFromRankedEntries(createRankedEntries(index.items, q, options, 0, { relaxOverlap: true }), q, options)
   }
   return createQueryResultFromRankedEntries(entries, q, options)
 }
