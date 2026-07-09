@@ -55,15 +55,15 @@ Test parallelism is capped at half available CPUs (PGlite WASM is CPU-heavy). Ov
 - **Capability module system** — opt-in WASM loading, no downloads by default (ADR-002)
 - **Inference provider system** — formal `InferenceProvider` interface, `ProviderRegistry` for runtime swapping, `OpenAICompatibleProvider` for remote/local APIs, `FallbackRouter` with cooldown and capability-aware routing, local server auto-discovery (Ollama, LM Studio, llama.cpp, vLLM, Jan)
 - **Job queue** — server-compatible pipeline: ai_revision (1), title_generation (2), embedding (3), concept_tagging (4), linking (5). Lower number = higher priority.
-- **Knowledge Shard** — import/export system: tar.gz bundles with checksums, conflict strategies, field-mapped JSON format parity
-- **Format parity** — JSON output must match fortemi server exactly. Format parity tests enforce this.
+- **Knowledge Shard** — import/export system: tar.gz bundles with checksums, conflict strategies, field-mapped JSON contract conformance
+- **Portable contract conformance** — shard and AIWG index JSON contracts must match their schema/validator gates; DB table parity is a separate storage-shape guard.
 - **Tiered persistence** — Chrome: OPFS, Firefox: IndexedDB, Safari: in-memory
 
 ## Non-Negotiables
 
 1. **UUIDv7** primary keys everywhere (sync compatibility)
 2. **Soft-delete** (`deleted_at`) on all mutable entities — never hard-delete
-3. **JSON field names identical to server** — format parity tests enforce this
+3. **Portable JSON contracts identical to server/AIWG authorities** — shard and AIWG index conformance gates enforce this
 4. **No WASM loaded by default** — capability module system gates all ML models
 5. **AGPL-3.0** — no proprietary dependencies
 6. **CalVer** — YYYY.M.PATCH, no leading zeros, npm rejects leading zeros
@@ -88,8 +88,9 @@ Test parallelism is capped at half available CPUs (PGlite WASM is CPU-heavy). Ov
 
 ## Testing
 
-- **Format parity tests are the highest priority** — if they break, nothing ships
-- 53 test files in `packages/core/src/__tests__/` (including `format-parity/` and `shard/` subdirs)
+- **Shard + AIWG index conformance tests are the ship gate** — if the portable-contract gate breaks, nothing ships
+- DB table parity lives in `packages/core/src/__tests__/db-table-parity/` and only guards PGlite table row shapes against server database fixtures
+- 53 test files in `packages/core/src/__tests__/` (including `db-table-parity/` and `shard/` subdirs)
 - E2E tests in `apps/standalone/e2e/` (smoke + loading suites, Playwright)
 - Coverage: 88% statements, 97% repository layer
 

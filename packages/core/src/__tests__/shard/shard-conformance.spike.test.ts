@@ -3,7 +3,7 @@
  *
  * Proves the recommended approach (committed shard JSON Schema as the structural
  * authority) is CI-runnable with no live server and would catch the S1-S9 field
- * breaks the audit found — the existing `format-parity` suite cannot, because it
+ * breaks the audit found — the `db-table-parity` suite cannot, because it
  * validates PGlite table shapes, not the shard JSON contract.
  *
  * This uses a compact JSON-Schema-subset checker so the proof stays zero-dep. The
@@ -108,7 +108,7 @@ describe('#238 spike — shard conformance schema (minimal proof)', () => {
 
   it('S-class: rejects a renamed field (server contract drift)', () => {
     // A generator that emits `content` instead of `original_content` — the exact
-    // class of break format-parity misses.
+    // class of break DB-table parity misses.
     const { original_content, ...rest } = conformantNote
     const drifted = { ...rest, content: original_content }
     const errors = validate(defs.note, drifted)

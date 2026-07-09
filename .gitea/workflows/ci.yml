@@ -48,6 +48,17 @@ jobs:
       - run: pnpm --filter @fortemi/graph build
       - run: pnpm --filter @fortemi/react test
 
+  portable-contract:
+    runs-on: ubuntu-latest
+    container: node:22
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - name: Shard + AIWG index conformance gate
+        run: pnpm test:portable-contract
+
   e2e:
     runs-on: ubuntu-latest
     container: mcr.microsoft.com/playwright:v1.58.2-noble
@@ -69,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     container: node:22
     timeout-minutes: 10
-    needs: [typecheck, lint, unit-test]
+    needs: [typecheck, lint, unit-test, portable-contract]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
