@@ -216,7 +216,7 @@ export function embeddingSetToShard(set: {
 }
 
 /** Convert a shard embedding set back to browser format. */
-export function embeddingSetFromShard(shard: ShardEmbeddingSet): {
+export function embeddingSetFromShard(shard: ShardEmbeddingSet, fallbackCreatedAt: string): {
   id: string
   name: string
   purpose: string | null
@@ -247,7 +247,7 @@ export function embeddingSetFromShard(shard: ShardEmbeddingSet): {
     compatibility_json: jsonString(shard.compatibility),
     materialization_json: jsonString(shard.materialization),
     freshness_json: jsonString(shard.freshness),
-    created_at: shard.created_at,
+    created_at: shard.created_at ?? fallbackCreatedAt,
     updated_at: shard.updated_at ?? null,
   }
 }

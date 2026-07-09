@@ -214,7 +214,7 @@ describe('field-mapper: embeddings', () => {
       created_at: '2026-01-01T00:00:00.000Z',
     }
     const shard = embeddingSetToShard(set)
-    const back = embeddingSetFromShard(shard)
+    const back = embeddingSetFromShard(shard, '2026-01-15T10:00:00.000Z')
     expect(back.model_name).toBe('all-MiniLM-L6-v2')
     expect(back.dimensions).toBe(384)
   })

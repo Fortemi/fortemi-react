@@ -8,6 +8,9 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { PGlite } from '@electric-sql/pglite'
 import { vector } from '@electric-sql/pglite/vector'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { MigrationRunner } from '../../migration-runner.js'
 import { allMigrations } from '../../migrations/index.js'
 import { NotesRepository } from '../../repositories/notes-repository.js'
@@ -24,6 +27,11 @@ import { compareShardVersions } from '../../shard/types.js'
 import type { ImportProgress, ShardManifest } from '../../shard/types.js'
 
 const encoder = new TextEncoder()
+const testDir = fileURLToPath(new URL('.', import.meta.url))
+const goldenFixturePath = resolve(
+  testDir,
+  'fixtures/golden/server-2026.2.9-fortemi-docs.shard',
+)
 
 async function createTestDb(): Promise<PGlite> {
   const db = await PGlite.create({ extensions: { vector } })
@@ -411,6 +419,25 @@ describe('importShard', { timeout: 30_000 }, () => {
 
     expect(result.success).toBe(true)
     expect(result.counts.notes).toBe(2)
+  })
+
+  it('imports the pinned server golden shard fixture with explicit unsupported-component warnings', async () => {
+    const archive = readFileSync(goldenFixturePath)
+
+    const result = await importShard(db, archive)
+
+    expect(result.success).toBe(true)
+    expect(result.counts.notes).toBe(180)
+    expect(result.counts.embedding_sets).toBe(1)
+    expect(result.skipped.embedding_set_members).toBe(180)
+    expect(result.warnings).toContain('templates.json skipped (not supported in browser)')
+    expect(result.warnings).toContain('embedding_configs.json skipped (not supported in browser)')
+    expect(result.warnings.some((warning) => warning.includes('embedding_set_member row(s) were not imported'))).toBe(true)
+
+    const notes = await db.query<{ n: number }>('SELECT COUNT(*)::int AS n FROM note')
+    const embeddingSets = await db.query<{ n: number }>('SELECT COUNT(*)::int AS n FROM embedding_set')
+    expect(notes.rows[0].n).toBe(180)
+    expect(embeddingSets.rows[0].n).toBe(1)
   })
 })
 

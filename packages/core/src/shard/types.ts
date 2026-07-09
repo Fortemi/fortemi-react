@@ -238,7 +238,13 @@ export interface ShardLink {
 export interface ShardEmbeddingSet {
   id: string
   name?: string
+  slug?: string | null
+  description?: string | null
   purpose?: string | null
+  document_count?: number
+  embedding_count?: number
+  is_system?: boolean
+  keywords?: string[]
   model: string
   dimension: number
   kind?: 'physical' | 'filter' | 'virtual'
@@ -249,7 +255,7 @@ export interface ShardEmbeddingSet {
   compatibility?: Record<string, unknown> | null
   materialization?: Record<string, unknown> | null
   freshness?: ShardArtifactFreshness | null
-  created_at: string
+  created_at?: string
   updated_at?: string
 }
 
@@ -257,7 +263,10 @@ export interface ShardEmbeddingSet {
 export interface ShardEmbeddingSetMember {
   embedding_set_id: string
   note_id: string
-  embedding_id: string
+  embedding_id?: string
+  membership_type?: string
+  added_at?: string
+  added_by?: string | null
 }
 
 /** Embedding as serialized in the shard JSONL. */

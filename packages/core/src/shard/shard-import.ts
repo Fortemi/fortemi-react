@@ -241,6 +241,9 @@ export async function importShard(
   if (files.has('templates.json')) {
     warnings.push('templates.json skipped (not supported in browser)')
   }
+  if (files.has('embedding_configs.json')) {
+    warnings.push('embedding_configs.json skipped (not supported in browser)')
+  }
 
   // ── Step 5: Transactional insert ──────────────────────────────────────
   const conflictClause = strategy === 'skip' ? 'ON CONFLICT DO NOTHING' : ''
@@ -512,7 +515,7 @@ export async function importShard(
       // Import embedding sets
       report?.({ phase: 'embedding_sets', done: 0, total: parsedEmbSets.length })
       for (const [index, shardSet] of parsedEmbSets.entries()) {
-        const set = embeddingSetFromShard(shardSet)
+        const set = embeddingSetFromShard(shardSet, manifest.created_at)
         if (strategy === 'replace') {
           await tx.query(
             `INSERT INTO embedding_set (
@@ -652,6 +655,12 @@ export async function importShard(
       // Import embedding set members
       report?.({ phase: 'embedding_set_members', done: 0, total: parsedEmbMembers.length })
       for (const [index, member] of parsedEmbMembers.entries()) {
+        if (!member.embedding_id) {
+          skipped.embedding_set_members = (skipped.embedding_set_members ?? 0) + 1
+          report?.({ phase: 'embedding_set_members', done: index + 1, total: parsedEmbMembers.length })
+          await maybeYield(index + 1, batchSize)
+          continue
+        }
         await tx.query(
           `INSERT INTO embedding_set_member (embedding_set_id, note_id, embedding_id)
            VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
@@ -660,6 +669,12 @@ export async function importShard(
         counts.embedding_set_members++
         report?.({ phase: 'embedding_set_members', done: index + 1, total: parsedEmbMembers.length })
         await maybeYield(index + 1, batchSize)
+      }
+      if (skipped.embedding_set_members) {
+        warnings.push(
+          `${skipped.embedding_set_members} embedding_set_member row(s) were not imported: ` +
+            'server shard membership records do not carry the local embedding_id foreign key.',
+        )
       }
     })
     report?.({ phase: 'index', done: 1, total: 1 })
