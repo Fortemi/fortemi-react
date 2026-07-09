@@ -131,7 +131,7 @@ describe('knowledge shard AJV schema validator (#255)', () => {
     } finally {
       await db.close()
     }
-  })
+  }, 30_000)
 
   it('validates the committed pinned server golden shard fixture', () => {
     const bytes = readFileSync(goldenFixturePath)

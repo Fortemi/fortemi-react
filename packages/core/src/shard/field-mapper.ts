@@ -373,14 +373,21 @@ export function embeddingToShard(emb: {
   id: string
   note_id: string
   embedding_set_id: string
+  chunk_index?: number | null
+  text?: string | null
   vector: string | number[]
+  model?: string | null
+  model_name?: string | null
   created_at: Date | string
 }): ShardEmbedding {
   return {
     id: emb.id,
     note_id: emb.note_id,
-    embedding_set_id: emb.embedding_set_id,
+    chunk_index: emb.chunk_index ?? 0,
+    text: emb.text ?? '',
     vector: typeof emb.vector === 'string' ? parseVector(emb.vector) : emb.vector,
+    model: emb.model ?? emb.model_name ?? 'unknown',
+    embedding_set_id: emb.embedding_set_id,
     created_at: toISOString(emb.created_at),
   }
 }
@@ -389,16 +396,22 @@ export function embeddingToShard(emb: {
 export function embeddingFromShard(shard: ShardEmbedding): {
   id: string
   note_id: string
-  embedding_set_id: string
+  embedding_set_id: string | null
+  chunk_index: number
+  text: string
   vector: string
-  created_at: string
+  model: string
+  created_at: string | null
 } {
   return {
     id: shard.id,
     note_id: shard.note_id,
-    embedding_set_id: shard.embedding_set_id,
+    embedding_set_id: shard.embedding_set_id ?? null,
+    chunk_index: shard.chunk_index,
+    text: shard.text,
     vector: `[${shard.vector.join(',')}]`,
-    created_at: shard.created_at,
+    model: shard.model,
+    created_at: shard.created_at ?? null,
   }
 }
 

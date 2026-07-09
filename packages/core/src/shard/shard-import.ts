@@ -5,7 +5,7 @@
  *           parse components → field-map → BEGIN transaction → INSERT all → COMMIT
  */
 
-import type { DatabaseClient } from '../storage-backend.js'
+import type { DatabaseClient, QueryExecutor } from '../storage-backend.js'
 import { unpackTarGz } from './shard-tar.js'
 import { validateChecksums } from './checksum.js'
 import {
@@ -655,20 +655,33 @@ export async function importShard(
       report?.({ phase: 'embeddings', done: 0, total: parsedEmbeddings.length })
       for (const [index, shardEmb] of parsedEmbeddings.entries()) {
         const emb = embeddingFromShard(shardEmb)
+        const embeddingSetId = emb.embedding_set_id ?? await resolveEmbeddingSetIdForServerEmbedding(tx, emb.model, emb.vector)
         if (strategy === 'replace') {
           await tx.query(
-            `INSERT INTO embedding (id, note_id, embedding_set_id, vector, created_at)
-             VALUES ($1, $2, $3, $4, $5)
-             ON CONFLICT (id) DO UPDATE SET vector = $4`,
-            [emb.id, emb.note_id, emb.embedding_set_id, emb.vector, emb.created_at],
+            `INSERT INTO embedding (id, note_id, embedding_set_id, chunk_index, text, vector, model, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8::timestamptz, now()))
+             ON CONFLICT (id) DO UPDATE SET embedding_set_id = $3, chunk_index = $4, text = $5, vector = $6, model = $7`,
+            [emb.id, emb.note_id, embeddingSetId, emb.chunk_index, emb.text, emb.vector, emb.model, emb.created_at],
           )
         } else {
           await tx.query(
-            `INSERT INTO embedding (id, note_id, embedding_set_id, vector, created_at)
-             VALUES ($1, $2, $3, $4, $5) ${conflictClause}`,
-            [emb.id, emb.note_id, emb.embedding_set_id, emb.vector, emb.created_at],
+            `INSERT INTO embedding (id, note_id, embedding_set_id, chunk_index, text, vector, model, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8::timestamptz, now())) ${conflictClause}`,
+            [emb.id, emb.note_id, embeddingSetId, emb.chunk_index, emb.text, emb.vector, emb.model, emb.created_at],
           )
         }
+        await tx.query(
+          `INSERT INTO embedding_set_member (
+             embedding_set_id, note_id, embedding_id, membership_type, added_at, added_by
+           ) VALUES ($1, $2, $3, 'materialized', COALESCE($4::timestamptz, now()), 'shard-import')
+           ON CONFLICT (embedding_set_id, note_id) DO UPDATE SET
+             embedding_id = EXCLUDED.embedding_id,
+             membership_type = CASE
+               WHEN embedding_set_member.membership_type = 'auto' THEN 'materialized'
+               ELSE embedding_set_member.membership_type
+             END`,
+          [embeddingSetId, emb.note_id, emb.id, emb.created_at],
+        )
         counts.embeddings++
         report?.({ phase: 'embeddings', done: index + 1, total: parsedEmbeddings.length })
         await maybeYield(index + 1, batchSize)
@@ -820,6 +833,47 @@ export async function importShard(
 }
 
 // ── Parsing helpers ───────────────────────────────────────────────────────
+
+async function resolveEmbeddingSetIdForServerEmbedding(
+  db: QueryExecutor,
+  model: string,
+  vector: string,
+): Promise<string> {
+  const dimension = vectorDimension(vector)
+  const existing = await db.query<{ id: string }>(
+    `SELECT id FROM embedding_set
+     WHERE model_name = $1 AND dimensions = $2
+     ORDER BY created_at, id
+     LIMIT 1`,
+    [model, dimension],
+  )
+  if (existing.rows[0]?.id) return existing.rows[0].id
+
+  const id = generateId()
+  await db.query(
+    `INSERT INTO embedding_set (
+       id, name, slug, description, purpose, document_count, embedding_count,
+       is_system, keywords_json, model_name, dimensions, kind, created_at, updated_at
+     ) VALUES ($1, $2, $3, NULL, NULL, 0, 0, false, '[]'::jsonb, $2, $4, 'physical', now(), now())`,
+    [id, model, slugifyServerEmbeddingSet(model), dimension],
+  )
+  return id
+}
+
+function vectorDimension(vector: string): number {
+  const inner = vector.replace(/^\[/, '').replace(/\]$/, '').trim()
+  if (!inner) return 0
+  return inner.split(',').length
+}
+
+function slugifyServerEmbeddingSet(value: string): string {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return slug || 'embedding-set'
+}
 
 function parseJsonl<T>(data: Uint8Array | undefined): T[] {
   if (!data || data.byteLength === 0) return []

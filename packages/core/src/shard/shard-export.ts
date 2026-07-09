@@ -507,12 +507,26 @@ export async function exportShard(
       id: string
       note_id: string
       embedding_set_id: string
+      chunk_index: number
+      text: string
       vector: string
+      model: string
+      model_name: string
       created_at: Date
     }>(
-      `SELECT * FROM embedding
-       ${setScoped ? 'WHERE embedding_set_id = ANY($1)' : ''}
-       ORDER BY created_at`,
+      `SELECT
+         e.id, e.note_id, e.embedding_set_id, e.chunk_index,
+         COALESCE(NULLIF(e.text, ''), nrc.content, no.content, '') AS text,
+         e.vector,
+         COALESCE(e.model, es.model_name) AS model,
+         es.model_name,
+         e.created_at
+       FROM embedding e
+       JOIN embedding_set es ON es.id = e.embedding_set_id
+       LEFT JOIN note_revised_current nrc ON nrc.note_id = e.note_id
+       LEFT JOIN note_original no ON no.note_id = e.note_id
+       ${setScoped ? 'WHERE e.embedding_set_id = ANY($1)' : ''}
+       ORDER BY e.created_at`,
       setScoped ? [embeddingSetIds] : [],
     )
     const memberEmbeddingIds = new Set(

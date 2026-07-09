@@ -303,9 +303,14 @@ export interface ShardEmbeddingConfig {
 export interface ShardEmbedding {
   id: string
   note_id: string
-  embedding_set_id: string
+  chunk_index: number
+  text: string
   vector: number[]
-  created_at: string
+  model: string
+  /** React shard extension used to preserve local embedding-set scoping. */
+  embedding_set_id?: string
+  /** React shard extension used to preserve local creation ordering. */
+  created_at?: string
 }
 
 

@@ -19,7 +19,7 @@ import { MemoryBlobStore } from '../../blob-store.js'
 import { exportShard } from '../../shard/shard-export.js'
 import { unpackTarGz } from '../../shard/shard-tar.js'
 import { validateChecksums } from '../../shard/checksum.js'
-import { validateShardComponentRecord } from '../../shard/schema-validator.js'
+import { validateShardArchive, validateShardComponentRecord } from '../../shard/schema-validator.js'
 import type { ShardManifest, ShardNote, ShardLink, ShardCollection } from '../../shard/types.js'
 
 async function createTestDb(): Promise<PGlite> {
@@ -342,13 +342,19 @@ describe('exportShard', () => {
       includeEmbeddings: true,
       embeddingSetIds: [summaries.id],
     })
+    expect(validateShardArchive(archive)).toEqual({ valid: true, errors: [] })
     const files = unpackTarGz(archive)
     const exportedSets = JSON.parse(new TextDecoder().decode(files.get('embedding_sets.json')!)) as Array<{ id: string }>
     const exportedEmbeddings = new TextDecoder()
       .decode(files.get('embeddings.jsonl')!)
       .split('\n')
       .filter(Boolean)
-      .map((line) => JSON.parse(line) as { embedding_set_id: string })
+      .map((line) => JSON.parse(line) as {
+        embedding_set_id: string
+        chunk_index: number
+        text: string
+        model: string
+      })
     const exportedMembers = new TextDecoder()
       .decode(files.get('embedding_set_members.jsonl')!)
       .split('\n')
@@ -357,7 +363,12 @@ describe('exportShard', () => {
 
     expect(exportedSets.map((set) => set.id)).toEqual([summaries.id])
     expect(exportedEmbeddings).toHaveLength(1)
-    expect(exportedEmbeddings[0].embedding_set_id).toBe(summaries.id)
+    expect(exportedEmbeddings[0]).toMatchObject({
+      embedding_set_id: summaries.id,
+      chunk_index: 0,
+      text: 'Vector scoped note',
+      model: 'summary-model',
+    })
     expect(exportedMembers).toHaveLength(1)
     expect(exportedMembers[0].embedding_set_id).toBe(summaries.id)
   })

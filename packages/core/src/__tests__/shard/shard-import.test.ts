@@ -569,6 +569,83 @@ describe('importShard', { timeout: 30_000 }, () => {
     )
     expect(rows.rows[0]).toEqual({ embedding_id: embedding.id, membership_type: 'materialized' })
   })
+
+  it('imports server-shaped embedding rows without React embedding_set_id', async () => {
+    const iso = '2026-01-01T00:00:00.000Z'
+    const vector = Array.from({ length: 384 }, (_, index) => index === 0 ? 1 : 0)
+    const note: ShardNote = {
+      id: 'note-server-embedding',
+      title: 'Server embedding note',
+      original_content: 'Original embedding note',
+      revised_content: 'Chunk source text',
+      collection_id: null,
+      attachments: [],
+      format: 'markdown',
+      source: 'manual',
+      starred: false,
+      archived: false,
+      tags: [],
+      created_at: iso,
+      updated_at: iso,
+      deleted_at: null,
+    }
+    const embedding = {
+      id: 'emb-server-1',
+      note_id: note.id,
+      chunk_index: 3,
+      text: 'Chunk source text',
+      vector,
+      model: 'nomic-embed-text',
+    }
+
+    const notesData = encoder.encode(JSON.stringify(note) + '\n')
+    const embeddingsData = encoder.encode(JSON.stringify(embedding) + '\n')
+    const manifest: ShardManifest = {
+      version: '1.0.0',
+      matric_version: 'test',
+      format: 'matric-shard',
+      created_at: iso,
+      components: ['notes', 'embeddings'],
+      counts: { notes: 1, embeddings: 1 },
+      checksums: {
+        'notes.jsonl': await sha256Hex(notesData),
+        'embeddings.jsonl': await sha256Hex(embeddingsData),
+      },
+      min_reader_version: '1.0.0',
+    }
+    const files = new Map<string, Uint8Array>()
+    files.set('notes.jsonl', notesData)
+    files.set('embeddings.jsonl', embeddingsData)
+    files.set('manifest.json', encoder.encode(JSON.stringify(manifest)))
+    const archive = packTarGz(files)
+
+    expect(validateShardArchive(archive)).toEqual({ valid: true, errors: [] })
+    const result = await importShard(db, archive)
+
+    expect(result.success).toBe(true)
+    expect(result.errors).toEqual([])
+    expect(result.counts.embeddings).toBe(1)
+
+    const rows = await db.query<{
+      chunk_index: number
+      text: string
+      model: string | null
+      embedding_set_id: string
+      membership_type: string | null
+    }>(
+      `SELECT e.chunk_index, e.text, e.model, e.embedding_set_id, m.membership_type
+       FROM embedding e
+       JOIN embedding_set_member m ON m.embedding_id = e.id
+       WHERE e.id = $1`,
+      [embedding.id],
+    )
+    expect(rows.rows[0]).toMatchObject({
+      chunk_index: 3,
+      text: 'Chunk source text',
+      model: 'nomic-embed-text',
+      membership_type: 'materialized',
+    })
+  })
 })
 
 describe('importShard — E1 attachment round-trip (#237)', { timeout: 30_000 }, () => {

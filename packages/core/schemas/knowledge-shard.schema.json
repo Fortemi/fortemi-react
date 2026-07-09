@@ -254,7 +254,9 @@
         "chunk_index": { "type": "integer", "minimum": 0 },
         "text": { "type": "string" },
         "vector": { "type": "array", "items": { "type": "number" } },
-        "model": { "type": "string" }
+        "model": { "type": "string" },
+        "embedding_set_id": { "type": "string", "minLength": 1 },
+        "created_at": { "$ref": "#/$defs/isoDateTime" }
       }
     },
     "skosScheme": {

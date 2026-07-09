@@ -335,22 +335,40 @@ describe('field-mapper: embeddings', () => {
       id: 'emb-1',
       note_id: 'note-1',
       embedding_set_id: 'es-1',
+      chunk_index: 2,
+      text: 'embedded chunk text',
       vector: '[0.1,0.2,0.3]',
+      model_name: 'nomic-embed-text',
       created_at: '2026-01-01T00:00:00.000Z',
     }
     const shard = embeddingToShard(emb)
-    expect(shard.vector).toEqual([0.1, 0.2, 0.3])
+    expect(shard).toMatchObject({
+      chunk_index: 2,
+      text: 'embedded chunk text',
+      vector: [0.1, 0.2, 0.3],
+      model: 'nomic-embed-text',
+      embedding_set_id: 'es-1',
+      created_at: '2026-01-01T00:00:00.000Z',
+    })
   })
 
   it('converts number array back to PGlite vector string', () => {
     const shard = {
       id: 'emb-1',
       note_id: 'note-1',
-      embedding_set_id: 'es-1',
+      chunk_index: 0,
+      text: 'chunk text',
       vector: [0.1, 0.2, 0.3],
-      created_at: '2026-01-01T00:00:00.000Z',
+      model: 'nomic-embed-text',
     }
     const back = embeddingFromShard(shard)
-    expect(back.vector).toBe('[0.1,0.2,0.3]')
+    expect(back).toMatchObject({
+      embedding_set_id: null,
+      chunk_index: 0,
+      text: 'chunk text',
+      vector: '[0.1,0.2,0.3]',
+      model: 'nomic-embed-text',
+      created_at: null,
+    })
   })
 })
