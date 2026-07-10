@@ -98,8 +98,9 @@ Node consumers can build embedding sets without a browser.
   `aiwg.fortemi.embedding.set.v1` sidecars from any Node-safe model backend, with
   no DOM or WebGL dependency. This unblocks CLI index building (for example
   AIWG's `index embed`).
-- Notes carry `binary_sources` in the Knowledge Shard export, so attachment
-  metadata and extracted text travel with the note while raw bytes do not.
+- Notes carry server-compatible `attachments` in the Knowledge Shard export, so
+  attachment metadata and extracted text travel with the note while raw bytes do
+  not. Legacy React shards that used `binary_sources` remain importable.
 
 ### Documentation
 

@@ -212,7 +212,7 @@ function tokenize(query: string): string[] {
 }
 
 function noteSearchText(note: ShardNote): string {
-  const extractedText = note.binary_sources
+  const extractedText = (note.attachments ?? note.binary_sources)
     ?.map((source) => source.extracted_text)
     .filter(Boolean)
     .join(' ') ?? ''
@@ -241,7 +241,7 @@ function noteMatchesTokens(note: ShardNote, tokens: string[]): boolean {
 function rankNote(note: ShardNote, tokens: string[], weights: ShardSearchWeights): number {
   if (tokens.length === 0) return 0
   const title = (note.title ?? '').toLowerCase()
-  const extractedText = note.binary_sources
+  const extractedText = (note.attachments ?? note.binary_sources)
     ?.map((source) => source.extracted_text)
     .filter(Boolean)
     .join(' ') ?? ''
@@ -257,7 +257,7 @@ function rankNote(note: ShardNote, tokens: string[], weights: ShardSearchWeights
 }
 
 function makeSnippet(note: ShardNote, tokens: string[], length: number): string {
-  const extractedText = note.binary_sources
+  const extractedText = (note.attachments ?? note.binary_sources)
     ?.map((source) => source.extracted_text)
     .filter(Boolean)
     .join(' ') ?? ''
