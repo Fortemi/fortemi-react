@@ -4,6 +4,13 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+### `@fortemi/graph` / `@fortemi/react` — opt-in node dragging (#245)
+
+`GraphView` gains a `draggableNodes` prop (default `false` — existing behavior unchanged). Dragging a node moves it under the pointer; on release the node is **pinned** and the rest of the graph re-settles around it (an incremental re-layout). Pins persist across layout updates; shift-click a pinned node to release its pin.
+
+- **`@fortemi/graph` `layoutCommunityGraph`** gains `pinned` (positions held fixed during settlement) and `initialPositions` (warm-start seed so a re-layout resumes from the current arrangement instead of re-seeding). New `PositionMap` type. Fully deterministic; unpinned output is bit-for-bit identical to before.
+- **`@fortemi/react` `GraphView`** wires pointer drag over the pin mechanism; the coordinate inversion is a pure, tested helper (`clientToGraphPoint`). No new dependencies; `@fortemi/graph` stays React-free.
+
 ### `@fortemi/graph` — snapshot-first load + render-prep mapping (#264)
 
 Shared warm-start helpers so every renderer tier (JS-only SVG, React `GraphView`, the interactive 2D/3D tiers) maps and loads graphs identically.
