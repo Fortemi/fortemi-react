@@ -121,6 +121,9 @@ These shapes are structurally identical to the ones `@fortemi/core` produces (`G
 | `computeGraphBounds(nodes)` / `fitGraphToViewport(bounds, viewport, opts?)` | Bounding box and a centered fit transform |
 | `neighborsOf` / `expandNeighborhood` / `subgraphForNodes` / `neighborhoodSubgraph` / `buildAdjacency` | Selection and BFS neighborhood expansion |
 | `serializeGraphSnapshot` / `stringifyGraphSnapshot` / `deserializeGraphSnapshot` | Stable, reproducible static snapshots for JS-only hosts |
+| `mapCommunityGraph(graph, opts?)` | `CommunityGraph` → render-ready `RenderGraph` (labels, degree size, per-community tone, baked positions) shared by every renderer tier |
+| `bakeRenderGraph(graph, opts?)` / `stringifyRenderGraph` | Build-time writer: run layout once, emit a deterministic baked-position snapshot |
+| `loadRenderSnapshot(source, opts?)` | Snapshot-first warm start: load a precomputed baked-position graph (URL/object/thunk); `null` → fall back to a live build |
 
 ### Layout options (`force`)
 

@@ -62,6 +62,26 @@ export {
 } from './serialize.js'
 export type { GraphSnapshot, SerializeSnapshotOptions } from './serialize.js'
 
+export {
+  GREYSCALE_COMMUNITY_RAMP,
+  communityRanks,
+  mapCommunityGraph,
+  bakeRenderGraph,
+  stringifyRenderGraph,
+  isRenderGraph,
+  hasBakedPositions,
+  loadRenderSnapshot,
+} from './render-prep.js'
+export type {
+  RenderNode,
+  RenderLink,
+  RenderGraph,
+  CommunityPalette,
+  MapCommunityGraphOptions,
+  BakeRenderGraphOptions,
+  LoadRenderSnapshotOptions,
+} from './render-prep.js'
+
 export { applyControlFilters, communityLegend } from './contract.js'
 export type {
   GraphControlContract,
