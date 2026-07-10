@@ -62,6 +62,21 @@ export {
 } from './serialize.js'
 export type { GraphSnapshot, SerializeSnapshotOptions } from './serialize.js'
 
+export { applyControlFilters, communityLegend } from './contract.js'
+export type {
+  GraphControlContract,
+  GraphControlFilters,
+  GraphLegendEntry,
+} from './contract.js'
+
+export { renderCommunityGraph } from './render-dom.js'
+export type {
+  GraphRenderOptions,
+  GraphRenderFilters,
+  GraphRenderUpdate,
+  GraphRenderHandle,
+} from './render-dom.js'
+
 export { GraphController } from './controller.js'
 export type {
   GraphControllerDb,

@@ -1,17 +1,18 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import type { CommunityGraph } from '@fortemi/core'
 import {
+  applyControlFilters,
   colorForCommunity,
-  filterCommunityGraph,
   layoutCommunityGraph,
 } from '@fortemi/graph'
-import type { GraphLayoutState } from '@fortemi/graph'
+import type { GraphControlFilters, GraphLayoutState } from '@fortemi/graph'
 
-export interface GraphViewFilters {
-  communityIds?: string[]
-  edgeKinds?: string[]
-  nodeIds?: string[]
-}
+/**
+ * Filter shape for `GraphView`. Alias of the shared `GraphControlFilters`
+ * contract (#260) so the React tier and the JS-only renderer filter identically
+ * (community / edge-kind / node allow-list / min-degree).
+ */
+export type GraphViewFilters = GraphControlFilters
 
 export interface GraphViewProps {
   graph: CommunityGraph | null
@@ -19,6 +20,10 @@ export interface GraphViewProps {
   filters?: GraphViewFilters
   selectedNodeId?: string | null
   onSelectNode?: (nodeId: string) => void
+  /** Navigation callback (double-click / Enter on a selected node). */
+  onNavigate?: (nodeId: string) => void
+  /** Human label for a node (title / a11y). Default: the node id. */
+  labelFor?: (nodeId: string) => string
   width?: number
   height?: number
   style?: CSSProperties
@@ -30,6 +35,8 @@ export function GraphView({
   filters,
   selectedNodeId,
   onSelectNode,
+  onNavigate,
+  labelFor,
   width = 760,
   height = 460,
   style,
@@ -37,7 +44,8 @@ export function GraphView({
   const [scale, setScale] = useState(1)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const algorithm = layout?.algorithm ?? 'force'
-  const visible = useMemo(() => filterCommunityGraph(graph, filters), [graph, filters])
+  const label = labelFor ?? ((id: string) => id)
+  const visible = useMemo(() => applyControlFilters(graph, filters), [graph, filters])
   const positioned = useMemo(
     () => layoutCommunityGraph(visible, { algorithm, width, height }),
     [visible, algorithm, width, height],
@@ -105,14 +113,23 @@ export function GraphView({
                   strokeWidth={selected ? 3 : 1.5}
                   tabIndex={0}
                   role="button"
-                  aria-label={`Select graph node ${node.id}`}
+                  data-node-id={node.id}
+                  aria-label={`Graph node ${label(node.id)}`}
                   onClick={() => onSelectNode?.(node.id)}
+                  onDoubleClick={() => onNavigate?.(node.id)}
                   onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') onSelectNode?.(node.id)
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      if (selected) onNavigate?.(node.id)
+                      else onSelectNode?.(node.id)
+                    }
                   }}
-                  style={{ cursor: onSelectNode ? 'pointer' : 'default', outline: 'none' }}
+                  style={{
+                    cursor: onSelectNode || onNavigate ? 'pointer' : 'default',
+                    outline: 'none',
+                  }}
                 />
-                <title>{node.id}</title>
+                <title>{label(node.id)}</title>
               </g>
             )
           })}
