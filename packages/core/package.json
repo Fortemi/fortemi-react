@@ -31,6 +31,9 @@
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "fortemi-compatibility": "./tools/verify-fortemi-compatibility.mjs"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -46,6 +49,7 @@
   },
   "files": [
     "dist",
+    "tools",
     "README.md",
     "LICENSE"
   ],
@@ -56,6 +60,7 @@
     "test:db-table-parity": "vitest run src/__tests__/db-table-parity",
     "test:portable-contract": "vitest run src/__tests__/aiwg-index.test.ts src/__tests__/shard/shard-conformance.spike.test.ts",
     "test:watch": "vitest",
+    "verify:fortemi-compatibility": "node tools/verify-fortemi-compatibility.mjs",
     "prepack": "pnpm build"
   },
   "dependencies": {
