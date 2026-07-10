@@ -2,6 +2,32 @@
 
 All notable changes to fortemi-react are documented here.
 
+## Unreleased
+
+### `@fortemi/core` / `@fortemi/react` — PGlite is now optional (#261)
+
+Non-DB consumers can ship a light, PGlite-free bundle.
+
+- **Lazy engine load (`@fortemi/core`):** `createPGliteInstance` now loads
+  `@electric-sql/pglite` (and its `vector` extension) via dynamic `import()`.
+  `dist/index.js` no longer carries a static `import '@electric-sql/pglite'`, so
+  bundlers keep the PGlite WASM engine out of the graph until an archive is
+  actually opened. `@electric-sql/pglite` moved from `dependencies` to
+  `optionalDependencies`.
+- **PGlite-free graph subpath (`@fortemi/react/graph`):** new subpath export that
+  re-exports only `GraphView`. It depends solely on `@fortemi/graph` + React
+  (zero `@fortemi/core`/PGlite/DB-worker references), so a presentational
+  consumer (e.g. a docs-map / static tenant) can render graphs without dragging
+  the database in — and Vite code-split builds no longer fail on the
+  `worker.format: 'iife'` / Node-FS chain. Importing `GraphView` from the package
+  root still works and still pulls the full provider surface.
+- **Tree-shakable barrels:** `@fortemi/core`, `@fortemi/graph`, and
+  `@fortemi/react` are marked `"sideEffects": false`.
+- **Pluggable persistence (unchanged seam, now documented):** `ArchiveManager`
+  already accepts a `StorageBackendFactory`; PGlite is the opt-in default via
+  `defaultStorageBackendFactory`. Hosts wanting a different store pass their own
+  factory and never touch PGlite.
+
 ## v2026.7.3 - 2026-07-07
 
 Security-hardening release for the AIWG portable-schema surface (epic #235). The

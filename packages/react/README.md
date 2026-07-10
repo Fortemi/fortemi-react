@@ -180,6 +180,26 @@ function AiwgGraph({ exportJson }: { exportJson: unknown }) {
 }
 ```
 
+### PGlite-free graph subpath
+
+`GraphView` renders a `CommunityGraph` with no database access — it depends only
+on `@fortemi/graph` (layout/filter/color helpers) and React. Consumers that want
+just the graph rendering, and never boot a local archive, should import it from
+the `@fortemi/react/graph` subpath instead of the package root:
+
+```tsx
+import { GraphView } from '@fortemi/react/graph'
+```
+
+This subpath carries no reference to `@fortemi/core`, PGlite, or the DB worker,
+so the PGlite WASM engine stays out of the bundle and Vite code-split builds do
+not trip on the worker/Node-FS chain. Importing `GraphView` from the package
+root still works; it just pulls the full provider surface (and therefore PGlite)
+into the module graph, since the root barrel also exports `FortemiProvider` and
+the DB hooks. PGlite itself is loaded lazily and is an optional dependency of
+`@fortemi/core`, so DB-backed consumers pay for it only when an archive is
+actually opened.
+
 For large static AIWG indexes, use the chunked hook methods so pages fetch only
 the needed manifest parts and the hook does not retain a full export array:
 

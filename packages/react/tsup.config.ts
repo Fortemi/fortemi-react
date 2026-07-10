@@ -6,7 +6,9 @@ import { defineConfig } from 'tsup';
 // resolve at runtime rather than being inlined into the react bundle.
 
 export default defineConfig({
-  entry: { index: 'src/index.ts' },
+  // `index` is the full surface (provider + hooks + GraphView).
+  // `graph` is a PGlite-free presentational subpath (GraphView only) — issue #261.
+  entry: { index: 'src/index.ts', graph: 'src/graph.ts' },
   format: ['esm'],
   dts: true,
   sourcemap: true,
