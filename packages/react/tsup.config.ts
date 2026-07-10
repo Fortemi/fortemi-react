@@ -8,9 +8,15 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   // `index` is the full surface (provider + hooks + GraphView).
   // `graph` is a PGlite-free presentational subpath (GraphView only) — issue #261.
-  // `graph-2d` is the Sigma interactive explorer (issue #263); its heavy deps
-  // are optional peers, dynamically imported, so they stay external.
-  entry: { index: 'src/index.ts', graph: 'src/graph.ts', 'graph-2d': 'src/graph-2d.ts' },
+  // `graph-2d` is the Sigma interactive explorer (issue #263); `graph-3d` is the
+  // react-force-graph-3d/Three view (issue #262). Both heavy renderers' deps are
+  // optional peers, dynamically imported, so they stay external.
+  entry: {
+    index: 'src/index.ts',
+    graph: 'src/graph.ts',
+    'graph-2d': 'src/graph-2d.ts',
+    'graph-3d': 'src/graph-3d.ts',
+  },
   format: ['esm'],
   dts: true,
   sourcemap: true,
@@ -29,5 +35,7 @@ export default defineConfig({
     'sigma',
     'graphology-layout-forceatlas2',
     'graphology-layout-forceatlas2/worker',
+    'react-force-graph-3d',
+    'three',
   ],
 });
