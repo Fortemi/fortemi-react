@@ -180,6 +180,16 @@ function AiwgGraph({ exportJson }: { exportJson: unknown }) {
 }
 ```
 
+### Node dragging
+
+Pass `draggableNodes` to let users drag nodes and reshape the layout (default off — existing click-to-select behavior is unchanged):
+
+```tsx
+<GraphView graph={graph} draggableNodes />
+```
+
+Dragging a node moves it under the pointer; on release the node is **pinned** and the rest of the graph re-settles around it (an incremental re-layout via `@fortemi/graph`'s `pinned` + warm-start `initialPositions`). Pins persist across subsequent layout updates — **shift-click a pinned node to release its pin**.
+
 ### PGlite-free graph subpath
 
 `GraphView` renders a `CommunityGraph` with no database access — it depends only
