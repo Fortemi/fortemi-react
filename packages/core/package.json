@@ -14,6 +14,7 @@
     "browser-database"
   ],
   "type": "module",
+  "sideEffects": false,
   "license": "AGPL-3.0-only",
   "author": "Joseph Magly <joe@magly.net>",
   "homepage": "https://github.com/Fortemi/fortemi-react",
@@ -65,12 +66,14 @@
     "prepack": "pnpm build"
   },
   "dependencies": {
-    "@electric-sql/pglite": "^0.4.1",
     "@noble/hashes": "^1.7.2",
     "ajv": "^8.17.1",
     "fflate": "^0.8.2",
     "uuid": "^13.0.0",
     "zod": "^3.24.0"
+  },
+  "optionalDependencies": {
+    "@electric-sql/pglite": "^0.4.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
