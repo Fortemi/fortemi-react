@@ -4,6 +4,15 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+### `@fortemi/graph` — snapshot-first load + render-prep mapping (#264)
+
+Shared warm-start helpers so every renderer tier (JS-only SVG, React `GraphView`, the interactive 2D/3D tiers) maps and loads graphs identically.
+
+- **`mapCommunityGraph(graph, options?)`** — pure `CommunityGraph` → render-ready `RenderGraph` mapping: labels, degree-derived node size, per-community tone, and baked positions when supplied. Palette is `'community'` (default, matches `colorForCommunity`), `'greyscale'` (`GREYSCALE_COMMUNITY_RAMP`, largest cluster = darkest), or a custom array.
+- **`loadRenderSnapshot(source, options?)`** — snapshot-first loader: instantly load a precomputed graph with baked x/y from a URL, object, or thunk; returns `null` (never throws) when absent/malformed/position-less so callers fall back to a live build.
+- **`bakeRenderGraph(graph, options?)`** + **`stringifyRenderGraph`** — build-time writer: run the layout once and emit a deterministic baked-position snapshot.
+- Also exports `communityRanks`, `isRenderGraph`, `hasBakedPositions`. No new dependencies; `@fortemi/graph` stays React-free.
+
 ### `@fortemi/core` / `@fortemi/react` — PGlite is now optional (#261)
 
 Non-DB consumers can ship a light, PGlite-free bundle.
