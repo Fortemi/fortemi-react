@@ -40,6 +40,10 @@
       "types": "./dist/graph.d.ts",
       "import": "./dist/graph.js"
     },
+    "./graph-2d": {
+      "types": "./dist/graph-2d.d.ts",
+      "import": "./dist/graph-2d.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -59,11 +63,22 @@
     "@fortemi/graph": "workspace:*"
   },
   "peerDependencies": {
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "graphology": "^0.26.0",
+    "graphology-layout-forceatlas2": "^0.10.1",
+    "sigma": "^3.0.3"
+  },
+  "peerDependenciesMeta": {
+    "graphology": { "optional": true },
+    "graphology-layout-forceatlas2": { "optional": true },
+    "sigma": { "optional": true }
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
+    "graphology": "^0.26.0",
+    "graphology-layout-forceatlas2": "^0.10.1",
     "react": "^19.2.4",
+    "sigma": "^3.0.3",
     "tsup": "^8.3.5",
     "typescript": "^5.8.0",
     "vitest": "^4.1.0"

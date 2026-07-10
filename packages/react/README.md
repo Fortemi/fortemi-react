@@ -180,6 +180,26 @@ function AiwgGraph({ exportJson }: { exportJson: unknown }) {
 }
 ```
 
+### Interactive 2D explorer (Sigma)
+
+For a live, force-directed explorer instead of the static SVG, import `SigmaGraphView` from the `@fortemi/react/graph-2d` subpath. It is backed by Sigma + graphology ForceAtlas2, which are **optional peer dependencies loaded lazily** — install them only if you use this view:
+
+```bash
+pnpm add sigma graphology graphology-layout-forceatlas2
+```
+
+```tsx
+import { SigmaGraphView } from '@fortemi/react/graph-2d'
+
+<SigmaGraphView
+  graph={communityGraph}
+  onSelectNode={(id) => setSelected(id)}
+  onOpenNode={(id) => openNote(id)}
+/>
+```
+
+Live LinLog settling, hover-neighborhood dimming, click-select with camera focus, ⌘/ctrl-click to re-anchor and re-settle around a node, double-click to open, and LOD labels. It accepts a `@fortemi/graph` `RenderGraph` directly or a `CommunityGraph` it maps for you, and can warm-start from a baked-position `snapshot`. The heavy renderer only enters your bundle on this subpath.
+
 ### Node dragging
 
 Pass `draggableNodes` to let users drag nodes and reshape the layout (default off — existing click-to-select behavior is unchanged):

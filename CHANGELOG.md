@@ -4,6 +4,15 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+### `@fortemi/react/graph-2d` — interactive Sigma 2D explorer (#263)
+
+A heavier renderer tier alongside the static `GraphView`: `SigmaGraphView`, backed by Sigma + graphology ForceAtlas2, on the new **`@fortemi/react/graph-2d`** subpath.
+
+- Live LinLog ForceAtlas2 settling with a `settling…` state; warm-starts from a baked-position snapshot (fast convergence) or a cold random seed.
+- Hover-neighborhood dimming, click-select + animated camera focus, ⌘/ctrl-click **re-anchor** (pin at centre, re-settle around it), double-click to open, click-stage to deselect, auto soft-anchor of the highest-degree hub, and LOD label decluttering.
+- `sigma`, `graphology`, `graphology-layout-forceatlas2` are **optional peer dependencies, lazy-loaded** via dynamic `import()` — the subpath's built entry carries no static import of them, so they only ship when a consumer mounts the view. Install with `pnpm add sigma graphology graphology-layout-forceatlas2`.
+- Consumes a `@fortemi/graph` `RenderGraph` (#264) — pass one directly or a `CommunityGraph` it maps for you (honoring the #260 filter contract).
+
 ### `@fortemi/graph` / `@fortemi/react` — opt-in node dragging (#245)
 
 `GraphView` gains a `draggableNodes` prop (default `false` — existing behavior unchanged). Dragging a node moves it under the pointer; on release the node is **pinned** and the rest of the graph re-settles around it (an incremental re-layout). Pins persist across layout updates; shift-click a pinned node to release its pin.

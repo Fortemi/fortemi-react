@@ -8,7 +8,9 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   // `index` is the full surface (provider + hooks + GraphView).
   // `graph` is a PGlite-free presentational subpath (GraphView only) — issue #261.
-  entry: { index: 'src/index.ts', graph: 'src/graph.ts' },
+  // `graph-2d` is the Sigma interactive explorer (issue #263); its heavy deps
+  // are optional peers, dynamically imported, so they stay external.
+  entry: { index: 'src/index.ts', graph: 'src/graph.ts', 'graph-2d': 'src/graph-2d.ts' },
   format: ['esm'],
   dts: true,
   sourcemap: true,
@@ -17,5 +19,15 @@ export default defineConfig({
   splitting: false,
   treeshake: true,
   outDir: 'dist',
-  external: ['react', 'react-dom', '@fortemi/core', '@fortemi/graph'],
+  external: [
+    'react',
+    'react-dom',
+    '@fortemi/core',
+    '@fortemi/graph',
+    // Optional peer deps for the interactive tiers — dynamically imported, never bundled.
+    'graphology',
+    'sigma',
+    'graphology-layout-forceatlas2',
+    'graphology-layout-forceatlas2/worker',
+  ],
 });
