@@ -4,6 +4,14 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+### `@fortemi/react/graph-3d` — 3D force-directed view (#262)
+
+`ForceGraph3DView`, a third renderer tier backed by `react-force-graph-3d` (Three.js), on the new **`@fortemi/react/graph-3d`** subpath.
+
+- Orbit + scroll-zoom; `zoomToFit` on engine stop; degree-derived node size and per-community tone from the shared `RenderGraph` (#264).
+- Click opens the node (via `onOpenNode`/`onSelectNode`); **⌘/ctrl-click re-anchors** (pins `fx/fy/fz` and `d3ReheatSimulation()` so the graph re-settles live). `ResizeObserver` container sizing; a memoised `Scene` with referentially-stable accessors so opening/closing a reader never re-inits the renderer (orbit + zoom preserved).
+- `react-force-graph-3d` and `three` are **optional peer dependencies, lazy-loaded** via `React.lazy` → dynamic `import()`; the built subpath has zero static import of them, so Three only ships when the 3D view mounts. Install with `pnpm add react-force-graph-3d three`.
+
 ### `@fortemi/react/graph-2d` — interactive Sigma 2D explorer (#263)
 
 A heavier renderer tier alongside the static `GraphView`: `SigmaGraphView`, backed by Sigma + graphology ForceAtlas2, on the new **`@fortemi/react/graph-2d`** subpath.

@@ -200,6 +200,22 @@ import { SigmaGraphView } from '@fortemi/react/graph-2d'
 
 Live LinLog settling, hover-neighborhood dimming, click-select with camera focus, ⌘/ctrl-click to re-anchor and re-settle around a node, double-click to open, and LOD labels. It accepts a `@fortemi/graph` `RenderGraph` directly or a `CommunityGraph` it maps for you, and can warm-start from a baked-position `snapshot`. The heavy renderer only enters your bundle on this subpath.
 
+### 3D force-directed view (Three.js)
+
+For a 3D view, import `ForceGraph3DView` from the `@fortemi/react/graph-3d` subpath. It is backed by `react-force-graph-3d` (Three.js), an **optional peer dependency loaded lazily** — install it only if you use this view:
+
+```bash
+pnpm add react-force-graph-3d three
+```
+
+```tsx
+import { ForceGraph3DView } from '@fortemi/react/graph-3d'
+
+<ForceGraph3DView graph={communityGraph} onOpenNode={(id) => openNote(id)} />
+```
+
+Orbit + scroll-zoom, `zoomToFit` on settle, click to open, and ⌘/ctrl-click to re-anchor and re-settle around a node. Like the 2D explorer it accepts a `RenderGraph` or a `CommunityGraph` it maps for you. Three only enters your bundle on this subpath.
+
 ### Node dragging
 
 Pass `draggableNodes` to let users drag nodes and reshape the layout (default off — existing click-to-select behavior is unchanged):
