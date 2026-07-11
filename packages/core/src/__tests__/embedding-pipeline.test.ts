@@ -25,6 +25,8 @@ import { SearchRepository } from '../repositories/search-repository.js'
 import { cosineSimilarity, suggestTags } from '../capabilities/auto-tag.js'
 import { setLlmFunction, getLlmFunction } from '../capabilities/llm-handler.js'
 import { titleGenerationHandler } from '../job-queue-worker.js'
+import { MemoryBlobStore } from '../blob-store.js'
+import { manageAttachments } from '../tools/manage-attachments.js'
 
 // ---------------------------------------------------------------------------
 // Mock embed function — deterministic, normalized 384-dim vectors
@@ -241,6 +243,28 @@ describe('embeddingGenerationHandler', () => {
     const embeddedText = capturedInputs.flat().join('\n')
     expect(embeddedText).toContain('Attachment OCR embedding text')
     expect(embeddedText).not.toContain('RAW-BINARY-SENTINEL')
+  })
+
+  it('re-embeds attached extracted text for hybrid search', async () => {
+    const noteId = await insertNote(db, 'Carrier body')
+    await embeddingGenerationHandler(makeJob(noteId), db)
+    const before = (await db.query<{ vector: string }>(
+      'SELECT vector::text FROM embedding WHERE note_id = $1', [noteId],
+    )).rows[0].vector
+
+    await manageAttachments(db, new MemoryBlobStore(), {
+      action: 'attach', note_id: noteId, filename: 'invoice.pdf', data_base64: btoa('pdf'),
+      mime_type: 'application/pdf', extracted_text: 'compliance invoice',
+    })
+    await embeddingGenerationHandler(makeJob(noteId), db)
+    const after = (await db.query<{ vector: string }>(
+      'SELECT vector::text FROM embedding WHERE note_id = $1', [noteId],
+    )).rows[0].vector
+    expect(after).not.toBe(before)
+
+    const [queryEmbedding] = await mockEmbed(['compliance invoice'])
+    const result = await new SearchRepository(db, true).hybridSearch('compliance invoice', queryEmbedding)
+    expect(result.results.map((item) => item.id)).toContain(noteId)
   })
 
   it('creates an embedding_set_member row', async () => {
