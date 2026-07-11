@@ -162,14 +162,6 @@ export function tagsToShard(
   }))
 }
 
-/**
- * Convert shard flat tags to browser format for insertion.
- * Returns unique tag names ready for note_tag association.
- */
-export function tagsFromShard(shardTags: ShardTag[]): string[] {
-  return [...new Set(shardTags.map((t) => t.name))]
-}
-
 // ── Embeddings ───────────────────────────────────────────────────────────
 
 /** Convert a browser embedding_set to shard format. */

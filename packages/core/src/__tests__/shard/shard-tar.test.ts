@@ -93,13 +93,13 @@ describe('shard-tar', () => {
     const files = new Map<string, Uint8Array>()
     const encoder = new TextEncoder()
     files.set('embedding_set_members.jsonl', encoder.encode('data'))
-    files.set('embedding_configs.json', encoder.encode('data2'))
+    files.set('embedding_sets.json', encoder.encode('data2'))
 
     const packed = packTarGz(files)
     const unpacked = unpackTarGz(packed)
 
     expect([...unpacked.keys()].sort()).toEqual([
-      'embedding_configs.json',
+      'embedding_sets.json',
       'embedding_set_members.jsonl',
     ])
   })

@@ -57,7 +57,6 @@ export {
   collectionToShard,
   collectionFromShard,
   tagsToShard,
-  tagsFromShard,
   embeddingSetToShard,
   embeddingSetFromShard,
   embeddingSetMemberToShard,

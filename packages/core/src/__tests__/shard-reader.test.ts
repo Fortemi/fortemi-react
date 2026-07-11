@@ -128,7 +128,7 @@ function clusteredShard(clusterSize = 2): { bytes: Uint8Array; clusters: ShardCl
   for (let offset = 0; offset < NOTES.length; offset += clusterSize) {
     const slice = NOTES.slice(offset, offset + clusterSize)
     const href = `notes/${String(offset).padStart(3, '0')}.jsonl`
-    clusters.push({ href, offset, count: slice.length })
+    clusters.push({ href, offset })
     files.set(href, encoder.encode(slice.map((n) => JSON.stringify(n)).join('\n')))
   }
   m.layout = { clusters: { notes: clusters } }

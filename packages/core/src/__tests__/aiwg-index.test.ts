@@ -976,6 +976,9 @@ describe('AIWG Fortemi chunked index — slim/projected parts (#168)', () => {
       ],
     }
     const controller = createAiwgIndexController(graphIndex)
+
+    await expect(controller.relationshipQuery({ direction: 'out' })).rejects.toThrow(/requires sourceId/)
+    await expect(controller.relationshipQuery({ direction: 'in' })).rejects.toThrow(/requires targetId/)
     const fullNeighbors = await controller.neighbors('aiwg:requirement:001', { direction: 'both' })
     expect(fullNeighbors.edges.map((edge) => edge.type).sort()).toEqual(['cites', 'satisfies'])
 

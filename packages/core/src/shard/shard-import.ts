@@ -26,7 +26,6 @@ import type {
   ShardNote,
   ShardLink,
   ShardCollection,
-  ShardTag,
   ShardEmbeddingSet,
   ShardEmbeddingSetMember,
   ShardEmbedding,
@@ -40,6 +39,7 @@ import type {
   ShardCommunitySet,
   ShardCommunityAssignment,
 } from './types.js'
+import { parseJsonArrayBytes, parseJsonlBytes } from './parse.js'
 
 const decoder = new TextDecoder()
 const DEFAULT_BATCH_SIZE = 250
@@ -190,26 +190,24 @@ export async function importShard(
   const parsedNotes = noteClusters && noteClusters.length > 0
     ? [...noteClusters]
         .sort((a, b) => a.offset - b.offset)
-        .flatMap((ref) => parseJsonl<ShardNote>(files.get(ref.href)))
-    : parseJsonl<ShardNote>(files.get('notes.jsonl'))
-  const parsedCollections = parseJsonArray<ShardCollection>(files.get('collections.json'))
-  // Tags are embedded in notes as arrays — the global tags.json is informational only
-  parseJsonArray<ShardTag>(files.get('tags.json')) // parsed for validation, not used directly
-  const parsedLinks = parseJsonl<ShardLink>(files.get('links.jsonl'))
-  const parsedEmbSets = parseJsonArray<ShardEmbeddingSet>(files.get('embedding_sets.json'))
-  const parsedEmbMembers = parseJsonl<ShardEmbeddingSetMember>(
+        .flatMap((ref) => parseJsonlBytes<ShardNote>(files.get(ref.href)))
+    : parseJsonlBytes<ShardNote>(files.get('notes.jsonl'))
+  const parsedCollections = parseJsonArrayBytes<ShardCollection>(files.get('collections.json'))
+  const parsedLinks = parseJsonlBytes<ShardLink>(files.get('links.jsonl'))
+  const parsedEmbSets = parseJsonArrayBytes<ShardEmbeddingSet>(files.get('embedding_sets.json'))
+  const parsedEmbMembers = parseJsonlBytes<ShardEmbeddingSetMember>(
     files.get('embedding_set_members.jsonl'),
   )
-  const parsedEmbeddings = parseJsonl<ShardEmbedding>(files.get('embeddings.jsonl'))
-  const parsedSkosSchemes = parseJsonArray<ShardSkosScheme>(files.get('skos_schemes.json'))
-  const parsedSkosConcepts = parseJsonArray<ShardSkosConcept>(files.get('skos_concepts.json'))
-  const parsedSkosRelations = parseJsonl<ShardSkosRelation>(files.get('skos_relations.jsonl'))
-  const parsedNoteSkosTags = parseJsonl<ShardNoteSkosTag>(files.get('note_skos_tags.jsonl'))
-  const parsedProvenanceEdges = parseJsonl<ShardProvenanceEdge>(files.get('provenance_edges.jsonl'))
-  const parsedGraphSources = parseJsonArray<ShardGraphSource>(files.get('graph_sources.json'))
-  const parsedGraphEdges = parseJsonl<ShardGraphEdge>(files.get('graph_edges.jsonl'))
-  const parsedCommunitySets = parseJsonArray<ShardCommunitySet>(files.get('communities.json'))
-  const parsedCommunityAssignments = parseJsonl<ShardCommunityAssignment>(files.get('community_assignments.jsonl'))
+  const parsedEmbeddings = parseJsonlBytes<ShardEmbedding>(files.get('embeddings.jsonl'))
+  const parsedSkosSchemes = parseJsonArrayBytes<ShardSkosScheme>(files.get('skos_schemes.json'))
+  const parsedSkosConcepts = parseJsonArrayBytes<ShardSkosConcept>(files.get('skos_concepts.json'))
+  const parsedSkosRelations = parseJsonlBytes<ShardSkosRelation>(files.get('skos_relations.jsonl'))
+  const parsedNoteSkosTags = parseJsonlBytes<ShardNoteSkosTag>(files.get('note_skos_tags.jsonl'))
+  const parsedProvenanceEdges = parseJsonlBytes<ShardProvenanceEdge>(files.get('provenance_edges.jsonl'))
+  const parsedGraphSources = parseJsonArrayBytes<ShardGraphSource>(files.get('graph_sources.json'))
+  const parsedGraphEdges = parseJsonlBytes<ShardGraphEdge>(files.get('graph_edges.jsonl'))
+  const parsedCommunitySets = parseJsonArrayBytes<ShardCommunitySet>(files.get('communities.json'))
+  const parsedCommunityAssignments = parseJsonlBytes<ShardCommunityAssignment>(files.get('community_assignments.jsonl'))
 
   // Warn about unknown components
   const knownFiles = new Set([
@@ -220,7 +218,6 @@ export async function importShard(
     'links.jsonl',
     'embedding_sets.json',
     'embedding_set_members.jsonl',
-    'embedding_configs.json',
     'embeddings.jsonl',
     'templates.json',
     'skos_schemes.json',
@@ -663,20 +660,4 @@ export async function importShard(
     errors,
     duration_ms: performance.now() - start,
   }
-}
-
-// ── Parsing helpers ───────────────────────────────────────────────────────
-
-function parseJsonl<T>(data: Uint8Array | undefined): T[] {
-  if (!data || data.byteLength === 0) return []
-  const text = decoder.decode(data)
-  return text
-    .split('\n')
-    .filter((line) => line.trim().length > 0)
-    .map((line) => JSON.parse(line) as T)
-}
-
-function parseJsonArray<T>(data: Uint8Array | undefined): T[] {
-  if (!data || data.byteLength === 0) return []
-  return JSON.parse(decoder.decode(data)) as T[]
 }

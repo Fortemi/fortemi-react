@@ -26,6 +26,7 @@ import type {
 import { CURRENT_SHARD_VERSION } from './types.js'
 import { noteFromShard, type BrowserNoteExport } from './field-mapper.js'
 import { unpackTarGz } from './shard-tar.js'
+import { parseJsonArrayBytes, parseJsonlBytes } from './parse.js'
 
 const decoder = new TextDecoder()
 
@@ -48,19 +49,6 @@ export function assertSafeComponentName(filename: string): void {
   ) {
     throw new Error(`Refusing to read unsafe shard component path: ${JSON.stringify(filename)}`)
   }
-}
-
-function parseJsonlBytes<T>(data: Uint8Array | undefined): T[] {
-  if (!data || data.byteLength === 0) return []
-  return decoder.decode(data)
-    .split('\n')
-    .filter((line) => line.trim().length > 0)
-    .map((line) => JSON.parse(line) as T)
-}
-
-function parseJsonArrayBytes<T>(data: Uint8Array | undefined): T[] {
-  if (!data || data.byteLength === 0) return []
-  return JSON.parse(decoder.decode(data)) as T[]
 }
 
 /** The public note shape — the same browser-insertable record `importShard` produces. */
