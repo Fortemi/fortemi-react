@@ -24,7 +24,7 @@ import {
 import { SearchRepository } from '../repositories/search-repository.js'
 import { cosineSimilarity, suggestTags } from '../capabilities/auto-tag.js'
 import { setLlmFunction, getLlmFunction } from '../capabilities/llm-handler.js'
-import { titleGenerationHandler } from '../job-queue-worker.js'
+import { conceptTaggingHandler, linkingHandler, titleGenerationHandler } from '../job-queue-worker.js'
 
 // ---------------------------------------------------------------------------
 // Mock embed function — deterministic, normalized 384-dim vectors
@@ -177,6 +177,7 @@ describe('embeddingGenerationHandler', () => {
 
   afterEach(async () => {
     setEmbedFunction(null)
+    setLlmFunction(null)
     await db.close()
   })
 
@@ -187,11 +188,32 @@ describe('embeddingGenerationHandler', () => {
     expect(result).toMatchObject({ skipped: true, reason: 'no embed function registered' })
   })
 
-  it('throws when note has no revised content', async () => {
+  it('skips when note has no revised content', async () => {
     const noteId = await insertNote(db) // no content
-    await expect(embeddingGenerationHandler(makeJob(noteId), db)).rejects.toThrow(
-      `No content for note ${noteId}`,
-    )
+    await expect(embeddingGenerationHandler(makeJob(noteId), db)).resolves.toMatchObject({ skipped: true })
+  })
+
+  it('does not embed a soft-deleted note', async () => {
+    const noteId = await insertNote(db, 'Deleted content must not be embedded')
+    await db.query('UPDATE note SET deleted_at = now() WHERE id = $1', [noteId])
+
+    await expect(embeddingGenerationHandler(makeJob(noteId), db)).resolves.toMatchObject({ skipped: true })
+    const embeddings = await db.query('SELECT id FROM embedding WHERE note_id = $1', [noteId])
+    expect(embeddings.rows).toEqual([])
+  })
+
+  it('does not concept-tag or semantically link a soft-deleted note', async () => {
+    const noteId = await insertNote(db, 'Deleted enrichment target')
+    await embeddingGenerationHandler(makeJob(noteId), db)
+    const llm = vi.fn(async () => 'deleted topic')
+    setLlmFunction(llm)
+    await db.query('UPDATE note SET deleted_at = now() WHERE id = $1', [noteId])
+
+    await expect(conceptTaggingHandler(makeJob(noteId), db)).resolves.toMatchObject({ skipped: true })
+    await expect(linkingHandler(makeJob(noteId), db)).resolves.toMatchObject({ skipped: true })
+    expect(llm).not.toHaveBeenCalled()
+    expect((await db.query('SELECT id FROM note_tag WHERE note_id = $1', [noteId])).rows).toEqual([])
+    expect((await db.query('SELECT id FROM link WHERE source_note_id = $1 OR target_note_id = $1', [noteId])).rows).toEqual([])
   })
 
   it('creates an embedding row in the database', async () => {
@@ -241,6 +263,22 @@ describe('embeddingGenerationHandler', () => {
     const embeddedText = capturedInputs.flat().join('\n')
     expect(embeddedText).toContain('Attachment OCR embedding text')
     expect(embeddedText).not.toContain('RAW-BINARY-SENTINEL')
+  })
+
+  it('excludes soft-deleted attachment text from embedding input', async () => {
+    const capturedInputs: string[][] = []
+    setEmbedFunction(async (texts) => { capturedInputs.push(texts); return mockEmbed(texts) })
+    const noteId = await insertNote(db, 'Active note body')
+    await db.query(`INSERT INTO attachment_blob (id, content_hash, size_bytes) VALUES ('blob-deleted', 'sha256:deleted', 1)`)
+    await db.query(
+      `INSERT INTO attachment (id, note_id, blob_id, filename, mime_type, extracted_text, deleted_at)
+       VALUES ('att-deleted', $1, 'blob-deleted', 'deleted.pdf', 'application/pdf', 'DELETED OCR SENTINEL', now())`,
+      [noteId],
+    )
+
+    await embeddingGenerationHandler(makeJob(noteId), db)
+    expect(capturedInputs.flat().join('\n')).toContain('Active note body')
+    expect(capturedInputs.flat().join('\n')).not.toContain('DELETED OCR SENTINEL')
   })
 
   it('creates an embedding_set_member row', async () => {
