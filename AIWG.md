@@ -3,7 +3,6 @@
 <!-- AIWG.md is the CLAUDE.md companion for non-Claude providers; same content. -->
 
 
-
 This file provides guidance to Claude Code when working with this codebase.
 
 ## Repository Purpose
@@ -17,27 +16,30 @@ fortemi-react is the React port of the fortemi knowledge management server (Rust
 - **UI**: React 19.2.4
 - **Database**: PGlite 0.4.1 (PostgreSQL WASM) with pgvector
 - **Build**: Vite 7.3.1, pnpm 10.6.5 workspaces
-- **Test**: Vitest 4.1.0 (813+ tests, 40 test files), Playwright 1.52.x (E2E)
+- **Test**: Vitest 4.1.0 (991 core tests across 54 files; + graph & react suites), Playwright 1.52.x (E2E)
 - **Lint**: ESLint 9.x (flat config) + typescript-eslint v8
 - **AI**: transformers.js (embeddings), WebLLM (local LLM), InferenceProvider system (remote + local + fallback)
 - **License**: AGPL-3.0-only
 - **Versioning**: CalVer YYYY.M.PATCH (no leading zeros)
-- **Current version**: 2026.6.4
+- **Current version**: 2026.7.3
 
 ## Monorepo Structure
 
 ```
 packages/core/       @fortemi/core — headless data layer (PGlite, repos, tools, workers, migrations, shard)
-packages/react/      @fortemi/react — React hooks, FortemiProvider
+packages/graph/      @fortemi/graph — framework-agnostic graph add-on (layout, filter, color, degree, bounds, neighborhood, snapshot, GraphController); depends on @fortemi/core, no React
+packages/react/      @fortemi/react — React hooks, FortemiProvider, GraphView (uses @fortemi/graph)
 apps/standalone/     @fortemi/standalone — Vite demo app (private, not published)
 ```
+
+Dependency direction (linear chain, no cycles): `@electric-sql/pglite` ← `@fortemi/core` ← `@fortemi/graph` ← `@fortemi/react`. `@fortemi/core` is the base and never depends on graph; `@fortemi/graph` depends on core (for `GraphController` and shared graph types) and is consumed by `@fortemi/react` and JS-only hosts.
 
 ## Development Commands
 
 ```bash
 pnpm dev              # Vite dev server on :5173
 pnpm build            # Build all packages
-pnpm test:core        # 813+ unit/integration tests (Vitest)
+pnpm test:core        # 991 unit/integration tests (Vitest)
 pnpm test:e2e         # E2E tests (Playwright, Chromium + Firefox)
 pnpm typecheck        # TypeScript strict across all packages
 pnpm lint             # ESLint
@@ -71,28 +73,29 @@ Test parallelism is capped at half available CPUs (PGlite WASM is CPU-heavy). Ov
 |------|---------|
 | `packages/core/src/index.ts` | All public exports from @fortemi/core |
 | `packages/core/src/job-queue-worker.ts` | Job queue with all server-compatible handlers |
-| `packages/core/src/migrations/` | 5 numbered migrations (schema must match server) |
+| `packages/core/src/migrations/` | 10 numbered migrations (schema must match server); `0010` adds attachment MIME and extracted-text metadata |
 | `packages/core/src/tools/` | 11 MCP tool functions (capture-knowledge, get-note, list-notes, manage-note, manage-tags, manage-collections, manage-links, manage-archive, manage-capabilities, manage-attachments, search) |
-| `packages/core/src/repositories/` | 7 data access repositories (notes, search, tags, collections, links, skos, attachments) |
-| `packages/core/src/capabilities/` | 13 files: InferenceProvider interface, ProviderRegistry, OpenAICompatibleProvider, FallbackRouter, local-discovery, gpu-detect, inference-detect, embedding-handler, llm-handler, semantic-loader, llm-loader, auto-tag, chunking |
-| `packages/core/src/shard/` | Knowledge Shard import/export: tar packaging, checksums, field-mapper, types |
+| `packages/core/src/repositories/` | 11 data access repositories (notes, search, tags, collections, links, skos, attachments, communities, graph, provenance, embedding-sets) |
+| `packages/core/src/capabilities/` | 14 files: InferenceProvider interface, ProviderRegistry, OpenAICompatibleProvider, FallbackRouter, local-discovery, gpu-detect, inference-detect, embedding-handler, embed-worker-transport, llm-handler, semantic-loader, llm-loader, auto-tag, chunking |
+| `packages/core/src/shard/` | Knowledge Shard import/export: tar packaging, checksums, field-mapper, types, and shard↔server conformance harness |
+| `packages/core/src/security/plugin-content.ts` | Validation and safety policy for plugin-provided content |
 | `packages/core/src/worker/` | PGlite worker protocol, client, and worker entry (single-writer serialization) |
 | `packages/core/src/service-worker/` | SW registration, route matching, and SW entry (MCP REST interception) |
 | `packages/react/src/FortemiProvider.tsx` | React context (db, events, archiveManager, capabilityManager, blobStore) |
-| `packages/react/src/hooks/` | 21 React hooks (notes, search, capabilities, job queue, import/export, inference) |
+| `packages/react/src/hooks/` | 30 hook modules exporting 30 hooks; `useFortemiContext` brings the package export surface to 31 hooks |
 | `apps/standalone/src/capabilities/setup.ts` | Real transformers.js + WebLLM wiring |
 | `.aiwg/` | SDLC documentation (SAD, ADRs, gates, plans, requirements) |
 
 ## Testing
 
 - **Format parity tests are the highest priority** — if they break, nothing ships
-- 40 test files in `packages/core/src/__tests__/` (including `format-parity/` and `shard/` subdirs)
-- E2E tests in `apps/standalone/e2e/` (smoke + loading suites, Playwright)
-- Coverage: 88% statements, 97% repository layer
+- 991 tests across 54 files in `packages/core/src/__tests__/` (including `format-parity/`, shard conformance, and `shard/` subdirs)
+- E2E tests in `apps/standalone/e2e/` (`smoke`, `loading`, and `webkit-compat`, Playwright)
+- Run `pnpm test:coverage` for current coverage; do not rely on hardcoded historical percentages.
 
 ## React Hooks Reference
 
-All 21 hooks exported from `@fortemi/react`:
+All 31 hooks exported from `@fortemi/react`:
 
 | Hook | Purpose |
 |------|---------|
@@ -117,6 +120,16 @@ All 21 hooks exported from `@fortemi/react`:
 | `useLocalDiscovery` | Local LLM server discovery (Ollama, LM Studio, etc.) |
 | `useEmbeddingPipeline` | Embedding pipeline lifecycle |
 | `useCapabilitySetup` | Unified capability wiring |
+| `useFortemiContext` | Access the FortemiProvider context (db, events, managers) |
+| `useGraphController` | Graph-source controller (mode selection + load dispatch) |
+| `useCommunities` | Graph community management (create, assign, summarize) |
+| `useSimilarityGraph` | Build a community graph from embedding similarity |
+| `useEmbeddingSets` | Named and virtual embedding set management |
+| `useEmbeddingWorker` | Embedding worker transport lifecycle |
+| `useShard` | Open and read a Knowledge Shard |
+| `useShardPrefetch` | Prefetch and cache a Knowledge Shard |
+| `useRemote` | Remote backend access (notes, search) |
+| `useAiwgIndex` | Query the AIWG artifact index and project it to a community graph |
 
 ## Browser Compatibility
 
@@ -205,6 +218,25 @@ Also run `aiwg discover` before declining an AIWG request as out of scope or inv
 ### Engagement Verification
 
 When a user asks whether AIWG is active or engaged in this project, run or read `aiwg status --probe --json` and report the result plainly: engaged state, project root, deployed provider files, installed frameworks/addons, and the next action from the probe. Do not add AIWG attribution, signatures, generated-by text, or passive footers to user files, commits, PRs, comments, code headers, or docs.
+
+### Tracker Authority Protocol
+
+- Source of truth: [.aiwg/aiwg.config](./.aiwg/aiwg.config)
+- Canonical tracker: `origin` (unknown; git@git.integrolabs.net:Fortemi/fortemi-react.git)
+- Primary repo remote: `origin`; CI remote: `origin`
+- Secondary/mirror remotes: github (backup-mirror)
+- Issue storage mode: not configured
+
+Tracker access order for issue, PR, release, and CI-sensitive tracker operations:
+1. MCP/app tools for the configured tracker.
+2. Tracker HTTP API with configured credentials.
+3. Tracker CLI for the configured tracker, after confirming authentication.
+4. Stop and report a blocker.
+
+- Project config decides tracker authority; installed/authenticated CLIs do not.
+- Git SSH remote access is repository sync, not issue-tracker API access.
+- Do not file on mirror or secondary remotes just because their CLI is authenticated.
+- Treat an unauthenticated tracker CLI as one failed access path, then continue probing MCP/app/API before blocking.
 
 ### Source Model
 
