@@ -461,7 +461,7 @@ export interface AiwgPrivacyFilterOptions {
 
 function isPrivacyExcluded(record: AiwgFortemiRecord, options?: AiwgPrivacyFilterOptions): boolean {
   const privacy = record.privacy
-  if (!privacy) return false
+  if (!privacy || !isPrivacyClassification(privacy.classification) || typeof privacy.pii !== 'boolean') return true
   if (privacy.classification === 'private' && !options?.includePrivate) return true
   if (privacy.pii && !options?.includePii) return true
   return false
@@ -840,7 +840,7 @@ export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidat
     if (!hasString(item.id)) errors.push('items[' + index + '].id is required')
     if (hasString(item.id) && ids.has(item.id)) errors.push('duplicate id: ' + item.id)
     if (hasString(item.id)) ids.add(item.id)
-    if (previousId && hasString(item.id) && previousId.localeCompare(item.id) > 0) {
+    if (previousId && hasString(item.id) && previousId > item.id) {
       errors.push('items must be sorted by id: ' + previousId + ' before ' + item.id)
     }
     if (hasString(item.id)) previousId = item.id
@@ -961,7 +961,7 @@ function validateProjectedRecords(items: Array<Partial<AiwgFortemiRecord>>): str
     if (!hasString(item.id)) errors.push('items[' + index + '].id is required')
     if (hasString(item.id) && ids.has(item.id)) errors.push('duplicate id: ' + item.id)
     if (hasString(item.id)) ids.add(item.id)
-    if (previousId && hasString(item.id) && previousId.localeCompare(item.id) > 0) {
+    if (previousId && hasString(item.id) && previousId > item.id) {
       errors.push('items must be sorted by id: ' + previousId + ' before ' + item.id)
     }
     if (hasString(item.id)) previousId = item.id
@@ -1262,6 +1262,7 @@ export function buildAiwgChunkedIndex(
   index: AiwgFortemiIndexExport,
   options: AiwgChunkedIndexBuildOptions = {},
 ): AiwgChunkedIndexBuildResult {
+  assertAiwgFortemiIndexExport(index)
   const partSize = hasPositiveInteger(options.partSize) ? options.partSize : 500
   const projection = options.projection
   const idEncoding = options.idEncoding ?? 'base64url'
@@ -1770,6 +1771,7 @@ function matchSetCacheKey(q: string, options: AiwgIndexQueryOptions): string {
     tags: options.tags ?? null,
     concepts: options.concepts ?? null,
     privacy: options.privacy ?? null,
+    searchProfile: options.searchProfile ?? null,
     rel: options.relationshipTargetId ?? null,
     weights: { ...DEFAULT_QUERY_WEIGHTS, ...options.weights },
   })
