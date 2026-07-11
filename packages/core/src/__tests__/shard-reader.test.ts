@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { openShard, assertSafeComponentName } from '../shard/shard-reader.js'
 import { createCosineSemanticProvider } from '../shard/semantic-providers.js'
 import { packTarGz } from '../shard/shard-tar.js'
-import { CURRENT_SHARD_VERSION, SHARD_FORMAT } from '../shard/types.js'
+import { compareShardVersions, CURRENT_SHARD_VERSION, SHARD_FORMAT } from '../shard/types.js'
+import { sha256Hex } from '../shard/checksum.js'
 import type {
   ShardClusterRef,
   ShardLink,
@@ -137,6 +138,13 @@ function clusteredShard(clusterSize = 2): { bytes: Uint8Array; clusters: ShardCl
 }
 
 describe('openShard — in-place read surface (monolithic)', () => {
+  it('validates packed component checksums before parsing', async () => {
+    const files = baseFiles(manifest({ checksums: { 'notes.jsonl': await sha256Hex(encoder.encode('different')) } }))
+    files.set('notes.jsonl', encoder.encode(JSON.stringify(NOTES[0])))
+    const reader = await openShard(packTarGz(files))
+    await expect(reader.listNotes()).rejects.toThrow(/Checksum validation failed.*notes\.jsonl/)
+  })
+
   it('browses with soft-delete excluded and archived included by default', async () => {
     const reader = await openShard(monolithicShard())
     const { items, total } = await reader.listNotes()
@@ -298,6 +306,24 @@ describe('openShard — static base URL source', () => {
     expect(requested).toContain('provenance_edges.jsonl')
     expect(requested).toContain('skos_relations.jsonl')
   })
+
+  it('rejects oversized and checksum-corrupt URL components', async () => {
+    const notes = encoder.encode(JSON.stringify(NOTES[0]))
+    const makeFetch = (m: ShardManifest) => (async (url: string | URL): Promise<Response> => {
+      const name = String(url).split('/').pop()
+      return new Response(name === 'manifest.json' ? JSON.stringify(m) : notes, { status: 200 })
+    }) as typeof fetch
+
+    const oversized = await openShard(
+      { baseUrl: 'https://cdn.example/shard', fetchImpl: makeFetch(manifest()) },
+      { maxComponentBytes: 8 },
+    )
+    await expect(oversized.listNotes()).rejects.toThrow(/exceeds cap/)
+
+    const corruptManifest = manifest({ checksums: { 'notes.jsonl': await sha256Hex(encoder.encode('different')) } })
+    const corrupt = await openShard({ baseUrl: 'https://cdn.example/shard', fetchImpl: makeFetch(corruptManifest) })
+    await expect(corrupt.listNotes()).rejects.toThrow(/Checksum validation failed.*notes\.jsonl/)
+  })
 })
 
 describe('openShard — pluggable semantic (cosine provider)', () => {
@@ -336,6 +362,11 @@ describe('openShard — reader version guard', () => {
     const files = baseFiles(manifest({ min_reader_version: '99.0.0' }))
     files.set('notes.jsonl', encoder.encode(NOTES.map((n) => JSON.stringify(n)).join('\n')))
     await expect(openShard(packTarGz(files))).rejects.toThrow(/requires reader version/)
+  })
+
+  it('compares multi-digit semver components numerically', () => {
+    expect(compareShardVersions('1.10.0', '1.9.0')).toBeGreaterThan(0)
+    expect(compareShardVersions('1.9.0', '1.10.0')).toBeLessThan(0)
   })
 })
 

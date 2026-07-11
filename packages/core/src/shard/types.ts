@@ -8,6 +8,18 @@
 export const CURRENT_SHARD_VERSION = '1.0.0'
 export const SHARD_FORMAT = 'matric-shard'
 
+/** Compare dotted numeric shard versions without lexicographic ordering bugs. */
+export function compareShardVersions(left: string, right: string): number {
+  const parse = (value: string) => value.split('.').map((part) => Number(/^\d+/.exec(part)?.[0] ?? 0))
+  const a = parse(left)
+  const b = parse(right)
+  for (let i = 0; i < Math.max(a.length, b.length); i += 1) {
+    const difference = (a[i] ?? 0) - (b[i] ?? 0)
+    if (difference !== 0) return difference < 0 ? -1 : 1
+  }
+  return 0
+}
+
 /** Components that can appear in a shard archive. */
 export type ShardComponent =
   | 'notes'

@@ -17,7 +17,7 @@ import {
 } from './field-mapper.js'
 import { generateId } from '../uuid.js'
 import { computeHash } from '../hash.js'
-import { CURRENT_SHARD_VERSION } from './types.js'
+import { compareShardVersions, CURRENT_SHARD_VERSION } from './types.js'
 import type {
   ShardManifest,
   ImportOptions,
@@ -154,7 +154,7 @@ export async function importShard(
   }
 
   // Version compatibility check
-  if (manifest.min_reader_version && manifest.min_reader_version > CURRENT_SHARD_VERSION) {
+  if (manifest.min_reader_version && compareShardVersions(manifest.min_reader_version, CURRENT_SHARD_VERSION) > 0) {
     return {
       success: false,
       counts,
@@ -247,10 +247,27 @@ export async function importShard(
 
   try {
     await db.transaction(async (tx) => {
+      const skipExisting = async (
+        key: keyof ImportCounts,
+        sql: string,
+        params: unknown[],
+      ): Promise<boolean> => {
+        if (strategy !== 'skip') return false
+        const existing = await tx.query(sql, params)
+        if (existing.rows.length === 0) return false
+        skipped[key] = (skipped[key] ?? 0) + 1
+        return true
+      }
+
       // Import collections first (notes may reference them)
       report?.({ phase: 'collections', done: 0, total: parsedCollections.length })
       for (const [index, shardCol] of parsedCollections.entries()) {
         const col = collectionFromShard(shardCol)
+        if (await skipExisting('collections', 'SELECT 1 FROM collection WHERE id = $1', [col.id])) {
+          report?.({ phase: 'collections', done: index + 1, total: parsedCollections.length })
+          await maybeYield(index + 1, batchSize)
+          continue
+        }
         if (strategy === 'replace') {
           await tx.query(
             `INSERT INTO collection (id, name, description, parent_id, created_at)
@@ -274,6 +291,11 @@ export async function importShard(
       report?.({ phase: 'notes', done: 0, total: parsedNotes.length })
       for (const [index, shardNote] of parsedNotes.entries()) {
         const note = noteFromShard(shardNote)
+        if (await skipExisting('notes', 'SELECT 1 FROM note WHERE id = $1', [note.id])) {
+          report?.({ phase: 'notes', done: index + 1, total: parsedNotes.length })
+          await maybeYield(index + 1, batchSize)
+          continue
+        }
         const contentHash = computeHash(new TextEncoder().encode(note.original_content))
 
         if (strategy === 'replace') {
@@ -371,6 +393,11 @@ export async function importShard(
       let doneSkos = 0
       report?.({ phase: 'skos', done: doneSkos, total: totalSkos })
       for (const scheme of parsedSkosSchemes) {
+        if (await skipExisting('skos_schemes', 'SELECT 1 FROM skos_scheme WHERE id = $1', [scheme.id])) {
+          report?.({ phase: 'skos', done: ++doneSkos, total: totalSkos })
+          await maybeYield(doneSkos, batchSize)
+          continue
+        }
         if (strategy === 'replace') {
           await tx.query(
             `INSERT INTO skos_scheme (id, title, description, created_at, updated_at)
@@ -391,6 +418,11 @@ export async function importShard(
       }
 
       for (const concept of parsedSkosConcepts) {
+        if (await skipExisting('skos_concepts', 'SELECT 1 FROM skos_concept WHERE id = $1', [concept.id])) {
+          report?.({ phase: 'skos', done: ++doneSkos, total: totalSkos })
+          await maybeYield(doneSkos, batchSize)
+          continue
+        }
         const altLabels = JSON.stringify(concept.alt_labels ?? [])
         if (strategy === 'replace') {
           await tx.query(
@@ -415,6 +447,11 @@ export async function importShard(
       report?.({ phase: 'links', done: 0, total: parsedLinks.length })
       for (const [index, shardLink] of parsedLinks.entries()) {
         const link = linkFromShard(shardLink)
+        if (await skipExisting('links', 'SELECT 1 FROM link WHERE id = $1', [link.id])) {
+          report?.({ phase: 'links', done: index + 1, total: parsedLinks.length })
+          await maybeYield(index + 1, batchSize)
+          continue
+        }
         if (strategy === 'replace') {
           await tx.query(
             `INSERT INTO link (id, source_note_id, target_note_id, link_type, confidence, created_at)
@@ -436,6 +473,11 @@ export async function importShard(
 
       // Import SKOS relations and note assignments after concepts and notes.
       for (const relation of parsedSkosRelations) {
+        if (await skipExisting('skos_relations', 'SELECT 1 FROM skos_concept_relation WHERE id = $1', [relation.id])) {
+          report?.({ phase: 'skos', done: ++doneSkos, total: totalSkos })
+          await maybeYield(doneSkos, batchSize)
+          continue
+        }
         if (strategy === 'replace') {
           await tx.query(
             `INSERT INTO skos_concept_relation (id, source_concept_id, target_concept_id, relation_type, created_at)
@@ -456,6 +498,11 @@ export async function importShard(
       }
 
       for (const tag of parsedNoteSkosTags) {
+        if (await skipExisting('note_skos_tags', 'SELECT 1 FROM note_skos_tag WHERE note_id = $1 AND concept_id = $2', [tag.note_id, tag.concept_id])) {
+          report?.({ phase: 'skos', done: ++doneSkos, total: totalSkos })
+          await maybeYield(doneSkos, batchSize)
+          continue
+        }
         await tx.query(
           `INSERT INTO note_skos_tag (id, note_id, concept_id, created_at)
            VALUES ($1, $2, $3, $4)
@@ -470,6 +517,11 @@ export async function importShard(
       // Import provenance edges.
       report?.({ phase: 'provenance', done: 0, total: parsedProvenanceEdges.length })
       for (const [index, edge] of parsedProvenanceEdges.entries()) {
+        if (await skipExisting('provenance_edges', 'SELECT 1 FROM provenance_edge WHERE id = $1', [edge.id])) {
+          report?.({ phase: 'provenance', done: index + 1, total: parsedProvenanceEdges.length })
+          await maybeYield(index + 1, batchSize)
+          continue
+        }
         const attributes = edge.attributes === null ? null : JSON.stringify(edge.attributes)
         if (strategy === 'replace') {
           await tx.query(
@@ -494,6 +546,11 @@ export async function importShard(
       report?.({ phase: 'embedding_sets', done: 0, total: parsedEmbSets.length })
       for (const [index, shardSet] of parsedEmbSets.entries()) {
         const set = embeddingSetFromShard(shardSet)
+        if (await skipExisting('embedding_sets', 'SELECT 1 FROM embedding_set WHERE id = $1', [set.id])) {
+          report?.({ phase: 'embedding_sets', done: index + 1, total: parsedEmbSets.length })
+          await maybeYield(index + 1, batchSize)
+          continue
+        }
         if (strategy === 'replace') {
           await tx.query(
             `INSERT INTO embedding_set (
@@ -523,6 +580,11 @@ export async function importShard(
       report?.({ phase: 'embeddings', done: 0, total: parsedEmbeddings.length })
       for (const [index, shardEmb] of parsedEmbeddings.entries()) {
         const emb = embeddingFromShard(shardEmb)
+        if (await skipExisting('embeddings', 'SELECT 1 FROM embedding WHERE id = $1', [emb.id])) {
+          report?.({ phase: 'embeddings', done: index + 1, total: parsedEmbeddings.length })
+          await maybeYield(index + 1, batchSize)
+          continue
+        }
         if (strategy === 'replace') {
           await tx.query(
             `INSERT INTO embedding (id, note_id, embedding_set_id, vector, created_at)
@@ -549,6 +611,11 @@ export async function importShard(
       let doneGraph = 0
       report?.({ phase: 'graph', done: doneGraph, total: totalGraph })
       for (const source of parsedGraphSources) {
+        if (await skipExisting('graph_sources', 'SELECT 1 FROM graph_source WHERE id = $1', [source.id])) {
+          report?.({ phase: 'graph', done: ++doneGraph, total: totalGraph })
+          await maybeYield(doneGraph, batchSize)
+          continue
+        }
         const parameters = source.parameters == null ? null : JSON.stringify(source.parameters)
         const freshness = JSON.stringify({ ...(source.freshness ?? {}), status: 'unknown' })
         await tx.query(
@@ -567,6 +634,15 @@ export async function importShard(
       }
 
       for (const edge of parsedGraphEdges) {
+        if (await skipExisting(
+          'graph_edges',
+          'SELECT 1 FROM graph_edge_artifact WHERE graph_source_id = $1 AND from_note_id = $2 AND to_note_id = $3 AND kind = $4',
+          [edge.graph_source_id, edge.from_note_id, edge.to_note_id, edge.kind],
+        )) {
+          report?.({ phase: 'graph', done: ++doneGraph, total: totalGraph })
+          await maybeYield(doneGraph, batchSize)
+          continue
+        }
         const metadata = edge.metadata == null ? null : JSON.stringify(edge.metadata)
         await tx.query(
           `INSERT INTO graph_edge_artifact (graph_source_id, from_note_id, to_note_id, weight, kind, rank, metadata_json)
@@ -587,7 +663,8 @@ export async function importShard(
       for (const set of parsedCommunitySets) {
         const parameters = set.parameters == null ? null : JSON.stringify(set.parameters)
         const freshness = JSON.stringify({ ...(set.freshness ?? {}), status: 'unknown' })
-        await tx.query(
+        const skippedSet = await skipExisting('community_sets', 'SELECT 1 FROM community_set WHERE id = $1', [set.id])
+        if (!skippedSet) await tx.query(
           `INSERT INTO community_set (id, graph_source_id, name, source_type, algorithm, parameters_json, input_hash, freshness_json, created_at)
            VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8::jsonb, $9)
            ${strategy === 'replace'
@@ -595,11 +672,16 @@ export async function importShard(
              : conflictClause}`,
           [set.id, set.graph_source_id, set.name, set.source_type, set.algorithm ?? null, parameters, set.input_hash, freshness, set.created_at],
         )
-        counts.community_sets++
+        if (!skippedSet) counts.community_sets++
         report?.({ phase: 'communities', done: ++doneCommunities, total: totalCommunities })
         await maybeYield(doneCommunities, batchSize)
 
         for (const community of set.communities ?? []) {
+          if (await skipExisting('communities', 'SELECT 1 FROM community WHERE community_set_id = $1 AND id = $2', [set.id, community.id])) {
+            report?.({ phase: 'communities', done: ++doneCommunities, total: totalCommunities })
+            await maybeYield(doneCommunities, batchSize)
+            continue
+          }
           const metadata = community.metadata == null ? null : JSON.stringify(community.metadata)
           await tx.query(
             `INSERT INTO community (community_set_id, id, label, rank, size, confidence, representative_note_ids, metadata_json)
@@ -616,6 +698,11 @@ export async function importShard(
       }
 
       for (const assignment of parsedCommunityAssignments) {
+        if (await skipExisting('community_assignments', 'SELECT 1 FROM community_assignment WHERE community_set_id = $1 AND note_id = $2', [assignment.community_set_id, assignment.note_id])) {
+          report?.({ phase: 'communities', done: ++doneCommunities, total: totalCommunities })
+          await maybeYield(doneCommunities, batchSize)
+          continue
+        }
         const metadata = assignment.metadata == null ? null : JSON.stringify(assignment.metadata)
         await tx.query(
           `INSERT INTO community_assignment (community_set_id, community_id, note_id, confidence, source_type, metadata_json)
@@ -633,6 +720,11 @@ export async function importShard(
       // Import embedding set members
       report?.({ phase: 'embedding_set_members', done: 0, total: parsedEmbMembers.length })
       for (const [index, member] of parsedEmbMembers.entries()) {
+        if (await skipExisting('embedding_set_members', 'SELECT 1 FROM embedding_set_member WHERE embedding_set_id = $1 AND note_id = $2', [member.embedding_set_id, member.note_id])) {
+          report?.({ phase: 'embedding_set_members', done: index + 1, total: parsedEmbMembers.length })
+          await maybeYield(index + 1, batchSize)
+          continue
+        }
         await tx.query(
           `INSERT INTO embedding_set_member (embedding_set_id, note_id, embedding_id)
            VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
