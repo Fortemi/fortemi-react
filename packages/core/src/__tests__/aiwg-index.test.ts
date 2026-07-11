@@ -1477,3 +1477,34 @@ describe('#239 validator conformance — v1/v2 forbiddance, enums, source gating
     expect(exported.source_export_schema_version).toBe('aiwg.fortemi.index.export.v2')
   })
 })
+
+describe('public validators reject hostile shapes without throwing (#288)', () => {
+  it.each([
+    ['non-array items', { ...index, items: {} }],
+    ['null item', { ...index, items: [null] }],
+    ['null chunk', { ...index, items: [{ ...index.items[0], chunks: [null] }] }],
+    ['null compatibility', { ...index, compatibility: null }],
+  ])('%s', (_name, value) => {
+    expect(() => validateAiwgFortemiIndexExport(value)).not.toThrow()
+    expect(validateAiwgFortemiIndexExport(value).valid).toBe(false)
+  })
+
+  it('rejects null manifest detail and part entries without throwing', () => {
+    const manifest = buildAiwgChunkedIndex(index).manifest
+    for (const value of [{ ...manifest, detail: null }, { ...manifest, parts: [null] }]) {
+      expect(() => validateAiwgFortemiChunkManifest(value)).not.toThrow()
+      expect(validateAiwgFortemiChunkManifest(value).valid).toBe(false)
+    }
+  })
+
+  it('rejects null projected records and static embeddings without throwing', () => {
+    const built = buildAiwgChunkedIndex(index, { projection: AIWG_SCAN_REQUIRED_FIELDS })
+    const projectedPart = { ...built.parts[0].part, items: [null] }
+    expect(() => validateAiwgFortemiChunkPart(projectedPart, built.manifest.parts[0], built.manifest)).not.toThrow()
+    expect(validateAiwgFortemiChunkPart(projectedPart, built.manifest.parts[0], built.manifest).valid).toBe(false)
+
+    const embeddingSet = { schema_version: 'aiwg.fortemi.embedding.set.v1', id: 'x', model: 'x', dimensions: 1, generated_at: new Date().toISOString(), granularity: 'record', embeddings: [null] }
+    expect(() => validateAiwgStaticEmbeddingSet(embeddingSet)).not.toThrow()
+    expect(validateAiwgStaticEmbeddingSet(embeddingSet).valid).toBe(false)
+  })
+})
