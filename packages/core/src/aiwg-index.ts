@@ -1013,7 +1013,7 @@ export function validateAiwgFortemiChunkPart(
       errors.push(...validateProjectedRecords(data.items).map((error) => 'items.' + error))
     } else {
       const validation = validateAiwgFortemiIndexExport({
-        schema_version: 'aiwg.fortemi.index.export.v1',
+        schema_version: manifest?.source_export_schema_version ?? 'aiwg.fortemi.index.export.v1',
         generated_at: manifest?.generated_at ?? '1970-01-01T00:00:00.000Z',
         source: manifest?.source ?? { repo: 'chunk', privacy: 'public' },
         items: data.items,

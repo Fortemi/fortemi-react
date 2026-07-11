@@ -1459,16 +1459,22 @@ describe('#239 validator conformance — v1/v2 forbiddance, enums, source gating
     expect(validateAiwgFortemiIndexExport(v2Ok).valid).toBe(true)
   })
 
-  it('E8 — chunked manifest carries the true source export version; review-decision reports it', () => {
+  it('E8 — chunked v2 source metadata survives validation, querying, and record loading', async () => {
     const v2Index: AiwgFortemiIndexExport = {
       ...index,
       schema_version: 'aiwg.fortemi.index.export.v2',
-      source: { repo: 'x/y', privacy: 'public' },
+      source: { repo: 'x/y', privacy: 'public', graph: { communities: 1 } },
       items: [v2Record('r', 'aiwg.skill')],
     }
     const built = buildAiwgChunkedIndex(v2Index)
     expect(built.manifest.source_export_schema_version).toBe('aiwg.fortemi.index.export.v2')
     expect(validateAiwgFortemiChunkManifest(built.manifest).valid).toBe(true)
+
+    const parts = new Map(built.parts.map(({ href, part }) => [href, part]))
+    const controller = createAiwgIndexController()
+    controller.loadChunkedIndex(built.manifest, async (part) => parts.get(part.href))
+    await expect(controller.queryChunked('')).resolves.toMatchObject({ total: 1 })
+    await expect(controller.getRecord('r')).resolves.toMatchObject({ id: 'r' })
 
     const exported = createAiwgReviewDecisionExport(
       { schema_version: built.manifest.source_export_schema_version ?? 'aiwg.fortemi.index.export.v1' },
