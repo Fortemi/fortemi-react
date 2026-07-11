@@ -142,6 +142,9 @@ export async function importShard(
   let manifest: ShardManifest
   try {
     manifest = JSON.parse(decoder.decode(manifestData))
+    if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
+      throw new Error('manifest must be a JSON object')
+    }
   } catch {
     return {
       success: false,
@@ -170,6 +173,13 @@ export async function importShard(
 
   // ── Step 3: Validate checksums ────────────────────────────────────────
   report?.({ phase: 'validate', done: 0, total: 1 })
+  if (!manifest.checksums || typeof manifest.checksums !== 'object') {
+    return {
+      success: false, counts, skipped, warnings,
+      errors: ['Invalid manifest.json: checksums must be an object'],
+      duration_ms: performance.now() - start,
+    }
+  }
   const checksumResult = await validateChecksums(manifest.checksums, files)
   if (!checksumResult.valid) {
     return {
@@ -187,29 +197,52 @@ export async function importShard(
   // Notes may be clustered (notes/000.jsonl, …) per the manifest layout (#189);
   // a monolithic notes.jsonl is the default. Concatenate clusters in offset order.
   const noteClusters = manifest.layout?.clusters?.notes
-  const parsedNotes = noteClusters && noteClusters.length > 0
-    ? [...noteClusters]
-        .sort((a, b) => a.offset - b.offset)
-        .flatMap((ref) => parseJsonl<ShardNote>(files.get(ref.href)))
-    : parseJsonl<ShardNote>(files.get('notes.jsonl'))
-  const parsedCollections = parseJsonArray<ShardCollection>(files.get('collections.json'))
-  // Tags are embedded in notes as arrays — the global tags.json is informational only
-  parseJsonArray<ShardTag>(files.get('tags.json')) // parsed for validation, not used directly
-  const parsedLinks = parseJsonl<ShardLink>(files.get('links.jsonl'))
-  const parsedEmbSets = parseJsonArray<ShardEmbeddingSet>(files.get('embedding_sets.json'))
-  const parsedEmbMembers = parseJsonl<ShardEmbeddingSetMember>(
-    files.get('embedding_set_members.jsonl'),
-  )
-  const parsedEmbeddings = parseJsonl<ShardEmbedding>(files.get('embeddings.jsonl'))
-  const parsedSkosSchemes = parseJsonArray<ShardSkosScheme>(files.get('skos_schemes.json'))
-  const parsedSkosConcepts = parseJsonArray<ShardSkosConcept>(files.get('skos_concepts.json'))
-  const parsedSkosRelations = parseJsonl<ShardSkosRelation>(files.get('skos_relations.jsonl'))
-  const parsedNoteSkosTags = parseJsonl<ShardNoteSkosTag>(files.get('note_skos_tags.jsonl'))
-  const parsedProvenanceEdges = parseJsonl<ShardProvenanceEdge>(files.get('provenance_edges.jsonl'))
-  const parsedGraphSources = parseJsonArray<ShardGraphSource>(files.get('graph_sources.json'))
-  const parsedGraphEdges = parseJsonl<ShardGraphEdge>(files.get('graph_edges.jsonl'))
-  const parsedCommunitySets = parseJsonArray<ShardCommunitySet>(files.get('communities.json'))
-  const parsedCommunityAssignments = parseJsonl<ShardCommunityAssignment>(files.get('community_assignments.jsonl'))
+  const parseComponent = <T>(name: string, parse: () => T): T => {
+    try { return parse() } catch (err) {
+      throw new Error(`${name}: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+  let parsedNotes: ShardNote[]
+  let parsedCollections: ShardCollection[]
+  let parsedLinks: ShardLink[]
+  let parsedEmbSets: ShardEmbeddingSet[]
+  let parsedEmbMembers: ShardEmbeddingSetMember[]
+  let parsedEmbeddings: ShardEmbedding[]
+  let parsedSkosSchemes: ShardSkosScheme[]
+  let parsedSkosConcepts: ShardSkosConcept[]
+  let parsedSkosRelations: ShardSkosRelation[]
+  let parsedNoteSkosTags: ShardNoteSkosTag[]
+  let parsedProvenanceEdges: ShardProvenanceEdge[]
+  let parsedGraphSources: ShardGraphSource[]
+  let parsedGraphEdges: ShardGraphEdge[]
+  let parsedCommunitySets: ShardCommunitySet[]
+  let parsedCommunityAssignments: ShardCommunityAssignment[]
+  try {
+    parsedNotes = parseComponent('notes', () => noteClusters && noteClusters.length > 0
+      ? [...noteClusters].sort((a, b) => a.offset - b.offset).flatMap((ref) => parseJsonl<ShardNote>(files.get(ref.href)))
+      : parseJsonl<ShardNote>(files.get('notes.jsonl')))
+    parsedCollections = parseComponent('collections.json', () => parseJsonArray<ShardCollection>(files.get('collections.json')))
+    parseComponent('tags.json', () => parseJsonArray<ShardTag>(files.get('tags.json')))
+    parsedLinks = parseComponent('links.jsonl', () => parseJsonl<ShardLink>(files.get('links.jsonl')))
+    parsedEmbSets = parseComponent('embedding_sets.json', () => parseJsonArray<ShardEmbeddingSet>(files.get('embedding_sets.json')))
+    parsedEmbMembers = parseComponent('embedding_set_members.jsonl', () => parseJsonl<ShardEmbeddingSetMember>(files.get('embedding_set_members.jsonl')))
+    parsedEmbeddings = parseComponent('embeddings.jsonl', () => parseJsonl<ShardEmbedding>(files.get('embeddings.jsonl')))
+    parsedSkosSchemes = parseComponent('skos_schemes.json', () => parseJsonArray<ShardSkosScheme>(files.get('skos_schemes.json')))
+    parsedSkosConcepts = parseComponent('skos_concepts.json', () => parseJsonArray<ShardSkosConcept>(files.get('skos_concepts.json')))
+    parsedSkosRelations = parseComponent('skos_relations.jsonl', () => parseJsonl<ShardSkosRelation>(files.get('skos_relations.jsonl')))
+    parsedNoteSkosTags = parseComponent('note_skos_tags.jsonl', () => parseJsonl<ShardNoteSkosTag>(files.get('note_skos_tags.jsonl')))
+    parsedProvenanceEdges = parseComponent('provenance_edges.jsonl', () => parseJsonl<ShardProvenanceEdge>(files.get('provenance_edges.jsonl')))
+    parsedGraphSources = parseComponent('graph_sources.json', () => parseJsonArray<ShardGraphSource>(files.get('graph_sources.json')))
+    parsedGraphEdges = parseComponent('graph_edges.jsonl', () => parseJsonl<ShardGraphEdge>(files.get('graph_edges.jsonl')))
+    parsedCommunitySets = parseComponent('communities.json', () => parseJsonArray<ShardCommunitySet>(files.get('communities.json')))
+    parsedCommunityAssignments = parseComponent('community_assignments.jsonl', () => parseJsonl<ShardCommunityAssignment>(files.get('community_assignments.jsonl')))
+  } catch (err) {
+    return {
+      success: false, counts, skipped, warnings,
+      errors: [`Failed to parse shard component: ${err instanceof Error ? err.message : String(err)}`],
+      duration_ms: performance.now() - start,
+    }
+  }
 
   // Warn about unknown components
   const knownFiles = new Set([
