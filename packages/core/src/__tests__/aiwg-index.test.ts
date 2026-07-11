@@ -1339,6 +1339,46 @@ describe('SEC1: prototype pollution via facet aggregation (#236)', () => {
     expect(({} as Record<string, unknown>).z).toBeUndefined()
     expect(result.facets['__proto__']).toEqual({ x: 1 })
   })
+
+  it.each(['constructor', '__proto__', 'toString'])('counts exotic record type %s as plain data', (type) => {
+    const result = validateAiwgFortemiIndexExport({
+      ...index,
+      items: [record('sec1-type', type, 'Exotic type', 'body')],
+    })
+
+    expect(result.counts[type]).toBe(1)
+    expect(typeof result.counts[type]).toBe('number')
+  })
+
+  it.each(['constructor', '__proto__', 'toString'])('keeps graph weights numeric for relationship type %s', (type) => {
+    const source = record('a', 'aiwg.skill', 'A', 'body', {
+      relationships: [
+        { type, target_id: 'b' },
+        { type, target_id: 'b' },
+      ],
+    })
+    const target = record('b', 'aiwg.skill', 'B', 'body')
+    const graph = aiwgFortemiIndexToCommunityGraph(
+      { ...index, items: [source, target] },
+      { relationshipWeights: JSON.parse(`{"${type}":2}`) as Record<string, number> },
+    )
+
+    expect(graph.edges).toEqual([{ source: 'a', target: 'b', kind: type, weight: 4 }])
+    expect(Number.isFinite(graph.edges[0]?.weight)).toBe(true)
+  })
+
+  it('defaults inherited and non-finite relationship weights to a finite number', () => {
+    const source = record('a', 'aiwg.skill', 'A', 'body', {
+      relationships: [{ type: 'constructor', target_id: 'b' }, { type: 'bad', target_id: 'b' }],
+    })
+    const graph = aiwgFortemiIndexToCommunityGraph(
+      { ...index, items: [source, record('b', 'aiwg.skill', 'B', 'body')] },
+      { relationshipWeights: { bad: Number.NaN } },
+    )
+
+    expect(graph.edges.map((edge) => edge.weight)).toEqual([1, 1])
+    expect(graph.edges.every((edge) => Number.isFinite(edge.weight))).toBe(true)
+  })
 })
 
 describe('SEC6: privacy/PII filtered at generation (#243)', () => {
