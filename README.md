@@ -2,9 +2,9 @@
 
 # fortemi-react
 
-**Local-first knowledge management for the browser — real PostgreSQL, private by default, no cloud required.**
+**The browser edition of the Fortémi intelligent-database stack — the same normalized data model, client-side, local-first, private by default.**
 
-Build notebooks, research tools, and AI-powered knowledge apps where the data lives on the user's device, search runs locally, and any cloud or AI provider is opt-in and yours to choose. Full PostgreSQL in the browser (PGlite + pgvector), typed React 19 hooks, and portable Knowledge Shard archives — no backend, no account, no lock-in.
+Run the Fortémi schema entirely in the browser: real PostgreSQL (PGlite + pgvector) with 100% JSON format parity with the Fortémi server, typed React 19 hooks, and portable Knowledge Shard archives. Build notebooks, research tools, and AI-powered knowledge apps where the data lives on the user's device, search runs locally, and any cloud or AI provider is opt-in and yours to choose — no backend, no account, no lock-in.
 
 ```bash
 pnpm add @fortemi/core @fortemi/react
@@ -19,15 +19,25 @@ pnpm dev
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
 [![Built with aiwg](https://img.shields.io/npm/v/aiwg?label=built%20with%20aiwg&color=CB3837&logo=npm&style=flat-square)](https://www.npmjs.com/package/aiwg)
 
-[**Why**](#why-fortemi-react) · [**Get Started**](#quick-start) · [**Packages**](#packages) · [**Features**](#what-you-get) · [**AI Capabilities**](#ai-capabilities) · [**Documentation**](#documentation) · [**License**](#license)
+[**What Fortémi Is**](#what-fortémi-is) · [**Why**](#why-fortemi-react) · [**Get Started**](#quick-start) · [**Packages**](#packages) · [**Features**](#what-you-get) · [**AI Capabilities**](#ai-capabilities) · [**Documentation**](#documentation) · [**License**](#license)
 
 </div>
 
 ---
 
+## What Fortémi Is
+
+Fortémi is an intelligent database for AI-ready applications: a normalized data schema plus data-science and processing tooling that turns messy organizational data into searchable, linkable, provenance-aware structures. The same schema runs across the server, browser edition, and HotM sidecar, giving teams a common substrate for complex, data-rich, compute-heavy applications while keeping deployment affordable on local, edge, or hosted infrastructure.
+
+**fortemi-react is the browser edition of that stack.** It runs the same normalized schema in PGlite/pgvector with 100% JSON format parity — the full read/write/search core plus an opt-in, sandbox-limited slice of on-device inference. Knowledge management is one use case built on the substrate, not the whole product. What the browser edition uniquely adds: the data never has to leave the device. Local-first and private-by-default stay the headline differentiators.
+
+### Fortémi (product) vs `@fortemi/core` (embeddable library)
+
+`@fortemi/core` is an embeddable library — the headless data layer other tools build on. (For example, it is AIWG's default index and discovery backend, reading from a static local cache.) A tool that embeds `@fortemi/core` is **not running Fortémi**: it is using the library's schema and query surface inside its own process, and the library ships no data anywhere by default. Fortémi the product is the full stack — the server or this browser edition — with its job pipeline, capability system, and portable archives.
+
 ## Why fortemi-react
 
-Most knowledge tools make you choose: capable but cloud-bound, or private but primitive. fortemi-react refuses the trade-off — it runs a full PostgreSQL engine *inside the browser*, so data never has to leave the device to be searchable, structured, and AI-ready.
+Most in-browser data stacks make you choose: capable but cloud-bound, or private but primitive. fortemi-react refuses the trade-off — it runs a full PostgreSQL engine *inside the browser*, so data never has to leave the device to be searchable, structured, and AI-ready.
 
 - **Private by default.** Notes live in the browser on the user's device — no server, no sync service, no cloud backup, no account. The only thing that ever leaves the device is a cloud AI call you explicitly opt into.
 - **Capable, not toy-grade.** Real PostgreSQL with `tsvector` full-text, pgvector HNSW semantic search, and BM25 reciprocal-rank fusion — production-grade retrieval that stays fast as an archive grows, entirely client-side.
