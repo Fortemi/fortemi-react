@@ -803,7 +803,7 @@ function forbidV2FieldsOnV1Record(item: Partial<AiwgFortemiRecord>, index: numbe
 
 export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidationResult {
   const errors: string[] = []
-  const counts: Partial<Record<string, number>> = {}
+  const counts: Partial<Record<string, number>> = Object.create(null)
   const data = value as Partial<AiwgFortemiIndexExport>
 
   if (!isSupportedIndexSchemaVersion(data?.schema_version)) {
@@ -2388,14 +2388,19 @@ export function aiwgFortemiIndexToCommunityGraph(
   options: AiwgIndexGraphOptions = {},
 ) {
   const ids = new Set(index.items.map((item) => item.id))
-  const relationshipWeights = options.relationshipWeights ?? {}
+  const relationshipWeights = options.relationshipWeights ?? Object.create(null)
   const edgeCounts = new Map<string, { source: string; target: string; kind: string; weight: number }>()
 
   for (const item of index.items) {
     for (const relationship of item.relationships) {
       if (!ids.has(relationship.target_id) && !options.includeDanglingRelationships) continue
       const kind = relationship.type
-      const baseWeight = relationshipWeights[kind] ?? 1
+      const configuredWeight = Object.prototype.hasOwnProperty.call(relationshipWeights, kind)
+        ? relationshipWeights[kind]
+        : undefined
+      const baseWeight = typeof configuredWeight === 'number' && Number.isFinite(configuredWeight)
+        ? configuredWeight
+        : 1
       const key = `${item.id}\u0000${relationship.target_id}\u0000${kind}`
       const existing = edgeCounts.get(key)
       if (existing) existing.weight += baseWeight
