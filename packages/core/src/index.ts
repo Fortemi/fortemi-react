@@ -92,6 +92,24 @@ export type { FortemiCore, FortemiConfig } from './create-fortemi.js'
 
 export { computeHash } from './hash.js'
 
+export {
+  FORTEMI_COMPATIBILITY_PATH,
+  FORTEMI_COMPATIBILITY_STATES,
+  FORTEMI_REQUIRED_COMPATIBILITY_CAPABILITIES,
+  fortemiCompatibilityUrl,
+  validateFortemiCompatibilityResponse,
+  fetchAndValidateFortemiCompatibility,
+  formatFortemiCompatibilitySummary,
+} from './server-compatibility.js'
+export type {
+  FetchFortemiCompatibilityOptions,
+  FortemiCompatibilityCapability,
+  FortemiCompatibilityResponse,
+  FortemiCompatibilityState,
+  FortemiCompatibilityValidationResult,
+  FortemiRequiredCompatibilityCapability,
+} from './server-compatibility.js'
+
 export { registerServiceWorker } from './service-worker/register.js'
 export type { SWRegistrationResult } from './service-worker/register.js'
 
@@ -332,14 +350,17 @@ export {
   noteToShard,
   noteFromShard,
   linkToShard,
+  urlLinkToShard,
   linkFromShard,
   collectionToShard,
   collectionFromShard,
   tagsToShard,
   tagsFromShard,
+  templateToShard,
   embeddingSetToShard,
   embeddingSetFromShard,
   embeddingSetMemberToShard,
+  embeddingConfigToShard,
   embeddingToShard,
   embeddingFromShard,
   skosSchemeToShard,
@@ -349,6 +370,11 @@ export {
   provenanceEdgeToShard,
   exportShard,
   importShard,
+  getKnowledgeShardSchema,
+  validateShardArchive,
+  validateShardManifest,
+  validateShardComponentRecord,
+  assertShardComponentRecord,
   openShard,
   createCosineSemanticProvider,
   prefetchShard,
@@ -357,6 +383,7 @@ export {
   getPrefetchedSha256,
   clearPrefetchedShard,
 } from './shard/index.js'
+export type { ShardSchemaValidationResult } from './shard/index.js'
 export type {
   ShardReader,
   ShardReaderSource,
@@ -388,9 +415,11 @@ export type {
   ShardNote,
   ShardCollection,
   ShardTag,
+  ShardTemplate,
   ShardLink,
   ShardEmbeddingSet,
   ShardEmbeddingSetMember,
+  ShardEmbeddingConfig,
   ShardEmbedding,
   ShardSkosScheme,
   ShardSkosConcept,

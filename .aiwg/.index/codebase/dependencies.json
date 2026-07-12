@@ -1,0 +1,6 @@
+{
+  "tools/release/create-repo-release.mjs": {
+    "upstream": [],
+    "downstream": []
+  }
+}

@@ -8,14 +8,21 @@
 export const CURRENT_SHARD_VERSION = '1.0.0'
 export const SHARD_FORMAT = 'matric-shard'
 
-/** Compare dotted numeric shard versions without lexicographic ordering bugs. */
+function parseVersion(value: string): number[] {
+  return value.split('.').map((segment) => {
+    const match = segment.match(/^\d+/)
+    return match ? Number.parseInt(match[0], 10) : 0
+  })
+}
+
 export function compareShardVersions(left: string, right: string): number {
-  const parse = (value: string) => value.split('.').map((part) => Number(/^\d+/.exec(part)?.[0] ?? 0))
-  const a = parse(left)
-  const b = parse(right)
-  for (let i = 0; i < Math.max(a.length, b.length); i += 1) {
-    const difference = (a[i] ?? 0) - (b[i] ?? 0)
-    if (difference !== 0) return difference < 0 ? -1 : 1
+  const leftParts = parseVersion(left)
+  const rightParts = parseVersion(right)
+  const length = Math.max(leftParts.length, rightParts.length)
+  for (let index = 0; index < length; index += 1) {
+    const leftValue = leftParts[index] ?? 0
+    const rightValue = rightParts[index] ?? 0
+    if (leftValue !== rightValue) return leftValue > rightValue ? 1 : -1
   }
   return 0
 }
@@ -25,6 +32,7 @@ export type ShardComponent =
   | 'notes'
   | 'collections'
   | 'tags'
+  | 'templates'
   | 'links'
   | 'embedding_sets'
   | 'embedding_set_members'
@@ -48,10 +56,13 @@ export interface ShardAttachmentReference {
   bytes: number
 }
 
-export interface ShardBinarySource {
-  extracted_text: string
+export interface ShardAttachmentProjection {
+  extracted_text: string | null
   attachment: ShardAttachmentReference
 }
+
+/** @deprecated Legacy React shard field name. Server shards use `attachments`. */
+export type ShardBinarySource = ShardAttachmentProjection
 
 /**
  * Reference to one cluster file of a component split across addressable files
@@ -75,6 +86,14 @@ export interface ShardLayout {
   clusters?: Partial<Record<ShardComponent, ShardClusterRef[]>>
 }
 
+export interface ShardMigrationHistoryEntry {
+  from_version: string
+  to_version: string
+  migrated_at: string
+  migrated_by: string
+  changes: string[]
+}
+
 /** Manifest included in every shard as manifest.json. */
 export interface ShardManifest {
   version: string
@@ -85,6 +104,8 @@ export interface ShardManifest {
   counts: Partial<Record<ShardComponent | 'community_sets', number>>
   checksums: Record<string, string> // filename → sha256 hex
   min_reader_version: string
+  migrated_from?: string | null
+  migration_history?: ShardMigrationHistoryEntry[]
   /** Clustered component layout for partial fetch (issue #189). Absent → monolithic. */
   layout?: ShardLayout
 }
@@ -127,9 +148,11 @@ export type ImportProgressPhase =
   | 'collections'
   | 'notes'
   | 'skos'
+  | 'templates'
   | 'links'
   | 'provenance'
   | 'embedding_sets'
+  | 'embedding_configs'
   | 'embeddings'
   | 'embedding_set_members'
   | 'graph'
@@ -146,9 +169,11 @@ export interface ImportProgress {
 export interface ImportCounts {
   notes: number
   collections: number
+  templates: number
   tags: number
   links: number
   embedding_sets: number
+  embedding_configs: number
   embedding_set_members: number
   embeddings: number
   skos_schemes: number
@@ -181,6 +206,9 @@ export interface ShardNote {
   title: string | null
   original_content: string
   revised_content: string | null
+  collection_id?: string | null
+  attachments?: ShardAttachmentProjection[]
+  /** @deprecated Legacy React shard field name. Use `attachments`. */
   binary_sources?: ShardBinarySource[]
   format: string
   source: string
@@ -208,22 +236,42 @@ export interface ShardTag {
   created_at: string
 }
 
+/** Template as serialized in the shard JSON array. */
+export interface ShardTemplate {
+  id: string
+  name: string
+  description: string | null
+  content: string
+  format: string
+  default_tags: string[]
+  collection_id: string | null
+  created_at: string
+  updated_at: string
+}
+
 /** Link as serialized in the shard JSONL. */
 export interface ShardLink {
   id: string
   from_note_id: string
-  to_note_id: string
+  to_note_id: string | null
+  to_url: string | null
   kind: string
   score: number | null
   created_at: string
-  metadata?: Record<string, unknown>
+  metadata: Record<string, unknown> | null
 }
 
 /** Embedding set as serialized in the shard JSON array. */
 export interface ShardEmbeddingSet {
   id: string
-  name?: string
-  purpose?: string | null
+  name: string
+  slug: string | null
+  description: string | null
+  purpose: string | null
+  document_count: number
+  embedding_count: number
+  is_system: boolean
+  keywords: string[]
   model: string
   dimension: number
   kind?: 'physical' | 'filter' | 'virtual'
@@ -234,7 +282,7 @@ export interface ShardEmbeddingSet {
   compatibility?: Record<string, unknown> | null
   materialization?: Record<string, unknown> | null
   freshness?: ShardArtifactFreshness | null
-  created_at: string
+  created_at?: string
   updated_at?: string
 }
 
@@ -242,16 +290,37 @@ export interface ShardEmbeddingSet {
 export interface ShardEmbeddingSetMember {
   embedding_set_id: string
   note_id: string
-  embedding_id: string
+  /** Legacy React shard field; new exports use server membership metadata instead. */
+  embedding_id?: string
+  membership_type: string
+  added_at: string
+  added_by: string | null
+}
+
+/** Embedding config as serialized in the shard JSON array. */
+export interface ShardEmbeddingConfig {
+  id: string
+  name: string
+  description: string | null
+  model: string
+  dimension: number
+  chunk_size: number
+  chunk_overlap: number
+  is_default: boolean
 }
 
 /** Embedding as serialized in the shard JSONL. */
 export interface ShardEmbedding {
   id: string
   note_id: string
-  embedding_set_id: string
+  chunk_index: number
+  text: string
   vector: number[]
-  created_at: string
+  model: string
+  /** React shard extension used to preserve local embedding-set scoping. */
+  embedding_set_id?: string
+  /** React shard extension used to preserve local creation ordering. */
+  created_at?: string
 }
 
 

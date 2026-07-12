@@ -8,8 +8,11 @@ import {
   collectionFromShard,
   tagsToShard,
   tagsFromShard,
+  templateToShard,
   embeddingSetToShard,
   embeddingSetFromShard,
+  embeddingSetMemberToShard,
+  embeddingConfigToShard,
   embeddingToShard,
   embeddingFromShard,
 } from '../../shard/field-mapper.js'
@@ -56,10 +59,11 @@ describe('field-mapper: notes', () => {
     expect(shard.tags).toEqual(['science', 'physics'])
   })
 
-  it('round-trips: browser → shard → browser produces identical data', () => {
+  it('round-trips: browser → shard → browser preserves browser note fields', () => {
     const shard = noteToShard(browserNote)
     const roundTripped = noteFromShard(shard)
-    expect(roundTripped).toEqual(browserNote)
+    expect(roundTripped).toMatchObject(browserNote)
+    expect(roundTripped.collection_id).toBeNull()
   })
 
   it('handles Date objects for timestamps', () => {
@@ -190,6 +194,34 @@ describe('field-mapper: tags', () => {
   })
 })
 
+describe('field-mapper: templates', () => {
+  it('exports templates with server field names', () => {
+    const shard = templateToShard({
+      id: 'tmpl-1',
+      name: 'Research brief',
+      description: null,
+      content: 'Body',
+      format: 'markdown',
+      default_tags: '["research","brief"]',
+      collection_id: 'col-1',
+      created_at: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-02T00:00:00.000Z',
+    })
+
+    expect(shard).toEqual({
+      id: 'tmpl-1',
+      name: 'Research brief',
+      description: null,
+      content: 'Body',
+      format: 'markdown',
+      default_tags: ['research', 'brief'],
+      collection_id: 'col-1',
+      created_at: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-02T00:00:00.000Z',
+    })
+  })
+})
+
 describe('field-mapper: embeddings', () => {
   it('renames model_name → model and dimensions → dimension', () => {
     const set = {
@@ -201,6 +233,16 @@ describe('field-mapper: embeddings', () => {
     const shard = embeddingSetToShard(set)
     expect(shard.model).toBe('all-MiniLM-L6-v2')
     expect(shard.dimension).toBe(384)
+    expect(shard).toMatchObject({
+      name: 'all-MiniLM-L6-v2',
+      slug: 'all-minilm-l6-v2',
+      description: null,
+      purpose: null,
+      document_count: 0,
+      embedding_count: 0,
+      is_system: false,
+      keywords: [],
+    })
     expect(shard).not.toHaveProperty('model_name')
     expect(shard).not.toHaveProperty('dimensions')
   })
@@ -208,14 +250,84 @@ describe('field-mapper: embeddings', () => {
   it('round-trips embedding set fields', () => {
     const set = {
       id: 'es-1',
+      name: 'Default',
+      slug: 'default',
+      description: 'Primary embedding set',
+      purpose: 'General semantic search',
+      document_count: 2,
+      embedding_count: 1,
+      is_system: true,
+      keywords_json: '["all","default"]',
       model_name: 'all-MiniLM-L6-v2',
       dimensions: 384,
       created_at: '2026-01-01T00:00:00.000Z',
     }
     const shard = embeddingSetToShard(set)
-    const back = embeddingSetFromShard(shard)
+    const back = embeddingSetFromShard(shard, '2026-01-15T10:00:00.000Z')
+    expect(shard).toMatchObject({
+      name: 'Default',
+      slug: 'default',
+      description: 'Primary embedding set',
+      purpose: 'General semantic search',
+      document_count: 2,
+      embedding_count: 1,
+      is_system: true,
+      keywords: ['all', 'default'],
+    })
+    expect(back).toMatchObject({
+      slug: 'default',
+      description: 'Primary embedding set',
+      purpose: 'General semantic search',
+      document_count: 2,
+      embedding_count: 1,
+      is_system: true,
+      keywords_json: '["all","default"]',
+    })
     expect(back.model_name).toBe('all-MiniLM-L6-v2')
     expect(back.dimensions).toBe(384)
+  })
+
+  it('exports embedding set members with server membership metadata', () => {
+    const shard = embeddingSetMemberToShard({
+      embedding_set_id: 'es-1',
+      note_id: 'note-1',
+      membership_type: 'auto',
+      added_at: '2026-01-01T00:00:00.000Z',
+      added_by: null,
+    })
+
+    expect(shard).toEqual({
+      embedding_set_id: 'es-1',
+      note_id: 'note-1',
+      membership_type: 'auto',
+      added_at: '2026-01-01T00:00:00.000Z',
+      added_by: null,
+    })
+    expect(shard).not.toHaveProperty('embedding_id')
+  })
+
+  it('exports embedding configs with server field names', () => {
+    const shard = embeddingConfigToShard({
+      id: 'cfg-1',
+      name: 'default',
+      description: null,
+      model: 'nomic-embed-text',
+      dimension: 768,
+      chunk_size: 1500,
+      chunk_overlap: 200,
+      is_default: true,
+    })
+
+    expect(shard).toEqual({
+      id: 'cfg-1',
+      name: 'default',
+      description: null,
+      model: 'nomic-embed-text',
+      dimension: 768,
+      chunk_size: 1500,
+      chunk_overlap: 200,
+      is_default: true,
+    })
   })
 
   it('converts PGlite vector string to number array', () => {
@@ -223,22 +335,40 @@ describe('field-mapper: embeddings', () => {
       id: 'emb-1',
       note_id: 'note-1',
       embedding_set_id: 'es-1',
+      chunk_index: 2,
+      text: 'embedded chunk text',
       vector: '[0.1,0.2,0.3]',
+      model_name: 'nomic-embed-text',
       created_at: '2026-01-01T00:00:00.000Z',
     }
     const shard = embeddingToShard(emb)
-    expect(shard.vector).toEqual([0.1, 0.2, 0.3])
+    expect(shard).toMatchObject({
+      chunk_index: 2,
+      text: 'embedded chunk text',
+      vector: [0.1, 0.2, 0.3],
+      model: 'nomic-embed-text',
+      embedding_set_id: 'es-1',
+      created_at: '2026-01-01T00:00:00.000Z',
+    })
   })
 
   it('converts number array back to PGlite vector string', () => {
     const shard = {
       id: 'emb-1',
       note_id: 'note-1',
-      embedding_set_id: 'es-1',
+      chunk_index: 0,
+      text: 'chunk text',
       vector: [0.1, 0.2, 0.3],
-      created_at: '2026-01-01T00:00:00.000Z',
+      model: 'nomic-embed-text',
     }
     const back = embeddingFromShard(shard)
-    expect(back.vector).toBe('[0.1,0.2,0.3]')
+    expect(back).toMatchObject({
+      embedding_set_id: null,
+      chunk_index: 0,
+      text: 'chunk text',
+      vector: '[0.1,0.2,0.3]',
+      model: 'nomic-embed-text',
+      created_at: null,
+    })
   })
 })

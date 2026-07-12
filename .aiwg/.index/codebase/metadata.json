@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "builtAt": "2026-07-08T03:22:04.235Z",
+  "buildTimeMs": 0,
+  "entries": {
+    "tools/release/create-repo-release.mjs": {
+      "path": "tools/release/create-repo-release.mjs",
+      "type": "document",
+      "phase": "other",
+      "title": "Untitled",
+      "tags": [],
+      "created": "2026-07-04T19:56:09.542Z",
+      "updated": "2026-07-04T19:56:09.542Z",
+      "checksum": "b7a65d5113a092a4",
+      "summary": "// Create (or update) a repository Release on GitHub or Gitea and attach the // packaged npm tarballs as release assets, so each repo carries the release // packages alongside the npm publishes. // // Idempotent: re-running for an existing tag reuses the release and re-uploads",
+      "dependencies": [],
+      "dependents": []
+    }
+  }
+}

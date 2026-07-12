@@ -2,6 +2,65 @@
 
 All notable changes to fortemi-react are documented here.
 
+## Unreleased
+
+### `@fortemi/react/graph-3d` — 3D force-directed view (#262)
+
+`ForceGraph3DView`, a third renderer tier backed by `react-force-graph-3d` (Three.js), on the new **`@fortemi/react/graph-3d`** subpath.
+
+- Orbit + scroll-zoom; `zoomToFit` on engine stop; degree-derived node size and per-community tone from the shared `RenderGraph` (#264).
+- Click opens the node (via `onOpenNode`/`onSelectNode`); **⌘/ctrl-click re-anchors** (pins `fx/fy/fz` and `d3ReheatSimulation()` so the graph re-settles live). `ResizeObserver` container sizing; a memoised `Scene` with referentially-stable accessors so opening/closing a reader never re-inits the renderer (orbit + zoom preserved).
+- `react-force-graph-3d` and `three` are **optional peer dependencies, lazy-loaded** via `React.lazy` → dynamic `import()`; the built subpath has zero static import of them, so Three only ships when the 3D view mounts. Install with `pnpm add react-force-graph-3d three`.
+
+### `@fortemi/react/graph-2d` — interactive Sigma 2D explorer (#263)
+
+A heavier renderer tier alongside the static `GraphView`: `SigmaGraphView`, backed by Sigma + graphology ForceAtlas2, on the new **`@fortemi/react/graph-2d`** subpath.
+
+- Live LinLog ForceAtlas2 settling with a `settling…` state; warm-starts from a baked-position snapshot (fast convergence) or a cold random seed.
+- Hover-neighborhood dimming, click-select + animated camera focus, ⌘/ctrl-click **re-anchor** (pin at centre, re-settle around it), double-click to open, click-stage to deselect, auto soft-anchor of the highest-degree hub, and LOD label decluttering.
+- `sigma`, `graphology`, `graphology-layout-forceatlas2` are **optional peer dependencies, lazy-loaded** via dynamic `import()` — the subpath's built entry carries no static import of them, so they only ship when a consumer mounts the view. Install with `pnpm add sigma graphology graphology-layout-forceatlas2`.
+- Consumes a `@fortemi/graph` `RenderGraph` (#264) — pass one directly or a `CommunityGraph` it maps for you (honoring the #260 filter contract).
+
+### `@fortemi/graph` / `@fortemi/react` — opt-in node dragging (#245)
+
+`GraphView` gains a `draggableNodes` prop (default `false` — existing behavior unchanged). Dragging a node moves it under the pointer; on release the node is **pinned** and the rest of the graph re-settles around it (an incremental re-layout). Pins persist across layout updates; shift-click a pinned node to release its pin.
+
+- **`@fortemi/graph` `layoutCommunityGraph`** gains `pinned` (positions held fixed during settlement) and `initialPositions` (warm-start seed so a re-layout resumes from the current arrangement instead of re-seeding). New `PositionMap` type. Fully deterministic; unpinned output is bit-for-bit identical to before.
+- **`@fortemi/react` `GraphView`** wires pointer drag over the pin mechanism; the coordinate inversion is a pure, tested helper (`clientToGraphPoint`). No new dependencies; `@fortemi/graph` stays React-free.
+
+### `@fortemi/graph` — snapshot-first load + render-prep mapping (#264)
+
+Shared warm-start helpers so every renderer tier (JS-only SVG, React `GraphView`, the interactive 2D/3D tiers) maps and loads graphs identically.
+
+- **`mapCommunityGraph(graph, options?)`** — pure `CommunityGraph` → render-ready `RenderGraph` mapping: labels, degree-derived node size, per-community tone, and baked positions when supplied. Palette is `'community'` (default, matches `colorForCommunity`), `'greyscale'` (`GREYSCALE_COMMUNITY_RAMP`, largest cluster = darkest), or a custom array.
+- **`loadRenderSnapshot(source, options?)`** — snapshot-first loader: instantly load a precomputed graph with baked x/y from a URL, object, or thunk; returns `null` (never throws) when absent/malformed/position-less so callers fall back to a live build.
+- **`bakeRenderGraph(graph, options?)`** + **`stringifyRenderGraph`** — build-time writer: run the layout once and emit a deterministic baked-position snapshot.
+- Also exports `communityRanks`, `isRenderGraph`, `hasBakedPositions`. No new dependencies; `@fortemi/graph` stays React-free.
+
+### `@fortemi/core` / `@fortemi/react` — PGlite is now optional (#261)
+
+Non-DB consumers can ship a light, PGlite-free bundle.
+
+- **Lazy engine load (`@fortemi/core`):** `createPGliteInstance` now loads
+  `@electric-sql/pglite` (and its `vector` extension) via dynamic `import()`.
+  `dist/index.js` no longer carries a static `import '@electric-sql/pglite'`, so
+  bundlers keep the PGlite WASM engine out of the graph until an archive is
+  actually opened. `@electric-sql/pglite` moved from `dependencies` to
+  `optionalDependencies`.
+- **PGlite-free graph subpath (`@fortemi/react/graph`):** new subpath export that
+  re-exports only `GraphView`. It depends solely on `@fortemi/graph` + React
+  (zero `@fortemi/core`/PGlite/DB-worker references), so a presentational
+  consumer (e.g. a docs-map / static tenant) can render graphs without dragging
+  the database in — and Vite code-split builds no longer fail on the
+  `worker.format: 'iife'` / Node-FS chain. Importing `GraphView` from the package
+  root still works and still pulls the full provider surface.
+- **Tree-shakable barrels:** `@fortemi/core`, `@fortemi/graph`, and
+  `@fortemi/react` are marked `"sideEffects": false`.
+- **Pluggable persistence (unchanged seam, now documented):** `ArchiveManager`
+  already accepts a `StorageBackendFactory`; PGlite is the opt-in default via
+  `defaultStorageBackendFactory`. Hosts wanting a different store pass their own
+  factory and never touch PGlite.
+
 ## v2026.7.3 - 2026-07-07
 
 Security-hardening release for the AIWG portable-schema surface (epic #235). The
@@ -98,8 +157,9 @@ Node consumers can build embedding sets without a browser.
   `aiwg.fortemi.embedding.set.v1` sidecars from any Node-safe model backend, with
   no DOM or WebGL dependency. This unblocks CLI index building (for example
   AIWG's `index embed`).
-- Notes carry `binary_sources` in the Knowledge Shard export, so attachment
-  metadata and extracted text travel with the note while raw bytes do not.
+- Notes carry server-compatible `attachments` in the Knowledge Shard export, so
+  attachment metadata and extracted text travel with the note while raw bytes do
+  not. Legacy React shards that used `binary_sources` remain importable.
 
 ### Documentation
 

@@ -42,6 +42,33 @@ export interface LayoutOptions {
   communityStrength?: number
   /** Keep every node center at least this many px from each canvas edge. */
   boundsPadding?: number
+  /**
+   * Positions to hold FIXED during settlement (drag pins, issue #245). Pinned
+   * nodes stay put while the rest of the graph re-settles around them, giving an
+   * incremental re-layout when a node is moved. Keyed by node id.
+   */
+  pinned?: PositionMap
+  /**
+   * Warm-start seed positions. Nodes present here begin the settlement from
+   * these coordinates instead of the closed-form ring, so a re-layout resumes
+   * from the current arrangement (smooth reshape) rather than re-seeding. Keyed
+   * by node id. `pinned` overrides this for pinned nodes.
+   */
+  initialPositions?: PositionMap
+}
+
+/** A node-id → position lookup, accepted as either a Map or a plain record. */
+export type PositionMap =
+  | Map<string, { x: number; y: number }>
+  | Record<string, { x: number; y: number }>
+
+function readPosition(
+  map: PositionMap | undefined,
+  id: string,
+): { x: number; y: number } | undefined {
+  if (!map) return undefined
+  if (map instanceof Map) return map.get(id)
+  return Object.prototype.hasOwnProperty.call(map, id) ? map[id] : undefined
 }
 
 const DEFAULTS = {
@@ -154,6 +181,34 @@ export function layoutCommunityGraph(
     }
   })
 
+  // Warm-start seed then pin overrides (issue #245). Warm start lets a re-layout
+  // resume from the current arrangement; pinned coordinates win outright.
+  const pinnedIndex = new Map<number, { x: number; y: number }>()
+  // Nodes with a real seed (warm start or pin) already have distinct positions,
+  // so they are exempt from the separation jitter below.
+  const seededIndex = new Set<number>()
+  graph.nodes.forEach((node, index) => {
+    const seed = readPosition(options.initialPositions, node.id)
+    if (seed) {
+      x[index] = seed.x
+      y[index] = seed.y
+      seededIndex.add(index)
+    }
+    const pin = readPosition(options.pinned, node.id)
+    if (pin) {
+      x[index] = pin.x
+      y[index] = pin.y
+      pinnedIndex.set(index, pin)
+      seededIndex.add(index)
+    }
+  })
+  const holdPinned = () => {
+    for (const [index, pos] of pinnedIndex) {
+      x[index] = pos.x
+      y[index] = pos.y
+    }
+  }
+
   // --- Force settlement (force algorithm only) -------------------------------
   if (algorithm === 'force' && n > 1) {
     const ticks = Math.max(0, Math.floor(options.ticks ?? DEFAULTS.ticks))
@@ -166,7 +221,10 @@ export function layoutCommunityGraph(
 
     const rng = mulberry32(seed)
     // Deterministic jitter so no two seeded nodes coincide (avoids div-by-zero).
+    // Pinned nodes are left exactly where they were placed. When nothing is
+    // pinned the branch never fires, so unpinned output is bit-for-bit identical.
     for (let i = 0; i < n; i++) {
+      if (seededIndex.has(i)) continue
       x[i] += (rng() - 0.5) * 8
       y[i] += (rng() - 0.5) * 8
     }
@@ -286,14 +344,19 @@ export function layoutCommunityGraph(
         y[i] = clampToRange(y[i], boundsPadding + r[i], height - boundsPadding - r[i])
       }
 
+      // Re-assert pinned positions last so pins hold exactly and neighbors
+      // settle around them.
+      holdPinned()
+
       alpha *= cooling
     }
   } else {
-    // Closed-form algorithms: still honor the bounds clamp.
+    // Closed-form algorithms: still honor the bounds clamp, then hold pins.
     for (let i = 0; i < n; i++) {
       x[i] = clampToRange(x[i], boundsPadding + r[i], width - boundsPadding - r[i])
       y[i] = clampToRange(y[i], boundsPadding + r[i], height - boundsPadding - r[i])
     }
+    holdPinned()
   }
 
   // --- Build the result ------------------------------------------------------

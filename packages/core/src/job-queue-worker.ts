@@ -448,7 +448,7 @@ export function conceptTaggingHandler(job: Job, db: DatabaseClient): Promise<unk
     if (!llmFn) return { skipped: true, reason: 'no LLM function registered' }
 
     const noteText = await getNoteTextWithExtractedAttachments(db, job.note_id)
-    if (!noteText) throw new Error(`No content found for note ${job.note_id}`)
+    if (!noteText) return { skipped: true, reason: 'note missing, deleted, or has no content' }
 
     const content = noteText.combined
 
@@ -501,7 +501,9 @@ export function linkingHandler(job: Job, db: DatabaseClient): Promise<unknown> {
   return (async () => {
     // Check if this note has embeddings
     const embResult = await db.query<{ id: string }>(
-      `SELECT id FROM embedding WHERE note_id = $1 LIMIT 1`,
+      `SELECT e.id FROM embedding e
+       JOIN note n ON n.id = e.note_id AND n.deleted_at IS NULL
+       WHERE e.note_id = $1 LIMIT 1`,
       [job.note_id],
     )
     if (embResult.rows.length === 0) {
@@ -510,7 +512,9 @@ export function linkingHandler(job: Job, db: DatabaseClient): Promise<unknown> {
 
     // Get this note's embedding vector
     const vecResult = await db.query<{ vector: string }>(
-      `SELECT vector::text FROM embedding WHERE note_id = $1 LIMIT 1`,
+      `SELECT e.vector::text FROM embedding e
+       JOIN note n ON n.id = e.note_id AND n.deleted_at IS NULL
+       WHERE e.note_id = $1 LIMIT 1`,
       [job.note_id],
     )
     if (vecResult.rows.length === 0) return { skipped: true, reason: 'no vector found' }
@@ -519,6 +523,7 @@ export function linkingHandler(job: Job, db: DatabaseClient): Promise<unknown> {
     const similar = await db.query<{ note_id: string; distance: number }>(
       `SELECT e.note_id, e.vector <=> (SELECT vector FROM embedding WHERE note_id = $1 LIMIT 1) as distance
        FROM embedding e
+       JOIN note n ON n.id = e.note_id AND n.deleted_at IS NULL
        WHERE e.note_id != $1
        ORDER BY distance ASC
        LIMIT 5`,

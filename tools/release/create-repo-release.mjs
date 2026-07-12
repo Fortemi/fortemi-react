@@ -17,7 +17,6 @@
 //   RELEASE_PACK_DIR   dir holding fortemi-<pkg>-<version>.tgz (default /tmp/fortemi-publish-check)
 //   RELEASE_NOTES_DIR  dir holding <tag>.md release notes (default docs/releases)
 
-/* global process, console, fetch, FormData, Blob */
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
