@@ -54,7 +54,7 @@ export async function embeddingGenerationHandler(
   if (!fn) return { skipped: true, reason: 'no embed function registered' }
 
   const noteText = await getNoteTextWithExtractedAttachments(db, job.note_id)
-  if (!noteText) throw new Error(`No content for note ${job.note_id}`)
+  if (!noteText) return { skipped: true, reason: 'note missing, deleted, or has no content' }
 
   const content = noteText.combined
   const chunks = chunkText(content)

@@ -22,6 +22,20 @@ export class ArchiveManager {
   private persistence: PersistenceMode
   private backendFactory: StorageBackendFactory
 
+  /**
+   * Persistence is a PLUGGABLE, opt-in backend (issue #261). Pass a
+   * `StorageBackendFactory` to run against any `StorageBackend`
+   * implementation; PGlite is merely the built-in default, selected only when
+   * the convenience `PersistenceMode` string form is used. Because
+   * `defaultStorageBackendFactory` reaches PGlite through the lazily-imported
+   * `createPGliteInstance` (see `db.ts`), a consumer that supplies its own
+   * factory — or never opens an archive at all — never pulls the PGlite WASM
+   * engine into its bundle.
+   *
+   * @param persistenceOrFactory `PersistenceMode` string (uses the built-in
+   *   PGlite backend) OR a custom `StorageBackendFactory`.
+   * @param persistenceOverride persistence hint passed to a custom factory.
+   */
   constructor(
     persistenceOrFactory: PersistenceMode | StorageBackendFactory,
     private events?: TypedEventBus,

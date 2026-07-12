@@ -50,9 +50,11 @@ const SHARD_LINKS: ShardLink[] = [
     id: 'link-1',
     from_note_id: 'n1',
     to_note_id: 'n3',
+    to_url: null,
     kind: 'related',
     score: 0.75,
     created_at: '2026-01-02T00:00:00.000Z',
+    metadata: null,
   },
 ]
 
@@ -306,6 +308,19 @@ describe('createPGliteBackend — PGlite adapter (#191)', () => {
           ['link-alpha-beta', alpha.id, beta.id, 'related', 0.8, '2026-01-02T00:00:00.000Z'],
         )
         await db.query(
+          `INSERT INTO link_url_target (id, source_note_id, to_url, link_type, confidence, metadata_json, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [
+            'link-alpha-url',
+            alpha.id,
+            'https://example.test/alpha',
+            'reference',
+            0.6,
+            JSON.stringify({ label: 'Alpha URL' }),
+            '2026-01-02T00:00:01.000Z',
+          ],
+        )
+        await db.query(
           `INSERT INTO skos_scheme (id, title, description, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5)`,
           ['scheme-backend', 'Backend concepts', null, '2026-01-03T00:00:00.000Z', '2026-01-04T00:00:00.000Z'],
@@ -370,12 +385,21 @@ describe('createPGliteBackend — PGlite adapter (#191)', () => {
         await backend.manageNote!({ action: 'update', note_id: alpha.id, content: 'Refined alpha content' })
         const full = await backend.getNoteFull!(alpha.id)
         expect(full?.content).toBe('Refined alpha content')
-        expect(full?.links?.map((l) => l.id)).toEqual(['link-alpha-beta'])
+        expect(full?.links?.map((l) => l.id)).toEqual(['link-alpha-beta', 'link-alpha-url'])
         expect(full?.concepts?.map((c) => c.prefLabel)).toEqual(['Widgets'])
         expect(full?.provenance?.map((p) => p.activity)).toEqual(['inducted'])
 
         const links = await backend.linksOf!(alpha.id)
         expect(links[0]).toMatchObject({ id: 'link-alpha-beta', fromNoteId: alpha.id, toNoteId: beta.id, kind: 'related', score: 0.8 })
+        expect(links[1]).toMatchObject({
+          id: 'link-alpha-url',
+          fromNoteId: alpha.id,
+          toNoteId: null,
+          toUrl: 'https://example.test/alpha',
+          kind: 'reference',
+          score: 0.6,
+          metadata: { label: 'Alpha URL' },
+        })
         const concepts = await backend.conceptsOf!(alpha.id)
         expect(concepts[0]).toMatchObject({ id: 'concept-widget', schemeId: 'scheme-backend', prefLabel: 'Widgets', altLabels: ['widgetry'] })
         const provenance = await backend.provenanceOf!(alpha.id)

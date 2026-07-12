@@ -23,7 +23,7 @@ import type {
   ShardSkosConcept,
   ShardSkosRelation,
 } from './types.js'
-import { CURRENT_SHARD_VERSION } from './types.js'
+import { compareShardVersions, CURRENT_SHARD_VERSION } from './types.js'
 import { noteFromShard, type BrowserNoteExport } from './field-mapper.js'
 import { unpackTarGz } from './shard-tar.js'
 
@@ -212,7 +212,7 @@ function tokenize(query: string): string[] {
 }
 
 function noteSearchText(note: ShardNote): string {
-  const extractedText = note.binary_sources
+  const extractedText = (note.attachments ?? note.binary_sources)
     ?.map((source) => source.extracted_text)
     .filter(Boolean)
     .join(' ') ?? ''
@@ -241,7 +241,7 @@ function noteMatchesTokens(note: ShardNote, tokens: string[]): boolean {
 function rankNote(note: ShardNote, tokens: string[], weights: ShardSearchWeights): number {
   if (tokens.length === 0) return 0
   const title = (note.title ?? '').toLowerCase()
-  const extractedText = note.binary_sources
+  const extractedText = (note.attachments ?? note.binary_sources)
     ?.map((source) => source.extracted_text)
     .filter(Boolean)
     .join(' ') ?? ''
@@ -257,7 +257,7 @@ function rankNote(note: ShardNote, tokens: string[], weights: ShardSearchWeights
 }
 
 function makeSnippet(note: ShardNote, tokens: string[], length: number): string {
-  const extractedText = note.binary_sources
+  const extractedText = (note.attachments ?? note.binary_sources)
     ?.map((source) => source.extracted_text)
     .filter(Boolean)
     .join(' ') ?? ''
@@ -553,7 +553,7 @@ export async function openShard(
   options: OpenShardOptions = {},
 ): Promise<ShardReader> {
   const store = await resolveStore(source)
-  if (store.manifest.min_reader_version && store.manifest.min_reader_version > CURRENT_SHARD_VERSION) {
+  if (store.manifest.min_reader_version && compareShardVersions(store.manifest.min_reader_version, CURRENT_SHARD_VERSION) > 0) {
     throw new Error(
       `Shard requires reader version ${store.manifest.min_reader_version}, ` +
       `but this build supports ${CURRENT_SHARD_VERSION}. Import the shard instead.`,

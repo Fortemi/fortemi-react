@@ -1,7 +1,8 @@
 # ADR-011: Knowledge Shard server-conformance and version negotiation
 
-- **Status**: Proposed (pending review)
+- **Status**: Accepted
 - **Date**: 2026-07-05
+- **Accepted**: 2026-07-09
 - **Issue**: #235 (audit epic)
 - **Relates**: ADR-010 (source-of-truth principle), server ADR-028 (shard archive migration system), server issue `Fortemi/fortemi#1013`
 
@@ -12,14 +13,14 @@ The Knowledge Shard (`shard/*`) is fortemi-react's interchange format with the R
 - The server owns `matric-shard` v1.0.0 authoritatively (`format:"matric-shard"`, bare-hex per-file SHA-256, `created_at_utc`→`created_at` rename). fortemi-react matches the envelope (`.shard`, tar.gz, filenames, format/version strings, checksum format — all verified correct).
 - But entity field names and coverage diverge: attachments emitted as `binary_sources` not `attachments` (S1); `note.collection_id` and `link.to_url` never serialized (S2/S5); `template` and `embedding_config` entities unimplemented (S3/S4); `embedding_set`/`embedding_set_member`/`embedding` field sets diverge (S6–S8); import never persists attachment rows at all (E1). fortemi-react also emits 9 SKOS/provenance/graph components the server excludes (S9).
 - `min_reader_version` is compared with a lexicographic string `>` rather than semver (S12/E5) — it will accept an incompatible future shard once any version segment reaches double digits.
-- The `format-parity` suite validates DB table shapes, not the shard contract — **zero** shard conformance coverage.
+- The suite now named `db-table-parity` validates DB table shapes, not the shard contract; shard conformance coverage must live in the portable-contract gate.
 - The server has a full migration/compat harness (ADR-028) with fixtures modeling future changes (`links→documents` rename, SHA256→BLAKE3); fortemi-react has no counterpart and never reads `migration_history`.
 
 ## Decision
 
 **1. Align the shard entity contract to the server, field-for-field.** Concretely: rename `binary_sources`→`attachments`; serialize `note.collection_id` and `link.to_url`; implement `template` and `embedding_config` export/import; align `embedding_set`/`embedding_set_member`/`embedding` to the server field sets; and make import actually persist attachment rows. React-only components (SKOS/provenance/graph) remain as a **documented, optional superset** clearly namespaced so a spec-conformant server can ignore them without error — they are not part of the parity contract.
 
-**2. Adopt a committed shard schema + server-produced golden fixtures as the conformance authority** (per ADR-010). A round-trip conformance suite MUST: (a) import a real server-exported `.shard` and assert every entity/field survives; (b) export a react `.shard` and assert it validates against the server shard schema; (c) run in CI. This replaces the mis-scoped `format-parity` guard for the shard surface.
+**2. Adopt a committed shard schema + server-produced golden fixtures as the conformance authority** (per ADR-010). A round-trip conformance suite MUST: (a) import a real server-exported `.shard` and assert every entity/field survives; (b) export a react `.shard` and assert it validates against the server shard schema; (c) run in CI. This replaces the mis-scoped DB-table parity guard for the shard surface.
 
 **3. Implement real version negotiation.** Replace lexicographic version comparison with semantic-version comparison at both sites. Honor `min_reader_version` correctly; on an unsupported major, refuse import with a clear, actionable error rather than silently proceeding. Populate `migration_history`/`migrated_from` on export. Track the server's forthcoming shard changes (ADR-028 fixtures) so a v1.1/v2.0 server shard is handled deliberately.
 

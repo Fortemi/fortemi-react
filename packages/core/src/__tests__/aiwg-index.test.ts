@@ -423,6 +423,88 @@ describe('AIWG Fortemi index adapter', () => {
     expect(trigger.rankedItems?.[0]?.matches?.some((match) => match.reason === 'trigger phrase')).toBe(true)
   })
 
+  it('matches the AIWG query-engine golden discovery ordering (#240)', () => {
+    const discoveryIndex: AiwgFortemiIndexExport = {
+      ...index,
+      items: [
+        record('aiwg:skill:address-issues', 'aiwg.skill', 'Address Issues', 'Issue-thread-driven agent loops.', {
+          search: {
+            name: 'address-issues',
+            title: 'Address Issues',
+            summary: 'Address open issues using issue-thread-driven agent loops with 2-way human-AI collaboration',
+            body: 'Tracker implementation loop with cycle comments and verification.',
+            triggers: ['address issues 17, 18, and 19', 'fix open issues'],
+            capability: 'Address open issues using issue-thread-driven agent loops',
+            tags: ['issues', 'tracker'],
+            type: 'skill',
+          },
+          tags: ['issues', 'tracker'],
+        }),
+        record('aiwg:skill:issue-audit', 'aiwg.skill', 'Issue Audit', 'Read-only backlog triage.', {
+          search: {
+            name: 'issue-audit',
+            title: 'Issue Audit',
+            summary: 'Audit open issues without implementing fixes',
+            body: 'Summarize issue backlog health and closure candidates.',
+            triggers: ['audit open issues'],
+            capability: 'Read-only issue triage',
+            tags: ['issues', 'audit'],
+            type: 'skill',
+          },
+          tags: ['issues', 'audit'],
+        }),
+        record('aiwg:skill:aiwg-doctor', 'aiwg.skill', 'AIWG Doctor', 'Workspace diagnostics.', {
+          search: {
+            name: 'aiwg-doctor',
+            title: 'AIWG Doctor',
+            summary: 'Run workspace health diagnostics',
+            body: 'Checks AIWG installation and project wiring.',
+            triggers: ['aiwg doctor', 'workspace health'],
+            capability: 'Workspace health check',
+            tags: ['health'],
+            type: 'skill',
+          },
+          tags: ['health'],
+        }),
+        record('docs:commands:address-issues', 'docs.page', 'Generated command directory', 'Path-only command reference.', {
+          source: {
+            path: 'commands/address-issues.md',
+            repo_relative_path: 'commands/address-issues.md',
+            locator: 'commands/address-issues.md',
+          },
+        }),
+      ],
+    }
+
+    const issueLoop = queryAiwgFortemiIndex(discoveryIndex, 'find a skill that handles issue loops', {
+      rank: true,
+      includeMatches: true,
+      searchProfile: 'aiwg-discovery',
+    })
+    const exact = queryAiwgFortemiIndex(discoveryIndex, 'aiwg doctor', {
+      rank: true,
+      includeMatches: true,
+      searchProfile: 'aiwg-discovery',
+    })
+    const typo = queryAiwgFortemiIndex(discoveryIndex, 'aiwg doctro', {
+      rank: true,
+      includeMatches: true,
+      searchProfile: 'aiwg-discovery',
+    })
+
+    expect(issueLoop.items.map((item) => item.id)).toEqual([
+      'aiwg:skill:address-issues',
+      'aiwg:skill:issue-audit',
+      'docs:commands:address-issues',
+    ])
+    expect(issueLoop.rankedItems?.[0]?.rank).toBeLessThanOrEqual(1)
+    expect(issueLoop.rankedItems?.[0]?.matches?.some((match) => match.reason === 'capability overlap')).toBe(true)
+    expect(exact.items[0].id).toBe('aiwg:skill:aiwg-doctor')
+    expect(exact.rankedItems?.[0]?.rank).toBe(1.001)
+    expect(typo.items[0].id).toBe('aiwg:skill:aiwg-doctor')
+    expect(typo.rankedItems?.[0]?.rank).toBe(0.951)
+  })
+
   it('queries static AIWG embedding sets semantically, hybrid-ranks with lexical fallback, and reports duplicates', () => {
     const semanticIndex: AiwgFortemiIndexExport = {
       ...index,
@@ -463,6 +545,44 @@ describe('AIWG Fortemi index adapter', () => {
     expect(hybrid.find((entry) => entry.item.id === 'aiwg:rule:lexical')?.embedding).toBeUndefined()
     expect(duplicates.map((pair) => [pair.left.id, pair.right.id])).toEqual([['aiwg:skill:search', 'aiwg:command:search']])
     expect(invalid.errors).toContain('embeddings[0].input_hash is required')
+  })
+
+  it('hybrid-ranks before applying pagination', () => {
+    const semanticIndex: AiwgFortemiIndexExport = {
+      ...index,
+      items: [
+        record('aiwg:rule:lexical-top', 'aiwg.rule', 'Alpha policy', 'alpha body'),
+        record('aiwg:skill:semantic-top', 'aiwg.skill', 'Alpha runner', 'body'),
+      ],
+    }
+    const embeddingSet: AiwgStaticEmbeddingSet = {
+      schema_version: 'aiwg.fortemi.embedding.set.v1',
+      id: 'aiwg-static-hybrid-pagination',
+      model: 'test-embed',
+      dimensions: 1,
+      generated_at: '2026-01-04T00:00:00.000Z',
+      granularity: 'body',
+      input_hash_algorithm: 'sha256',
+      embeddings: [
+        { record_id: 'aiwg:rule:lexical-top', embedding: [0], input_hash: 'hash-lexical' },
+        { record_id: 'aiwg:skill:semantic-top', embedding: [1], input_hash: 'hash-semantic' },
+      ],
+    }
+
+    const full = queryAiwgHybridIndex(semanticIndex, embeddingSet, 'alpha', [1], {
+      lexicalWeight: 0.9,
+      semanticWeight: 0.1,
+      limit: 10,
+    })
+    const secondPage = queryAiwgHybridIndex(semanticIndex, embeddingSet, 'alpha', [1], {
+      lexicalWeight: 0.9,
+      semanticWeight: 0.1,
+      limit: 1,
+      offset: 1,
+    })
+
+    expect(full.map((entry) => entry.item.id)).toEqual(['aiwg:rule:lexical-top', 'aiwg:skill:semantic-top'])
+    expect(secondPage.map((entry) => entry.item.id)).toEqual(['aiwg:skill:semantic-top'])
   })
 
   it('builds AIWG embedding-set sidecars from a headless backend and extracted attachment text', async () => {
@@ -816,6 +936,32 @@ describe('AIWG Fortemi chunked index — match-set page cache (#179)', () => {
     expect(again.fetchedParts).toBe(0)
   })
 
+  it('does not serve a cached set when the search profile changes', async () => {
+    const { manifest, parts } = createChunkedFixture(2)
+    const { loader, calls } = countingLoader(parts)
+    const controller = createAiwgIndexController()
+    controller.loadChunkedIndex(manifest, loader, { maxCachedParts: manifest.parts.length })
+
+    await controller.queryChunked('Example', { rank: true, limit: 2 })
+    const callsAfterDefault = calls.length
+
+    const discovery = await controller.queryChunked('Example', {
+      rank: true,
+      limit: 2,
+      searchProfile: 'aiwg-discovery',
+    })
+    const expected = queryAiwgFortemiIndex(index, 'Example', {
+      rank: true,
+      limit: 2,
+      searchProfile: 'aiwg-discovery',
+    })
+
+    expect(discovery.scannedParts).toBe(manifest.parts.length)
+    expect(discovery.fetchedParts).toBe(0)
+    expect(calls.length).toBe(callsAfterDefault)
+    expect(discovery.items.map((item) => item.id)).toEqual(expected.items.map((item) => item.id))
+  })
+
   it('clearChunkCache drops the match set so the next query re-scans', async () => {
     const { manifest, parts } = createChunkedFixture(2)
     const { loader, calls } = countingLoader(parts)
@@ -1008,6 +1154,51 @@ describe('AIWG Fortemi chunked index — slim/projected parts (#168)', () => {
     expect(relationshipSet.ids).toEqual(['aiwg:requirement:001', 'research:ref:001'])
     expect(graph.edges.map((edge) => edge.kind).sort()).toEqual(['cites', 'satisfies'])
     expect(detailFetches).toBeGreaterThan(0)
+  })
+
+  it('scopes both-direction neighbors before sorting and limiting', async () => {
+    const graphIndex: AiwgFortemiIndexExport = {
+      ...index,
+      items: [
+        record('z:unrelated', 'aiwg.adr', 'Unrelated', 'No neighbor.', {
+          relationships: [{ type: 'mentions', target_id: 'z:other' }],
+        }),
+        record('b:source', 'aiwg.adr', 'B Source', 'Neighbor B.', {
+          relationships: [{ type: 'mentions', target_id: 'center' }],
+        }),
+        record('a:source', 'aiwg.adr', 'A Source', 'Neighbor A.', {
+          relationships: [{ type: 'mentions', target_id: 'center' }],
+        }),
+        record('center', 'aiwg.requirement', 'Center', 'Target.'),
+        record('z:other', 'aiwg.requirement', 'Other', 'Other target.'),
+      ],
+    }
+    const controller = createAiwgIndexController(graphIndex)
+
+    const result = await controller.neighbors('center', { direction: 'both', limit: 1 })
+
+    expect(result.edges).toEqual([{ source_id: 'a:source', target_id: 'center', type: 'mentions' }])
+    expect(result.nodes.map((node) => node.id).sort()).toEqual(['a:source', 'center'])
+  })
+
+  it('sorts relationship queries before applying limit', async () => {
+    const graphIndex: AiwgFortemiIndexExport = {
+      ...index,
+      items: [
+        record('b:source', 'aiwg.adr', 'B Source', 'B.', {
+          relationships: [{ type: 'mentions', target_id: 'target' }],
+        }),
+        record('a:source', 'aiwg.adr', 'A Source', 'A.', {
+          relationships: [{ type: 'mentions', target_id: 'target' }],
+        }),
+        record('target', 'aiwg.requirement', 'Target', 'Target.'),
+      ],
+    }
+    const controller = createAiwgIndexController(graphIndex)
+
+    const result = await controller.relationshipQuery({ limit: 1 })
+
+    expect(result.edges).toEqual([{ source_id: 'a:source', target_id: 'target', type: 'mentions' }])
   })
 
   it('preserves v2 relationship direction and target paths across whole and chunked traversal', async () => {
@@ -1339,6 +1530,46 @@ describe('SEC1: prototype pollution via facet aggregation (#236)', () => {
     expect(({} as Record<string, unknown>).z).toBeUndefined()
     expect(result.facets['__proto__']).toEqual({ x: 1 })
   })
+
+  it.each(['constructor', '__proto__', 'toString'])('counts exotic record type %s as plain data', (type) => {
+    const result = validateAiwgFortemiIndexExport({
+      ...index,
+      items: [record('sec1-type', type, 'Exotic type', 'body')],
+    })
+
+    expect(result.counts[type]).toBe(1)
+    expect(typeof result.counts[type]).toBe('number')
+  })
+
+  it.each(['constructor', '__proto__', 'toString'])('keeps graph weights numeric for relationship type %s', (type) => {
+    const source = record('a', 'aiwg.skill', 'A', 'body', {
+      relationships: [
+        { type, target_id: 'b' },
+        { type, target_id: 'b' },
+      ],
+    })
+    const target = record('b', 'aiwg.skill', 'B', 'body')
+    const graph = aiwgFortemiIndexToCommunityGraph(
+      { ...index, items: [source, target] },
+      { relationshipWeights: JSON.parse(`{"${type}":2}`) as Record<string, number> },
+    )
+
+    expect(graph.edges).toEqual([{ source: 'a', target: 'b', kind: type, weight: 4 }])
+    expect(Number.isFinite(graph.edges[0]?.weight)).toBe(true)
+  })
+
+  it('defaults inherited and non-finite relationship weights to a finite number', () => {
+    const source = record('a', 'aiwg.skill', 'A', 'body', {
+      relationships: [{ type: 'constructor', target_id: 'b' }, { type: 'bad', target_id: 'b' }],
+    })
+    const graph = aiwgFortemiIndexToCommunityGraph(
+      { ...index, items: [source, record('b', 'aiwg.skill', 'B', 'body')] },
+      { relationshipWeights: { bad: Number.NaN } },
+    )
+
+    expect(graph.edges.map((edge) => edge.weight)).toEqual([1, 1])
+    expect(graph.edges.every((edge) => Number.isFinite(edge.weight))).toBe(true)
+  })
 })
 
 describe('SEC6: privacy/PII filtered at generation (#243)', () => {
@@ -1459,16 +1690,22 @@ describe('#239 validator conformance — v1/v2 forbiddance, enums, source gating
     expect(validateAiwgFortemiIndexExport(v2Ok).valid).toBe(true)
   })
 
-  it('E8 — chunked manifest carries the true source export version; review-decision reports it', () => {
+  it('E8 — chunked v2 source metadata survives validation, querying, and record loading', async () => {
     const v2Index: AiwgFortemiIndexExport = {
       ...index,
       schema_version: 'aiwg.fortemi.index.export.v2',
-      source: { repo: 'x/y', privacy: 'public' },
+      source: { repo: 'x/y', privacy: 'public', graph: { communities: 1 } },
       items: [v2Record('r', 'aiwg.skill')],
     }
     const built = buildAiwgChunkedIndex(v2Index)
     expect(built.manifest.source_export_schema_version).toBe('aiwg.fortemi.index.export.v2')
     expect(validateAiwgFortemiChunkManifest(built.manifest).valid).toBe(true)
+
+    const parts = new Map(built.parts.map(({ href, part }) => [href, part]))
+    const controller = createAiwgIndexController()
+    controller.loadChunkedIndex(built.manifest, async (part) => parts.get(part.href))
+    await expect(controller.queryChunked('')).resolves.toMatchObject({ total: 1 })
+    await expect(controller.getRecord('r')).resolves.toMatchObject({ id: 'r' })
 
     const exported = createAiwgReviewDecisionExport(
       { schema_version: built.manifest.source_export_schema_version ?? 'aiwg.fortemi.index.export.v1' },
