@@ -99,8 +99,8 @@ describe('shard-tar', () => {
     const unpacked = unpackTarGz(packed)
 
     expect([...unpacked.keys()].sort()).toEqual([
-      'embedding_sets.json',
       'embedding_set_members.jsonl',
+      'embedding_sets.json',
     ])
   })
 })
