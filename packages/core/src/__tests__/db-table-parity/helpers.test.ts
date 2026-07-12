@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { getRowShape, matchServerShape } from './helpers.js'
 
-describe('Format parity helpers', () => {
+describe('DB table parity helpers', () => {
   it('getRowShape extracts types', () => {
     const shape = getRowShape({ id: 'abc', count: 42, active: true, meta: null })
     expect(shape).toEqual({ id: 'string', count: 'number', active: 'boolean', meta: 'null' })

@@ -5,7 +5,7 @@
  *           parse components → field-map → BEGIN transaction → INSERT all → COMMIT
  */
 
-import type { DatabaseClient } from '../storage-backend.js'
+import type { DatabaseClient, QueryExecutor } from '../storage-backend.js'
 import { unpackTarGz } from './shard-tar.js'
 import { validateChecksums } from './checksum.js'
 import {
@@ -17,7 +17,7 @@ import {
 } from './field-mapper.js'
 import { generateId } from '../uuid.js'
 import { computeHash } from '../hash.js'
-import { CURRENT_SHARD_VERSION } from './types.js'
+import { compareShardVersions, CURRENT_SHARD_VERSION } from './types.js'
 import type {
   ShardManifest,
   ImportOptions,
@@ -27,7 +27,9 @@ import type {
   ShardLink,
   ShardCollection,
   ShardTag,
+  ShardTemplate,
   ShardEmbeddingSet,
+  ShardEmbeddingConfig,
   ShardEmbeddingSetMember,
   ShardEmbedding,
   ShardSkosScheme,
@@ -81,17 +83,16 @@ export async function importShard(
   const report = options?.onProgress
   const warnings: string[] = []
   const errors: string[] = []
-  // E1 (#237): shards carry attachment *references* (metadata + checksum), not
-  // the binary content, so attachments cannot yet be restored on import. Track
-  // the drop so it surfaces as an explicit warning instead of silent data loss.
-  let droppedAttachmentCount = 0
-  let notesWithDroppedAttachments = 0
+  let importedAttachmentReferenceCount = 0
+  let notesWithImportedAttachmentReferences = 0
   const counts: ImportCounts = {
     notes: 0,
     collections: 0,
+    templates: 0,
     tags: 0,
     links: 0,
     embedding_sets: 0,
+    embedding_configs: 0,
     embedding_set_members: 0,
     embeddings: 0,
     skos_schemes: 0,
@@ -154,7 +155,7 @@ export async function importShard(
   }
 
   // Version compatibility check
-  if (manifest.min_reader_version && manifest.min_reader_version > CURRENT_SHARD_VERSION) {
+  if (manifest.min_reader_version && compareShardVersions(manifest.min_reader_version, CURRENT_SHARD_VERSION) > 0) {
     return {
       success: false,
       counts,
@@ -195,8 +196,10 @@ export async function importShard(
   const parsedCollections = parseJsonArray<ShardCollection>(files.get('collections.json'))
   // Tags are embedded in notes as arrays — the global tags.json is informational only
   parseJsonArray<ShardTag>(files.get('tags.json')) // parsed for validation, not used directly
+  const parsedTemplates = parseJsonArray<ShardTemplate>(files.get('templates.json'))
   const parsedLinks = parseJsonl<ShardLink>(files.get('links.jsonl'))
   const parsedEmbSets = parseJsonArray<ShardEmbeddingSet>(files.get('embedding_sets.json'))
+  const parsedEmbConfigs = parseJsonArray<ShardEmbeddingConfig>(files.get('embedding_configs.json'))
   const parsedEmbMembers = parseJsonl<ShardEmbeddingSetMember>(
     files.get('embedding_set_members.jsonl'),
   )
@@ -238,10 +241,6 @@ export async function importShard(
       warnings.push(`Unknown component skipped: ${filename}`)
     }
   }
-  if (files.has('templates.json')) {
-    warnings.push('templates.json skipped (not supported in browser)')
-  }
-
   // ── Step 5: Transactional insert ──────────────────────────────────────
   const conflictClause = strategy === 'skip' ? 'ON CONFLICT DO NOTHING' : ''
 
@@ -267,6 +266,34 @@ export async function importShard(
         }
         counts.collections++
         report?.({ phase: 'collections', done: index + 1, total: parsedCollections.length })
+        await maybeYield(index + 1, batchSize)
+      }
+
+      // Import templates
+      report?.({ phase: 'templates', done: 0, total: parsedTemplates.length })
+      for (const [index, template] of parsedTemplates.entries()) {
+        await tx.query(
+          `INSERT INTO template (
+             id, name, description, content, format, default_tags, collection_id, created_at, updated_at
+           )
+           VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9)
+           ${strategy === 'replace'
+             ? 'ON CONFLICT (id) DO UPDATE SET name = $2, description = $3, content = $4, format = $5, default_tags = $6::jsonb, collection_id = $7, created_at = $8, updated_at = $9'
+             : conflictClause}`,
+          [
+            template.id,
+            template.name,
+            template.description,
+            template.content,
+            template.format,
+            JSON.stringify(template.default_tags),
+            template.collection_id,
+            template.created_at,
+            template.updated_at,
+          ],
+        )
+        counts.templates++
+        report?.({ phase: 'templates', done: index + 1, total: parsedTemplates.length })
         await maybeYield(index + 1, batchSize)
       }
 
@@ -346,11 +373,61 @@ export async function importShard(
           )
         }
 
-        // E1 (#237): attachment references survive on the note but their bytes
-        // are not packaged in the shard, so they cannot be persisted here.
-        if (note.binary_sources?.length) {
-          droppedAttachmentCount += note.binary_sources.length
-          notesWithDroppedAttachments++
+        if (note.collection_id) {
+          await tx.query(
+            `INSERT INTO collection_note (collection_id, note_id)
+             VALUES ($1, $2)
+             ON CONFLICT (collection_id, note_id) DO NOTHING`,
+            [note.collection_id, note.id],
+          )
+        }
+
+        // Shard projections carry extracted text plus attachment metadata. They
+        // intentionally do not carry the raw blob payload, so import preserves
+        // the reference rows and leaves BlobStore hydration to an out-of-band
+        // source that owns the bytes.
+        if (note.attachments?.length) {
+          notesWithImportedAttachmentReferences++
+          for (let position = 0; position < note.attachments.length; position += 1) {
+            const projection = note.attachments[position]
+            const ref = projection.attachment
+            const existingBlob = await tx.query<{ id: string }>(
+              `SELECT id FROM attachment_blob WHERE content_hash = $1`,
+              [ref.checksum],
+            )
+            const blobId = existingBlob.rows[0]?.id ?? generateId()
+            if (!existingBlob.rows.length) {
+              await tx.query(
+                `INSERT INTO attachment_blob (id, content_hash, size_bytes, storage_path)
+                 VALUES ($1, $2, $3, $4)
+                 ON CONFLICT (content_hash) DO NOTHING`,
+                [blobId, ref.checksum, ref.bytes, ref.path],
+              )
+            }
+            const filename = ref.path.split('/').filter(Boolean).pop() ?? ref.path
+            if (strategy === 'replace') {
+              await tx.query(
+                `INSERT INTO attachment (id, note_id, blob_id, filename, mime_type, extracted_text, position)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)
+                 ON CONFLICT (id) DO UPDATE SET
+                   note_id = $2,
+                   blob_id = $3,
+                   filename = $4,
+                   mime_type = $5,
+                   extracted_text = $6,
+                   position = $7,
+                   deleted_at = NULL`,
+                [ref.id, note.id, blobId, filename, ref.mime, projection.extracted_text, position],
+              )
+            } else {
+              await tx.query(
+                `INSERT INTO attachment (id, note_id, blob_id, filename, mime_type, extracted_text, position)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7) ${conflictClause}`,
+                [ref.id, note.id, blobId, filename, ref.mime, projection.extracted_text, position],
+              )
+            }
+            importedAttachmentReferenceCount++
+          }
         }
 
         counts.notes++
@@ -358,11 +435,11 @@ export async function importShard(
         await maybeYield(index + 1, batchSize)
       }
 
-      if (droppedAttachmentCount > 0) {
+      if (importedAttachmentReferenceCount > 0) {
         warnings.push(
-          `${droppedAttachmentCount} attachment(s) across ${notesWithDroppedAttachments} note(s) were not imported: ` +
-            'shards currently carry attachment references (metadata + checksum) but not the binary content, ' +
-            'so attachment bytes cannot be restored. Tracking: #237 (attachment round-trip) / server #1013 (binary contract).',
+          `${importedAttachmentReferenceCount} attachment reference(s) across ${notesWithImportedAttachmentReferences} note(s) were imported as metadata only: ` +
+            'Knowledge Shard projections carry extracted text plus attachment metadata, not raw binary payloads, ' +
+            'so BlobStore bytes remain unavailable unless provided by an out-of-band attachment source. Tracking: #237 / server #1013.',
         )
       }
 
@@ -415,6 +492,30 @@ export async function importShard(
       report?.({ phase: 'links', done: 0, total: parsedLinks.length })
       for (const [index, shardLink] of parsedLinks.entries()) {
         const link = linkFromShard(shardLink)
+        if (!link.target_note_id) {
+          if (!link.to_url) {
+            skipped.links = (skipped.links ?? 0) + 1
+            warnings.push(`Shard link skipped: ${link.id} has neither to_note_id nor to_url.`)
+            report?.({ phase: 'links', done: index + 1, total: parsedLinks.length })
+            await maybeYield(index + 1, batchSize)
+            continue
+          }
+          const metadata = link.metadata == null ? null : JSON.stringify(link.metadata)
+          await tx.query(
+            `INSERT INTO link_url_target (
+               id, source_note_id, to_url, link_type, confidence, metadata_json, created_at
+             )
+             VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
+             ${strategy === 'replace'
+               ? 'ON CONFLICT (id) DO UPDATE SET source_note_id = $2, to_url = $3, link_type = $4, confidence = $5, metadata_json = $6::jsonb, created_at = $7'
+               : conflictClause}`,
+            [link.id, link.source_note_id, link.to_url, link.link_type, link.confidence, metadata, link.created_at],
+          )
+          counts.links++
+          report?.({ phase: 'links', done: index + 1, total: parsedLinks.length })
+          await maybeYield(index + 1, batchSize)
+          continue
+        }
         if (strategy === 'replace') {
           await tx.query(
             `INSERT INTO link (id, source_note_id, target_note_id, link_type, confidence, created_at)
@@ -490,28 +591,59 @@ export async function importShard(
         await maybeYield(index + 1, batchSize)
       }
 
+      // Import embedding configs
+      report?.({ phase: 'embedding_configs', done: 0, total: parsedEmbConfigs.length })
+      for (const [index, config] of parsedEmbConfigs.entries()) {
+        await tx.query(
+          `INSERT INTO embedding_config (
+             id, name, description, model, dimension, chunk_size, chunk_overlap, is_default
+           )
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           ${strategy === 'replace'
+             ? 'ON CONFLICT (id) DO UPDATE SET name = $2, description = $3, model = $4, dimension = $5, chunk_size = $6, chunk_overlap = $7, is_default = $8'
+             : conflictClause}`,
+          [
+            config.id,
+            config.name,
+            config.description,
+            config.model,
+            config.dimension,
+            config.chunk_size,
+            config.chunk_overlap,
+            config.is_default,
+          ],
+        )
+        counts.embedding_configs++
+        report?.({ phase: 'embedding_configs', done: index + 1, total: parsedEmbConfigs.length })
+        await maybeYield(index + 1, batchSize)
+      }
+
       // Import embedding sets
       report?.({ phase: 'embedding_sets', done: 0, total: parsedEmbSets.length })
       for (const [index, shardSet] of parsedEmbSets.entries()) {
-        const set = embeddingSetFromShard(shardSet)
+        const set = embeddingSetFromShard(shardSet, manifest.created_at)
         if (strategy === 'replace') {
           await tx.query(
             `INSERT INTO embedding_set (
-               id, name, purpose, model_name, dimensions, kind, mode, truncate_dimension,
+               id, name, slug, description, purpose, document_count, embedding_count, is_system, keywords_json,
+               model_name, dimensions, kind, mode, truncate_dimension,
                criteria_json, source_json, compatibility_json, materialization_json, freshness_json, created_at, updated_at
-             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14, COALESCE($15::timestamptz, $14::timestamptz))
-             ON CONFLICT (id) DO UPDATE SET name = $2, purpose = $3, model_name = $4, dimensions = $5,
-               kind = $6, mode = $7, truncate_dimension = $8, criteria_json = $9::jsonb, source_json = $10::jsonb,
-               compatibility_json = $11::jsonb, materialization_json = $12::jsonb, freshness_json = $13::jsonb, updated_at = COALESCE($15::timestamptz, $14::timestamptz)`,
-            [set.id, set.name, set.purpose, set.model_name, set.dimensions, set.kind, set.mode, set.truncate_dimension, set.criteria_json, set.source_json, set.compatibility_json, set.materialization_json, set.freshness_json, set.created_at, set.updated_at],
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12, $13, $14, $15::jsonb, $16::jsonb, $17::jsonb, $18::jsonb, $19::jsonb, $20, COALESCE($21::timestamptz, $20::timestamptz))
+             ON CONFLICT (id) DO UPDATE SET name = $2, slug = $3, description = $4, purpose = $5,
+               document_count = $6, embedding_count = $7, is_system = $8, keywords_json = $9::jsonb,
+               model_name = $10, dimensions = $11, kind = $12, mode = $13, truncate_dimension = $14,
+               criteria_json = $15::jsonb, source_json = $16::jsonb, compatibility_json = $17::jsonb,
+               materialization_json = $18::jsonb, freshness_json = $19::jsonb, updated_at = COALESCE($21::timestamptz, $20::timestamptz)`,
+            [set.id, set.name, set.slug, set.description, set.purpose, set.document_count, set.embedding_count, set.is_system, set.keywords_json, set.model_name, set.dimensions, set.kind, set.mode, set.truncate_dimension, set.criteria_json, set.source_json, set.compatibility_json, set.materialization_json, set.freshness_json, set.created_at, set.updated_at],
           )
         } else {
           await tx.query(
             `INSERT INTO embedding_set (
-               id, name, purpose, model_name, dimensions, kind, mode, truncate_dimension,
+               id, name, slug, description, purpose, document_count, embedding_count, is_system, keywords_json,
+               model_name, dimensions, kind, mode, truncate_dimension,
                criteria_json, source_json, compatibility_json, materialization_json, freshness_json, created_at, updated_at
-             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14, COALESCE($15::timestamptz, $14::timestamptz)) ${conflictClause}`,
-            [set.id, set.name, set.purpose, set.model_name, set.dimensions, set.kind, set.mode, set.truncate_dimension, set.criteria_json, set.source_json, set.compatibility_json, set.materialization_json, set.freshness_json, set.created_at, set.updated_at],
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12, $13, $14, $15::jsonb, $16::jsonb, $17::jsonb, $18::jsonb, $19::jsonb, $20, COALESCE($21::timestamptz, $20::timestamptz)) ${conflictClause}`,
+            [set.id, set.name, set.slug, set.description, set.purpose, set.document_count, set.embedding_count, set.is_system, set.keywords_json, set.model_name, set.dimensions, set.kind, set.mode, set.truncate_dimension, set.criteria_json, set.source_json, set.compatibility_json, set.materialization_json, set.freshness_json, set.created_at, set.updated_at],
           )
         }
         counts.embedding_sets++
@@ -523,20 +655,33 @@ export async function importShard(
       report?.({ phase: 'embeddings', done: 0, total: parsedEmbeddings.length })
       for (const [index, shardEmb] of parsedEmbeddings.entries()) {
         const emb = embeddingFromShard(shardEmb)
+        const embeddingSetId = emb.embedding_set_id ?? await resolveEmbeddingSetIdForServerEmbedding(tx, emb.model, emb.vector)
         if (strategy === 'replace') {
           await tx.query(
-            `INSERT INTO embedding (id, note_id, embedding_set_id, vector, created_at)
-             VALUES ($1, $2, $3, $4, $5)
-             ON CONFLICT (id) DO UPDATE SET vector = $4`,
-            [emb.id, emb.note_id, emb.embedding_set_id, emb.vector, emb.created_at],
+            `INSERT INTO embedding (id, note_id, embedding_set_id, chunk_index, text, vector, model, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8::timestamptz, now()))
+             ON CONFLICT (id) DO UPDATE SET embedding_set_id = $3, chunk_index = $4, text = $5, vector = $6, model = $7`,
+            [emb.id, emb.note_id, embeddingSetId, emb.chunk_index, emb.text, emb.vector, emb.model, emb.created_at],
           )
         } else {
           await tx.query(
-            `INSERT INTO embedding (id, note_id, embedding_set_id, vector, created_at)
-             VALUES ($1, $2, $3, $4, $5) ${conflictClause}`,
-            [emb.id, emb.note_id, emb.embedding_set_id, emb.vector, emb.created_at],
+            `INSERT INTO embedding (id, note_id, embedding_set_id, chunk_index, text, vector, model, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8::timestamptz, now())) ${conflictClause}`,
+            [emb.id, emb.note_id, embeddingSetId, emb.chunk_index, emb.text, emb.vector, emb.model, emb.created_at],
           )
         }
+        await tx.query(
+          `INSERT INTO embedding_set_member (
+             embedding_set_id, note_id, embedding_id, membership_type, added_at, added_by
+           ) VALUES ($1, $2, $3, 'materialized', COALESCE($4::timestamptz, now()), 'shard-import')
+           ON CONFLICT (embedding_set_id, note_id) DO UPDATE SET
+             embedding_id = EXCLUDED.embedding_id,
+             membership_type = CASE
+               WHEN embedding_set_member.membership_type = 'auto' THEN 'materialized'
+               ELSE embedding_set_member.membership_type
+             END`,
+          [embeddingSetId, emb.note_id, emb.id, emb.created_at],
+        )
         counts.embeddings++
         report?.({ phase: 'embeddings', done: index + 1, total: parsedEmbeddings.length })
         await maybeYield(index + 1, batchSize)
@@ -633,10 +778,32 @@ export async function importShard(
       // Import embedding set members
       report?.({ phase: 'embedding_set_members', done: 0, total: parsedEmbMembers.length })
       for (const [index, member] of parsedEmbMembers.entries()) {
+        let embeddingId = member.embedding_id ?? null
+        if (!embeddingId) {
+          const resolvedEmbedding = await tx.query<{ id: string }>(
+            `SELECT id FROM embedding WHERE embedding_set_id = $1 AND note_id = $2 ORDER BY created_at DESC LIMIT 1`,
+            [member.embedding_set_id, member.note_id],
+          )
+          embeddingId = resolvedEmbedding.rows[0]?.id ?? null
+        }
         await tx.query(
-          `INSERT INTO embedding_set_member (embedding_set_id, note_id, embedding_id)
-           VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
-          [member.embedding_set_id, member.note_id, member.embedding_id],
+          `INSERT INTO embedding_set_member (
+             embedding_set_id, note_id, embedding_id, membership_type, added_at, added_by
+           )
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (embedding_set_id, note_id) DO UPDATE SET
+             embedding_id = COALESCE(EXCLUDED.embedding_id, embedding_set_member.embedding_id),
+             membership_type = EXCLUDED.membership_type,
+             added_at = EXCLUDED.added_at,
+             added_by = EXCLUDED.added_by`,
+          [
+            member.embedding_set_id,
+            member.note_id,
+            embeddingId,
+            member.membership_type ?? 'materialized',
+            member.added_at ?? manifest.created_at,
+            member.added_by ?? null,
+          ],
         )
         counts.embedding_set_members++
         report?.({ phase: 'embedding_set_members', done: index + 1, total: parsedEmbMembers.length })
@@ -666,6 +833,47 @@ export async function importShard(
 }
 
 // ── Parsing helpers ───────────────────────────────────────────────────────
+
+async function resolveEmbeddingSetIdForServerEmbedding(
+  db: QueryExecutor,
+  model: string,
+  vector: string,
+): Promise<string> {
+  const dimension = vectorDimension(vector)
+  const existing = await db.query<{ id: string }>(
+    `SELECT id FROM embedding_set
+     WHERE model_name = $1 AND dimensions = $2
+     ORDER BY created_at, id
+     LIMIT 1`,
+    [model, dimension],
+  )
+  if (existing.rows[0]?.id) return existing.rows[0].id
+
+  const id = generateId()
+  await db.query(
+    `INSERT INTO embedding_set (
+       id, name, slug, description, purpose, document_count, embedding_count,
+       is_system, keywords_json, model_name, dimensions, kind, created_at, updated_at
+     ) VALUES ($1, $2, $3, NULL, NULL, 0, 0, false, '[]'::jsonb, $2, $4, 'physical', now(), now())`,
+    [id, model, slugifyServerEmbeddingSet(model), dimension],
+  )
+  return id
+}
+
+function vectorDimension(vector: string): number {
+  const inner = vector.replace(/^\[/, '').replace(/\]$/, '').trim()
+  if (!inner) return 0
+  return inner.split(',').length
+}
+
+function slugifyServerEmbeddingSet(value: string): string {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return slug || 'embedding-set'
+}
 
 function parseJsonl<T>(data: Uint8Array | undefined): T[] {
   if (!data || data.byteLength === 0) return []

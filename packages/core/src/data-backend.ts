@@ -81,7 +81,8 @@ export interface BackendNoteFull extends BackendNote {
 export interface BackendLink {
   id: string
   fromNoteId: string
-  toNoteId: string
+  toNoteId: string | null
+  toUrl?: string | null
   kind: string
   score: number | null
   createdAt: string
@@ -334,11 +335,36 @@ function linkToBackend(link: LinkRow): BackendLink {
   }
 }
 
+function urlLinkToBackend(link: {
+  id: string
+  source_note_id: string
+  to_url: string
+  link_type: string
+  confidence: number | null
+  metadata_json?: Record<string, unknown> | string | null
+  created_at: Date | string
+}): BackendLink {
+  const metadata = typeof link.metadata_json === 'string'
+    ? JSON.parse(link.metadata_json) as Record<string, unknown>
+    : link.metadata_json ?? undefined
+  return {
+    id: link.id,
+    fromNoteId: link.source_note_id,
+    toNoteId: null,
+    toUrl: link.to_url,
+    kind: link.link_type,
+    score: link.confidence,
+    createdAt: toIso(link.created_at),
+    ...(metadata ? { metadata } : {}),
+  }
+}
+
 function shardLinkToBackend(link: ShardLink): BackendLink {
   return {
     id: link.id,
     fromNoteId: link.from_note_id,
     toNoteId: link.to_note_id,
+    toUrl: link.to_url,
     kind: link.kind,
     score: link.score,
     createdAt: link.created_at,
@@ -411,6 +437,7 @@ function remoteLinkToBackend(link: Partial<BackendLink> & {
   source_note_id?: string
   to_note_id?: string
   target_note_id?: string
+  to_url?: string | null
   kind?: string
   link_type?: string
   score?: number | null
@@ -420,7 +447,8 @@ function remoteLinkToBackend(link: Partial<BackendLink> & {
   return {
     id: link.id,
     fromNoteId: link.fromNoteId ?? link.from_note_id ?? link.source_note_id ?? '',
-    toNoteId: link.toNoteId ?? link.to_note_id ?? link.target_note_id ?? '',
+    toNoteId: link.toNoteId ?? link.to_note_id ?? link.target_note_id ?? null,
+    toUrl: link.toUrl ?? link.to_url ?? null,
     kind: link.kind ?? link.link_type ?? '',
     score: link.score ?? link.confidence ?? null,
     createdAt: link.createdAt ?? link.created_at ?? '',
@@ -459,7 +487,23 @@ export function createPGliteBackend(db: DatabaseClient, options: PGliteBackendOp
 
   async function linksOf(id: string): Promise<BackendLink[]> {
     const result = await links.listForNote(id)
-    return [...result.outbound, ...result.inbound].map(linkToBackend)
+    const urlLinks = await db.query<{
+      id: string
+      source_note_id: string
+      to_url: string
+      link_type: string
+      confidence: number | null
+      metadata_json: Record<string, unknown> | string | null
+      created_at: Date
+    }>(
+      `SELECT * FROM link_url_target WHERE source_note_id = $1 AND deleted_at IS NULL ORDER BY created_at`,
+      [id],
+    )
+    return [
+      ...result.outbound.map(linkToBackend),
+      ...result.inbound.map(linkToBackend),
+      ...urlLinks.rows.map(urlLinkToBackend),
+    ]
   }
 
   async function conceptsOf(id: string): Promise<BackendConcept[]> {

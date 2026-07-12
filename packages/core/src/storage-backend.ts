@@ -69,6 +69,13 @@ export class PGliteStorageBackendFactory implements StorageBackendFactory {
   }
 }
 
+/**
+ * Built-in PGlite backend factory — the opt-in default (issue #261). PGlite is
+ * loaded lazily by `createPGliteInstance` on first `open()`, so referencing
+ * this constant does not force the WASM engine into a consumer's static graph.
+ * Hosts wanting a different store pass their own `StorageBackendFactory` to
+ * `ArchiveManager` instead.
+ */
 export const defaultStorageBackendFactory = new PGliteStorageBackendFactory()
 
 export class PGliteWorkerStorageBackend implements StorageBackend {
