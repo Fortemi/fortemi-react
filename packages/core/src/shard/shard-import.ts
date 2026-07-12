@@ -8,6 +8,7 @@
 import type { DatabaseClient, QueryExecutor } from '../storage-backend.js'
 import { unpackTarGz } from './shard-tar.js'
 import { validateChecksums } from './checksum.js'
+import { collectSidecarBlobs, blobChecksumToHex } from './blob-sidecar.js'
 import {
   noteFromShard,
   linkFromShard,
@@ -16,7 +17,7 @@ import {
   embeddingFromShard,
 } from './field-mapper.js'
 import { generateId } from '../uuid.js'
-import { computeHash } from '../hash.js'
+import { computeHash, computeBlobHash } from '../hash.js'
 import { compareShardVersions, CURRENT_SHARD_VERSION } from './types.js'
 import type {
   ShardManifest,
@@ -86,6 +87,10 @@ export async function importShard(
   const errors: string[] = []
   let importedAttachmentReferenceCount = 0
   let notesWithImportedAttachmentReferences = 0
+  // Sidecar bytes to write to the BlobStore *after* the import transaction
+  // commits — keyed by content hash so identical blobs hydrate once, and kept
+  // out of the transaction so a rollback leaves no orphaned bytes.
+  const blobsToHydrate = new Map<string, Uint8Array>()
   const counts: ImportCounts = {
     notes: 0,
     collections: 0,
@@ -194,6 +199,12 @@ export async function importShard(
     }
   }
   report?.({ phase: 'validate', done: 1, total: 1 })
+
+  // Portable byte sidecar (Fortemi/fortemi#1046): content-addressed
+  // `blobs/<hex>` entries, keyed by bare BLAKE3 hex. Only collected when a
+  // BlobStore hydration destination is supplied; unreferenced entries are
+  // ignored, and a missing entry leaves its attachment reference-only.
+  const sidecarBlobs = options?.blobStore ? collectSidecarBlobs(files) : null
 
   // ── Step 4: Parse all components ──────────────────────────────────────
   // Notes may be clustered (notes/000.jsonl, …) per the manifest layout (#189);
@@ -452,10 +463,11 @@ export async function importShard(
           )
         }
 
-        // Shard projections carry extracted text plus attachment metadata. They
-        // intentionally do not carry the raw blob payload, so import preserves
-        // the reference rows and leaves BlobStore hydration to an out-of-band
-        // source that owns the bytes.
+        // Shard projection records carry extracted text plus attachment
+        // metadata, never raw bytes. When the shard includes a portable
+        // `blobs/<hex>` byte sidecar (Fortemi/fortemi#1046) and an import
+        // `blobStore` is supplied, matching bytes are hydrated after commit so
+        // getBlob() resolves; otherwise attachments import as reference-only.
         if (note.attachments?.length) {
           notesWithImportedAttachmentReferences++
           for (let position = 0; position < note.attachments.length; position += 1) {
@@ -471,7 +483,10 @@ export async function importShard(
                 `INSERT INTO attachment_blob (id, content_hash, size_bytes, storage_path)
                  VALUES ($1, $2, $3, $4)
                  ON CONFLICT (content_hash) DO NOTHING`,
-                [blobId, ref.checksum, ref.bytes, ref.path],
+                // storage_path stays NULL: the browser edition addresses blobs
+                // by content_hash via the BlobStore, not a filesystem key, and
+                // `ref.path` is the display filename (never a storage locator).
+                [blobId, ref.checksum, ref.bytes, null],
               )
             }
             const filename = ref.path.split('/').filter(Boolean).pop() ?? ref.path
@@ -496,7 +511,33 @@ export async function importShard(
                 [ref.id, note.id, blobId, filename, ref.mime, projection.extracted_text, position],
               )
             }
-            importedAttachmentReferenceCount++
+            // Portable byte sidecar hydration (Fortemi/fortemi#1046): if the
+            // shard carried this attachment's bytes, verify them against the
+            // BLAKE3 checksum and queue a post-commit BlobStore write so
+            // getBlob() returns real bytes. Otherwise the attachment stays
+            // reference-only, exactly as before.
+            let hydrated = false
+            if (sidecarBlobs) {
+              if (blobsToHydrate.has(ref.checksum)) {
+                hydrated = true
+              } else {
+                const bytes = sidecarBlobs.get(blobChecksumToHex(ref.checksum))
+                if (bytes) {
+                  if (computeBlobHash(bytes) === ref.checksum) {
+                    blobsToHydrate.set(ref.checksum, bytes)
+                    hydrated = true
+                  } else {
+                    warnings.push(
+                      `Sidecar blob for attachment ${ref.id} failed BLAKE3 integrity ` +
+                        `check (expected ${ref.checksum}); imported as reference-only.`,
+                    )
+                  }
+                }
+              }
+            }
+            if (!hydrated) {
+              importedAttachmentReferenceCount++
+            }
           }
         }
 
@@ -508,8 +549,9 @@ export async function importShard(
       if (importedAttachmentReferenceCount > 0) {
         warnings.push(
           `${importedAttachmentReferenceCount} attachment reference(s) across ${notesWithImportedAttachmentReferences} note(s) were imported as metadata only: ` +
-            'Knowledge Shard projections carry extracted text plus attachment metadata, not raw binary payloads, ' +
-            'so BlobStore bytes remain unavailable unless provided by an out-of-band attachment source. Tracking: #237 / server #1013.',
+            'these shard records carry extracted text plus attachment metadata but no matching byte-sidecar entry, ' +
+            'so their BlobStore bytes are unavailable (getBlob() returns null). Export a self-contained shard ' +
+            '(`includeBlobs` + a `blobStore`) and import with a `blobStore` to hydrate bytes. Tracking: #271 / server #1046.',
         )
       }
 
@@ -960,6 +1002,24 @@ export async function importShard(
       warnings,
       errors: [`Transaction failed (rolled back): ${err instanceof Error ? err.message : String(err)}`],
       duration_ms: performance.now() - start,
+    }
+  }
+
+  // Hydrate attachment bytes from the portable sidecar *after* the import
+  // transaction has committed, so a rollback never leaves orphaned blobs. The
+  // BlobStore is content-addressed and separate from the SQL transaction; a
+  // failure here is non-fatal (bytes can be re-imported), so it degrades to a
+  // warning rather than discarding a successful metadata import.
+  if (options?.blobStore && blobsToHydrate.size > 0) {
+    try {
+      for (const [hash, bytes] of blobsToHydrate) {
+        await options.blobStore.write(hash, bytes)
+      }
+    } catch (err) {
+      warnings.push(
+        `Imported metadata successfully but failed to hydrate ${blobsToHydrate.size} ` +
+          `attachment blob(s) into the BlobStore: ${err instanceof Error ? err.message : String(err)}.`,
+      )
     }
   }
 

@@ -90,7 +90,7 @@ export type { ArchiveInfo } from './archive-manager.js'
 export { createFortemi } from './create-fortemi.js'
 export type { FortemiCore, FortemiConfig } from './create-fortemi.js'
 
-export { computeHash } from './hash.js'
+export { computeHash, computeBlobHash } from './hash.js'
 
 export {
   FORTEMI_COMPATIBILITY_PATH,

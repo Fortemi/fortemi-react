@@ -8,6 +8,7 @@ import type { DatabaseClient } from '../storage-backend.js'
 import { VERSION } from '../index.js'
 import { packTarGz } from './shard-tar.js'
 import { sha256Hex } from './checksum.js'
+import { sidecarEntryName } from './blob-sidecar.js'
 import {
   noteToShard,
   linkToShard,
@@ -179,8 +180,10 @@ export async function exportShard(
     const source: ShardAttachmentProjection = {
       extracted_text: row.extracted_text,
       attachment: {
+        // `path` is the display filename per the binary-attachment projection
+        // contract — never the physical storage key (`storage_path`).
         id: row.id,
-        path: row.storage_path ?? row.filename,
+        path: row.filename,
         mime: row.mime_type,
         checksum: row.content_hash,
         bytes: Number(row.size_bytes),
@@ -726,6 +729,23 @@ export async function exportShard(
     ...(layout ? { layout } : {}),
   }
   files.set('manifest.json', encoder.encode(JSON.stringify(manifest, null, 2)))
+
+  // ── Portable byte sidecar (Fortemi/fortemi#1046) ────────────────────
+  // Optional content-addressed `blobs/<hex>` entries, one per distinct
+  // attachment content hash. Deliberately excluded from `manifest.checksums`:
+  // an entry's name *is* its BLAKE3 digest, so entries are self-verifying, and
+  // readers must tolerate missing/unknown `blobs/` entries. A blob the store
+  // cannot return is skipped — its attachment stays reference-only.
+  if (options?.includeBlobs && options.blobStore) {
+    const packed = new Set<string>()
+    for (const row of attachmentRows.rows) {
+      const checksum = row.content_hash
+      if (packed.has(checksum)) continue
+      packed.add(checksum)
+      const bytes = await options.blobStore.read(checksum)
+      if (bytes) files.set(sidecarEntryName(checksum), bytes)
+    }
+  }
 
   // ── Pack tar.gz ─────────────────────────────────────────────────────
   return packTarGz(files)

@@ -12,7 +12,7 @@
 import type { DatabaseClient } from '../storage-backend.js'
 import type { BlobStore } from '../blob-store.js'
 import { generateId } from '../uuid.js'
-import { computeHash } from '../hash.js'
+import { computeBlobHash } from '../hash.js'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -58,14 +58,16 @@ export class AttachmentsRepository {
   /**
    * Attach a binary file to a note.
    *
-   * If a blob with the same SHA-256 content hash already exists, the existing
+   * If a blob with the same BLAKE3 content hash already exists, the existing
    * blob row is reused (deduplication). Otherwise a new blob row is inserted
-   * and the raw bytes are written to the BlobStore.
+   * and the raw bytes are written to the BlobStore. The BLAKE3 `content_hash`
+   * (`blake3:<hex>`) matches the server convention and is the key used by the
+   * portable Knowledge-Shard byte sidecar.
    *
    * Returns the newly created AttachmentRow.
    */
   async attach(input: AttachInput): Promise<AttachmentRow> {
-    const contentHash = computeHash(input.data)
+    const contentHash = computeBlobHash(input.data)
     const sizeBytes = input.data.length
 
     // ── blob deduplication ──────────────────────────────────────────────────
