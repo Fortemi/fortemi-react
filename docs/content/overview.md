@@ -1,10 +1,10 @@
 ---
 title: Welcome
-summary: A browser-only port of the Fortémi memory server — PGlite data layer, hybrid semantic search, SKOS tagging, and graph tooling, with 100% JSON format parity with the Rust server. Local-first and private-by-default.
+summary: The browser edition of the Fortémi intelligent-database stack — the same normalized data schema in a PGlite data layer with 100% JSON format parity, hybrid semantic search, SKOS tagging, and graph tooling. Local-first and private-by-default.
 hero:
   eyebrow: Fortémi React
-  title: Knowledge Management in the Browser
-  subtitle: The Fortémi memory server, running entirely in the browser — a PGlite (PostgreSQL WASM) data layer, hybrid semantic search, W3C SKOS tagging, and graph tooling. No server required. Local-first, private-by-default.
+  title: The Fortémi Intelligent Database, in the Browser
+  subtitle: The browser edition of the Fortémi intelligent-database stack — a PGlite (PostgreSQL WASM) data layer running the same normalized schema, hybrid semantic search, W3C SKOS tagging, and graph tooling. No server required. Local-first, private-by-default.
   fullBleed: true
   align: center
   cta:
@@ -23,9 +23,15 @@ banner:
 
 ## What is fortemi-react?
 
-fortemi-react is the **browser build of the Fortémi memory server**. Fortémi keeps notes for an AI agent and lets the agent search them by *meaning*, not just exact words. fortemi-react does that same job with **no separate server** — the data lives in the browser on the user's device, search runs locally, and any cloud or AI provider is strictly opt-in.
+Fortémi is an intelligent database for AI-ready applications: a normalized data schema plus data-science and processing tooling that turns messy organizational data into searchable, linkable, provenance-aware structures. The same schema runs across the server, browser edition, and HotM sidecar, giving teams a common substrate for complex, data-rich, compute-heavy applications while keeping deployment affordable on local, edge, or hosted infrastructure.
 
-It is the server *in the browser*. (HotM, a separate project, is a desktop client that talks to the Rust server; fortemi-react is the server itself, ported to run in-page.) Its JSON output matches the Fortémi Rust server exactly, so archives are portable between the two.
+fortemi-react is the **browser edition of that stack**. It runs the same normalized schema with **no separate server** — the data lives in the browser on the user's device, search runs locally, and any cloud or AI provider is strictly opt-in. Keeping notes for an AI agent and searching them by *meaning*, not just exact words, is a use case built on that substrate — not the whole product.
+
+It is the stack *in the browser*. (HotM, a separate project, is a desktop client that bundles the Rust server; fortemi-react is the stack itself, ported to run in-page.) Its JSON output matches the Fortémi Rust server exactly, so archives are portable between the two.
+
+## Fortémi (product) vs `@fortemi/core` (embeddable library)
+
+`@fortemi/core` is an embeddable library — the headless data layer other tools build on. (For example, it is AIWG's default index and discovery backend, reading from a static local cache.) A tool that embeds `@fortemi/core` is **not running Fortémi**: it is using the library's schema and query surface inside its own process, and the library ships no data anywhere by default. Fortémi the product is the full stack — the server or this browser edition — with its job pipeline, capability system, and portable archives.
 
 ## Highlights
 
