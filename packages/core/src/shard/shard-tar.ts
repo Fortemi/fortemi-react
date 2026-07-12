@@ -149,8 +149,18 @@ function decodeTar(tarData: Uint8Array): Map<string, Uint8Array> {
  * @param files Map of filename → file contents
  * @returns Compressed archive bytes (suitable for .shard file)
  */
-export function packTarGz(files: Map<string, Uint8Array>): Uint8Array {
+export function packTarGz(
+  files: Map<string, Uint8Array>,
+  opts?: { maxDecompressedBytes?: number },
+): Uint8Array {
   const tarData = encodeTar(files)
+  const cap = opts?.maxDecompressedBytes ?? DEFAULT_MAX_DECOMPRESSED_BYTES
+  if (tarData.byteLength > cap) {
+    throw new Error(
+      'Refusing to create archive: uncompressed size ' + tarData.byteLength +
+        ' exceeds cap ' + cap + ' bytes',
+    )
+  }
   return gzipSync(tarData)
 }
 

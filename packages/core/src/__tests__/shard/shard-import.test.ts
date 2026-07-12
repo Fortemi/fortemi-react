@@ -227,6 +227,12 @@ describe('importShard', { timeout: 30_000 }, () => {
     await sourceDb.close()
 
     expect(result.success).toBe(true)
+    expect(result.counts.notes).toBe(0)
+    expect(result.counts.collections).toBe(0)
+    expect(result.counts.links).toBe(0)
+    expect(result.skipped.notes).toBe(2)
+    expect(result.skipped.collections).toBe(1)
+    expect(result.skipped.links).toBe(1)
     const notesAfter = new NotesRepository(db)
     const updated = await notesAfter.get(list.items[0].id)
     expect(updated.title).toBe('Modified') // unchanged
