@@ -1025,9 +1025,11 @@ describe('AIWG Fortemi chunked index — slim/projected parts (#168)', () => {
   it('builds a projected manifest + slim parts + full detail records', () => {
     const richIndex: AiwgFortemiIndexExport = {
       ...index,
+      schema_version: 'aiwg.fortemi.index.export.v2',
       items: [
         {
           ...index.items[0],
+          schema_version: 'aiwg.fortemi.index.record.v2',
           skos_concepts: [{ id: 'concept:rich', prefLabel: 'Rich Metadata' }],
           provenance_events: [{ activity: 'generated', agent: 'aiwg-index' }],
         },
@@ -1597,6 +1599,13 @@ describe('SEC6: privacy/PII filtered at generation (#243)', () => {
     ).toEqual(['pii', 'prv', 'pub'])
   })
 
+  it('fails closed for missing or unknown privacy metadata', () => {
+    const missing = { ...record('missing', 'aiwg.skill', 'Missing', 'body'), privacy: undefined } as unknown as AiwgFortemiRecord
+    const unknown = { ...record('unknown', 'aiwg.skill', 'Unknown', 'body'), privacy: { classification: 'confidential', pii: false } } as unknown as AiwgFortemiRecord
+    expect(filterAiwgRecordsByPrivacy([missing, unknown], { includePrivate: true, includePii: true })).toEqual([])
+    expect(() => buildAiwgChunkedIndex({ ...index, items: [missing] })).toThrow(/privacy/)
+  })
+
   it('buildAiwgStaticEmbeddingSet excludes private/pii by default', async () => {
     const safe = await buildAiwgStaticEmbeddingSet(mixed, { id: 'safe', backend })
     expect(safe.embeddings.map((e) => e.record_id)).toEqual(['pub'])
@@ -1622,6 +1631,14 @@ describe('SEC6: privacy/PII filtered at generation (#243)', () => {
 
 describe('#239 validator conformance — v1/v2 forbiddance, enums, source gating, review-decision version', () => {
   const exportV1 = (items: AiwgFortemiRecord[]): unknown => ({ ...index, schema_version: 'aiwg.fortemi.index.export.v1', items })
+
+  it('accepts bytewise-sorted mixed-case ids independent of locale', () => {
+    const result = validateAiwgFortemiIndexExport(exportV1([
+      record('Zeta', 'aiwg.skill', 'Zeta', 'body'),
+      record('alpha', 'aiwg.skill', 'Alpha', 'body'),
+    ]))
+    expect(result.errors.filter((error) => error.includes('sorted by id'))).toEqual([])
+  })
 
   it('A2 — rejects a record.v1 carrying record-level v2-only fields', () => {
     const cases: Array<[string, Partial<AiwgFortemiRecord>]> = [
