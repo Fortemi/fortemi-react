@@ -88,6 +88,9 @@ describe('MigrationRunner', () => {
     expect(tableNames).toContain('embedding_set')
     expect(tableNames).toContain('embedding')
     expect(tableNames).toContain('embedding_set_member')
+    expect(tableNames).toContain('embedding_config')
+    expect(tableNames).toContain('template')
+    expect(tableNames).toContain('link_url_target')
   })
 
   it('is idempotent — running twice applies only once', async () => {
@@ -220,7 +223,7 @@ describe('MigrationRunner', () => {
     ).rejects.toThrow()
   })
 
-  it('embedding table enforces unique (note_id, embedding_set_id)', async () => {
+  it('embedding table enforces unique (note_id, embedding_set_id, chunk_index)', async () => {
     await runner.apply(allMigrations)
 
     await db.query(
@@ -234,14 +237,18 @@ describe('MigrationRunner', () => {
 
     const vec = JSON.stringify(Array.from({ length: 384 }, () => 0.1))
     await db.query(
-      "INSERT INTO embedding (id, note_id, embedding_set_id, vector) VALUES ($1, $2, $3, $4)",
-      ['emb-1', 'note-emb-1', 'eset-1', vec],
+      "INSERT INTO embedding (id, note_id, embedding_set_id, chunk_index, vector) VALUES ($1, $2, $3, $4, $5)",
+      ['emb-1', 'note-emb-1', 'eset-1', 0, vec],
+    )
+    await db.query(
+      "INSERT INTO embedding (id, note_id, embedding_set_id, chunk_index, vector) VALUES ($1, $2, $3, $4, $5)",
+      ['emb-2', 'note-emb-1', 'eset-1', 1, vec],
     )
 
     await expect(
       db.query(
-        "INSERT INTO embedding (id, note_id, embedding_set_id, vector) VALUES ($1, $2, $3, $4)",
-        ['emb-2', 'note-emb-1', 'eset-1', vec],
+        "INSERT INTO embedding (id, note_id, embedding_set_id, chunk_index, vector) VALUES ($1, $2, $3, $4, $5)",
+        ['emb-3', 'note-emb-1', 'eset-1', 1, vec],
       ),
     ).rejects.toThrow()
   })

@@ -172,6 +172,7 @@ Rules active from AIWG: see `.claude/rules/RULES-INDEX.md` — 35 rules across c
 
 # AIWG
 
+@.aiwg/aiwg.config
 
 <!--
   This block is managed by `aiwg regenerate` and `aiwg use`.
@@ -224,7 +225,7 @@ When a user asks whether AIWG is active or engaged in this project, run or read 
 - Source of truth: [.aiwg/aiwg.config](./.aiwg/aiwg.config)
 - Canonical tracker: `origin` (unknown; git@git.integrolabs.net:Fortemi/fortemi-react.git)
 - Primary repo remote: `origin`; CI remote: `origin`
-- Secondary/mirror remotes: github (backup-mirror)
+- Secondary/mirror remotes: github (publish-target)
 - Issue storage mode: not configured
 
 Tracker access order for issue, PR, release, and CI-sensitive tracker operations:

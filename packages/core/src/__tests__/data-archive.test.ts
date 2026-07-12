@@ -28,8 +28,17 @@ function metaFixture(overrides: Partial<DbSnapshotMeta> = {}): DbSnapshotMeta {
 }
 
 describe('data-archive — version constants', () => {
-  it('SUPPORTED_PGLITE_VERSION matches the installed dependency (no drift)', () => {
-    const dep = (pkg.dependencies as Record<string, string>)['@electric-sql/pglite']
+  it('SUPPORTED_PGLITE_VERSION matches the declared dependency (no drift)', () => {
+    // PGlite is an OPTIONAL dependency (issue #261) — lazy-loaded so DB-free
+    // consumers don't bundle it. The version constant that gates snapshot
+    // compatibility must still track whatever range core declares, wherever
+    // it is declared.
+    const deps = {
+      ...(pkg.dependencies as Record<string, string> | undefined),
+      ...(pkg.optionalDependencies as Record<string, string> | undefined),
+    }
+    const dep = deps['@electric-sql/pglite']
+    expect(dep, '@electric-sql/pglite must be declared in (optional)dependencies').toBeDefined()
     expect(dep.replace(/^[\^~]/, '')).toBe(SUPPORTED_PGLITE_VERSION)
   })
 

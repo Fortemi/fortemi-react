@@ -5,7 +5,14 @@ import { MigrationRunner } from '../../migration-runner.js'
 import { allMigrations } from '../../migrations/index.js'
 import { loadServerFixture, matchServerShape } from './helpers.js'
 
-describe('Format Parity', () => {
+/**
+ * DB table parity guard.
+ *
+ * This suite compares PGlite table row shapes against server database fixtures.
+ * It does not validate the portable Knowledge Shard or AIWG index JSON
+ * contracts; those are covered by the portable-contract CI gate.
+ */
+describe('DB Table Parity', () => {
   let db: PGlite
 
   beforeAll(async () => {
@@ -203,7 +210,7 @@ describe('Format Parity', () => {
     // the attachment row to feed local search/index/export. The server models
     // MIME via document_type_id -> document_type.mime_type and does not persist
     // extracted text, so these appear here as browser-only extras. Export JSON
-    // parity is preserved elsewhere (notes carry `binary_sources`, not attachment
+    // parity is preserved elsewhere (notes carry `attachments`, not attachment
     // columns). Assert the exact allowed set so any *other* divergence still fails.
     expect([...comparison.extra].sort()).toEqual(['extracted_text', 'mime_type'])
   })

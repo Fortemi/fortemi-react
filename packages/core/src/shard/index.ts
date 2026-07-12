@@ -25,9 +25,11 @@ export type {
   ShardNote,
   ShardCollection,
   ShardTag,
+  ShardTemplate,
   ShardLink,
   ShardEmbeddingSet,
   ShardEmbeddingSetMember,
+  ShardEmbeddingConfig,
   ShardEmbedding,
   ShardSkosScheme,
   ShardSkosConcept,
@@ -53,14 +55,16 @@ export {
   noteToShard,
   noteFromShard,
   linkToShard,
+  urlLinkToShard,
   linkFromShard,
   collectionToShard,
   collectionFromShard,
   tagsToShard,
-  tagsFromShard,
+  templateToShard,
   embeddingSetToShard,
   embeddingSetFromShard,
   embeddingSetMemberToShard,
+  embeddingConfigToShard,
   embeddingToShard,
   embeddingFromShard,
   skosSchemeToShard,
@@ -76,6 +80,16 @@ export { exportShard } from './shard-export.js'
 
 // Import pipeline
 export { importShard } from './shard-import.js'
+
+// Schema validation
+export {
+  getKnowledgeShardSchema,
+  validateShardArchive,
+  validateShardManifest,
+  validateShardComponentRecord,
+  assertShardComponentRecord,
+} from './schema-validator.js'
+export type { ShardSchemaValidationResult } from './schema-validator.js'
 
 // In-place reader (static-file backend, issue #189)
 export { openShard } from './shard-reader.js'

@@ -216,6 +216,12 @@ describe('SearchRepository', () => {
     expect(resp.results[0].snippet.length).toBeGreaterThan(0)
   })
 
+  it('normalizes a content-less note snippet to an empty string', async () => {
+    await insertNote(db, { id: 'empty-content', title: 'Empty content' })
+    const resp = await repo.search('')
+    expect(resp.results.find((result) => result.id === 'empty-content')?.snippet).toBe('')
+  })
+
   // -------------------------------------------------------------------------
   // Empty query → recent notes
   // -------------------------------------------------------------------------

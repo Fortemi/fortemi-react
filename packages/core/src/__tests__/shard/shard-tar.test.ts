@@ -93,19 +93,24 @@ describe('shard-tar', () => {
     const files = new Map<string, Uint8Array>()
     const encoder = new TextEncoder()
     files.set('embedding_set_members.jsonl', encoder.encode('data'))
-    files.set('embedding_configs.json', encoder.encode('data2'))
+    files.set('embedding_sets.json', encoder.encode('data2'))
 
     const packed = packTarGz(files)
     const unpacked = unpackTarGz(packed)
 
     expect([...unpacked.keys()].sort()).toEqual([
-      'embedding_configs.json',
       'embedding_set_members.jsonl',
+      'embedding_sets.json',
     ])
   })
 })
 
 describe('shard-tar SEC3: decompression bomb cap (#241)', () => {
+  it('refuses to export an archive that its matching import cap cannot unpack', () => {
+    const files = new Map([['big.txt', new TextEncoder().encode('x'.repeat(64))]])
+    expect(() => packTarGz(files, { maxDecompressedBytes: 16 })).toThrow(/create archive.*exceeds cap/i)
+  })
+
   it('rejects an archive whose declared size exceeds the cap', () => {
     const files = new Map<string, Uint8Array>()
     files.set('big.txt', new TextEncoder().encode('x'.repeat(4096)))

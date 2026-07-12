@@ -23,9 +23,11 @@ import type {
   ShardSkosConcept,
   ShardSkosRelation,
 } from './types.js'
-import { CURRENT_SHARD_VERSION } from './types.js'
+import { compareShardVersions, CURRENT_SHARD_VERSION } from './types.js'
 import { noteFromShard, type BrowserNoteExport } from './field-mapper.js'
-import { unpackTarGz } from './shard-tar.js'
+import { DEFAULT_MAX_DECOMPRESSED_BYTES, unpackTarGz } from './shard-tar.js'
+import { parseJsonArrayBytes, parseJsonlBytes } from './parse.js'
+import { sha256Hex } from './checksum.js'
 
 const decoder = new TextDecoder()
 
@@ -48,19 +50,6 @@ export function assertSafeComponentName(filename: string): void {
   ) {
     throw new Error(`Refusing to read unsafe shard component path: ${JSON.stringify(filename)}`)
   }
-}
-
-function parseJsonlBytes<T>(data: Uint8Array | undefined): T[] {
-  if (!data || data.byteLength === 0) return []
-  return decoder.decode(data)
-    .split('\n')
-    .filter((line) => line.trim().length > 0)
-    .map((line) => JSON.parse(line) as T)
-}
-
-function parseJsonArrayBytes<T>(data: Uint8Array | undefined): T[] {
-  if (!data || data.byteLength === 0) return []
-  return JSON.parse(decoder.decode(data)) as T[]
 }
 
 /** The public note shape — the same browser-insertable record `importShard` produces. */
@@ -135,6 +124,8 @@ export interface OpenShardOptions {
   semantic?: StaticSemanticProvider
   /** Bounds the cross-page search match cache (total cached note records). Default 5000. */
   maxCachedMatches?: number
+  /** Maximum bytes fetched for any unpacked component. Default 256 MiB. */
+  maxComponentBytes?: number
 }
 
 /** Reads shard component/cluster files from a packed map or a static base URL. */
@@ -158,8 +149,13 @@ class PackedComponentStore implements ShardComponentStore {
     this.files = files
     this.manifest = manifest
   }
-  read(filename: string): Promise<Uint8Array | undefined> {
-    return Promise.resolve(this.files.get(filename))
+  async read(filename: string): Promise<Uint8Array | undefined> {
+    const bytes = this.files.get(filename)
+    const expectedChecksum = this.manifest.checksums?.[filename]
+    if (bytes && expectedChecksum && await sha256Hex(bytes) !== expectedChecksum) {
+      throw new Error(`Checksum validation failed for shard component: ${filename}`)
+    }
+    return bytes
   }
 }
 
@@ -169,10 +165,12 @@ class UrlComponentStore implements ShardComponentStore {
   private baseUrl: string
   private fetchImpl: typeof fetch
   private cache = new Map<string, Uint8Array | undefined>()
-  constructor(baseUrl: string, fetchImpl: typeof fetch, manifest: ShardManifest) {
+  private maxComponentBytes: number
+  constructor(baseUrl: string, fetchImpl: typeof fetch, manifest: ShardManifest, maxComponentBytes: number) {
     this.baseUrl = baseUrl.replace(/\/$/, '')
     this.fetchImpl = fetchImpl
     this.manifest = manifest
+    this.maxComponentBytes = maxComponentBytes
   }
   async read(filename: string): Promise<Uint8Array | undefined> {
     assertSafeComponentName(filename)
@@ -182,13 +180,48 @@ class UrlComponentStore implements ShardComponentStore {
       this.cache.set(filename, undefined)
       return undefined
     }
-    const bytes = new Uint8Array(await response.arrayBuffer())
+    const declaredLength = Number(response.headers.get('content-length'))
+    if (Number.isFinite(declaredLength) && declaredLength > this.maxComponentBytes) {
+      throw new Error(`Shard component ${filename} exceeds cap ${this.maxComponentBytes} bytes`)
+    }
+    const chunks: Uint8Array[] = []
+    let total = 0
+    if (response.body) {
+      const reader = response.body.getReader()
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        total += value.byteLength
+        if (total > this.maxComponentBytes) {
+          await reader.cancel()
+          throw new Error(`Shard component ${filename} exceeds cap ${this.maxComponentBytes} bytes`)
+        }
+        chunks.push(value)
+      }
+    } else {
+      const value = new Uint8Array(await response.arrayBuffer())
+      total = value.byteLength
+      if (total > this.maxComponentBytes) {
+        throw new Error(`Shard component ${filename} exceeds cap ${this.maxComponentBytes} bytes`)
+      }
+      chunks.push(value)
+    }
+    const bytes = new Uint8Array(total)
+    let offset = 0
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset)
+      offset += chunk.byteLength
+    }
+    const expectedChecksum = this.manifest.checksums?.[filename]
+    if (expectedChecksum && await sha256Hex(bytes) !== expectedChecksum) {
+      throw new Error(`Checksum validation failed for shard component: ${filename}`)
+    }
     this.cache.set(filename, bytes)
     return bytes
   }
 }
 
-async function resolveStore(source: ShardReaderSource): Promise<ShardComponentStore> {
+async function resolveStore(source: ShardReaderSource, maxComponentBytes: number): Promise<ShardComponentStore> {
   if (typeof source === 'object' && 'baseUrl' in source) {
     const fetchImpl = source.fetchImpl ?? (globalThis.fetch as typeof fetch)
     const base = source.baseUrl.replace(/\/$/, '')
@@ -197,7 +230,7 @@ async function resolveStore(source: ShardReaderSource): Promise<ShardComponentSt
       throw new Error(`Failed to fetch shard manifest (${manifestResponse.status}): ${base}/manifest.json`)
     }
     const manifest = (await manifestResponse.json()) as ShardManifest
-    return new UrlComponentStore(base, fetchImpl, manifest)
+    return new UrlComponentStore(base, fetchImpl, manifest, maxComponentBytes)
   }
   const bytes = await toBytes(source)
   const files = unpackTarGz(bytes)
@@ -212,7 +245,7 @@ function tokenize(query: string): string[] {
 }
 
 function noteSearchText(note: ShardNote): string {
-  const extractedText = note.binary_sources
+  const extractedText = (note.attachments ?? note.binary_sources)
     ?.map((source) => source.extracted_text)
     .filter(Boolean)
     .join(' ') ?? ''
@@ -241,7 +274,7 @@ function noteMatchesTokens(note: ShardNote, tokens: string[]): boolean {
 function rankNote(note: ShardNote, tokens: string[], weights: ShardSearchWeights): number {
   if (tokens.length === 0) return 0
   const title = (note.title ?? '').toLowerCase()
-  const extractedText = note.binary_sources
+  const extractedText = (note.attachments ?? note.binary_sources)
     ?.map((source) => source.extracted_text)
     .filter(Boolean)
     .join(' ') ?? ''
@@ -257,7 +290,7 @@ function rankNote(note: ShardNote, tokens: string[], weights: ShardSearchWeights
 }
 
 function makeSnippet(note: ShardNote, tokens: string[], length: number): string {
-  const extractedText = note.binary_sources
+  const extractedText = (note.attachments ?? note.binary_sources)
     ?.map((source) => source.extracted_text)
     .filter(Boolean)
     .join(' ') ?? ''
@@ -552,8 +585,8 @@ export async function openShard(
   source: ShardReaderSource,
   options: OpenShardOptions = {},
 ): Promise<ShardReader> {
-  const store = await resolveStore(source)
-  if (store.manifest.min_reader_version && store.manifest.min_reader_version > CURRENT_SHARD_VERSION) {
+  const store = await resolveStore(source, options.maxComponentBytes ?? DEFAULT_MAX_DECOMPRESSED_BYTES)
+  if (store.manifest.min_reader_version && compareShardVersions(store.manifest.min_reader_version, CURRENT_SHARD_VERSION) > 0) {
     throw new Error(
       `Shard requires reader version ${store.manifest.min_reader_version}, ` +
       `but this build supports ${CURRENT_SHARD_VERSION}. Import the shard instead.`,

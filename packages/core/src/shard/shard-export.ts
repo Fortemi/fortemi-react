@@ -11,10 +11,13 @@ import { sha256Hex } from './checksum.js'
 import {
   noteToShard,
   linkToShard,
+  urlLinkToShard,
   collectionToShard,
   tagsToShard,
+  templateToShard,
   embeddingSetToShard,
   embeddingSetMemberToShard,
+  embeddingConfigToShard,
   embeddingToShard,
   skosSchemeToShard,
   skosConceptToShard,
@@ -35,7 +38,8 @@ import type {
   ShardComponent,
   ShardClusterRef,
   ShardLayout,
-  ShardBinarySource,
+  ShardAttachmentProjection,
+  ShardEmbeddingConfig,
 } from './types.js'
 
 const encoder = new TextEncoder()
@@ -73,7 +77,8 @@ export async function exportShard(
     noteQuery = `SELECT n.id, n.title, n.format, n.source, n.is_starred, n.is_archived,
               n.created_at, n.updated_at, n.deleted_at,
               o.content as original_content,
-              c.content as revised_content
+              c.content as revised_content,
+              $1::text as collection_id
        FROM note n
        LEFT JOIN note_original o ON o.note_id = n.id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
@@ -85,7 +90,14 @@ export async function exportShard(
     noteQuery = `SELECT n.id, n.title, n.format, n.source, n.is_starred, n.is_archived,
               n.created_at, n.updated_at, n.deleted_at,
               o.content as original_content,
-              c.content as revised_content
+              c.content as revised_content,
+              (
+                SELECT cn.collection_id
+                FROM collection_note cn
+                WHERE cn.note_id = n.id
+                ORDER BY cn.position, cn.added_at
+                LIMIT 1
+              ) as collection_id
        FROM note n
        LEFT JOIN note_original o ON o.note_id = n.id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
@@ -97,7 +109,14 @@ export async function exportShard(
     noteQuery = `SELECT n.id, n.title, n.format, n.source, n.is_starred, n.is_archived,
               n.created_at, n.updated_at, n.deleted_at,
               o.content as original_content,
-              c.content as revised_content
+              c.content as revised_content,
+              (
+                SELECT cn.collection_id
+                FROM collection_note cn
+                WHERE cn.note_id = n.id
+                ORDER BY cn.position, cn.added_at
+                LIMIT 1
+              ) as collection_id
        FROM note n
        LEFT JOIN note_original o ON o.note_id = n.id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
@@ -118,6 +137,7 @@ export async function exportShard(
     deleted_at: Date | null
     original_content: string
     revised_content: string | null
+    collection_id: string | null
   }>(noteQuery, noteParams)
 
   // Fetch tags per note
@@ -154,10 +174,10 @@ export async function exportShard(
        WHERE a.deleted_at IS NULL
        ORDER BY a.note_id, a.position, a.created_at`,
   )
-  const binarySourcesByNote = new Map<string, ShardBinarySource[]>()
+  const attachmentsByNote = new Map<string, ShardAttachmentProjection[]>()
   for (const row of attachmentRows.rows) {
-    const source: ShardBinarySource = {
-      extracted_text: row.extracted_text ?? '',
+    const source: ShardAttachmentProjection = {
+      extracted_text: row.extracted_text,
       attachment: {
         id: row.id,
         path: row.storage_path ?? row.filename,
@@ -166,15 +186,15 @@ export async function exportShard(
         bytes: Number(row.size_bytes),
       },
     }
-    const sources = binarySourcesByNote.get(row.note_id) ?? []
+    const sources = attachmentsByNote.get(row.note_id) ?? []
     sources.push(source)
-    binarySourcesByNote.set(row.note_id, sources)
+    attachmentsByNote.set(row.note_id, sources)
   }
 
   const notes: BrowserNoteExport[] = noteRows.rows.map((row) => ({
     ...row,
     tags: tagsByNote.get(row.id) ?? [],
-    binary_sources: binarySourcesByNote.get(row.id),
+    attachments: attachmentsByNote.get(row.id),
   }))
 
   // Collect exported note IDs for scoping related data
@@ -189,7 +209,7 @@ export async function exportShard(
     for (let offset = 0; offset < shardNotes.length; offset += clusterSize) {
       const slice = shardNotes.slice(offset, offset + clusterSize)
       const href = `notes/${String(offset).padStart(6, '0')}.jsonl`
-      clusters.push({ href, offset, count: slice.length })
+      clusters.push({ href, offset })
       files.set(href, encoder.encode(slice.map((n) => JSON.stringify(n)).join('\n')))
     }
     layout = { clusters: { notes: clusters } }
@@ -240,6 +260,25 @@ export async function exportShard(
   components.push('tags')
   counts.tags = shardTags.length
 
+  // ── Query templates ─────────────────────────────────────────────────
+  const templateRows = await db.query<{
+    id: string
+    name: string
+    description: string | null
+    content: string
+    format: string
+    default_tags: string[] | string
+    collection_id: string | null
+    created_at: Date
+    updated_at: Date
+  }>(`SELECT * FROM template ORDER BY created_at, id`)
+  if (templateRows.rows.length > 0) {
+    const shardTemplates = templateRows.rows.map((template) => templateToShard(template))
+    files.set('templates.json', encoder.encode(JSON.stringify(shardTemplates)))
+    components.push('templates')
+    counts.templates = shardTemplates.length
+  }
+
   // ── Query links (scoped to exported notes) ──────────────────────────
   const linkRows = await db.query<LinkRow>(
     `SELECT * FROM link WHERE deleted_at IS NULL ORDER BY created_at`,
@@ -248,10 +287,26 @@ export async function exportShard(
   const filteredLinks = (options?.tag || options?.collectionId)
     ? linkRows.rows.filter((l) => exportedNoteIds.has(l.source_note_id) && exportedNoteIds.has(l.target_note_id))
     : linkRows.rows
-  const linksJsonl = filteredLinks.map((l) => JSON.stringify(linkToShard(l))).join('\n')
+  const urlLinkRows = await db.query<{
+    id: string
+    source_note_id: string
+    to_url: string
+    link_type: string
+    confidence: number | null
+    metadata_json: Record<string, unknown> | string | null
+    created_at: Date
+  }>(`SELECT * FROM link_url_target WHERE deleted_at IS NULL ORDER BY created_at`)
+  const filteredUrlLinks = (options?.tag || options?.collectionId)
+    ? urlLinkRows.rows.filter((l) => exportedNoteIds.has(l.source_note_id))
+    : urlLinkRows.rows
+  const shardLinks = [
+    ...filteredLinks.map((l) => linkToShard(l)),
+    ...filteredUrlLinks.map((l) => urlLinkToShard(l)),
+  ]
+  const linksJsonl = shardLinks.map((l) => JSON.stringify(l)).join('\n')
   files.set('links.jsonl', encoder.encode(linksJsonl))
   components.push('links')
-  counts.links = filteredLinks.length
+  counts.links = shardLinks.length
 
 
   // ── Query SKOS (scoped to exported notes when filtered) ─────────────
@@ -352,7 +407,13 @@ export async function exportShard(
     const embSetRows = await db.query<{
       id: string
       name: string
+      slug: string | null
+      description: string | null
       purpose: string | null
+      document_count: number | null
+      embedding_count: number | null
+      is_system: boolean
+      keywords_json: unknown | null
       model_name: string
       dimensions: number
       kind?: 'physical' | 'filter' | 'virtual'
@@ -366,9 +427,27 @@ export async function exportShard(
       created_at: Date
       updated_at?: Date
     }>(
-      `SELECT * FROM embedding_set
-       ${setScoped ? 'WHERE id = ANY($1)' : ''}
-       ORDER BY created_at`,
+      `SELECT
+         es.id, es.name, es.slug, es.description, es.purpose,
+         COALESCE(es.document_count, member_counts.document_count, 0)::int AS document_count,
+         COALESCE(es.embedding_count, embedding_counts.embedding_count, 0)::int AS embedding_count,
+         es.is_system, es.keywords_json,
+         es.model_name, es.dimensions, es.kind, es.mode, es.truncate_dimension,
+         es.criteria_json, es.source_json, es.compatibility_json, es.materialization_json,
+         es.freshness_json, es.created_at, es.updated_at
+       FROM embedding_set es
+       LEFT JOIN (
+         SELECT embedding_set_id, COUNT(*)::int AS document_count
+         FROM embedding_set_member
+         GROUP BY embedding_set_id
+       ) member_counts ON member_counts.embedding_set_id = es.id
+       LEFT JOIN (
+         SELECT embedding_set_id, COUNT(*)::int AS embedding_count
+         FROM embedding
+         GROUP BY embedding_set_id
+       ) embedding_counts ON embedding_counts.embedding_set_id = es.id
+       ${setScoped ? 'WHERE es.id = ANY($1)' : ''}
+       ORDER BY es.created_at`,
       setScoped ? [embeddingSetIds] : [],
     )
     const exportedSetIds = new Set(embSetRows.rows.map((row) => row.id))
@@ -387,10 +466,25 @@ export async function exportShard(
     components.push('embedding_sets')
     counts.embedding_sets = shardEmbSets.length
 
+    const embeddingConfigRows = await db.query<ShardEmbeddingConfig>(
+      `SELECT id, name, description, model, dimension, chunk_size, chunk_overlap, is_default
+       FROM embedding_config
+       ORDER BY name, id`,
+    )
+    if (embeddingConfigRows.rows.length > 0) {
+      const shardEmbeddingConfigs = embeddingConfigRows.rows.map((row) => embeddingConfigToShard(row))
+      files.set('embedding_configs.json', encoder.encode(JSON.stringify(shardEmbeddingConfigs)))
+      components.push('embedding_configs')
+      counts.embedding_configs = shardEmbeddingConfigs.length
+    }
+
     const embMemberRows = await db.query<{
       embedding_set_id: string
       note_id: string
-      embedding_id: string
+      embedding_id: string | null
+      membership_type: string | null
+      added_at: Date | string | null
+      added_by: string | null
     }>(
       `SELECT * FROM embedding_set_member
        ${setScoped ? 'WHERE embedding_set_id = ANY($1)' : ''}`,
@@ -413,15 +507,31 @@ export async function exportShard(
       id: string
       note_id: string
       embedding_set_id: string
+      chunk_index: number
+      text: string
       vector: string
+      model: string
+      model_name: string
       created_at: Date
     }>(
-      `SELECT * FROM embedding
-       ${setScoped ? 'WHERE embedding_set_id = ANY($1)' : ''}
-       ORDER BY created_at`,
+      `SELECT
+         e.id, e.note_id, e.embedding_set_id, e.chunk_index,
+         COALESCE(NULLIF(e.text, ''), nrc.content, no.content, '') AS text,
+         e.vector,
+         COALESCE(e.model, es.model_name) AS model,
+         es.model_name,
+         e.created_at
+       FROM embedding e
+       JOIN embedding_set es ON es.id = e.embedding_set_id
+       LEFT JOIN note_revised_current nrc ON nrc.note_id = e.note_id
+       LEFT JOIN note_original no ON no.note_id = e.note_id
+       ${setScoped ? 'WHERE e.embedding_set_id = ANY($1)' : ''}
+       ORDER BY e.created_at`,
       setScoped ? [embeddingSetIds] : [],
     )
-    const memberEmbeddingIds = new Set(scopedEmbMemberRows.map((member) => member.embedding_id))
+    const memberEmbeddingIds = new Set(
+      scopedEmbMemberRows.map((member) => member.embedding_id).filter((id): id is string => Boolean(id)),
+    )
     const scopedEmbRows = embRows.rows.filter((embedding) =>
       exportedSetIds.has(embedding.embedding_set_id) &&
       exportedNoteIds.has(embedding.note_id) &&
@@ -611,6 +721,8 @@ export async function exportShard(
     counts,
     checksums,
     min_reader_version: '1.0.0',
+    migrated_from: null,
+    migration_history: [],
     ...(layout ? { layout } : {}),
   }
   files.set('manifest.json', encoder.encode(JSON.stringify(manifest, null, 2)))

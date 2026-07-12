@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { AttachmentsRepository } from '../repositories/attachments-repository.js'
 import type { AttachmentRow } from '../repositories/attachments-repository.js'
 import type { BlobStore } from '../blob-store.js'
+import { enqueueJob } from '../job-queue-worker.js'
 
 export const ManageAttachmentsInputSchema = z.object({
   action: z.enum(['attach', 'list', 'get', 'get_blob', 'delete']),
@@ -54,6 +55,10 @@ export async function manageAttachments(
         extractedText: input.extracted_text,
         displayName: input.display_name,
       })
+      if (input.extracted_text) {
+        await enqueueJob(db, { noteId: input.note_id, jobType: 'embedding' })
+        await enqueueJob(db, { noteId: input.note_id, jobType: 'concept_tagging' })
+      }
       return { action: 'attach', attachment, size_bytes: data.length }
     }
     case 'list': {
@@ -80,7 +85,12 @@ export async function manageAttachments(
     }
     case 'delete': {
       if (!input.attachment_id) throw new Error('attachment_id required for delete')
+      const attachment = await repo.get(input.attachment_id)
       await repo.delete(input.attachment_id)
+      if (attachment.extracted_text) {
+        await enqueueJob(db, { noteId: attachment.note_id, jobType: 'embedding' })
+        await enqueueJob(db, { noteId: attachment.note_id, jobType: 'concept_tagging' })
+      }
       return { action: 'delete', attachment_id: input.attachment_id }
     }
   }
