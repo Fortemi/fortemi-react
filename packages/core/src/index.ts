@@ -452,6 +452,12 @@ export {
   validateAiwgFortemiIndexExport,
   validateAiwgStaticEmbeddingSet,
 } from './aiwg-index.js'
+export {
+  getAiwgFortemiIndexExportSchema,
+  validateAiwgFortemiIndexExportSchema,
+  validateAiwgFortemiProjectedRecordSchema,
+} from './aiwg-index-schema.js'
+export type { AiwgIndexSchemaValidationResult } from './aiwg-index-schema.js'
 export type {
   AiwgChunkedIndexBuildOptions,
   AiwgChunkedIndexBuildResult,

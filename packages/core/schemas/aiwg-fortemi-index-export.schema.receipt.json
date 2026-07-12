@@ -1,0 +1,7 @@
+{
+  "source_repository": "https://git.integrolabs.net/roctinam/aiwg",
+  "source_path": "schemas/aiwg-fortemi-index-export.json",
+  "source_commit": "7c9ccb2352a25b10f9de8f0ec340099062fd8b9c",
+  "sha256": "828e3ac4ff615970fad84a747b08b2281db4d65d6429fdc99481e786e47b9122",
+  "vendored_for": "Fortemi/fortemi-react#293"
+}

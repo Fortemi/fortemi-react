@@ -1,5 +1,9 @@
 import { computeHash } from './hash.js'
 import type { ShardAttachmentReference, ShardBinarySource } from './shard/types.js'
+import {
+  validateAiwgFortemiIndexExportSchema,
+  validateAiwgFortemiProjectedRecordSchema,
+} from './aiwg-index-schema.js'
 
 export type AiwgFortemiRecordType = string
 
@@ -148,12 +152,15 @@ export interface AiwgFortemiIndexExport {
   source: {
     repo: string
     privacy: AiwgPrivacyClassification
-    // v2-only graph metadata block; the validator gates its presence to export.v2.
-    graph?: Record<string, unknown>
+    // v2-only upstream graph name; the vendored schema is authoritative.
+    graph?: string
   }
   items: AiwgFortemiRecord[]
-  // v2-only; the validator gates its presence to export.v2.
-  compatibility?: Record<string, unknown>
+  // v2-only compatibility declaration defined by the vendored upstream schema.
+  compatibility?: {
+    previous_schema_version: 'aiwg.fortemi.index.export.v1'
+    strategy: 'supported'
+  }
 }
 
 export interface AiwgFortemiChunkPartRef {
@@ -342,7 +349,7 @@ export interface AiwgReviewDecision {
 export interface AiwgReviewDecisionExport {
   schema_version: 'aiwg.fortemi.review-decisions.v1'
   generated_at: string
-  source_export_schema_version: string
+  source_export_schema_version: AiwgFortemiIndexExportSchemaVersion
   decisions: AiwgReviewDecision[]
 }
 
@@ -807,7 +814,7 @@ function forbidV2FieldsOnV1Record(item: Partial<AiwgFortemiRecord>, index: numbe
 }
 
 export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidationResult {
-  const errors: string[] = []
+  const errors = validateAiwgFortemiIndexExportSchema(value).errors
   const counts: Partial<Record<string, number>> = Object.create(null)
   const data = isPlainRecord(value) ? value as Partial<AiwgFortemiIndexExport> : {}
   if (!isPlainRecord(value)) errors.push('index export must be an object')
@@ -969,7 +976,10 @@ export function assertAiwgFortemiChunkManifest(value: unknown): AiwgFortemiChunk
 }
 
 // Validate projected (slim) scan-part items: scan-required fields only, ids unique + sorted.
-function validateProjectedRecords(items: Array<Partial<AiwgFortemiRecord>>): string[] {
+function validateProjectedRecords(
+  items: Array<Partial<AiwgFortemiRecord>>,
+  sourceSchemaVersion: AiwgFortemiIndexExportSchemaVersion,
+): string[] {
   const errors: string[] = []
   const ids = new Set<string>()
   let previousId = ''
@@ -977,6 +987,14 @@ function validateProjectedRecords(items: Array<Partial<AiwgFortemiRecord>>): str
     if (!isPlainRecord(item)) {
       errors.push('items[' + index + '] must be an object')
       continue
+    }
+    const schemaValidation = validateAiwgFortemiProjectedRecordSchema(item)
+    errors.push(...schemaValidation.errors.map((error) => `items[${index}]${error}`))
+    const expectedRecordVersion = sourceSchemaVersion === 'aiwg.fortemi.index.export.v2'
+      ? 'aiwg.fortemi.index.record.v2'
+      : 'aiwg.fortemi.index.record.v1'
+    if (item.schema_version !== expectedRecordVersion) {
+      errors.push(`items[${index}].schema_version must match ${sourceSchemaVersion}`)
     }
     if (!isSupportedRecordSchemaVersion(item.schema_version)) {
       errors.push('items[' + index + '].schema_version must be aiwg.fortemi.index.record.v1 or aiwg.fortemi.index.record.v2')
@@ -1000,9 +1018,6 @@ function validateProjectedRecords(items: Array<Partial<AiwgFortemiRecord>>): str
     }
     if (!Array.isArray(item.tags)) errors.push('items[' + index + '].tags must be an array')
     if (!Array.isArray(item.concepts)) errors.push('items[' + index + '].concepts must be an array')
-    if (!item.privacy || !hasString(item.privacy.classification)) {
-      errors.push('items[' + index + '].privacy.classification is required')
-    }
   }
   return errors
 }
@@ -1034,12 +1049,18 @@ export function validateAiwgFortemiChunkPart(
 
   if (Array.isArray(data?.items)) {
     if (manifest?.projection) {
-      errors.push(...validateProjectedRecords(data.items).map((error) => 'items.' + error))
+      errors.push(...validateProjectedRecords(
+        data.items,
+        manifest.source_export_schema_version ?? 'aiwg.fortemi.index.export.v1',
+      ).map((error) => 'items.' + error))
     } else {
       const validation = validateAiwgFortemiIndexExport({
         schema_version: manifest?.source_export_schema_version ?? 'aiwg.fortemi.index.export.v1',
         generated_at: manifest?.generated_at ?? '1970-01-01T00:00:00.000Z',
         source: manifest?.source ?? { repo: 'chunk', privacy: 'public' },
+        ...((manifest?.source_export_schema_version ?? 'aiwg.fortemi.index.export.v1') === 'aiwg.fortemi.index.export.v2'
+          ? { compatibility: { previous_schema_version: 'aiwg.fortemi.index.export.v1', strategy: 'supported' } }
+          : {}),
         items: data.items,
       })
       errors.push(...validation.errors.map((error) => 'items.' + error))
