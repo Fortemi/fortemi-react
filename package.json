@@ -19,6 +19,8 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "test:core": "pnpm --filter @fortemi/core test",
+    "test:db-table-parity": "pnpm --filter @fortemi/core test:db-table-parity",
+    "test:portable-contract": "pnpm --filter @fortemi/core test:portable-contract",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "report:bundle": "pnpm --filter @fortemi/standalone report:bundle",

@@ -1,0 +1,266 @@
+{
+  ".aiwg/.milestones.json": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/AIWG.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/adrs/ADR-001-pglite-storage-engine.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/adrs/ADR-002-capability-modules.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/adrs/ADR-003-pglite-single-writer.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/adrs/ADR-004-service-worker-api.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/adrs/ADR-005-browser-compatibility.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/adrs/ADR-006-public-api-first.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/adrs/ADR-007-deployment-modes.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/adrs/ADR-008-agent-discoverable-capabilities.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/adrs/ADR-009-pluggable-storage-backend.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/architecture/SAD.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/architecture/adr-backend-seam.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/architecture/dynamic-user-authored-communities.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/architecture/graph-community-shard-artifacts.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/architecture/graph-source-controller.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/architecture/package-architecture.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/architecture/phase-0-embedding-graph-ownership.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/architecture/precomputed-similarity-graphs.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/architecture/premium-backoffice-boundary-2026-07.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/architecture/virtual-embedding-sets.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/deployment/cm-plan.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/frameworks/forensics-complete/chain-of-custody.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/frameworks/knowledge-base/index.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/frameworks/registry.json": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/gates/gate-elaboration.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/gates/gate-inception.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/intake/README.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/intake/architecture.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/intake/data-model.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/intake/flows.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/intake/option-matrix.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/intake/project-intake.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/intake/solution-profile.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/issues/checkpoint-issue-drafts-2026-07.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/planning/phase-plan-elaboration.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/planning/phase-plan-inception.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/ralph/completion-2026-03-21.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/reports/accelerate-state.json": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/reports/aiwg-portable-schema-audit-2026-07-05.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/reports/construction-ready-brief.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/reports/doc-sync-audit-2026-06-14.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/reports/doc-sync-audit-2026-06-18.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/reports/doc-sync-audit-2026-06-24.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/reports/doc-sync-audit-2026-07-01.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/reports/sdlc-checkpoint-2026-07.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/requirements/supplementary-requirements.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/requirements/use-cases/UC-001-capture-knowledge.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/requirements/use-cases/UC-002-search-notes.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/requirements/use-cases/UC-003-manage-collections.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/requirements/use-cases/UC-004-mcp-tool-access.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/requirements/use-cases/UC-005-manage-capabilities.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/requirements/use-cases/UC-006-manage-attachments.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/requirements/use-cases/UC-007-manage-archives.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/requirements/use-cases/UC-008-manage-links.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/risks/risk-list.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/security/aiwg-portable-schema-security-2026-07-05.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/spikes/238-shard-conformance-harness.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/team/agent-assignments.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/testing/test-strategy.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/working/170-graph-controller-progress.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/working/backend-tiers-progress.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/working/docsite-nav-hero-progress.md": {
+    "upstream": [],
+    "downstream": []
+  },
+  ".aiwg/working/release-2026.6.6-progress.md": {
+    "upstream": [],
+    "downstream": []
+  }
+}

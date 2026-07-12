@@ -19,6 +19,7 @@ import { MemoryBlobStore } from '../../blob-store.js'
 import { exportShard } from '../../shard/shard-export.js'
 import { unpackTarGz } from '../../shard/shard-tar.js'
 import { validateChecksums } from '../../shard/checksum.js'
+import { validateShardArchive, validateShardComponentRecord } from '../../shard/schema-validator.js'
 import type { ShardManifest, ShardNote, ShardLink, ShardCollection } from '../../shard/types.js'
 
 async function createTestDb(): Promise<PGlite> {
@@ -72,6 +73,8 @@ describe('exportShard', () => {
     expect(manifest.matric_version).toBeTruthy()
     expect(manifest.created_at).toBeTruthy()
     expect(manifest.min_reader_version).toBe('1.0.0')
+    expect(manifest.migrated_from).toBeNull()
+    expect(manifest.migration_history).toEqual([])
     expect(manifest.components).toContain('notes')
     expect(manifest.counts.notes).toBe(1)
   })
@@ -136,7 +139,7 @@ describe('exportShard', () => {
     const notesJsonl = new TextDecoder().decode(files.get('notes.jsonl')!)
     const shardNote: ShardNote = JSON.parse(notesJsonl.split('\n')[0])
 
-    expect(shardNote.binary_sources).toEqual([
+    expect(shardNote.attachments).toEqual([
       {
         extracted_text: 'Optical character recognition text for search',
         attachment: {
@@ -148,7 +151,39 @@ describe('exportShard', () => {
         },
       },
     ])
+    expect(shardNote).not.toHaveProperty('binary_sources')
     expect(notesJsonl).not.toContain('RAW-BINARY-SENTINEL')
+    expect(notesJsonl).not.toContain('data_base64')
+  })
+
+  it('exports pending attachment extraction as a bounded null-text projection', async () => {
+    const note = await notes.create({ content: 'Attachment carrier', title: 'Pending extraction' })
+    const attachments = new AttachmentsRepository(db, new MemoryBlobStore())
+    const attachment = await attachments.attach({
+      noteId: note.id,
+      data: new TextEncoder().encode('PENDING-BINARY-SENTINEL'),
+      filename: 'video.mp4',
+      mimeType: 'video/mp4',
+    })
+
+    const archive = await exportShard(db)
+    const files = unpackTarGz(archive)
+    const notesJsonl = new TextDecoder().decode(files.get('notes.jsonl')!)
+    const shardNote: ShardNote = JSON.parse(notesJsonl.split('\n')[0])
+
+    expect(shardNote.attachments).toEqual([
+      {
+        extracted_text: null,
+        attachment: {
+          id: attachment.id,
+          path: 'video.mp4',
+          mime: 'video/mp4',
+          checksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/),
+          bytes: 'PENDING-BINARY-SENTINEL'.length,
+        },
+      },
+    ])
+    expect(notesJsonl).not.toContain('PENDING-BINARY-SENTINEL')
     expect(notesJsonl).not.toContain('data_base64')
   })
 
@@ -177,25 +212,67 @@ describe('exportShard', () => {
     expect(collectionsJson[0].description).toBe('Papers')
   })
 
+  it('exports note collection_id from collection membership', async () => {
+    const collection = await collections.create({ name: 'Research' })
+    const note = await notes.create({ content: 'Collection note' })
+    await collections.assignNote(collection.id, note.id)
+
+    const archive = await exportShard(db)
+    const files = unpackTarGz(archive)
+    const notesJsonl = new TextDecoder().decode(files.get('notes.jsonl')!)
+    const shardNote: ShardNote = JSON.parse(notesJsonl.split('\n')[0])
+
+    expect(shardNote.collection_id).toBe(collection.id)
+  })
+
   it('exports links with shard field names', async () => {
     const note1 = await notes.create({ content: 'Note A' })
     const note2 = await notes.create({ content: 'Note B' })
     await links.create(note1.id, note2.id, 'related')
+    await db.query(
+      `INSERT INTO link_url_target (id, source_note_id, to_url, link_type, confidence, metadata_json, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        'link-url-1',
+        note1.id,
+        'https://example.test',
+        'reference',
+        0.5,
+        JSON.stringify({ label: 'Example' }),
+        '2026-01-01T00:00:00.000Z',
+      ],
+    )
 
     const archive = await exportShard(db)
     const files = unpackTarGz(archive)
     const linksJsonl = new TextDecoder().decode(files.get('links.jsonl')!)
-    const shardLink: ShardLink = JSON.parse(linksJsonl.split('\n')[0])
+    const shardLinks = linksJsonl.split('\n').map((line) => JSON.parse(line) as ShardLink)
+    const shardLink = shardLinks.find((link) => link.id !== 'link-url-1')!
+    const shardUrlLink = shardLinks.find((link) => link.id === 'link-url-1')!
 
     expect(shardLink).toHaveProperty('from_note_id')
     expect(shardLink).toHaveProperty('to_note_id')
+    expect(shardLink).toHaveProperty('to_url')
     expect(shardLink).toHaveProperty('kind')
+    expect(shardLink).toHaveProperty('metadata')
     expect(shardLink).not.toHaveProperty('source_note_id')
     expect(shardLink).not.toHaveProperty('target_note_id')
     expect(shardLink).not.toHaveProperty('link_type')
     expect(shardLink.from_note_id).toBe(note1.id)
     expect(shardLink.to_note_id).toBe(note2.id)
+    expect(shardLink.to_url).toBeNull()
     expect(shardLink.kind).toBe('related')
+    expect(shardLink.metadata).toBeNull()
+    expect(validateShardComponentRecord('links', shardLink)).toEqual({ valid: true, errors: [] })
+    expect(shardUrlLink).toMatchObject({
+      from_note_id: note1.id,
+      to_note_id: null,
+      to_url: 'https://example.test',
+      kind: 'reference',
+      score: 0.5,
+      metadata: { label: 'Example' },
+    })
+    expect(validateShardComponentRecord('links', shardUrlLink)).toEqual({ valid: true, errors: [] })
   })
 
   it('JSONL format: one valid JSON per line', async () => {
@@ -267,13 +344,19 @@ describe('exportShard', () => {
       includeEmbeddings: true,
       embeddingSetIds: [summaries.id],
     })
+    expect(validateShardArchive(archive)).toEqual({ valid: true, errors: [] })
     const files = unpackTarGz(archive)
     const exportedSets = JSON.parse(new TextDecoder().decode(files.get('embedding_sets.json')!)) as Array<{ id: string }>
     const exportedEmbeddings = new TextDecoder()
       .decode(files.get('embeddings.jsonl')!)
       .split('\n')
       .filter(Boolean)
-      .map((line) => JSON.parse(line) as { embedding_set_id: string })
+      .map((line) => JSON.parse(line) as {
+        embedding_set_id: string
+        chunk_index: number
+        text: string
+        model: string
+      })
     const exportedMembers = new TextDecoder()
       .decode(files.get('embedding_set_members.jsonl')!)
       .split('\n')
@@ -282,7 +365,12 @@ describe('exportShard', () => {
 
     expect(exportedSets.map((set) => set.id)).toEqual([summaries.id])
     expect(exportedEmbeddings).toHaveLength(1)
-    expect(exportedEmbeddings[0].embedding_set_id).toBe(summaries.id)
+    expect(exportedEmbeddings[0]).toMatchObject({
+      embedding_set_id: summaries.id,
+      chunk_index: 0,
+      text: 'Vector scoped note',
+      model: 'summary-model',
+    })
     expect(exportedMembers).toHaveLength(1)
     expect(exportedMembers[0].embedding_set_id).toBe(summaries.id)
   })

@@ -8,21 +8,33 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { PGlite } from '@electric-sql/pglite'
 import { vector } from '@electric-sql/pglite/vector'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { MigrationRunner } from '../../migration-runner.js'
 import { allMigrations } from '../../migrations/index.js'
 import { NotesRepository } from '../../repositories/notes-repository.js'
 import { CollectionsRepository } from '../../repositories/collections-repository.js'
 import { LinksRepository } from '../../repositories/links-repository.js'
+import { EmbeddingSetsRepository } from '../../repositories/embedding-sets-repository.js'
 import { TagsRepository } from '../../repositories/tags-repository.js'
 import { AttachmentsRepository } from '../../repositories/attachments-repository.js'
 import { MemoryBlobStore } from '../../blob-store.js'
 import { exportShard } from '../../shard/shard-export.js'
 import { importShard } from '../../shard/shard-import.js'
-import { packTarGz } from '../../shard/shard-tar.js'
+import { packTarGz, unpackTarGz } from '../../shard/shard-tar.js'
+import { validateShardArchive } from '../../shard/schema-validator.js'
 import { sha256Hex } from '../../shard/checksum.js'
-import type { ImportProgress, ShardManifest } from '../../shard/types.js'
+import { compareShardVersions } from '../../shard/types.js'
+import type { ImportProgress, ShardLink, ShardManifest, ShardNote } from '../../shard/types.js'
 
 const encoder = new TextEncoder()
+const decoder = new TextDecoder()
+const testDir = fileURLToPath(new URL('.', import.meta.url))
+const goldenFixturePath = resolve(
+  testDir,
+  'fixtures/golden/server-2026.2.9-fortemi-docs.shard',
+)
 
 async function createTestDb(): Promise<PGlite> {
   const db = await PGlite.create({ extensions: { vector } })
@@ -143,6 +155,60 @@ describe('importShard', { timeout: 30_000 }, () => {
 
     expect(linkRows.rows).toHaveLength(1)
     expect(linkRows.rows[0].link_type).toBe('related')
+  })
+
+  it('imports and re-exports URL-only server links', async () => {
+    const linkData = encoder.encode(JSON.stringify({
+      id: 'link-url-1',
+      from_note_id: 'note-1',
+      to_note_id: null,
+      to_url: 'https://example.test',
+      kind: 'reference',
+      score: null,
+      created_at: '2026-01-01T00:00:00.000Z',
+      metadata: { label: 'Example' },
+    }))
+    const manifest: ShardManifest = {
+      version: '1.0.0',
+      matric_version: '2026.3.0',
+      format: 'matric-shard',
+      created_at: new Date().toISOString(),
+      components: ['links'],
+      counts: { links: 1 },
+      checksums: { 'links.jsonl': await sha256Hex(linkData) },
+      min_reader_version: '1.0.0',
+    }
+    const files = new Map<string, Uint8Array>()
+    files.set('manifest.json', encoder.encode(JSON.stringify(manifest)))
+    files.set('links.jsonl', linkData)
+
+    const result = await importShard(db, packTarGz(files))
+    const linkRows = await db.query<{ n: number }>('SELECT COUNT(*)::int AS n FROM link')
+    const urlLinkRows = await db.query<{ n: number; to_url: string; metadata: string }>(
+      `SELECT COUNT(*)::int AS n, MIN(to_url) AS to_url, MIN(metadata_json::text) AS metadata FROM link_url_target`,
+    )
+
+    expect(result.success).toBe(true)
+    expect(result.counts.links).toBe(1)
+    expect(result.skipped.links ?? 0).toBe(0)
+    expect(result.warnings.some((warning) => warning.includes('URL-only shard link skipped: link-url-1'))).toBe(false)
+    expect(linkRows.rows[0].n).toBe(0)
+    expect(urlLinkRows.rows[0].n).toBe(1)
+    expect(urlLinkRows.rows[0].to_url).toBe('https://example.test')
+    expect(JSON.parse(urlLinkRows.rows[0].metadata)).toEqual({ label: 'Example' })
+
+    const exported = unpackTarGz(await exportShard(db))
+    const exportedLink = JSON.parse(
+      new TextDecoder().decode(exported.get('links.jsonl')!),
+    ) as ShardLink
+    expect(exportedLink).toMatchObject({
+      id: 'link-url-1',
+      from_note_id: 'note-1',
+      to_note_id: null,
+      to_url: 'https://example.test',
+      kind: 'reference',
+      metadata: { label: 'Example' },
+    })
   })
 
   it('skip strategy: existing records untouched', async () => {
@@ -289,6 +355,13 @@ describe('importShard', { timeout: 30_000 }, () => {
     expect(result.errors[0]).toContain('reader version')
   })
 
+  it('compares shard reader versions numerically', () => {
+    expect(compareShardVersions('1.10.0', '1.9.0')).toBeGreaterThan(0)
+    expect(compareShardVersions('1.0.10', '1.0.2')).toBeGreaterThan(0)
+    expect(compareShardVersions('1.0.0', '1.0')).toBe(0)
+    expect(compareShardVersions('1.2.0', '1.10.0')).toBeLessThan(0)
+  })
+
   it('warns about unknown components', async () => {
     const manifest: ShardManifest = {
       version: '1.0.0',
@@ -312,16 +385,28 @@ describe('importShard', { timeout: 30_000 }, () => {
     expect(result.warnings).toContain('Unknown component skipped: custom_data.json')
   })
 
-  it('warns about skipped templates.json', async () => {
-    const templatesData = encoder.encode('[]')
+  it('imports and re-exports templates.json', async () => {
+    const templatesData = encoder.encode(JSON.stringify([
+      {
+        id: 'tmpl-1',
+        name: 'Research brief',
+        description: 'Reusable research note',
+        content: '# {{title}}',
+        format: 'markdown',
+        default_tags: ['research', 'brief'],
+        collection_id: null,
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-02T00:00:00.000Z',
+      },
+    ]))
     const templatesHash = await sha256Hex(templatesData)
     const manifest: ShardManifest = {
       version: '1.0.0',
       matric_version: '2026.3.0',
       format: 'matric-shard',
       created_at: new Date().toISOString(),
-      components: [],
-      counts: {},
+      components: ['templates'],
+      counts: { templates: 1 },
       checksums: { 'templates.json': templatesHash },
       min_reader_version: '1.0.0',
     }
@@ -334,7 +419,22 @@ describe('importShard', { timeout: 30_000 }, () => {
     const result = await importShard(db, archive)
 
     expect(result.success).toBe(true)
-    expect(result.warnings).toContain('templates.json skipped (not supported in browser)')
+    expect(result.counts.templates).toBe(1)
+    expect(result.warnings).not.toContain('templates.json skipped (not supported in browser)')
+
+    const rows = await db.query<{ name: string; tags: string }>(
+      `SELECT name, default_tags::text AS tags FROM template WHERE id = 'tmpl-1'`,
+    )
+    expect(rows.rows[0].name).toBe('Research brief')
+    expect(JSON.parse(rows.rows[0].tags)).toEqual(['research', 'brief'])
+
+    const exported = unpackTarGz(await exportShard(db))
+    const exportedTemplates = JSON.parse(
+      new TextDecoder().decode(exported.get('templates.json')!),
+    ) as Array<{ id: string; default_tags: string[] }>
+    expect(exportedTemplates).toEqual([
+      expect.objectContaining({ id: 'tmpl-1', default_tags: ['research', 'brief'] }),
+    ])
   })
 
   it('entire import is atomic (transaction rollback on failure)', async () => {
@@ -398,10 +498,187 @@ describe('importShard', { timeout: 30_000 }, () => {
     expect(result.success).toBe(true)
     expect(result.counts.notes).toBe(2)
   })
+
+  it('imports the pinned server golden shard fixture with explicit unsupported-component warnings', async () => {
+    const archive = readFileSync(goldenFixturePath)
+
+    const result = await importShard(db, archive)
+
+    expect(result.success).toBe(true)
+    expect(result.counts.notes).toBe(180)
+    expect(result.counts.templates).toBe(0)
+    expect(result.counts.embedding_sets).toBe(1)
+    expect(result.counts.embedding_configs).toBe(8)
+    expect(result.counts.embedding_set_members).toBe(180)
+    expect(result.skipped.embedding_set_members ?? 0).toBe(0)
+    expect(result.warnings).not.toContain('templates.json skipped (not supported in browser)')
+    expect(result.warnings).not.toContain('embedding_configs.json skipped (not supported in browser)')
+    expect(result.warnings.some((warning) => warning.includes('embedding_set_member row(s) were not imported'))).toBe(false)
+
+    const notes = await db.query<{ n: number }>('SELECT COUNT(*)::int AS n FROM note')
+    const embeddingSets = await db.query<{ n: number }>('SELECT COUNT(*)::int AS n FROM embedding_set')
+    const embeddingConfigs = await db.query<{ n: number; default_count: number }>(
+      `SELECT COUNT(*)::int AS n, COUNT(*) FILTER (WHERE is_default)::int AS default_count FROM embedding_config`,
+    )
+    const embeddingSetMembers = await db.query<{
+      n: number
+      null_embeddings: number
+      membership_type: string | null
+    }>(
+      `SELECT
+         COUNT(*)::int AS n,
+         COUNT(*) FILTER (WHERE embedding_id IS NULL)::int AS null_embeddings,
+         MIN(membership_type) AS membership_type
+       FROM embedding_set_member`,
+    )
+    expect(notes.rows[0].n).toBe(180)
+    expect(embeddingSets.rows[0].n).toBe(1)
+    expect(embeddingConfigs.rows[0]).toEqual({ n: 8, default_count: 1 })
+    expect(embeddingSetMembers.rows[0].n).toBe(180)
+    expect(embeddingSetMembers.rows[0].null_embeddings).toBe(180)
+    expect(embeddingSetMembers.rows[0].membership_type).toBe('auto')
+
+    const exportedArchive = await exportShard(db, { includeEmbeddings: true })
+    expect(validateShardArchive(exportedArchive)).toEqual({ valid: true, errors: [] })
+
+    const exported = unpackTarGz(exportedArchive)
+    const exportedManifest: ShardManifest = JSON.parse(decoder.decode(exported.get('manifest.json')!))
+    expect(exportedManifest.components).toEqual(expect.arrayContaining([
+      'notes',
+      'embedding_sets',
+      'embedding_configs',
+      'embedding_set_members',
+    ]))
+    expect(exportedManifest.counts.notes).toBe(180)
+    expect(exportedManifest.counts.embedding_sets).toBe(1)
+    expect(exportedManifest.counts.embedding_configs).toBe(8)
+    expect(exportedManifest.counts.embedding_set_members).toBe(180)
+
+    const exportedConfigs = JSON.parse(
+      new TextDecoder().decode(exported.get('embedding_configs.json')!),
+    ) as Array<{ id: string; name: string; model: string }>
+    expect(exportedConfigs).toHaveLength(8)
+    expect(exportedConfigs.some((config) => config.name === 'default' && config.model === 'nomic-embed-text')).toBe(true)
+  })
+
+  it('imports legacy React embedding_set_member rows that still carry embedding_id', async () => {
+    const sourceDb = await createTestDb()
+    const sourceNotes = new NotesRepository(sourceDb)
+    const sourceSets = new EmbeddingSetsRepository(sourceDb)
+    const note = await sourceNotes.create({ content: 'Embedded note' })
+    const set = await sourceSets.create({ name: 'Legacy set' })
+    const embedding = await sourceSets.putEmbedding({
+      note_id: note.id,
+      embedding_set_id: set.id,
+      vector: [1, ...Array(383).fill(0)],
+    })
+
+    const currentArchive = await exportShard(sourceDb, { includeEmbeddings: true })
+    const files = unpackTarGz(currentArchive)
+    const legacyMembers = encoder.encode(JSON.stringify({
+      embedding_set_id: set.id,
+      note_id: note.id,
+      embedding_id: embedding.id,
+    }))
+    files.set('embedding_set_members.jsonl', legacyMembers)
+
+    const manifest: ShardManifest = JSON.parse(new TextDecoder().decode(files.get('manifest.json')!))
+    manifest.checksums['embedding_set_members.jsonl'] = await sha256Hex(legacyMembers)
+    files.set('manifest.json', encoder.encode(JSON.stringify(manifest)))
+
+    const result = await importShard(db, packTarGz(files))
+    await sourceDb.close()
+
+    expect(result.success).toBe(true)
+    expect(result.counts.embedding_set_members).toBe(1)
+
+    const rows = await db.query<{ embedding_id: string | null; membership_type: string }>(
+      `SELECT embedding_id, membership_type FROM embedding_set_member WHERE embedding_set_id = $1 AND note_id = $2`,
+      [set.id, note.id],
+    )
+    expect(rows.rows[0]).toEqual({ embedding_id: embedding.id, membership_type: 'materialized' })
+  })
+
+  it('imports server-shaped embedding rows without React embedding_set_id', async () => {
+    const iso = '2026-01-01T00:00:00.000Z'
+    const vector = Array.from({ length: 384 }, (_, index) => index === 0 ? 1 : 0)
+    const note: ShardNote = {
+      id: 'note-server-embedding',
+      title: 'Server embedding note',
+      original_content: 'Original embedding note',
+      revised_content: 'Chunk source text',
+      collection_id: null,
+      attachments: [],
+      format: 'markdown',
+      source: 'manual',
+      starred: false,
+      archived: false,
+      tags: [],
+      created_at: iso,
+      updated_at: iso,
+      deleted_at: null,
+    }
+    const embedding = {
+      id: 'emb-server-1',
+      note_id: note.id,
+      chunk_index: 3,
+      text: 'Chunk source text',
+      vector,
+      model: 'nomic-embed-text',
+    }
+
+    const notesData = encoder.encode(JSON.stringify(note) + '\n')
+    const embeddingsData = encoder.encode(JSON.stringify(embedding) + '\n')
+    const manifest: ShardManifest = {
+      version: '1.0.0',
+      matric_version: 'test',
+      format: 'matric-shard',
+      created_at: iso,
+      components: ['notes', 'embeddings'],
+      counts: { notes: 1, embeddings: 1 },
+      checksums: {
+        'notes.jsonl': await sha256Hex(notesData),
+        'embeddings.jsonl': await sha256Hex(embeddingsData),
+      },
+      min_reader_version: '1.0.0',
+    }
+    const files = new Map<string, Uint8Array>()
+    files.set('notes.jsonl', notesData)
+    files.set('embeddings.jsonl', embeddingsData)
+    files.set('manifest.json', encoder.encode(JSON.stringify(manifest)))
+    const archive = packTarGz(files)
+
+    expect(validateShardArchive(archive)).toEqual({ valid: true, errors: [] })
+    const result = await importShard(db, archive)
+
+    expect(result.success).toBe(true)
+    expect(result.errors).toEqual([])
+    expect(result.counts.embeddings).toBe(1)
+
+    const rows = await db.query<{
+      chunk_index: number
+      text: string
+      model: string | null
+      embedding_set_id: string
+      membership_type: string | null
+    }>(
+      `SELECT e.chunk_index, e.text, e.model, e.embedding_set_id, m.membership_type
+       FROM embedding e
+       JOIN embedding_set_member m ON m.embedding_id = e.id
+       WHERE e.id = $1`,
+      [embedding.id],
+    )
+    expect(rows.rows[0]).toMatchObject({
+      chunk_index: 3,
+      text: 'Chunk source text',
+      model: 'nomic-embed-text',
+      membership_type: 'materialized',
+    })
+  })
 })
 
 describe('importShard — E1 attachment round-trip (#237)', { timeout: 30_000 }, () => {
-  it('surfaces dropped attachments as an explicit warning instead of silent data loss', async () => {
+  it('preserves attachment metadata and byte counts without inlining raw blob payloads', async () => {
     // Source DB with one note carrying a real attachment.
     const sourceDb = await createTestDb()
     const notes = new NotesRepository(sourceDb)
@@ -415,7 +692,7 @@ describe('importShard — E1 attachment round-trip (#237)', { timeout: 30_000 },
       extractedText: 'report text',
     })
 
-    // The export carries the attachment *reference* (S1: binary_sources).
+    // The export carries the attachment reference (S1: server `attachments` field).
     const archive = await exportShard(sourceDb)
     await sourceDb.close()
 
@@ -426,12 +703,78 @@ describe('importShard — E1 attachment round-trip (#237)', { timeout: 30_000 },
     expect(result.success).toBe(true)
     expect(result.counts.notes).toBe(1)
 
-    // Attachment bytes are not packaged in the shard, so nothing is persisted —
-    // but the loss is now reported, not silent (E1).
-    const rows = await targetDb.query<{ n: number }>('SELECT COUNT(*)::int AS n FROM attachment')
-    expect(rows.rows[0].n).toBe(0)
-    expect(result.warnings.some((w) => /attachment\(s\).*were not imported/.test(w))).toBe(true)
+    // Shards preserve extracted text plus attachment metadata. They do not carry
+    // the raw payload, so BlobStore bytes are unavailable after import unless an
+    // external attachment source hydrates them separately.
+    const rows = await targetDb.query<{
+      id: string
+      filename: string
+      mime_type: string | null
+      extracted_text: string | null
+      content_hash: string
+      size_bytes: number
+      storage_path: string | null
+    }>(
+      `SELECT a.id, a.filename, a.mime_type, a.extracted_text, b.content_hash, b.size_bytes, b.storage_path
+         FROM attachment a
+         JOIN attachment_blob b ON b.id = a.blob_id`,
+    )
+    expect(rows.rows).toHaveLength(1)
+    expect(rows.rows[0]).toMatchObject({
+      filename: 'report.pdf',
+      mime_type: 'application/pdf',
+      extracted_text: 'report text',
+      size_bytes: 'binary-payload-bytes'.length,
+      storage_path: 'report.pdf',
+    })
+    expect(rows.rows[0].content_hash).toMatch(/^sha256:[0-9a-f]{64}$/)
+
+    const importedAttachments = new AttachmentsRepository(targetDb, new MemoryBlobStore())
+    await expect(importedAttachments.getBlob(rows.rows[0].id)).resolves.toBeNull()
+
+    const reexported = await exportShard(targetDb)
+    const reexportedFiles = unpackTarGz(reexported)
+    const reexportedNote: ShardNote = JSON.parse(
+      decoder.decode(reexportedFiles.get('notes.jsonl')!).split('\n')[0],
+    )
+    expect(reexportedNote.attachments).toEqual([
+      {
+        extracted_text: 'report text',
+        attachment: {
+          id: rows.rows[0].id,
+          path: 'report.pdf',
+          mime: 'application/pdf',
+          checksum: rows.rows[0].content_hash,
+          bytes: 'binary-payload-bytes'.length,
+        },
+      },
+    ])
+    expect(decoder.decode(reexportedFiles.get('notes.jsonl')!)).not.toContain('binary-payload-bytes')
+    expect(result.warnings.some((w) => /metadata only/.test(w))).toBe(true)
     expect(result.warnings.some((w) => w.includes('#237'))).toBe(true)
+
+    await targetDb.close()
+  })
+
+  it('restores note collection membership from collection_id', async () => {
+    const sourceDb = await createTestDb()
+    const notes = new NotesRepository(sourceDb)
+    const collections = new CollectionsRepository(sourceDb)
+    const collection = await collections.create({ name: 'Imported collection' })
+    const note = await notes.create({ content: 'Collection member', title: 'Member', tags: [] })
+    await collections.assignNote(collection.id, note.id)
+
+    const archive = await exportShard(sourceDb)
+    await sourceDb.close()
+
+    const targetDb = await createTestDb()
+    const result = await importShard(targetDb, archive)
+    const rows = await targetDb.query<{ collection_id: string; note_id: string }>(
+      'SELECT collection_id, note_id FROM collection_note',
+    )
+
+    expect(result.success).toBe(true)
+    expect(rows.rows).toEqual([{ collection_id: collection.id, note_id: note.id }])
 
     await targetDb.close()
   })
