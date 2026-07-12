@@ -60,7 +60,6 @@ export {
   collectionToShard,
   collectionFromShard,
   tagsToShard,
-  tagsFromShard,
   templateToShard,
   embeddingSetToShard,
   embeddingSetFromShard,

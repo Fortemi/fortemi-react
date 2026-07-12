@@ -1,14 +1,7 @@
 import { computeHash } from './hash.js'
+import type { ShardAttachmentReference, ShardBinarySource } from './shard/types.js'
 
-export type AiwgFortemiKnownRecordType =
-  | 'crm.contact'
-  | 'crm.organization'
-  | 'crm.event'
-  | 'crm.interaction'
-  | 'aiwg.artifact'
-  | 'aiwg.kb.page'
-
-export type AiwgFortemiRecordType = AiwgFortemiKnownRecordType | `aiwg.${string}` | `research.${string}` | `docs.${string}` | string
+export type AiwgFortemiRecordType = string
 
 export type AiwgFortemiRecordSchemaVersion = 'aiwg.fortemi.index.record.v1' | 'aiwg.fortemi.index.record.v2'
 export type AiwgFortemiIndexExportSchemaVersion = 'aiwg.fortemi.index.export.v1' | 'aiwg.fortemi.index.export.v2'
@@ -115,18 +108,8 @@ export interface AiwgFortemiRecordEmbedding {
   metadata?: Record<string, unknown>
 }
 
-export interface AiwgFortemiAttachmentReference {
-  id: string
-  path: string
-  mime: string | null
-  checksum: string
-  bytes: number
-}
-
-export interface AiwgFortemiBinarySource {
-  extracted_text: string
-  attachment: AiwgFortemiAttachmentReference
-}
+export type AiwgFortemiAttachmentReference = ShardAttachmentReference
+export type AiwgFortemiBinarySource = ShardBinarySource
 
 export interface AiwgFortemiRecord {
   schema_version: AiwgFortemiRecordSchemaVersion
@@ -1184,18 +1167,23 @@ function recordText(item: AiwgFortemiProjectedRecord): string {
     ?? item.search?.summary
     ?? item.chunks?.map((chunk) => chunk.text ?? chunk.body ?? chunk.summary ?? '').filter(Boolean).join('\n')
     ?? ''
-  const extractedText = 'binary_sources' in item
+  const extractedText = binarySourceText(item)
+  return [base, extractedText].filter(Boolean).join('\n')
+}
+
+function binarySourceText(item: AiwgFortemiProjectedRecord): string {
+  return 'binary_sources' in item
     ? item.binary_sources?.map((source) => source.extracted_text).filter(Boolean).join('\n') ?? ''
     : ''
-  return [base, extractedText].filter(Boolean).join('\n')
 }
 
 function defaultEmbeddingInput(record: AiwgFortemiRecord, granularity: AiwgStaticEmbeddingSet['granularity']): string {
   const title = recordTitle(record)
   const text = recordText(record)
   if (granularity === 'title-summary') {
-    const extractedText = record.binary_sources?.map((source) => source.extracted_text).filter(Boolean).join('\n') ?? ''
-    return [title, record.search?.summary ?? '', extractedText].filter(Boolean).join('\n')
+    // Attachment text remains part of title-summary embeddings so binary-only
+    // knowledge is searchable even when the record has no authored summary.
+    return [title, record.search?.summary ?? '', binarySourceText(record)].filter(Boolean).join('\n')
   }
   return [title, text].filter(Boolean).join('\n')
 }
@@ -2018,15 +2006,21 @@ function edgeFromRelationship(sourceId: string, relationship: AiwgFortemiRelatio
 
 function relationshipMatches(edge: AiwgRelationshipEdgeSummary, options: AiwgRelationshipQueryOptions = {}): boolean {
   const type = relationshipTypeFilter(options)
-  const direction = options.direction ?? 'both'
   if (type && edge.type !== type) return false
   if (options.relationshipDirection && edge.direction !== options.relationshipDirection) return false
   if (options.sourceId && edge.source_id !== options.sourceId) return false
   if (options.targetId && edge.target_id !== options.targetId) return false
   if (options.endpointId && edge.source_id !== options.endpointId && edge.target_id !== options.endpointId) return false
-  if (direction === 'out' && options.targetId && edge.target_id !== options.targetId) return false
-  if (direction === 'in' && options.sourceId && edge.source_id !== options.sourceId) return false
   return true
+}
+
+function assertRelationshipDirectionAnchor(options: AiwgRelationshipQueryOptions): void {
+  if (options.direction === 'out' && !options.sourceId) {
+    throw new Error("relationship direction 'out' requires sourceId")
+  }
+  if (options.direction === 'in' && !options.targetId) {
+    throw new Error("relationship direction 'in' requires targetId")
+  }
 }
 
 function nodeSummary(item: AiwgFortemiProjectedRecord): AiwgRelationshipNodeSummary {
@@ -2041,6 +2035,7 @@ function relationshipResultFromRecords(
   records: AiwgFortemiProjectedRecord[],
   options: AiwgRelationshipQueryOptions = {},
 ): AiwgRelationshipTraversalResult {
+  assertRelationshipDirectionAnchor(options)
   const byId = new Map(records.map((record) => [record.id, record]))
   const edges: AiwgRelationshipEdgeSummary[] = []
   for (const record of records) {

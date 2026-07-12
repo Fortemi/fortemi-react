@@ -209,7 +209,7 @@ export async function exportShard(
     for (let offset = 0; offset < shardNotes.length; offset += clusterSize) {
       const slice = shardNotes.slice(offset, offset + clusterSize)
       const href = `notes/${String(offset).padStart(6, '0')}.jsonl`
-      clusters.push({ href, offset, count: slice.length })
+      clusters.push({ href, offset })
       files.set(href, encoder.encode(slice.map((n) => JSON.stringify(n)).join('\n')))
     }
     layout = { clusters: { notes: clusters } }

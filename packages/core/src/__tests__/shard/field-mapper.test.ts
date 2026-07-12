@@ -7,7 +7,6 @@ import {
   collectionToShard,
   collectionFromShard,
   tagsToShard,
-  tagsFromShard,
   templateToShard,
   embeddingSetToShard,
   embeddingSetFromShard,
@@ -183,15 +182,6 @@ describe('field-mapper: tags', () => {
     expect(shard[1].name).toBe('math')
   })
 
-  it('converts from shard tags to unique tag names', () => {
-    const shardTags = [
-      { name: 'physics', created_at: '2026-01-01T00:00:00.000Z' },
-      { name: 'physics', created_at: '2026-01-02T00:00:00.000Z' },
-      { name: 'math', created_at: '2026-01-01T00:00:00.000Z' },
-    ]
-    const names = tagsFromShard(shardTags)
-    expect(names).toEqual(['physics', 'math'])
-  })
 })
 
 describe('field-mapper: templates', () => {

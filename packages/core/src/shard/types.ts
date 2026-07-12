@@ -35,8 +35,8 @@ export type ShardComponent =
   | 'templates'
   | 'links'
   | 'embedding_sets'
-  | 'embedding_set_members'
   | 'embedding_configs'
+  | 'embedding_set_members'
   | 'embeddings'
   | 'skos_schemes'
   | 'skos_concepts'
@@ -66,14 +66,12 @@ export type ShardBinarySource = ShardAttachmentProjection
 
 /**
  * Reference to one cluster file of a component split across addressable files
- * (`notes/000.jsonl`, `notes/001.jsonl`, …). `offset`/`count` are the record
- * range within the component, so an in-place reader fetches only the clusters a
- * query needs — the shard analog of the AIWG chunk-manifest scan parts.
+ * (`notes/000.jsonl`, `notes/001.jsonl`, …). `offset` preserves deterministic
+ * component order; readers discover each cluster's size from its contents.
  */
 export interface ShardClusterRef {
   href: string // path within the shard, relative to manifest base
   offset: number // index of the first record in this cluster
-  count: number // records in this cluster
 }
 
 /**
