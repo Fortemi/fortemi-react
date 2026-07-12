@@ -50,6 +50,7 @@
               "templates",
               "links",
               "embedding_sets",
+              "embedding_configs",
               "embedding_set_members",
               "embeddings",
               "skos_schemes",
