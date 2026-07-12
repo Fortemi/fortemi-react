@@ -279,6 +279,35 @@ describe('importShard', { timeout: 30_000 }, () => {
     expect(result.errors[0]).toContain('Missing manifest.json')
   })
 
+  it('returns a structured error for a null manifest', async () => {
+    const archive = packTarGz(new Map([['manifest.json', encoder.encode('null')]]))
+    await expect(importShard(db, archive)).resolves.toMatchObject({ success: false })
+  })
+
+  it('returns a structured error when manifest checksums are missing', async () => {
+    const manifest = { version: '1.0.0', format: 'matric-shard', components: [], counts: {} }
+    const archive = packTarGz(new Map([['manifest.json', encoder.encode(JSON.stringify(manifest))]]))
+    const result = await importShard(db, archive)
+    expect(result.success).toBe(false)
+    expect(result.errors.join('\n')).toContain('checksums must be an object')
+  })
+
+  it('returns a component-named structured error for checksum-matching corrupt JSONL', async () => {
+    const linksData = encoder.encode('{not json}\n')
+    const manifest: ShardManifest = {
+      version: '1.0.0', matric_version: '2026.3.0', format: 'matric-shard',
+      created_at: new Date().toISOString(), components: ['links'], counts: { links: 1 },
+      checksums: { 'links.jsonl': await sha256Hex(linksData) }, min_reader_version: '1.0.0',
+    }
+    const archive = packTarGz(new Map([
+      ['manifest.json', encoder.encode(JSON.stringify(manifest))],
+      ['links.jsonl', linksData],
+    ]))
+    const result = await importShard(db, archive)
+    expect(result.success).toBe(false)
+    expect(result.errors.join('\n')).toContain('links.jsonl')
+  })
+
   it('rejects archive with invalid checksum', async () => {
     const notesData = encoder.encode('{"id":"1","title":"Test","original_content":"x","revised_content":null,"format":"markdown","source":"user","starred":false,"archived":false,"tags":[],"created_at":"2026-01-01T00:00:00Z","updated_at":"2026-01-01T00:00:00Z","deleted_at":null}')
     const badChecksum = 'deadbeef'.repeat(8)
