@@ -731,9 +731,12 @@ describe('importShard — E1 attachment round-trip (#237)', { timeout: 30_000 },
       mime_type: 'application/pdf',
       extracted_text: 'report text',
       size_bytes: 'binary-payload-bytes'.length,
-      storage_path: 'report.pdf',
+      // storage_path is NULL on import: the browser addresses blobs by
+      // content_hash via the BlobStore; `path` is the display filename, never
+      // a storage locator (binary-attachment projection contract, Ask 3).
+      storage_path: null,
     })
-    expect(rows.rows[0].content_hash).toMatch(/^sha256:[0-9a-f]{64}$/)
+    expect(rows.rows[0].content_hash).toMatch(/^blake3:[0-9a-f]{64}$/)
 
     const importedAttachments = new AttachmentsRepository(targetDb, new MemoryBlobStore())
     await expect(importedAttachments.getBlob(rows.rows[0].id)).resolves.toBeNull()
@@ -757,7 +760,7 @@ describe('importShard — E1 attachment round-trip (#237)', { timeout: 30_000 },
     ])
     expect(decoder.decode(reexportedFiles.get('notes.jsonl')!)).not.toContain('binary-payload-bytes')
     expect(result.warnings.some((w) => /metadata only/.test(w))).toBe(true)
-    expect(result.warnings.some((w) => w.includes('#237'))).toBe(true)
+    expect(result.warnings.some((w) => w.includes('#271'))).toBe(true)
 
     await targetDb.close()
   })

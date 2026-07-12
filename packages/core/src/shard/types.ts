@@ -5,6 +5,8 @@
  * knowledge data with a manifest for integrity verification.
  */
 
+import type { BlobStore } from '../blob-store.js'
+
 export const CURRENT_SHARD_VERSION = '1.0.0'
 export const SHARD_FORMAT = 'matric-shard'
 
@@ -126,6 +128,20 @@ export interface ExportOptions {
    * (issue #189). Absent → a single monolithic `notes.jsonl` (unchanged).
    */
   clusterNotesSize?: number
+  /**
+   * Pack attachment bytes into a portable content-addressed `blobs/<hex>`
+   * sidecar (Fortemi/fortemi#1046), producing a self-contained shard whose
+   * attachments survive a round-trip (`getBlob()` returns real bytes on the
+   * importing host). Requires {@link blobStore}. Absent/false → reference-only
+   * (server default), which remains a valid shard.
+   */
+  includeBlobs?: boolean
+  /**
+   * Byte source for the sidecar. Required when `includeBlobs` is set; attachment
+   * bytes are read by their `content_hash`. A blob the store cannot return is
+   * skipped (its attachment stays reference-only) rather than failing export.
+   */
+  blobStore?: BlobStore
 }
 
 /** Conflict resolution strategy for shard import. */
@@ -138,6 +154,14 @@ export interface ImportOptions {
   batchSize?: number
   /** Progress callback for long-running import phases. */
   onProgress?: (progress: ImportProgress) => void
+  /**
+   * Destination for hydrating attachment bytes from a portable `blobs/<hex>`
+   * sidecar (Fortemi/fortemi#1046). When provided, sidecar entries whose bare
+   * hex matches an imported attachment's `content_hash` are written to this
+   * store after the import transaction commits, so `getBlob()` returns real
+   * bytes. Absent → attachments import as reference-only metadata (unchanged).
+   */
+  blobStore?: BlobStore
 }
 
 export type ImportProgressPhase =
