@@ -28,6 +28,10 @@ import {
   type AiwgFortemiRecord,
   type AiwgStaticEmbeddingSet,
 } from '../aiwg-index.js'
+import {
+  getAiwgFortemiIndexExportSchema,
+  validateAiwgFortemiIndexExportSchema,
+} from '../aiwg-index-schema.js'
 import fixture from '../../test/fixtures/sanitized-aiwg-fortemi-index.json' with { type: 'json' }
 
 const index = fixture as unknown as AiwgFortemiIndexExport
@@ -65,7 +69,20 @@ function record(id: string, type: string, title: string, text: string, overrides
 }
 
 function v2Record(id: string, type: string, overrides: Partial<AiwgFortemiRecord> = {}): AiwgFortemiRecord {
-  return {
+  const defaultSearch: NonNullable<AiwgFortemiRecord['search']> = {
+    title: id,
+    name: id.split(':').at(-1),
+    summary: '',
+    body: '',
+    triggers: [],
+    aliases: [],
+    capability: type,
+    tags: [],
+    phase: 'construction',
+    type,
+    frontmatter: {},
+  }
+  const base: AiwgFortemiRecord = {
     ...record(id, type, id, ''),
     schema_version: 'aiwg.fortemi.index.record.v2',
     source: {
@@ -77,24 +94,23 @@ function v2Record(id: string, type: string, overrides: Partial<AiwgFortemiRecord
       checksum: `sha256:${id}`,
       updated_at: '2026-07-02T00:00:00.000Z',
     },
-    search: {
-      title: id,
-      name: id.split(':').at(-1),
-      summary: '',
-      body: '',
-      triggers: [],
-      aliases: [],
-      capability: type,
-      tags: [],
-      phase: 'construction',
-      type,
-      frontmatter: {},
-    },
+    search: defaultSearch,
     chunks: [],
     embeddings: [],
     compatibility: { v1_strategy: 'preserve-flat-fields' },
-    privacy: { classification: 'public', pii: false, locality: 'workspace' },
+    privacy: { classification: 'public', pii: false, locality: 'project' },
     ...overrides,
+  }
+  const search = {
+    ...defaultSearch,
+    ...overrides.search,
+  }
+  return {
+    ...base,
+    schema_version: 'aiwg.fortemi.index.record.v2',
+    title: overrides.title ?? search.title,
+    text: overrides.text ?? search.body,
+    search,
   }
 }
 
@@ -155,6 +171,9 @@ describe('AIWG Fortemi index adapter', () => {
   it('accepts static documentation page records', () => {
     const docsIndex: AiwgFortemiIndexExport = {
       ...index,
+      schema_version: 'aiwg.fortemi.index.export.v2',
+      source: { repo: 'Fortemi/fortemi-react', privacy: 'public', graph: 'project' },
+      compatibility: { previous_schema_version: 'aiwg.fortemi.index.export.v1', strategy: 'supported' },
       items: [
         {
           schema_version: 'aiwg.fortemi.index.record.v2',
@@ -238,7 +257,7 @@ describe('AIWG Fortemi index adapter', () => {
     const validation = validateAiwgFortemiIndexExport(docsIndex)
     const result = queryAiwgFortemiIndex(docsIndex, 'tenant', { types: ['docs.page'] })
 
-    expect(validation.valid).toBe(true)
+    expect(validation.valid, validation.errors.join('\n')).toBe(true)
     expect(validation.counts).toMatchObject({ 'docs.page': 1 })
     expect(result.items[0]?.source.locator).toBe('section:getting-started')
     expect(result.items[0]?.skos_concepts?.[0]?.prefLabel).toBe('Static Index')
@@ -308,9 +327,12 @@ describe('AIWG Fortemi index adapter', () => {
       source: {
         repo: 'Fortemi/fortemi-react',
         privacy: 'public',
-        graph: { communities: 2 },
+        graph: 'project',
       },
-      compatibility: { v1_strategy: 'flat-fields-plus-v2-projection' },
+      compatibility: {
+        previous_schema_version: 'aiwg.fortemi.index.export.v1',
+        strategy: 'supported',
+      },
       items: [
         v2Record('aiwg:agent:planner', 'aiwg.agent', {
           title: undefined,
@@ -373,7 +395,7 @@ describe('AIWG Fortemi index adapter', () => {
     const projectionResult = queryAiwgFortemiIndex(v2Index, 'acceptance criteria', { searchProfile: 'aiwg-discovery' })
     const chunkResult = queryAiwgFortemiIndex(v2Index, 'chunked planner body')
 
-    expect(validation.valid).toBe(true)
+    expect(validation.valid, validation.errors.join('\n')).toBe(true)
     expect(validation.counts).toMatchObject({
       'aiwg.agent': 1,
       'aiwg.command': 1,
@@ -1026,15 +1048,15 @@ describe('AIWG Fortemi chunked index — slim/projected parts (#168)', () => {
     const richIndex: AiwgFortemiIndexExport = {
       ...index,
       schema_version: 'aiwg.fortemi.index.export.v2',
-      items: [
-        {
-          ...index.items[0],
-          schema_version: 'aiwg.fortemi.index.record.v2',
+      source: { repo: 'Fortemi/fortemi-react', privacy: 'public', graph: 'project' },
+      compatibility: { previous_schema_version: 'aiwg.fortemi.index.export.v1', strategy: 'supported' },
+      items: index.items.map((item, itemIndex) => v2Record(item.id, item.type, {
+        ...item,
+        ...(itemIndex === 0 ? {
           skos_concepts: [{ id: 'concept:rich', prefLabel: 'Rich Metadata' }],
           provenance_events: [{ activity: 'generated', agent: 'aiwg-index' }],
-        },
-        ...index.items.slice(1),
-      ],
+        } : {}),
+      })),
     }
     const built = buildAiwgChunkedIndex(richIndex, {
       partSize: 2,
@@ -1210,6 +1232,8 @@ describe('AIWG Fortemi chunked index — slim/projected parts (#168)', () => {
     const graphIndex: AiwgFortemiIndexExport = {
       ...index,
       schema_version: 'aiwg.fortemi.index.export.v2',
+      source: { repo: 'Fortemi/fortemi-react', privacy: 'public', graph: 'project' },
+      compatibility: { previous_schema_version: 'aiwg.fortemi.index.export.v1', strategy: 'supported' },
       items: [
         v2Record('aiwg:command:deploy', 'aiwg.command', {
           search: { title: 'Deploy Command', body: 'Deployment command.' },
@@ -1680,7 +1704,13 @@ describe('#239 validator conformance — v1/v2 forbiddance, enums, source gating
       relationships: [{ type: 'documents', target_id: 't', direction: 'upstream' }],
       source: { path: 'p.md', repo_relative_path: 'p.md', locator: 'p', origin: 'aiwg', generated: true },
     })
-    const res = validateAiwgFortemiIndexExport({ ...index, schema_version: 'aiwg.fortemi.index.export.v2', items: [v2] })
+    const res = validateAiwgFortemiIndexExport({
+      ...index,
+      schema_version: 'aiwg.fortemi.index.export.v2',
+      source: { repo: 'x/y', privacy: 'public', graph: 'project' },
+      compatibility: { previous_schema_version: 'aiwg.fortemi.index.export.v1', strategy: 'supported' },
+      items: [v2],
+    })
     expect(res.errors).toEqual([])
     expect(res.valid).toBe(true)
   })
@@ -1706,7 +1736,7 @@ describe('#239 validator conformance — v1/v2 forbiddance, enums, source gating
     expect(validateAiwgFortemiIndexExport(v1Graph).errors.join('\n')).toContain('source.graph is a v2-only field')
     const v1Compat = { ...index, schema_version: 'aiwg.fortemi.index.export.v1', compatibility: {}, items: [rec] }
     expect(validateAiwgFortemiIndexExport(v1Compat).errors.join('\n')).toContain('compatibility is a v2-only field')
-    const v2Ok = { ...index, schema_version: 'aiwg.fortemi.index.export.v2', source: { repo: 'x/y', privacy: 'public', graph: { communities: 1 } }, compatibility: {}, items: [v2Record('r', 'aiwg.skill')] }
+    const v2Ok = { ...index, schema_version: 'aiwg.fortemi.index.export.v2', source: { repo: 'x/y', privacy: 'public', graph: 'project' }, compatibility: { previous_schema_version: 'aiwg.fortemi.index.export.v1', strategy: 'supported' }, items: [v2Record('r', 'aiwg.skill')] }
     expect(validateAiwgFortemiIndexExport(v2Ok).valid).toBe(true)
   })
 
@@ -1714,7 +1744,8 @@ describe('#239 validator conformance — v1/v2 forbiddance, enums, source gating
     const v2Index: AiwgFortemiIndexExport = {
       ...index,
       schema_version: 'aiwg.fortemi.index.export.v2',
-      source: { repo: 'x/y', privacy: 'public', graph: { communities: 1 } },
+      source: { repo: 'x/y', privacy: 'public', graph: 'project' },
+      compatibility: { previous_schema_version: 'aiwg.fortemi.index.export.v1', strategy: 'supported' },
       items: [v2Record('r', 'aiwg.skill')],
     }
     const built = buildAiwgChunkedIndex(v2Index)
@@ -1732,6 +1763,54 @@ describe('#239 validator conformance — v1/v2 forbiddance, enums, source gating
       [],
     )
     expect(exported.source_export_schema_version).toBe('aiwg.fortemi.index.export.v2')
+  })
+})
+
+describe('#293 pinned AIWG index schema authority', () => {
+  it('vendors the upstream schema and validates real build input before chunking', () => {
+    expect(getAiwgFortemiIndexExportSchema()).toMatchObject({
+      $id: 'https://aiwg.io/schemas/aiwg-fortemi-index-export.json',
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
+    })
+    expect(validateAiwgFortemiIndexExportSchema(index)).toEqual({ valid: true, errors: [] })
+    expect(() => buildAiwgChunkedIndex(index)).not.toThrow()
+  })
+
+  it('M7 — rejects record.v2 items inside an export.v1 envelope', () => {
+    const result = validateAiwgFortemiIndexExport({ ...index, items: [v2Record('r', 'aiwg.skill')] })
+    expect(result.valid).toBe(false)
+    expect(result.errors.join('\n')).toContain('must be equal to constant')
+  })
+
+  it('L1/L3 — rejects provenance_events on record.v1 and invalid manifest privacy', () => {
+    const withEvents = record('r', 'aiwg.skill', 'R', 'body', {
+      provenance_events: [{ activity: 'generated' }],
+    })
+    expect(validateAiwgFortemiIndexExport({ ...index, items: [withEvents] }).valid).toBe(false)
+    expect(validateAiwgFortemiIndexExport({
+      ...index,
+      source: { ...index.source, privacy: 'secret' as unknown as 'public' },
+    }).valid).toBe(false)
+  })
+
+  it('M8 — applies schema privacy and provenance constraints to projected records', () => {
+    const built = buildAiwgChunkedIndex(index, {
+      projection: [...AIWG_SCAN_REQUIRED_FIELDS, 'provenance'],
+      privacy: { includePrivate: true, includePii: true },
+    })
+    const item = built.parts[0].part.items[0]
+    const badPart = {
+      ...built.parts[0].part,
+      items: [{
+        ...item,
+        privacy: { classification: 'secret', pii: 'no' },
+        provenance: [{ ...item.provenance[0], confidence: 'invented' }],
+      }],
+    }
+    const result = validateAiwgFortemiChunkPart(badPart, built.manifest.parts[0], built.manifest)
+    expect(result.valid).toBe(false)
+    expect(result.errors.join('\n')).toContain('privacy/classification')
+    expect(result.errors.join('\n')).toContain('provenance/0/confidence')
   })
 })
 
