@@ -641,6 +641,10 @@ function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: n
       errors.push('items[' + index + '].skos_concepts must be an array when present')
     } else {
       for (const [conceptIndex, concept] of item.skos_concepts.entries()) {
+        if (!isPlainRecord(concept)) {
+          errors.push('items[' + index + '].skos_concepts[' + conceptIndex + '] must be an object')
+          continue
+        }
         if (!hasString(concept.id)) errors.push('items[' + index + '].skos_concepts[' + conceptIndex + '].id is required')
         if (!hasString(concept.prefLabel)) errors.push('items[' + index + '].skos_concepts[' + conceptIndex + '].prefLabel is required')
         if (!isOptionalStringArray(concept.altLabels)) errors.push('items[' + index + '].skos_concepts[' + conceptIndex + '].altLabels must be a string array')
@@ -655,6 +659,10 @@ function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: n
       errors.push('items[' + index + '].skos_relations must be an array when present')
     } else {
       for (const [relationIndex, relation] of item.skos_relations.entries()) {
+        if (!isPlainRecord(relation)) {
+          errors.push('items[' + index + '].skos_relations[' + relationIndex + '] must be an object')
+          continue
+        }
         if (!hasString(relation.type)) errors.push('items[' + index + '].skos_relations[' + relationIndex + '].type is required')
         if (!hasString(relation.source_id)) errors.push('items[' + index + '].skos_relations[' + relationIndex + '].source_id is required')
         if (!hasString(relation.target_id)) errors.push('items[' + index + '].skos_relations[' + relationIndex + '].target_id is required')
@@ -669,6 +677,10 @@ function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: n
       errors.push('items[' + index + '].provenance_events must be an array when present')
     } else {
       for (const [eventIndex, event] of item.provenance_events.entries()) {
+        if (!isPlainRecord(event)) {
+          errors.push('items[' + index + '].provenance_events[' + eventIndex + '] must be an object')
+          continue
+        }
         if (!hasString(event.activity)) errors.push('items[' + index + '].provenance_events[' + eventIndex + '].activity is required')
         if (event.attributes !== undefined && !isPlainRecord(event.attributes)) {
           errors.push('items[' + index + '].provenance_events[' + eventIndex + '].attributes must be an object')
@@ -678,6 +690,10 @@ function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: n
   }
   if (Array.isArray(item.relationships)) {
     for (const [relationshipIndex, relationship] of item.relationships.entries()) {
+      if (!isPlainRecord(relationship)) {
+        errors.push('items[' + index + '].relationships[' + relationshipIndex + '] must be an object')
+        continue
+      }
       if (relationship.metadata !== undefined && !isPlainRecord(relationship.metadata)) {
         errors.push('items[' + index + '].relationships[' + relationshipIndex + '].metadata must be an object')
       }
@@ -711,7 +727,10 @@ function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: n
       errors.push('items[' + index + '].chunks must be an array when present')
     } else {
       for (const [chunkIndex, chunk] of item.chunks.entries()) {
-        if (!isPlainRecord(chunk)) errors.push('items[' + index + '].chunks[' + chunkIndex + '] must be an object')
+        if (!isPlainRecord(chunk)) {
+          errors.push('items[' + index + '].chunks[' + chunkIndex + '] must be an object')
+          continue
+        }
         if (chunk.metadata !== undefined && !isPlainRecord(chunk.metadata)) {
           errors.push('items[' + index + '].chunks[' + chunkIndex + '].metadata must be an object')
         }
@@ -723,7 +742,10 @@ function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: n
       errors.push('items[' + index + '].embeddings must be an array when present')
     } else {
       for (const [embeddingIndex, embedding] of item.embeddings.entries()) {
-        if (!isPlainRecord(embedding)) errors.push('items[' + index + '].embeddings[' + embeddingIndex + '] must be an object')
+        if (!isPlainRecord(embedding)) {
+          errors.push('items[' + index + '].embeddings[' + embeddingIndex + '] must be an object')
+          continue
+        }
         const vector = embedding.embedding ?? embedding.vector
         if (vector !== undefined && (!Array.isArray(vector) || !vector.every((entry) => typeof entry === 'number'))) {
           errors.push('items[' + index + '].embeddings[' + embeddingIndex + '].embedding/vector must be a number array')
@@ -804,7 +826,8 @@ function forbidV2FieldsOnV1Record(item: Partial<AiwgFortemiRecord>, index: numbe
 export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidationResult {
   const errors: string[] = []
   const counts: Partial<Record<string, number>> = Object.create(null)
-  const data = value as Partial<AiwgFortemiIndexExport>
+  const data = isPlainRecord(value) ? value as Partial<AiwgFortemiIndexExport> : {}
+  if (!isPlainRecord(value)) errors.push('index export must be an object')
 
   if (!isSupportedIndexSchemaVersion(data?.schema_version)) {
     errors.push('schema_version must be aiwg.fortemi.index.export.v1 or aiwg.fortemi.index.export.v2')
@@ -831,7 +854,12 @@ export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidat
 
   const ids = new Set<string>()
   let previousId = ''
-  for (const [index, item] of (data.items ?? []).entries()) {
+  const items = Array.isArray(data.items) ? data.items : []
+  for (const [index, item] of items.entries()) {
+    if (!isPlainRecord(item)) {
+      errors.push('items[' + index + '] must be an object')
+      continue
+    }
     for (const field of REQUIRED_RECORD_FIELDS) {
       if (!(field in item)) errors.push('items[' + index + '].' + field + ' is required')
     }
@@ -885,7 +913,8 @@ export function assertAiwgFortemiIndexExport(value: unknown): AiwgFortemiIndexEx
 
 export function validateAiwgFortemiChunkManifest(value: unknown): AiwgChunkedIndexValidationResult {
   const errors: string[] = []
-  const data = value as Partial<AiwgFortemiChunkManifest>
+  const data = isPlainRecord(value) ? value as Partial<AiwgFortemiChunkManifest> : {}
+  if (!isPlainRecord(value)) errors.push('chunk manifest must be an object')
 
   if (data?.schema_version !== 'aiwg.fortemi.index.chunk-manifest.v1') {
     errors.push('schema_version must be aiwg.fortemi.index.chunk-manifest.v1')
@@ -911,7 +940,9 @@ export function validateAiwgFortemiChunkManifest(value: unknown): AiwgChunkedInd
       }
     }
   }
-  if (data.detail !== undefined) {
+  if (data.detail !== undefined && !isPlainRecord(data.detail)) {
+    errors.push('detail must be an object')
+  } else if (data.detail !== undefined) {
     if (!hasString(data.detail.href)) errors.push('detail.href is required')
     else if (!data.detail.href.includes('{id}')) errors.push('detail.href must contain the {id} placeholder')
     if (
@@ -927,6 +958,10 @@ export function validateAiwgFortemiChunkManifest(value: unknown): AiwgChunkedInd
   let expectedOffset = 0
   const parts = Array.isArray(data?.parts) ? data.parts : []
   for (const [index, part] of parts.entries()) {
+    if (!isPlainRecord(part)) {
+      errors.push('parts[' + index + '] must be an object')
+      continue
+    }
     if (!hasString(part.href)) errors.push('parts[' + index + '].href is required')
     if (!hasNonNegativeInteger(part.offset)) errors.push('parts[' + index + '].offset must be a non-negative integer')
     if (!hasNonNegativeInteger(part.count)) errors.push('parts[' + index + '].count must be a non-negative integer')
@@ -956,6 +991,10 @@ function validateProjectedRecords(items: Array<Partial<AiwgFortemiRecord>>): str
   const ids = new Set<string>()
   let previousId = ''
   for (const [index, item] of items.entries()) {
+    if (!isPlainRecord(item)) {
+      errors.push('items[' + index + '] must be an object')
+      continue
+    }
     if (!isSupportedRecordSchemaVersion(item.schema_version)) {
       errors.push('items[' + index + '].schema_version must be aiwg.fortemi.index.record.v1 or aiwg.fortemi.index.record.v2')
     }
@@ -991,7 +1030,8 @@ export function validateAiwgFortemiChunkPart(
   manifest?: AiwgFortemiChunkManifest,
 ): AiwgChunkedIndexValidationResult {
   const errors: string[] = []
-  const data = value as Partial<AiwgFortemiChunkPart>
+  const data = isPlainRecord(value) ? value as Partial<AiwgFortemiChunkPart> : {}
+  if (!isPlainRecord(value)) errors.push('chunk part must be an object')
 
   if (data?.schema_version !== 'aiwg.fortemi.index.chunk.v1') {
     errors.push('schema_version must be aiwg.fortemi.index.chunk.v1')
@@ -1685,7 +1725,8 @@ function cosineSimilarity(left: number[], right: number[]): number {
 
 export function validateAiwgStaticEmbeddingSet(value: unknown): AiwgChunkedIndexValidationResult {
   const errors: string[] = []
-  const data = value as Partial<AiwgStaticEmbeddingSet>
+  const data = isPlainRecord(value) ? value as Partial<AiwgStaticEmbeddingSet> : {}
+  if (!isPlainRecord(value)) errors.push('embedding set must be an object')
   if (data?.schema_version !== 'aiwg.fortemi.embedding.set.v1') errors.push('schema_version must be aiwg.fortemi.embedding.set.v1')
   if (!hasString(data?.id)) errors.push('id is required')
   if (!hasString(data?.model)) errors.push('model is required')
@@ -1693,7 +1734,12 @@ export function validateAiwgStaticEmbeddingSet(value: unknown): AiwgChunkedIndex
   if (!hasString(data?.generated_at)) errors.push('generated_at is required')
   if (!hasString(data?.granularity)) errors.push('granularity is required')
   if (!Array.isArray(data?.embeddings)) errors.push('embeddings must be an array')
-  for (const [index, embedding] of (data.embeddings ?? []).entries()) {
+  const embeddings = Array.isArray(data.embeddings) ? data.embeddings : []
+  for (const [index, embedding] of embeddings.entries()) {
+    if (!isPlainRecord(embedding)) {
+      errors.push('embeddings[' + index + '] must be an object')
+      continue
+    }
     if (!hasString(embedding.record_id)) errors.push('embeddings[' + index + '].record_id is required')
     if (!hasString(embedding.input_hash)) errors.push('embeddings[' + index + '].input_hash is required')
     if (!Array.isArray(embedding.embedding)) errors.push('embeddings[' + index + '].embedding must be an array')
