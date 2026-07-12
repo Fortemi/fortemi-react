@@ -281,6 +281,19 @@ export async function importShard(
 
   try {
     await db.transaction(async (tx) => {
+      const preexistingEmbeddingMembers = new Set<string>()
+      if (strategy === 'skip') {
+        for (const member of parsedEmbMembers) {
+          const existing = await tx.query(
+            'SELECT 1 FROM embedding_set_member WHERE embedding_set_id = $1 AND note_id = $2',
+            [member.embedding_set_id, member.note_id],
+          )
+          if (existing.rows.length > 0) {
+            preexistingEmbeddingMembers.add(`${member.embedding_set_id}\0${member.note_id}`)
+          }
+        }
+      }
+
       const skipExisting = async (
         key: keyof ImportCounts,
         sql: string,
@@ -900,7 +913,8 @@ export async function importShard(
       // Import embedding set members
       report?.({ phase: 'embedding_set_members', done: 0, total: parsedEmbMembers.length })
       for (const [index, member] of parsedEmbMembers.entries()) {
-        if (await skipExisting('embedding_set_members', 'SELECT 1 FROM embedding_set_member WHERE embedding_set_id = $1 AND note_id = $2', [member.embedding_set_id, member.note_id])) {
+        if (strategy === 'skip' && preexistingEmbeddingMembers.has(`${member.embedding_set_id}\0${member.note_id}`)) {
+          skipped.embedding_set_members = (skipped.embedding_set_members ?? 0) + 1
           report?.({ phase: 'embedding_set_members', done: index + 1, total: parsedEmbMembers.length })
           await maybeYield(index + 1, batchSize)
           continue
