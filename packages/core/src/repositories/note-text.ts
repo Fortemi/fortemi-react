@@ -15,6 +15,7 @@ export async function getNoteTextWithExtractedAttachments(
             COALESCE(string_agg(a.extracted_text, E'\n' ORDER BY a.position, a.created_at)
               FILTER (WHERE a.extracted_text IS NOT NULL AND a.extracted_text <> ''), '') as extracted_text
        FROM note_revised_current c
+       JOIN note n ON n.id = c.note_id AND n.deleted_at IS NULL
        LEFT JOIN attachment a ON a.note_id = c.note_id AND a.deleted_at IS NULL
        WHERE c.note_id = $1
        GROUP BY c.content`,

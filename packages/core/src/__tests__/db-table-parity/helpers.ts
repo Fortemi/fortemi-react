@@ -8,7 +8,7 @@ const __dirname = dirname(__filename)
 const FIXTURES_DIR = join(__dirname, 'fixtures')
 
 /**
- * Load a server-extracted JSON fixture for a given table.
+ * Load a server-extracted database-row JSON fixture for a given table.
  */
 export function loadServerFixture(tableName: string): Record<string, unknown>[] {
   const filePath = join(FIXTURES_DIR, `${tableName}.json`)
@@ -40,7 +40,9 @@ export function getRowShape(row: Record<string, unknown>): Record<string, string
 }
 
 /**
- * Compare field names and types between actual (browser) and expected (server) rows.
+ * Compare field names and types between actual (browser) and expected (server)
+ * database rows. This helper intentionally scopes to table shape parity, not
+ * portable shard/index JSON contract conformance.
  * Returns { pass: true } or { pass: false, missing, extra, typeMismatch }.
  */
 export function matchServerShape(

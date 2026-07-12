@@ -17,7 +17,7 @@ const ATTACHMENT_TEXT_JOIN = `
          WHERE deleted_at IS NULL
          GROUP BY note_id
        ) ax ON ax.note_id = n.id`
-const COMBINED_TEXT_SQL = `(coalesce(c.content, '') || ' ' || coalesce(ax.extracted_text, ''))`
+const COMBINED_TEXT_SQL = `trim(both from (coalesce(c.content, '') || ' ' || coalesce(ax.extracted_text, '')))`
 const COMBINED_TEXT_VECTOR_SQL = `to_tsvector('english', ${COMBINED_TEXT_SQL})`
 
 export class SearchRepository {

@@ -13,6 +13,7 @@
     "visualization"
   ],
   "type": "module",
+  "sideEffects": false,
   "license": "AGPL-3.0-only",
   "author": "Joseph Magly <joe@magly.net>",
   "homepage": "https://github.com/Fortemi/fortemi-react",

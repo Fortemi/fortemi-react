@@ -7,13 +7,15 @@
 
 import type {
   ShardNote,
-  ShardBinarySource,
+  ShardAttachmentProjection,
   ShardLink,
   ShardTag,
   ShardCollection,
+  ShardTemplate,
   ShardEmbeddingSet,
   ShardEmbeddingSetMember,
   ShardEmbedding,
+  ShardEmbeddingConfig,
   ShardSkosScheme,
   ShardSkosConcept,
   ShardSkosRelation,
@@ -38,7 +40,8 @@ export interface BrowserNoteExport {
   deleted_at: Date | string | null
   original_content: string
   revised_content: string | null
-  binary_sources?: ShardBinarySource[]
+  collection_id?: string | null
+  attachments?: ShardAttachmentProjection[]
   tags: string[]
 }
 
@@ -49,7 +52,8 @@ export function noteToShard(note: BrowserNoteExport): ShardNote {
     title: note.title,
     original_content: note.original_content,
     revised_content: note.revised_content,
-    ...(note.binary_sources?.length ? { binary_sources: note.binary_sources } : {}),
+    collection_id: note.collection_id ?? null,
+    ...(note.attachments?.length ? { attachments: note.attachments } : {}),
     format: note.format,
     source: note.source,
     starred: note.is_starred,
@@ -63,6 +67,7 @@ export function noteToShard(note: BrowserNoteExport): ShardNote {
 
 /** Convert a shard note back to browser-insertable format. */
 export function noteFromShard(shard: ShardNote): BrowserNoteExport {
+  const attachments = shard.attachments ?? shard.binary_sources
   return {
     id: shard.id,
     title: shard.title,
@@ -72,7 +77,8 @@ export function noteFromShard(shard: ShardNote): BrowserNoteExport {
     is_archived: shard.archived,
     original_content: shard.original_content,
     revised_content: shard.revised_content,
-    binary_sources: shard.binary_sources,
+    collection_id: shard.collection_id ?? null,
+    attachments,
     tags: shard.tags,
     created_at: shard.created_at,
     updated_at: shard.updated_at,
@@ -88,9 +94,36 @@ export function linkToShard(link: LinkRow): ShardLink {
     id: link.id,
     from_note_id: link.source_note_id,
     to_note_id: link.target_note_id,
+    to_url: null,
     kind: link.link_type,
     score: link.confidence,
     created_at: toISOString(link.created_at),
+    metadata: null,
+  }
+}
+
+/** Convert a browser URL-target link row to shard format. */
+export function urlLinkToShard(link: {
+  id: string
+  source_note_id: string
+  to_url: string
+  link_type: string
+  confidence: number | null
+  metadata_json?: Record<string, unknown> | string | null
+  created_at: Date | string
+}): ShardLink {
+  const metadata = typeof link.metadata_json === 'string'
+    ? JSON.parse(link.metadata_json) as Record<string, unknown>
+    : link.metadata_json ?? null
+  return {
+    id: link.id,
+    from_note_id: link.source_note_id,
+    to_note_id: null,
+    to_url: link.to_url,
+    kind: link.link_type,
+    score: link.confidence,
+    created_at: toISOString(link.created_at),
+    metadata,
   }
 }
 
@@ -98,18 +131,22 @@ export function linkToShard(link: LinkRow): ShardLink {
 export function linkFromShard(shard: ShardLink): {
   id: string
   source_note_id: string
-  target_note_id: string
+  target_note_id: string | null
+  to_url: string | null
   link_type: string
   confidence: number | null
   created_at: string
+  metadata: Record<string, unknown> | null
 } {
   return {
     id: shard.id,
     source_note_id: shard.from_note_id,
     target_note_id: shard.to_note_id,
+    to_url: shard.to_url,
     link_type: shard.kind,
     confidence: shard.score,
     created_at: shard.created_at,
+    metadata: shard.metadata,
   }
 }
 
@@ -162,13 +199,48 @@ export function tagsToShard(
   }))
 }
 
+// ── Templates ────────────────────────────────────────────────────────────
+
+/** Convert a browser template row to shard format. */
+export function templateToShard(template: {
+  id: string
+  name: string
+  description: string | null
+  content: string
+  format: string
+  default_tags: string[] | string
+  collection_id: string | null
+  created_at: Date | string
+  updated_at: Date | string
+}): ShardTemplate {
+  return {
+    id: template.id,
+    name: template.name,
+    description: template.description,
+    content: template.content,
+    format: template.format,
+    default_tags: Array.isArray(template.default_tags)
+      ? template.default_tags
+      : JSON.parse(template.default_tags) as string[],
+    collection_id: template.collection_id,
+    created_at: toISOString(template.created_at),
+    updated_at: toISOString(template.updated_at),
+  }
+}
+
 // ── Embeddings ───────────────────────────────────────────────────────────
 
 /** Convert a browser embedding_set to shard format. */
 export function embeddingSetToShard(set: {
   id: string
   name?: string
+  slug?: string | null
+  description?: string | null
   purpose?: string | null
+  document_count?: number | null
+  embedding_count?: number | null
+  is_system?: boolean | null
+  keywords_json?: unknown | null
   model_name: string
   dimensions: number
   kind?: 'physical' | 'filter' | 'virtual'
@@ -182,10 +254,17 @@ export function embeddingSetToShard(set: {
   created_at: Date | string
   updated_at?: Date | string
 }): ShardEmbeddingSet {
+  const name = set.name ?? set.model_name
   return {
     id: set.id,
-    name: set.name ?? set.model_name,
+    name,
+    slug: set.slug ?? slugifyEmbeddingSet(name),
+    description: set.description ?? null,
     purpose: set.purpose ?? null,
+    document_count: set.document_count ?? 0,
+    embedding_count: set.embedding_count ?? 0,
+    is_system: set.is_system ?? false,
+    keywords: jsonStringArray(set.keywords_json),
     model: set.model_name,
     dimension: set.dimensions,
     kind: set.kind ?? 'physical',
@@ -202,10 +281,16 @@ export function embeddingSetToShard(set: {
 }
 
 /** Convert a shard embedding set back to browser format. */
-export function embeddingSetFromShard(shard: ShardEmbeddingSet): {
+export function embeddingSetFromShard(shard: ShardEmbeddingSet, fallbackCreatedAt: string): {
   id: string
   name: string
+  slug: string | null
+  description: string | null
   purpose: string | null
+  document_count: number | null
+  embedding_count: number | null
+  is_system: boolean
+  keywords_json: string | null
   model_name: string
   dimensions: number
   kind: 'physical' | 'filter' | 'virtual'
@@ -222,7 +307,13 @@ export function embeddingSetFromShard(shard: ShardEmbeddingSet): {
   return {
     id: shard.id,
     name: shard.name ?? shard.model,
+    slug: shard.slug ?? null,
+    description: shard.description ?? null,
     purpose: shard.purpose ?? null,
+    document_count: shard.document_count ?? null,
+    embedding_count: shard.embedding_count ?? null,
+    is_system: shard.is_system ?? false,
+    keywords_json: jsonString(shard.keywords ?? []),
     model_name: shard.model,
     dimensions: shard.dimension,
     kind: shard.kind ?? 'physical',
@@ -233,7 +324,7 @@ export function embeddingSetFromShard(shard: ShardEmbeddingSet): {
     compatibility_json: jsonString(shard.compatibility),
     materialization_json: jsonString(shard.materialization),
     freshness_json: jsonString(shard.freshness),
-    created_at: shard.created_at,
+    created_at: shard.created_at ?? fallbackCreatedAt,
     updated_at: shard.updated_at ?? null,
   }
 }
@@ -242,12 +333,30 @@ export function embeddingSetFromShard(shard: ShardEmbeddingSet): {
 export function embeddingSetMemberToShard(member: {
   embedding_set_id: string
   note_id: string
-  embedding_id: string
+  membership_type?: string | null
+  added_at?: Date | string | null
+  added_by?: string | null
 }): ShardEmbeddingSetMember {
   return {
     embedding_set_id: member.embedding_set_id,
     note_id: member.note_id,
-    embedding_id: member.embedding_id,
+    membership_type: member.membership_type ?? 'materialized',
+    added_at: toISOString(member.added_at ?? new Date()),
+    added_by: member.added_by ?? null,
+  }
+}
+
+/** Convert a browser embedding_config row to shard format. */
+export function embeddingConfigToShard(config: ShardEmbeddingConfig): ShardEmbeddingConfig {
+  return {
+    id: config.id,
+    name: config.name,
+    description: config.description ?? null,
+    model: config.model,
+    dimension: config.dimension,
+    chunk_size: config.chunk_size,
+    chunk_overlap: config.chunk_overlap,
+    is_default: config.is_default,
   }
 }
 
@@ -256,14 +365,21 @@ export function embeddingToShard(emb: {
   id: string
   note_id: string
   embedding_set_id: string
+  chunk_index?: number | null
+  text?: string | null
   vector: string | number[]
+  model?: string | null
+  model_name?: string | null
   created_at: Date | string
 }): ShardEmbedding {
   return {
     id: emb.id,
     note_id: emb.note_id,
-    embedding_set_id: emb.embedding_set_id,
+    chunk_index: emb.chunk_index ?? 0,
+    text: emb.text ?? '',
     vector: typeof emb.vector === 'string' ? parseVector(emb.vector) : emb.vector,
+    model: emb.model ?? emb.model_name ?? 'unknown',
+    embedding_set_id: emb.embedding_set_id,
     created_at: toISOString(emb.created_at),
   }
 }
@@ -272,16 +388,22 @@ export function embeddingToShard(emb: {
 export function embeddingFromShard(shard: ShardEmbedding): {
   id: string
   note_id: string
-  embedding_set_id: string
+  embedding_set_id: string | null
+  chunk_index: number
+  text: string
   vector: string
-  created_at: string
+  model: string
+  created_at: string | null
 } {
   return {
     id: shard.id,
     note_id: shard.note_id,
-    embedding_set_id: shard.embedding_set_id,
+    embedding_set_id: shard.embedding_set_id ?? null,
+    chunk_index: shard.chunk_index,
+    text: shard.text,
     vector: `[${shard.vector.join(',')}]`,
-    created_at: shard.created_at,
+    model: shard.model,
+    created_at: shard.created_at ?? null,
   }
 }
 
@@ -405,6 +527,16 @@ function parseJsonObjectField(value: Record<string, unknown> | string | null): R
   return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : null
 }
 
+function jsonStringArray(value: unknown): string[] {
+  if (value == null) return []
+  if (Array.isArray(value)) return value.map(String)
+  if (typeof value === 'string') {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed.map(String) : []
+  }
+  return []
+}
+
 function jsonObject(value: unknown): Record<string, unknown> | null {
   if (value == null) return null
   if (typeof value === 'string') return JSON.parse(value) as Record<string, unknown>
@@ -413,4 +545,13 @@ function jsonObject(value: unknown): Record<string, unknown> | null {
 
 function jsonString(value: unknown): string | null {
   return value == null ? null : JSON.stringify(value)
+}
+
+function slugifyEmbeddingSet(value: string): string {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return slug || 'embedding-set'
 }

@@ -366,6 +366,7 @@ export interface AiwgRelationshipTraversalOptions {
 export interface AiwgRelationshipQueryOptions extends AiwgRelationshipTraversalOptions {
   sourceId?: string
   targetId?: string
+  endpointId?: string
   type?: string
 }
 
@@ -444,7 +445,7 @@ export interface AiwgPrivacyFilterOptions {
 
 function isPrivacyExcluded(record: AiwgFortemiRecord, options?: AiwgPrivacyFilterOptions): boolean {
   const privacy = record.privacy
-  if (!privacy) return false
+  if (!privacy || !isPrivacyClassification(privacy.classification) || typeof privacy.pii !== 'boolean') return true
   if (privacy.classification === 'private' && !options?.includePrivate) return true
   if (privacy.pii && !options?.includePii) return true
   return false
@@ -623,6 +624,10 @@ function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: n
       errors.push('items[' + index + '].skos_concepts must be an array when present')
     } else {
       for (const [conceptIndex, concept] of item.skos_concepts.entries()) {
+        if (!isPlainRecord(concept)) {
+          errors.push('items[' + index + '].skos_concepts[' + conceptIndex + '] must be an object')
+          continue
+        }
         if (!hasString(concept.id)) errors.push('items[' + index + '].skos_concepts[' + conceptIndex + '].id is required')
         if (!hasString(concept.prefLabel)) errors.push('items[' + index + '].skos_concepts[' + conceptIndex + '].prefLabel is required')
         if (!isOptionalStringArray(concept.altLabels)) errors.push('items[' + index + '].skos_concepts[' + conceptIndex + '].altLabels must be a string array')
@@ -637,6 +642,10 @@ function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: n
       errors.push('items[' + index + '].skos_relations must be an array when present')
     } else {
       for (const [relationIndex, relation] of item.skos_relations.entries()) {
+        if (!isPlainRecord(relation)) {
+          errors.push('items[' + index + '].skos_relations[' + relationIndex + '] must be an object')
+          continue
+        }
         if (!hasString(relation.type)) errors.push('items[' + index + '].skos_relations[' + relationIndex + '].type is required')
         if (!hasString(relation.source_id)) errors.push('items[' + index + '].skos_relations[' + relationIndex + '].source_id is required')
         if (!hasString(relation.target_id)) errors.push('items[' + index + '].skos_relations[' + relationIndex + '].target_id is required')
@@ -651,6 +660,10 @@ function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: n
       errors.push('items[' + index + '].provenance_events must be an array when present')
     } else {
       for (const [eventIndex, event] of item.provenance_events.entries()) {
+        if (!isPlainRecord(event)) {
+          errors.push('items[' + index + '].provenance_events[' + eventIndex + '] must be an object')
+          continue
+        }
         if (!hasString(event.activity)) errors.push('items[' + index + '].provenance_events[' + eventIndex + '].activity is required')
         if (event.attributes !== undefined && !isPlainRecord(event.attributes)) {
           errors.push('items[' + index + '].provenance_events[' + eventIndex + '].attributes must be an object')
@@ -660,6 +673,10 @@ function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: n
   }
   if (Array.isArray(item.relationships)) {
     for (const [relationshipIndex, relationship] of item.relationships.entries()) {
+      if (!isPlainRecord(relationship)) {
+        errors.push('items[' + index + '].relationships[' + relationshipIndex + '] must be an object')
+        continue
+      }
       if (relationship.metadata !== undefined && !isPlainRecord(relationship.metadata)) {
         errors.push('items[' + index + '].relationships[' + relationshipIndex + '].metadata must be an object')
       }
@@ -693,7 +710,10 @@ function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: n
       errors.push('items[' + index + '].chunks must be an array when present')
     } else {
       for (const [chunkIndex, chunk] of item.chunks.entries()) {
-        if (!isPlainRecord(chunk)) errors.push('items[' + index + '].chunks[' + chunkIndex + '] must be an object')
+        if (!isPlainRecord(chunk)) {
+          errors.push('items[' + index + '].chunks[' + chunkIndex + '] must be an object')
+          continue
+        }
         if (chunk.metadata !== undefined && !isPlainRecord(chunk.metadata)) {
           errors.push('items[' + index + '].chunks[' + chunkIndex + '].metadata must be an object')
         }
@@ -705,7 +725,10 @@ function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: n
       errors.push('items[' + index + '].embeddings must be an array when present')
     } else {
       for (const [embeddingIndex, embedding] of item.embeddings.entries()) {
-        if (!isPlainRecord(embedding)) errors.push('items[' + index + '].embeddings[' + embeddingIndex + '] must be an object')
+        if (!isPlainRecord(embedding)) {
+          errors.push('items[' + index + '].embeddings[' + embeddingIndex + '] must be an object')
+          continue
+        }
         const vector = embedding.embedding ?? embedding.vector
         if (vector !== undefined && (!Array.isArray(vector) || !vector.every((entry) => typeof entry === 'number'))) {
           errors.push('items[' + index + '].embeddings[' + embeddingIndex + '].embedding/vector must be a number array')
@@ -785,8 +808,9 @@ function forbidV2FieldsOnV1Record(item: Partial<AiwgFortemiRecord>, index: numbe
 
 export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidationResult {
   const errors: string[] = []
-  const counts: Partial<Record<string, number>> = {}
-  const data = value as Partial<AiwgFortemiIndexExport>
+  const counts: Partial<Record<string, number>> = Object.create(null)
+  const data = isPlainRecord(value) ? value as Partial<AiwgFortemiIndexExport> : {}
+  if (!isPlainRecord(value)) errors.push('index export must be an object')
 
   if (!isSupportedIndexSchemaVersion(data?.schema_version)) {
     errors.push('schema_version must be aiwg.fortemi.index.export.v1 or aiwg.fortemi.index.export.v2')
@@ -813,7 +837,12 @@ export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidat
 
   const ids = new Set<string>()
   let previousId = ''
-  for (const [index, item] of (data.items ?? []).entries()) {
+  const items = Array.isArray(data.items) ? data.items : []
+  for (const [index, item] of items.entries()) {
+    if (!isPlainRecord(item)) {
+      errors.push('items[' + index + '] must be an object')
+      continue
+    }
     for (const field of REQUIRED_RECORD_FIELDS) {
       if (!(field in item)) errors.push('items[' + index + '].' + field + ' is required')
     }
@@ -823,7 +852,7 @@ export function validateAiwgFortemiIndexExport(value: unknown): AiwgIndexValidat
     if (!hasString(item.id)) errors.push('items[' + index + '].id is required')
     if (hasString(item.id) && ids.has(item.id)) errors.push('duplicate id: ' + item.id)
     if (hasString(item.id)) ids.add(item.id)
-    if (previousId && hasString(item.id) && previousId.localeCompare(item.id) > 0) {
+    if (previousId && hasString(item.id) && previousId > item.id) {
       errors.push('items must be sorted by id: ' + previousId + ' before ' + item.id)
     }
     if (hasString(item.id)) previousId = item.id
@@ -867,7 +896,8 @@ export function assertAiwgFortemiIndexExport(value: unknown): AiwgFortemiIndexEx
 
 export function validateAiwgFortemiChunkManifest(value: unknown): AiwgChunkedIndexValidationResult {
   const errors: string[] = []
-  const data = value as Partial<AiwgFortemiChunkManifest>
+  const data = isPlainRecord(value) ? value as Partial<AiwgFortemiChunkManifest> : {}
+  if (!isPlainRecord(value)) errors.push('chunk manifest must be an object')
 
   if (data?.schema_version !== 'aiwg.fortemi.index.chunk-manifest.v1') {
     errors.push('schema_version must be aiwg.fortemi.index.chunk-manifest.v1')
@@ -893,7 +923,9 @@ export function validateAiwgFortemiChunkManifest(value: unknown): AiwgChunkedInd
       }
     }
   }
-  if (data.detail !== undefined) {
+  if (data.detail !== undefined && !isPlainRecord(data.detail)) {
+    errors.push('detail must be an object')
+  } else if (data.detail !== undefined) {
     if (!hasString(data.detail.href)) errors.push('detail.href is required')
     else if (!data.detail.href.includes('{id}')) errors.push('detail.href must contain the {id} placeholder')
     if (
@@ -909,6 +941,10 @@ export function validateAiwgFortemiChunkManifest(value: unknown): AiwgChunkedInd
   let expectedOffset = 0
   const parts = Array.isArray(data?.parts) ? data.parts : []
   for (const [index, part] of parts.entries()) {
+    if (!isPlainRecord(part)) {
+      errors.push('parts[' + index + '] must be an object')
+      continue
+    }
     if (!hasString(part.href)) errors.push('parts[' + index + '].href is required')
     if (!hasNonNegativeInteger(part.offset)) errors.push('parts[' + index + '].offset must be a non-negative integer')
     if (!hasNonNegativeInteger(part.count)) errors.push('parts[' + index + '].count must be a non-negative integer')
@@ -938,13 +974,17 @@ function validateProjectedRecords(items: Array<Partial<AiwgFortemiRecord>>): str
   const ids = new Set<string>()
   let previousId = ''
   for (const [index, item] of items.entries()) {
+    if (!isPlainRecord(item)) {
+      errors.push('items[' + index + '] must be an object')
+      continue
+    }
     if (!isSupportedRecordSchemaVersion(item.schema_version)) {
       errors.push('items[' + index + '].schema_version must be aiwg.fortemi.index.record.v1 or aiwg.fortemi.index.record.v2')
     }
     if (!hasString(item.id)) errors.push('items[' + index + '].id is required')
     if (hasString(item.id) && ids.has(item.id)) errors.push('duplicate id: ' + item.id)
     if (hasString(item.id)) ids.add(item.id)
-    if (previousId && hasString(item.id) && previousId.localeCompare(item.id) > 0) {
+    if (previousId && hasString(item.id) && previousId > item.id) {
       errors.push('items must be sorted by id: ' + previousId + ' before ' + item.id)
     }
     if (hasString(item.id)) previousId = item.id
@@ -973,7 +1013,8 @@ export function validateAiwgFortemiChunkPart(
   manifest?: AiwgFortemiChunkManifest,
 ): AiwgChunkedIndexValidationResult {
   const errors: string[] = []
-  const data = value as Partial<AiwgFortemiChunkPart>
+  const data = isPlainRecord(value) ? value as Partial<AiwgFortemiChunkPart> : {}
+  if (!isPlainRecord(value)) errors.push('chunk part must be an object')
 
   if (data?.schema_version !== 'aiwg.fortemi.index.chunk.v1') {
     errors.push('schema_version must be aiwg.fortemi.index.chunk.v1')
@@ -996,7 +1037,7 @@ export function validateAiwgFortemiChunkPart(
       errors.push(...validateProjectedRecords(data.items).map((error) => 'items.' + error))
     } else {
       const validation = validateAiwgFortemiIndexExport({
-        schema_version: 'aiwg.fortemi.index.export.v1',
+        schema_version: manifest?.source_export_schema_version ?? 'aiwg.fortemi.index.export.v1',
         generated_at: manifest?.generated_at ?? '1970-01-01T00:00:00.000Z',
         source: manifest?.source ?? { repo: 'chunk', privacy: 'public' },
         items: data.items,
@@ -1250,6 +1291,7 @@ export function buildAiwgChunkedIndex(
   index: AiwgFortemiIndexExport,
   options: AiwgChunkedIndexBuildOptions = {},
 ): AiwgChunkedIndexBuildResult {
+  assertAiwgFortemiIndexExport(index)
   const partSize = hasPositiveInteger(options.partSize) ? options.partSize : 500
   const projection = options.projection
   const idEncoding = options.idEncoding ?? 'base64url'
@@ -1340,39 +1382,26 @@ function queryMatches(item: AiwgFortemiRecord, q: string): AiwgIndexQueryMatch[]
 }
 
 const DISCOVERY_STOPWORDS = new Set([
-  'a',
-  'an',
-  'and',
-  'are',
-  'as',
-  'for',
-  'from',
-  'how',
-  'i',
-  'in',
-  'is',
-  'me',
-  'of',
-  'on',
-  'or',
-  'please',
-  'the',
-  'to',
-  'use',
-  'with',
+  'the', 'a', 'an', 'and', 'or', 'of', 'for', 'to', 'in', 'on',
+  'with', 'into', 'from', 'is', 'are', 'be', 'i', 'we', 'my',
+  'it', 'you', 'me', 'us', 'your', 'our', 'this', 'that', 'these', 'those',
+  'there', 'here', 'some', 'any', 'all', 'also', 'please', 'about',
+  'how', 'what', 'which', 'where', 'when', 'who', 'why',
+  'find', 'give', 'show', 'need', 'want', 'looking', 'look', 'help',
+  'do', 'does', 'did', 'can', 'could', 'should', 'would', 'will',
+  'handle', 'handles', 'handling',
+  'aiwg', 'skill', 'skills', 'agent', 'agents', 'command', 'commands',
+  'rule', 'rules', 'flow', 'flows', 'workflow', 'workflows',
 ])
 
-function normalizeDiscoveryText(value: string): string {
-  return value.toLowerCase().replace(/[_/]+/g, ' ').replace(/[^a-z0-9.-]+/g, ' ').trim()
-}
-
-function canonicalDiscoveryName(value: string): string {
-  return normalizeDiscoveryText(value).replace(/[\s.-]+/g, '')
+function normalizeDiscoveryName(value: string): string {
+  return value.toLowerCase().replace(/[-_\s]+/g, ' ').trim()
 }
 
 function discoveryTokens(value: string): string[] {
-  return normalizeDiscoveryText(value)
-    .split(/\s+/)
+  return value
+    .toLowerCase()
+    .split(/[^a-z0-9-]+/)
     .filter((token) => token.length > 1 && !DISCOVERY_STOPWORDS.has(token))
 }
 
@@ -1386,18 +1415,71 @@ function addDiscoveryMatch(matches: AiwgIndexQueryMatch[], match: AiwgIndexQuery
   }
 }
 
-function tokenOverlapScore(tokens: string[], value: string): number {
-  if (tokens.length === 0 || !value) return 0
-  const normalized = normalizeDiscoveryText(value)
-  const hits = tokens.filter((token) => normalized.includes(token)).length
-  return hits / tokens.length
+function damerauLevenshteinAtMostOne(left: string, right: string): boolean {
+  if (left === right) return true
+  if (Math.abs(left.length - right.length) > 1) return false
+
+  if (left.length === right.length) {
+    let firstDiff = -1
+    let diffCount = 0
+    for (let index = 0; index < left.length; index += 1) {
+      if (left[index] !== right[index]) {
+        if (firstDiff < 0) firstDiff = index
+        diffCount += 1
+      }
+    }
+    if (diffCount === 1) return true
+    return diffCount === 2
+      && firstDiff + 1 < left.length
+      && left[firstDiff] === right[firstDiff + 1]
+      && left[firstDiff + 1] === right[firstDiff]
+  }
+
+  const shorter = left.length < right.length ? left : right
+  const longer = left.length < right.length ? right : left
+  let shorterIndex = 0
+  let longerIndex = 0
+  let edits = 0
+  while (shorterIndex < shorter.length && longerIndex < longer.length) {
+    if (shorter[shorterIndex] === longer[longerIndex]) {
+      shorterIndex += 1
+      longerIndex += 1
+    } else {
+      edits += 1
+      if (edits > 1) return false
+      longerIndex += 1
+    }
+  }
+  return true
 }
 
-function discoveryMatches(item: AiwgFortemiRecord, query: string): AiwgIndexQueryMatch[] {
+function nearDiscoveryNameMatch(query: string, name: string): boolean {
+  const queryParts = normalizeDiscoveryName(query).split(/\s+/).filter(Boolean)
+  const nameParts = normalizeDiscoveryName(name).split(/\s+/).filter(Boolean)
+  if (queryParts.length !== nameParts.length) return false
+
+  return queryParts.every((part, index) => {
+    const target = nameParts[index]
+    if (part === target) return true
+    if (part.length < 5 || target.length < 5) return false
+    return damerauLevenshteinAtMostOne(part, target)
+  })
+}
+
+function lowerValues(values: string[]): string[] {
+  return values.map((value) => value.toLowerCase())
+}
+
+interface DiscoveryScoringOptions {
+  relaxOverlap?: boolean
+}
+
+function discoveryMatches(item: AiwgFortemiRecord, query: string, options: DiscoveryScoringOptions = {}): AiwgIndexQueryMatch[] {
   if (!query) return []
   const matches: AiwgIndexQueryMatch[] = []
   const tokens = discoveryTokens(query)
-  const canonicalQuery = canonicalDiscoveryName(query)
+  const lower = tokens.length > 0 ? tokens.join(' ') : query.toLowerCase().trim()
+  const rawLower = query.toLowerCase().trim()
   const idParts = item.id.split(/[:/]/)
   const names = [
     item.id,
@@ -1423,39 +1505,78 @@ function discoveryMatches(item: AiwgFortemiRecord, query: string): AiwgIndexQuer
     ...item.tags,
   ].filter((value): value is string => hasString(value))
   const sourceValues = [item.source?.path, item.source?.repo_relative_path, item.source?.locator].filter((value): value is string => hasString(value))
+  const title = recordTitle(item)
+  const summary = [item.search?.summary, recordText(item)].filter((value): value is string => hasString(value)).join('\n')
+  const type = item.search?.type ?? item.type
+  const tags = [...(item.search?.tags ?? []), ...item.tags]
+  const useMultiToken = tokens.length > 1
+  const minHits = useMultiToken ? (options.relaxOverlap ? 1 : Math.ceil(tokens.length / 2)) : 1
+  const overlapOK = (hits: number): boolean => useMultiToken && hits >= minHits
+
+  const addInfo = (match: AiwgIndexQueryMatch) => addDiscoveryMatch(matches, { ...match, score: 0 })
+  const addScore = (score: number) => {
+    if (score > 0) addDiscoveryMatch(matches, { field: 'id', value: item.id, score, reason: 'aiwg discovery score' })
+  }
 
   for (const name of names) {
-    const canonicalName = canonicalDiscoveryName(name)
-    if (!canonicalName) continue
-    if (canonicalName === canonicalQuery) {
-      addDiscoveryMatch(matches, { field: 'id', value: name, score: 80, reason: 'exact canonical name' })
-    } else if (canonicalName.includes(canonicalQuery) || canonicalQuery.includes(canonicalName)) {
-      addDiscoveryMatch(matches, { field: 'id', value: name, score: 48, reason: 'near canonical name' })
+    if (normalizeDiscoveryName(query) === normalizeDiscoveryName(name)) {
+      addInfo({ field: 'id', value: name, reason: 'exact canonical name' })
+      addScore(1.001)
+      return matches
+    }
+    if (nearDiscoveryNameMatch(query, name)) {
+      addInfo({ field: 'id', value: name, reason: 'near canonical name' })
+      addScore(0.951)
+      return matches
     }
   }
 
-  const title = recordTitle(item)
-  const titleOverlap = tokenOverlapScore(tokens, title)
-  if (titleOverlap > 0) addDiscoveryMatch(matches, { field: 'title', value: title, score: 18 * titleOverlap, reason: 'title token overlap' })
+  let score = 0
+  const scoreText = (
+    field: AiwgIndexQueryMatch['field'],
+    value: string,
+    reason: string,
+    exactScore: number,
+    overlapScore: number,
+    weight: number,
+    exactBonus = 0,
+  ) => {
+    const normalized = value.toLowerCase()
+    if (normalized.includes(lower)) {
+      score += exactScore * weight
+      if (normalized === lower) score += exactBonus
+      addInfo({ field, value, reason })
+    } else if (useMultiToken) {
+      const hits = tokens.filter((token) => normalized.includes(token)).length
+      if (overlapOK(hits)) {
+        score += overlapScore * weight * (hits / tokens.length)
+        addInfo({ field, value, reason })
+      }
+    }
+  }
 
+  for (const trigger of lowerValues(triggers)) {
+    if (trigger === lower || trigger === rawLower) {
+      addInfo({ field: 'facet', value: trigger, reason: 'trigger phrase' })
+      addScore(1.0008)
+      return matches
+    }
+  }
   for (const trigger of triggers) {
-    const overlap = tokenOverlapScore(tokens, trigger)
-    if (overlap > 0) addDiscoveryMatch(matches, { field: 'facet', value: trigger, score: 34 * overlap, reason: 'trigger phrase' })
+    scoreText('facet', trigger, 'trigger phrase', 0.25, 0.06, 4)
   }
-
-  for (const capability of capabilities) {
-    const overlap = tokenOverlapScore(tokens, capability)
-    if (overlap > 0) addDiscoveryMatch(matches, { field: 'concept', value: capability, score: 22 * overlap, reason: 'capability overlap' })
-  }
-
-  const text = recordText(item)
-  const textOverlap = tokenOverlapScore(tokens, text)
-  if (textOverlap > 0) addDiscoveryMatch(matches, { field: 'text', value: text, score: 8 * textOverlap, reason: 'body token overlap' })
-
+  for (const capability of capabilities) scoreText('concept', capability, 'capability overlap', 0.2, 0.1, 2)
+  scoreText('title', title, 'title token overlap', 0.3, 0.08, 3, 0.2)
+  for (const tag of tags) scoreText('tag', tag, 'tag token overlap', 0.2, 0.05, 2)
+  if (summary) scoreText('text', summary, 'body token overlap', 0.15, 0.04, 1)
   for (const source of sourceValues) {
-    const overlap = tokenOverlapScore(tokens, source)
-    if (overlap > 0) addDiscoveryMatch(matches, { field: 'source', value: source, score: 2 * overlap, reason: 'path overlap' })
+    scoreText('source', source, 'path overlap', 0.1, 0.03, 1)
   }
+  if (type.toLowerCase().includes(lower)) {
+    score += 0.1
+    addInfo({ field: 'facet', value: type, reason: 'type overlap' })
+  }
+  addScore(Math.min(score, 1.0))
 
   return matches
 }
@@ -1500,13 +1621,14 @@ function createRankedEntries(
   q: string,
   options: AiwgIndexQueryOptions,
   ordinalBase = 0,
+  discoveryOptions: DiscoveryScoringOptions = {},
 ): AiwgRankedEntry[] {
   const weights = { ...DEFAULT_QUERY_WEIGHTS, ...options.weights }
   const profile = options.searchProfile ?? 'default'
   return items.map((item, ordinal) => ({
     item,
     ordinal: ordinalBase + ordinal,
-    matches: profile === 'aiwg-discovery' ? discoveryMatches(item, q) : queryMatches(item, q),
+    matches: profile === 'aiwg-discovery' ? discoveryMatches(item, q, discoveryOptions) : queryMatches(item, q),
   }))
     .filter(({ item, matches }) => {
       if (q && matches.length === 0) return false
@@ -1569,8 +1691,7 @@ export function queryAiwgFortemiIndex(
   const q = query.trim().toLowerCase()
   const entries = createRankedEntries(index.items, q, options)
   if (entries.length === 0 && q && options.searchProfile === 'aiwg-discovery') {
-    const relaxed = discoveryTokens(q).join(' ')
-    return createQueryResultFromRankedEntries(createRankedEntries(index.items, relaxed, options), relaxed, options)
+    return createQueryResultFromRankedEntries(createRankedEntries(index.items, q, options, 0, { relaxOverlap: true }), q, options)
   }
   return createQueryResultFromRankedEntries(entries, q, options)
 }
@@ -1593,7 +1714,8 @@ function cosineSimilarity(left: number[], right: number[]): number {
 
 export function validateAiwgStaticEmbeddingSet(value: unknown): AiwgChunkedIndexValidationResult {
   const errors: string[] = []
-  const data = value as Partial<AiwgStaticEmbeddingSet>
+  const data = isPlainRecord(value) ? value as Partial<AiwgStaticEmbeddingSet> : {}
+  if (!isPlainRecord(value)) errors.push('embedding set must be an object')
   if (data?.schema_version !== 'aiwg.fortemi.embedding.set.v1') errors.push('schema_version must be aiwg.fortemi.embedding.set.v1')
   if (!hasString(data?.id)) errors.push('id is required')
   if (!hasString(data?.model)) errors.push('model is required')
@@ -1601,7 +1723,12 @@ export function validateAiwgStaticEmbeddingSet(value: unknown): AiwgChunkedIndex
   if (!hasString(data?.generated_at)) errors.push('generated_at is required')
   if (!hasString(data?.granularity)) errors.push('granularity is required')
   if (!Array.isArray(data?.embeddings)) errors.push('embeddings must be an array')
-  for (const [index, embedding] of (data.embeddings ?? []).entries()) {
+  const embeddings = Array.isArray(data.embeddings) ? data.embeddings : []
+  for (const [index, embedding] of embeddings.entries()) {
+    if (!isPlainRecord(embedding)) {
+      errors.push('embeddings[' + index + '] must be an object')
+      continue
+    }
     if (!hasString(embedding.record_id)) errors.push('embeddings[' + index + '].record_id is required')
     if (!hasString(embedding.input_hash)) errors.push('embeddings[' + index + '].input_hash is required')
     if (!Array.isArray(embedding.embedding)) errors.push('embeddings[' + index + '].embedding must be an array')
@@ -1649,7 +1776,10 @@ export function queryAiwgHybridIndex(
   queryEmbedding: number[],
   options: AiwgStaticHybridQueryOptions = {},
 ): AiwgStaticSemanticResult[] {
-  const lexical = queryAiwgFortemiIndex(index, query, { ...options, rank: true })
+  const lexicalOptions: AiwgStaticHybridQueryOptions = { ...options }
+  delete lexicalOptions.limit
+  delete lexicalOptions.offset
+  const lexical = queryAiwgFortemiIndex(index, query, { ...lexicalOptions, rank: true })
   const semantic = queryAiwgSemanticIndex(index, embeddingSet, queryEmbedding, { limit: index.items.length })
   const lexicalWeight = options.lexicalWeight ?? 0.5
   const semanticWeight = options.semanticWeight ?? 0.5
@@ -1759,6 +1889,7 @@ function matchSetCacheKey(q: string, options: AiwgIndexQueryOptions): string {
     concepts: options.concepts ?? null,
     privacy: options.privacy ?? null,
     rel: options.relationshipTargetId ?? null,
+    searchProfile: options.searchProfile ?? 'default',
     weights: { ...DEFAULT_QUERY_WEIGHTS, ...options.weights },
   })
 }
@@ -1879,6 +2010,7 @@ function relationshipMatches(edge: AiwgRelationshipEdgeSummary, options: AiwgRel
   if (options.relationshipDirection && edge.direction !== options.relationshipDirection) return false
   if (options.sourceId && edge.source_id !== options.sourceId) return false
   if (options.targetId && edge.target_id !== options.targetId) return false
+  if (options.endpointId && edge.source_id !== options.endpointId && edge.target_id !== options.endpointId) return false
   return true
 }
 
@@ -1913,11 +2045,12 @@ function relationshipResultFromRecords(
       edges.push(edge)
     }
   }
-  const limitedEdges = (options.limit ? edges.slice(0, options.limit) : edges).sort((left, right) => (
+  const sortedEdges = edges.sort((left, right) => (
     left.source_id.localeCompare(right.source_id)
     || left.target_id.localeCompare(right.target_id)
     || left.type.localeCompare(right.type)
   ))
+  const limitedEdges = options.limit ? sortedEdges.slice(0, options.limit) : sortedEdges
   const nodes = new Map<string, AiwgRelationshipNodeSummary>()
   for (const edge of limitedEdges) {
     addNode(nodes, byId.get(edge.source_id))
@@ -1936,6 +2069,7 @@ function neighborQueryOptions(id: string, options: AiwgRelationshipTraversalOpti
     ...options,
     ...(direction === 'out' ? { sourceId: id } : {}),
     ...(direction === 'in' ? { targetId: id } : {}),
+    ...(direction === 'both' ? { endpointId: id } : {}),
   }
 }
 
@@ -2296,14 +2430,19 @@ export function aiwgFortemiIndexToCommunityGraph(
   options: AiwgIndexGraphOptions = {},
 ) {
   const ids = new Set(index.items.map((item) => item.id))
-  const relationshipWeights = options.relationshipWeights ?? {}
+  const relationshipWeights = options.relationshipWeights ?? Object.create(null)
   const edgeCounts = new Map<string, { source: string; target: string; kind: string; weight: number }>()
 
   for (const item of index.items) {
     for (const relationship of item.relationships) {
       if (!ids.has(relationship.target_id) && !options.includeDanglingRelationships) continue
       const kind = relationship.type
-      const baseWeight = relationshipWeights[kind] ?? 1
+      const configuredWeight = Object.prototype.hasOwnProperty.call(relationshipWeights, kind)
+        ? relationshipWeights[kind]
+        : undefined
+      const baseWeight = typeof configuredWeight === 'number' && Number.isFinite(configuredWeight)
+        ? configuredWeight
+        : 1
       const key = `${item.id}\u0000${relationship.target_id}\u0000${kind}`
       const existing = edgeCounts.get(key)
       if (existing) existing.weight += baseWeight

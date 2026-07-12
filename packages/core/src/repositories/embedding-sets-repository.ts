@@ -547,7 +547,7 @@ export class EmbeddingSetsRepository {
     if (criteria.conceptIds && criteria.conceptIds.length > 0) {
       throw new Error('Unsupported virtual embedding-set criteria field: conceptIds')
     }
-    const conditions = ['e.embedding_set_id = $1']
+    const conditions = ['e.embedding_set_id = $1', 'n.deleted_at IS NULL']
     const params: unknown[] = [source.baseSetId]
     let idx = 2
     if (criteria.noteIds?.length) {

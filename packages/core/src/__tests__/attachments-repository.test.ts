@@ -22,6 +22,7 @@ import { MigrationRunner } from '../migration-runner.js'
 import { allMigrations } from '../migrations/index.js'
 import { MemoryBlobStore } from '../blob-store.js'
 import { AttachmentsRepository } from '../repositories/attachments-repository.js'
+import { manageAttachments } from '../tools/manage-attachments.js'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -67,6 +68,26 @@ describe('AttachmentsRepository', () => {
   // ── attach() ─────────────────────────────────────────────────────────────
 
   describe('attach()', () => {
+    it('manage_attachments allowlists browser fields and queues enrichment when extracted text changes', async () => {
+      const attached = await manageAttachments(db, blobStore, {
+        action: 'attach', note_id: 'note-1', filename: 'ocr.pdf', mime_type: 'application/pdf',
+        extracted_text: 'compliance invoice', data_base64: btoa('pdf'),
+      })
+      expect(Object.keys(attached.attachment ?? {}).sort()).toEqual([
+        'blob_id', 'created_at', 'deleted_at', 'display_name', 'document_type_id', 'extracted_text', 'filename',
+        'id', 'mime_type', 'note_id', 'position',
+      ])
+      expect(attached.attachment).toMatchObject({ mime_type: 'application/pdf', extracted_text: 'compliance invoice' })
+      expect((await db.query<{ job_type: string }>(
+        `SELECT job_type FROM job_queue WHERE note_id = 'note-1' ORDER BY job_type`,
+      )).rows.map((row) => row.job_type)).toEqual(['concept_tagging', 'embedding'])
+
+      await manageAttachments(db, blobStore, { action: 'delete', attachment_id: attached.attachment?.id })
+      expect((await db.query<{ count: string }>(
+        `SELECT count(*)::text AS count FROM job_queue WHERE note_id = 'note-1'`,
+      )).rows[0].count).toBe('4')
+    })
+
     it('stores blob data and returns a populated AttachmentRow', async () => {
       const data = makeBytes('hello attachment')
       const att = await repo.attach({

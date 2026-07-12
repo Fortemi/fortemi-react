@@ -892,6 +892,8 @@ const all = capabilityManager.listAll()
 
 Attachments are stored as binary blobs in the `BlobStore` (OPFS or IDB), with metadata in the `attachment` table. The `manageAttachments` tool handles the base64 encoding boundary so that data can be transported over JSON (MCP bridge, `postMessage`, etc.). Search, shard export, static AIWG index, and embedding-set surfaces use extracted text plus attachment references; they do not inline raw binary bytes or `data_base64`.
 
+When `manageAttachments` attaches or removes non-empty `extracted_text`, it automatically queues fresh `embedding` and `concept_tagging` jobs for the note so semantic and hybrid search stay aligned with full-text search.
+
 ### Attaching a file from a file input
 
 ```tsx

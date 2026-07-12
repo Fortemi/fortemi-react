@@ -121,6 +121,9 @@ These shapes are structurally identical to the ones `@fortemi/core` produces (`G
 | `computeGraphBounds(nodes)` / `fitGraphToViewport(bounds, viewport, opts?)` | Bounding box and a centered fit transform |
 | `neighborsOf` / `expandNeighborhood` / `subgraphForNodes` / `neighborhoodSubgraph` / `buildAdjacency` | Selection and BFS neighborhood expansion |
 | `serializeGraphSnapshot` / `stringifyGraphSnapshot` / `deserializeGraphSnapshot` | Stable, reproducible static snapshots for JS-only hosts |
+| `mapCommunityGraph(graph, opts?)` | `CommunityGraph` → render-ready `RenderGraph` (labels, degree size, per-community tone, baked positions) shared by every renderer tier |
+| `bakeRenderGraph(graph, opts?)` / `stringifyRenderGraph` | Build-time writer: run layout once, emit a deterministic baked-position snapshot |
+| `loadRenderSnapshot(source, opts?)` | Snapshot-first warm start: load a precomputed baked-position graph (URL/object/thunk); `null` → fall back to a live build |
 
 ### Layout options (`force`)
 
@@ -166,9 +169,60 @@ writeFileSync(
 )
 ```
 
+## Choosing a Renderer
+
+The same `CommunityGraph` can be drawn by more than one renderer *tier*. Every tier honors the shared **`GraphControlContract`** — `algorithm`, `filters` (community / edge-kind / node allow-list / `minDegree`), `selectedNodeId` + `onSelectNode`, `onNavigate`, `labelFor`, `colors` — so switching tiers is mechanical: pass the same options object.
+
+| Tier | Import | Deps | Best for |
+|---|---|---|---|
+| **JS-only SVG** | `renderCommunityGraph` (`@fortemi/graph`) | none | Static sites, SSR/snapshot pipelines, no-framework hosts |
+| **React (static)** | `GraphView` (`@fortemi/react`) | React | React apps wanting the component + hooks ecosystem |
+| **Interactive 2D** | Sigma tier (planned, #263) | `sigma` + `graphology` (optional, lazy) | Live force settling, camera focus, LOD labels |
+| **3D** | `Graph3D` (planned, #262) | `react-force-graph-3d` (optional, lazy) | Orbitable 3D force graph, 2D/3D toggle |
+
+`communityLegend(graph)` returns `{ communityId, color, count }[]` — the shared data any tier can render as a legend and use to drive the `communityIds` show/hide filter. `applyControlFilters(graph, filters)` is the one filter function every tier runs, so visibility is identical across tiers.
+
 ## Render in a Vanilla JS Host (no React)
 
-A static documentation site can fetch that snapshot and render its own SVG using only the projection helpers — no React, no PGlite:
+`renderCommunityGraph` is a batteries-included SVG renderer built on the engine — zoom/pan, hover-neighborhood highlighting, click + keyboard selection, navigation, a labeled popup, and `focus(id)` search — with no React and no canvas library. It stays pixel-comparable to `@fortemi/react`'s `GraphView`:
+
+```js
+import { renderCommunityGraph, deserializeGraphSnapshot } from '@fortemi/graph'
+
+const graph = deserializeGraphSnapshot(await (await fetch('./graph-snapshot.json')).json())
+
+const view = renderCommunityGraph(document.getElementById('graph'), graph, {
+  algorithm: 'community',
+  filters: { edgeKinds: ['similarity', 'link'], minDegree: 1 },
+  labelFor: (id) => graph.nodes.find((n) => n.id === id)?.id ?? id,
+  onSelectNode: (id) => console.log('selected', id),
+  onNavigate: (id) => location.assign(`#/note/${id}`),
+})
+
+view.update({ filters: { communityIds: ['c1'] } }) // reactive filter change
+view.focus('note-42')                               // search / focus a node
+// view.destroy()                                   // tear down
+```
+
+The **React tier** takes the same contract fields, so a consumer can offer both and switch with no rewiring:
+
+```tsx
+import { GraphView } from '@fortemi/react'
+
+<GraphView
+  graph={graph}
+  layout={{ algorithm: 'community' }}
+  filters={{ edgeKinds: ['similarity', 'link'], minDegree: 1 }}
+  selectedNodeId={selected}
+  onSelectNode={setSelected}
+  onNavigate={(id) => navigate(`/note/${id}`)}
+  labelFor={(id) => titleOf(id)}
+/>
+```
+
+### Roll your own projection
+
+If you need a fully custom view, the projection helpers are exposed directly — `renderCommunityGraph` is just a consumer of them — so you can emit your own SVG/canvas with no PGlite:
 
 ```js
 import {

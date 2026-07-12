@@ -106,6 +106,11 @@ describe('shard-tar', () => {
 })
 
 describe('shard-tar SEC3: decompression bomb cap (#241)', () => {
+  it('refuses to export an archive that its matching import cap cannot unpack', () => {
+    const files = new Map([['big.txt', new TextEncoder().encode('x'.repeat(64))]])
+    expect(() => packTarGz(files, { maxDecompressedBytes: 16 })).toThrow(/create archive.*exceeds cap/i)
+  })
+
   it('rejects an archive whose declared size exceeds the cap', () => {
     const files = new Map<string, Uint8Array>()
     files.set('big.txt', new TextEncoder().encode('x'.repeat(4096)))

@@ -200,9 +200,11 @@ describe('shard format parity: server fixture import', () => {
       id: '019541a0-0000-7000-8000-000000000020',
       from_note_id: '019541a0-0000-7000-8000-000000000001',
       to_note_id: '019541a0-0000-7000-8000-000000000001',
+      to_url: null,
       kind: 'self-reference',
       score: 0.95,
       created_at: '2026-01-15T10:00:00.000Z',
+      metadata: null,
     }
 
     const shardTags: ShardTag[] = [

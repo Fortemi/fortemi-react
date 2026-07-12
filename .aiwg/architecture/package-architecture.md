@@ -102,3 +102,15 @@ is given and *selects* the source to project.
   when only the pure helpers are imported.
 - **React composes both** into hooks and a `GraphView` component, staying
   visually aligned with JS-only hosts because they share the same projection code.
+
+## Enterprise And Premium Boundary
+
+The July 2026 enterprise/backoffice checkpoint keeps `fortemi-react` public and
+local-first. Premium or backoffice concepts may enter these packages only as
+coarse public capability metadata, preview-state types, and generic disabled or
+degraded UI helpers. Hosted-only APIs, private Enterprise Edition crates, license
+enforcement, tenant-admin backoffice workflows, KMS, RBAC, billing, and audit
+implementations remain outside this package set.
+
+See `.aiwg/architecture/premium-backoffice-boundary-2026-07.md` for the detailed
+boundary decision and review checklist.
