@@ -3,7 +3,6 @@
 <!-- AIWG.md is the CLAUDE.md companion for non-Claude providers; same content. -->
 
 
-
 This file provides guidance to Claude Code when working with this codebase.
 
 ## Repository Purpose
@@ -17,7 +16,7 @@ fortemi-react is the React port of the fortemi knowledge management server (Rust
 - **UI**: React 19.2.4
 - **Database**: PGlite 0.4.1 (PostgreSQL WASM) with pgvector
 - **Build**: Vite 7.3.1, pnpm 10.6.5 workspaces
-- **Test**: Vitest 4.1.0 (949 tests, 53 core test files; + graph & react suites), Playwright 1.52.x (E2E)
+- **Test**: Vitest 4.1.0 (991 core tests across 54 files; + graph & react suites), Playwright 1.52.x (E2E)
 - **Lint**: ESLint 9.x (flat config) + typescript-eslint v8
 - **AI**: transformers.js (embeddings), WebLLM (local LLM), InferenceProvider system (remote + local + fallback)
 - **License**: AGPL-3.0-only
@@ -40,7 +39,7 @@ Dependency direction (linear chain, no cycles): `@electric-sql/pglite` ← `@for
 ```bash
 pnpm dev              # Vite dev server on :5173
 pnpm build            # Build all packages
-pnpm test:core        # 813+ unit/integration tests (Vitest)
+pnpm test:core        # 991 unit/integration tests (Vitest)
 pnpm test:e2e         # E2E tests (Playwright, Chromium + Firefox)
 pnpm typecheck        # TypeScript strict across all packages
 pnpm lint             # ESLint
@@ -55,15 +54,15 @@ Test parallelism is capped at half available CPUs (PGlite WASM is CPU-heavy). Ov
 - **Capability module system** — opt-in WASM loading, no downloads by default (ADR-002)
 - **Inference provider system** — formal `InferenceProvider` interface, `ProviderRegistry` for runtime swapping, `OpenAICompatibleProvider` for remote/local APIs, `FallbackRouter` with cooldown and capability-aware routing, local server auto-discovery (Ollama, LM Studio, llama.cpp, vLLM, Jan)
 - **Job queue** — server-compatible pipeline: ai_revision (1), title_generation (2), embedding (3), concept_tagging (4), linking (5). Lower number = higher priority.
-- **Knowledge Shard** — import/export system: tar.gz bundles with checksums, conflict strategies, field-mapped JSON contract conformance
-- **Portable contract conformance** — shard and AIWG index JSON contracts must match their schema/validator gates; DB table parity is a separate storage-shape guard.
+- **Knowledge Shard** — import/export system: tar.gz bundles with checksums, conflict strategies, field-mapped JSON format parity
+- **Format parity** — JSON output must match fortemi server exactly. Format parity tests enforce this.
 - **Tiered persistence** — Chrome: OPFS, Firefox: IndexedDB, Safari: in-memory
 
 ## Non-Negotiables
 
 1. **UUIDv7** primary keys everywhere (sync compatibility)
 2. **Soft-delete** (`deleted_at`) on all mutable entities — never hard-delete
-3. **Portable JSON contracts identical to server/AIWG authorities** — shard and AIWG index conformance gates enforce this
+3. **JSON field names identical to server** — format parity tests enforce this
 4. **No WASM loaded by default** — capability module system gates all ML models
 5. **AGPL-3.0** — no proprietary dependencies
 6. **CalVer** — YYYY.M.PATCH, no leading zeros, npm rejects leading zeros
@@ -74,25 +73,25 @@ Test parallelism is capped at half available CPUs (PGlite WASM is CPU-heavy). Ov
 |------|---------|
 | `packages/core/src/index.ts` | All public exports from @fortemi/core |
 | `packages/core/src/job-queue-worker.ts` | Job queue with all server-compatible handlers |
-| `packages/core/src/migrations/` | 9 numbered migrations (schema must match server) |
+| `packages/core/src/migrations/` | 10 numbered migrations (schema must match server); `0010` adds attachment MIME and extracted-text metadata |
 | `packages/core/src/tools/` | 11 MCP tool functions (capture-knowledge, get-note, list-notes, manage-note, manage-tags, manage-collections, manage-links, manage-archive, manage-capabilities, manage-attachments, search) |
 | `packages/core/src/repositories/` | 11 data access repositories (notes, search, tags, collections, links, skos, attachments, communities, graph, provenance, embedding-sets) |
 | `packages/core/src/capabilities/` | 14 files: InferenceProvider interface, ProviderRegistry, OpenAICompatibleProvider, FallbackRouter, local-discovery, gpu-detect, inference-detect, embedding-handler, embed-worker-transport, llm-handler, semantic-loader, llm-loader, auto-tag, chunking |
-| `packages/core/src/shard/` | Knowledge Shard import/export: tar packaging, checksums, field-mapper, types |
+| `packages/core/src/shard/` | Knowledge Shard import/export: tar packaging, checksums, field-mapper, types, and shard↔server conformance harness |
+| `packages/core/src/security/plugin-content.ts` | Validation and safety policy for plugin-provided content |
 | `packages/core/src/worker/` | PGlite worker protocol, client, and worker entry (single-writer serialization) |
 | `packages/core/src/service-worker/` | SW registration, route matching, and SW entry (MCP REST interception) |
 | `packages/react/src/FortemiProvider.tsx` | React context (db, events, archiveManager, capabilityManager, blobStore) |
-| `packages/react/src/hooks/` | 31 React hooks (notes, search, tags, collections, capabilities, job queue, import/export, inference, graph/communities, embedding sets, shard, remote) |
+| `packages/react/src/hooks/` | 30 hook modules exporting 30 hooks; `useFortemiContext` brings the package export surface to 31 hooks |
 | `apps/standalone/src/capabilities/setup.ts` | Real transformers.js + WebLLM wiring |
 | `.aiwg/` | SDLC documentation (SAD, ADRs, gates, plans, requirements) |
 
 ## Testing
 
-- **Shard + AIWG index conformance tests are the ship gate** — if the portable-contract gate breaks, nothing ships
-- DB table parity lives in `packages/core/src/__tests__/db-table-parity/` and only guards PGlite table row shapes against server database fixtures
-- 53 test files in `packages/core/src/__tests__/` (including `db-table-parity/` and `shard/` subdirs)
-- E2E tests in `apps/standalone/e2e/` (smoke + loading suites, Playwright)
-- Coverage: 88% statements, 97% repository layer
+- **Format parity tests are the highest priority** — if they break, nothing ships
+- 991 tests across 54 files in `packages/core/src/__tests__/` (including `format-parity/`, shard conformance, and `shard/` subdirs)
+- E2E tests in `apps/standalone/e2e/` (`smoke`, `loading`, and `webkit-compat`, Playwright)
+- Run `pnpm test:coverage` for current coverage; do not rely on hardcoded historical percentages.
 
 ## React Hooks Reference
 
@@ -173,6 +172,7 @@ Rules active from AIWG: see `.claude/rules/RULES-INDEX.md` — 35 rules across c
 
 # AIWG
 
+@.aiwg/aiwg.config
 
 <!--
   This block is managed by `aiwg regenerate` and `aiwg use`.
@@ -219,6 +219,25 @@ Also run `aiwg discover` before declining an AIWG request as out of scope or inv
 ### Engagement Verification
 
 When a user asks whether AIWG is active or engaged in this project, run or read `aiwg status --probe --json` and report the result plainly: engaged state, project root, deployed provider files, installed frameworks/addons, and the next action from the probe. Do not add AIWG attribution, signatures, generated-by text, or passive footers to user files, commits, PRs, comments, code headers, or docs.
+
+### Tracker Authority Protocol
+
+- Source of truth: [.aiwg/aiwg.config](./.aiwg/aiwg.config)
+- Canonical tracker: `origin` (unknown; git@git.integrolabs.net:Fortemi/fortemi-react.git)
+- Primary repo remote: `origin`; CI remote: `origin`
+- Secondary/mirror remotes: github (publish-target)
+- Issue storage mode: not configured
+
+Tracker access order for issue, PR, release, and CI-sensitive tracker operations:
+1. MCP/app tools for the configured tracker.
+2. Tracker HTTP API with configured credentials.
+3. Tracker CLI for the configured tracker, after confirming authentication.
+4. Stop and report a blocker.
+
+- Project config decides tracker authority; installed/authenticated CLIs do not.
+- Git SSH remote access is repository sync, not issue-tracker API access.
+- Do not file on mirror or secondary remotes just because their CLI is authenticated.
+- Treat an unauthenticated tracker CLI as one failed access path, then continue probing MCP/app/API before blocking.
 
 ### Source Model
 
