@@ -1,0 +1,336 @@
+{
+  "version": 1,
+  "generated": "2026-07-08T03:22:04.234Z",
+  "entries": {
+    ".aiwg/.milestones.json": {
+      "checksum": "1f4c95dabb5ac442",
+      "mtime": "2026-07-04T19:56:09.524Z",
+      "size": 49
+    },
+    ".aiwg/AIWG.md": {
+      "checksum": "740803933a8900c2",
+      "mtime": "2026-07-04T19:56:09.524Z",
+      "size": 2822
+    },
+    ".aiwg/adrs/ADR-001-pglite-storage-engine.md": {
+      "checksum": "d887c1fe4eb0f75f",
+      "mtime": "2026-07-04T19:56:09.524Z",
+      "size": 2427
+    },
+    ".aiwg/adrs/ADR-002-capability-modules.md": {
+      "checksum": "3cef32c7a95f66f6",
+      "mtime": "2026-07-04T19:56:09.524Z",
+      "size": 2541
+    },
+    ".aiwg/adrs/ADR-003-pglite-single-writer.md": {
+      "checksum": "61e37727569d8247",
+      "mtime": "2026-07-04T19:56:09.524Z",
+      "size": 2239
+    },
+    ".aiwg/adrs/ADR-004-service-worker-api.md": {
+      "checksum": "77040ed868017105",
+      "mtime": "2026-07-04T19:56:09.524Z",
+      "size": 2998
+    },
+    ".aiwg/adrs/ADR-005-browser-compatibility.md": {
+      "checksum": "1732db00429baece",
+      "mtime": "2026-07-04T19:56:09.524Z",
+      "size": 3242
+    },
+    ".aiwg/adrs/ADR-006-public-api-first.md": {
+      "checksum": "01028031ff825182",
+      "mtime": "2026-07-04T19:56:09.524Z",
+      "size": 8221
+    },
+    ".aiwg/adrs/ADR-007-deployment-modes.md": {
+      "checksum": "d52ec4244a4727de",
+      "mtime": "2026-07-04T19:56:09.524Z",
+      "size": 6316
+    },
+    ".aiwg/adrs/ADR-008-agent-discoverable-capabilities.md": {
+      "checksum": "33ae45b29fa0b090",
+      "mtime": "2026-07-04T19:56:09.524Z",
+      "size": 12332
+    },
+    ".aiwg/adrs/ADR-009-pluggable-storage-backend.md": {
+      "checksum": "d0fad1f45a3ab4fb",
+      "mtime": "2026-07-04T19:56:09.524Z",
+      "size": 4018
+    },
+    ".aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md": {
+      "checksum": "9c3165c208144c5d",
+      "mtime": "2026-07-07T23:03:47.887Z",
+      "size": 5484
+    },
+    ".aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md": {
+      "checksum": "b05c4565f9b7e362",
+      "mtime": "2026-07-07T23:03:47.887Z",
+      "size": 5134
+    },
+    ".aiwg/architecture/SAD.md": {
+      "checksum": "d1009e3bbd00e904",
+      "mtime": "2026-07-07T23:03:47.887Z",
+      "size": 22477
+    },
+    ".aiwg/architecture/adr-backend-seam.md": {
+      "checksum": "f48ceae9c78eeb3e",
+      "mtime": "2026-07-04T19:56:09.526Z",
+      "size": 6650
+    },
+    ".aiwg/architecture/dynamic-user-authored-communities.md": {
+      "checksum": "4a7dd67cfad26d50",
+      "mtime": "2026-07-04T19:56:09.526Z",
+      "size": 6938
+    },
+    ".aiwg/architecture/graph-community-shard-artifacts.md": {
+      "checksum": "8eb85d69b2cff92c",
+      "mtime": "2026-07-04T19:56:09.526Z",
+      "size": 8571
+    },
+    ".aiwg/architecture/graph-source-controller.md": {
+      "checksum": "28a5a0b207c046d5",
+      "mtime": "2026-07-04T19:56:09.526Z",
+      "size": 6652
+    },
+    ".aiwg/architecture/package-architecture.md": {
+      "checksum": "ddbe739b12082637",
+      "mtime": "2026-07-06T22:05:28.655Z",
+      "size": 7282
+    },
+    ".aiwg/architecture/phase-0-embedding-graph-ownership.md": {
+      "checksum": "d963da708165ad61",
+      "mtime": "2026-07-04T19:56:09.526Z",
+      "size": 8093
+    },
+    ".aiwg/architecture/precomputed-similarity-graphs.md": {
+      "checksum": "9aff165dbc14eb5c",
+      "mtime": "2026-07-04T19:56:09.526Z",
+      "size": 7154
+    },
+    ".aiwg/architecture/premium-backoffice-boundary-2026-07.md": {
+      "checksum": "740e58ef41666d75",
+      "mtime": "2026-07-06T22:05:28.654Z",
+      "size": 5037
+    },
+    ".aiwg/architecture/virtual-embedding-sets.md": {
+      "checksum": "696c170a6b70be97",
+      "mtime": "2026-07-04T19:56:09.526Z",
+      "size": 8367
+    },
+    ".aiwg/deployment/cm-plan.md": {
+      "checksum": "4d9923f42b1b550c",
+      "mtime": "2026-07-04T19:56:09.526Z",
+      "size": 7113
+    },
+    ".aiwg/frameworks/forensics-complete/chain-of-custody.md": {
+      "checksum": "a5b333337ae3400f",
+      "mtime": "2026-07-04T19:56:09.527Z",
+      "size": 5548
+    },
+    ".aiwg/frameworks/knowledge-base/index.md": {
+      "checksum": "0a3745f5a0c5c39e",
+      "mtime": "2026-07-04T19:56:09.527Z",
+      "size": 9
+    },
+    ".aiwg/frameworks/registry.json": {
+      "checksum": "364b7448197b0877",
+      "mtime": "2026-07-04T19:56:09.527Z",
+      "size": 672
+    },
+    ".aiwg/gates/gate-elaboration.md": {
+      "checksum": "7b42680b9687540d",
+      "mtime": "2026-07-04T19:56:09.527Z",
+      "size": 3795
+    },
+    ".aiwg/gates/gate-inception.md": {
+      "checksum": "c80ff308a64da19b",
+      "mtime": "2026-07-04T19:56:09.527Z",
+      "size": 3401
+    },
+    ".aiwg/intake/README.md": {
+      "checksum": "9ae6d4f4da8c4571",
+      "mtime": "2026-07-04T19:56:09.527Z",
+      "size": 3211
+    },
+    ".aiwg/intake/architecture.md": {
+      "checksum": "e968f7b5a43441b7",
+      "mtime": "2026-07-04T19:56:09.527Z",
+      "size": 11238
+    },
+    ".aiwg/intake/data-model.md": {
+      "checksum": "3ac6c310feb18814",
+      "mtime": "2026-07-04T19:56:09.527Z",
+      "size": 13250
+    },
+    ".aiwg/intake/flows.md": {
+      "checksum": "28668847e7a08721",
+      "mtime": "2026-07-04T19:56:09.527Z",
+      "size": 14666
+    },
+    ".aiwg/intake/option-matrix.md": {
+      "checksum": "019b2dbbe1bd8c1e",
+      "mtime": "2026-07-04T19:56:09.527Z",
+      "size": 14261
+    },
+    ".aiwg/intake/project-intake.md": {
+      "checksum": "0877f5f40b0691f0",
+      "mtime": "2026-07-04T19:56:09.527Z",
+      "size": 19379
+    },
+    ".aiwg/intake/solution-profile.md": {
+      "checksum": "50c4cc7fc7b6fd94",
+      "mtime": "2026-07-04T19:56:09.527Z",
+      "size": 7640
+    },
+    ".aiwg/issues/checkpoint-issue-drafts-2026-07.md": {
+      "checksum": "6ed54a7df718bfdd",
+      "mtime": "2026-07-08T01:25:41.463Z",
+      "size": 1832
+    },
+    ".aiwg/planning/phase-plan-elaboration.md": {
+      "checksum": "1cc745b9867882d2",
+      "mtime": "2026-07-04T19:56:09.528Z",
+      "size": 4877
+    },
+    ".aiwg/planning/phase-plan-inception.md": {
+      "checksum": "c6ede3574ae53ac9",
+      "mtime": "2026-07-04T19:56:09.528Z",
+      "size": 4684
+    },
+    ".aiwg/ralph/completion-2026-03-21.md": {
+      "checksum": "3f10ac3f1a749d29",
+      "mtime": "2026-07-04T19:56:09.528Z",
+      "size": 3801
+    },
+    ".aiwg/reports/accelerate-state.json": {
+      "checksum": "9afbcd07562b0d76",
+      "mtime": "2026-07-04T19:56:09.528Z",
+      "size": 5119
+    },
+    ".aiwg/reports/aiwg-portable-schema-audit-2026-07-05.md": {
+      "checksum": "26e729b3fe836c18",
+      "mtime": "2026-07-07T23:03:47.888Z",
+      "size": 19345
+    },
+    ".aiwg/reports/construction-ready-brief.md": {
+      "checksum": "1ab8bc7503432983",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 5101
+    },
+    ".aiwg/reports/doc-sync-audit-2026-06-14.md": {
+      "checksum": "5aceefc51f5f6b38",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 1142
+    },
+    ".aiwg/reports/doc-sync-audit-2026-06-18.md": {
+      "checksum": "3027730c8b5ab678",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 3340
+    },
+    ".aiwg/reports/doc-sync-audit-2026-06-24.md": {
+      "checksum": "29dd1dbaf3db89dd",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 3083
+    },
+    ".aiwg/reports/doc-sync-audit-2026-07-01.md": {
+      "checksum": "9cc08d0b367db8f1",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 1944
+    },
+    ".aiwg/reports/sdlc-checkpoint-2026-07.md": {
+      "checksum": "5d20c1ecbbbcf876",
+      "mtime": "2026-07-08T01:25:41.463Z",
+      "size": 2611
+    },
+    ".aiwg/requirements/supplementary-requirements.md": {
+      "checksum": "d71349bd2c5df702",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 7887
+    },
+    ".aiwg/requirements/use-cases/UC-001-capture-knowledge.md": {
+      "checksum": "45bd16d98adf9c95",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 3880
+    },
+    ".aiwg/requirements/use-cases/UC-002-search-notes.md": {
+      "checksum": "1de909773c351909",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 4326
+    },
+    ".aiwg/requirements/use-cases/UC-003-manage-collections.md": {
+      "checksum": "56d9a0cc4d3587cf",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 3021
+    },
+    ".aiwg/requirements/use-cases/UC-004-mcp-tool-access.md": {
+      "checksum": "de819c93ac55751b",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 6070
+    },
+    ".aiwg/requirements/use-cases/UC-005-manage-capabilities.md": {
+      "checksum": "710b68ff629c025a",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 5174
+    },
+    ".aiwg/requirements/use-cases/UC-006-manage-attachments.md": {
+      "checksum": "cb89a4ea1e620a06",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 5022
+    },
+    ".aiwg/requirements/use-cases/UC-007-manage-archives.md": {
+      "checksum": "8459d7fd309612b6",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 4261
+    },
+    ".aiwg/requirements/use-cases/UC-008-manage-links.md": {
+      "checksum": "80638af31ab734c2",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 3860
+    },
+    ".aiwg/risks/risk-list.md": {
+      "checksum": "a833301bc9f74146",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 3578
+    },
+    ".aiwg/security/aiwg-portable-schema-security-2026-07-05.md": {
+      "checksum": "c0cb8989770c0ad7",
+      "mtime": "2026-07-07T23:03:47.888Z",
+      "size": 4557
+    },
+    ".aiwg/spikes/238-shard-conformance-harness.md": {
+      "checksum": "a6ab4871f3417441",
+      "mtime": "2026-07-07T23:03:47.888Z",
+      "size": 4939
+    },
+    ".aiwg/team/agent-assignments.md": {
+      "checksum": "9afc3c05359d273f",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 2417
+    },
+    ".aiwg/testing/test-strategy.md": {
+      "checksum": "628b173afc85b2b7",
+      "mtime": "2026-07-04T19:56:09.529Z",
+      "size": 14191
+    },
+    ".aiwg/working/170-graph-controller-progress.md": {
+      "checksum": "f7f6f7bd798da6a2",
+      "mtime": "2026-07-07T23:03:47.888Z",
+      "size": 2831
+    },
+    ".aiwg/working/backend-tiers-progress.md": {
+      "checksum": "9a95b19bdba91c16",
+      "mtime": "2026-07-07T23:03:47.889Z",
+      "size": 4312
+    },
+    ".aiwg/working/docsite-nav-hero-progress.md": {
+      "checksum": "667ad7474134af27",
+      "mtime": "2026-07-07T23:03:47.889Z",
+      "size": 4145
+    },
+    ".aiwg/working/release-2026.6.6-progress.md": {
+      "checksum": "4dc3d3d4bd10f7eb",
+      "mtime": "2026-07-07T23:03:47.889Z",
+      "size": 2884
+    }
+  }
+}

@@ -40,7 +40,7 @@ export { filterCommunityGraph } from './filter.js'
 export type { GraphFilter } from './filter.js'
 
 export { layoutCommunityGraph } from './layout.js'
-export type { LayoutOptions, NodeRadiusResolver } from './layout.js'
+export type { LayoutOptions, NodeRadiusResolver, PositionMap } from './layout.js'
 
 export { computeGraphBounds, fitGraphToViewport } from './bounds.js'
 export type { FitOptions } from './bounds.js'
@@ -61,6 +61,41 @@ export {
   deserializeGraphSnapshot,
 } from './serialize.js'
 export type { GraphSnapshot, SerializeSnapshotOptions } from './serialize.js'
+
+export {
+  GREYSCALE_COMMUNITY_RAMP,
+  communityRanks,
+  mapCommunityGraph,
+  bakeRenderGraph,
+  stringifyRenderGraph,
+  isRenderGraph,
+  hasBakedPositions,
+  loadRenderSnapshot,
+} from './render-prep.js'
+export type {
+  RenderNode,
+  RenderLink,
+  RenderGraph,
+  CommunityPalette,
+  MapCommunityGraphOptions,
+  BakeRenderGraphOptions,
+  LoadRenderSnapshotOptions,
+} from './render-prep.js'
+
+export { applyControlFilters, communityLegend } from './contract.js'
+export type {
+  GraphControlContract,
+  GraphControlFilters,
+  GraphLegendEntry,
+} from './contract.js'
+
+export { renderCommunityGraph } from './render-dom.js'
+export type {
+  GraphRenderOptions,
+  GraphRenderFilters,
+  GraphRenderUpdate,
+  GraphRenderHandle,
+} from './render-dom.js'
 
 export { GraphController } from './controller.js'
 export type {

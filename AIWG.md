@@ -17,20 +17,23 @@ fortemi-react is the React port of the fortemi knowledge management server (Rust
 - **UI**: React 19.2.4
 - **Database**: PGlite 0.4.1 (PostgreSQL WASM) with pgvector
 - **Build**: Vite 7.3.1, pnpm 10.6.5 workspaces
-- **Test**: Vitest 4.1.0 (813+ tests, 40 test files), Playwright 1.52.x (E2E)
+- **Test**: Vitest 4.1.0 (949 tests, 53 core test files; + graph & react suites), Playwright 1.52.x (E2E)
 - **Lint**: ESLint 9.x (flat config) + typescript-eslint v8
 - **AI**: transformers.js (embeddings), WebLLM (local LLM), InferenceProvider system (remote + local + fallback)
 - **License**: AGPL-3.0-only
 - **Versioning**: CalVer YYYY.M.PATCH (no leading zeros)
-- **Current version**: 2026.6.4
+- **Current version**: 2026.7.3
 
 ## Monorepo Structure
 
 ```
 packages/core/       @fortemi/core — headless data layer (PGlite, repos, tools, workers, migrations, shard)
-packages/react/      @fortemi/react — React hooks, FortemiProvider
+packages/graph/      @fortemi/graph — framework-agnostic graph add-on (layout, filter, color, degree, bounds, neighborhood, snapshot, GraphController); depends on @fortemi/core, no React
+packages/react/      @fortemi/react — React hooks, FortemiProvider, GraphView (uses @fortemi/graph)
 apps/standalone/     @fortemi/standalone — Vite demo app (private, not published)
 ```
+
+Dependency direction (linear chain, no cycles): `@electric-sql/pglite` ← `@fortemi/core` ← `@fortemi/graph` ← `@fortemi/react`. `@fortemi/core` is the base and never depends on graph; `@fortemi/graph` depends on core (for `GraphController` and shared graph types) and is consumed by `@fortemi/react` and JS-only hosts.
 
 ## Development Commands
 
@@ -52,15 +55,15 @@ Test parallelism is capped at half available CPUs (PGlite WASM is CPU-heavy). Ov
 - **Capability module system** — opt-in WASM loading, no downloads by default (ADR-002)
 - **Inference provider system** — formal `InferenceProvider` interface, `ProviderRegistry` for runtime swapping, `OpenAICompatibleProvider` for remote/local APIs, `FallbackRouter` with cooldown and capability-aware routing, local server auto-discovery (Ollama, LM Studio, llama.cpp, vLLM, Jan)
 - **Job queue** — server-compatible pipeline: ai_revision (1), title_generation (2), embedding (3), concept_tagging (4), linking (5). Lower number = higher priority.
-- **Knowledge Shard** — import/export system: tar.gz bundles with checksums, conflict strategies, field-mapped JSON format parity
-- **Format parity** — JSON output must match fortemi server exactly. Format parity tests enforce this.
+- **Knowledge Shard** — import/export system: tar.gz bundles with checksums, conflict strategies, field-mapped JSON contract conformance
+- **Portable contract conformance** — shard and AIWG index JSON contracts must match their schema/validator gates; DB table parity is a separate storage-shape guard.
 - **Tiered persistence** — Chrome: OPFS, Firefox: IndexedDB, Safari: in-memory
 
 ## Non-Negotiables
 
 1. **UUIDv7** primary keys everywhere (sync compatibility)
 2. **Soft-delete** (`deleted_at`) on all mutable entities — never hard-delete
-3. **JSON field names identical to server** — format parity tests enforce this
+3. **Portable JSON contracts identical to server/AIWG authorities** — shard and AIWG index conformance gates enforce this
 4. **No WASM loaded by default** — capability module system gates all ML models
 5. **AGPL-3.0** — no proprietary dependencies
 6. **CalVer** — YYYY.M.PATCH, no leading zeros, npm rejects leading zeros
@@ -71,28 +74,29 @@ Test parallelism is capped at half available CPUs (PGlite WASM is CPU-heavy). Ov
 |------|---------|
 | `packages/core/src/index.ts` | All public exports from @fortemi/core |
 | `packages/core/src/job-queue-worker.ts` | Job queue with all server-compatible handlers |
-| `packages/core/src/migrations/` | 5 numbered migrations (schema must match server) |
+| `packages/core/src/migrations/` | 9 numbered migrations (schema must match server) |
 | `packages/core/src/tools/` | 11 MCP tool functions (capture-knowledge, get-note, list-notes, manage-note, manage-tags, manage-collections, manage-links, manage-archive, manage-capabilities, manage-attachments, search) |
-| `packages/core/src/repositories/` | 7 data access repositories (notes, search, tags, collections, links, skos, attachments) |
-| `packages/core/src/capabilities/` | 13 files: InferenceProvider interface, ProviderRegistry, OpenAICompatibleProvider, FallbackRouter, local-discovery, gpu-detect, inference-detect, embedding-handler, llm-handler, semantic-loader, llm-loader, auto-tag, chunking |
+| `packages/core/src/repositories/` | 11 data access repositories (notes, search, tags, collections, links, skos, attachments, communities, graph, provenance, embedding-sets) |
+| `packages/core/src/capabilities/` | 14 files: InferenceProvider interface, ProviderRegistry, OpenAICompatibleProvider, FallbackRouter, local-discovery, gpu-detect, inference-detect, embedding-handler, embed-worker-transport, llm-handler, semantic-loader, llm-loader, auto-tag, chunking |
 | `packages/core/src/shard/` | Knowledge Shard import/export: tar packaging, checksums, field-mapper, types |
 | `packages/core/src/worker/` | PGlite worker protocol, client, and worker entry (single-writer serialization) |
 | `packages/core/src/service-worker/` | SW registration, route matching, and SW entry (MCP REST interception) |
 | `packages/react/src/FortemiProvider.tsx` | React context (db, events, archiveManager, capabilityManager, blobStore) |
-| `packages/react/src/hooks/` | 21 React hooks (notes, search, capabilities, job queue, import/export, inference) |
+| `packages/react/src/hooks/` | 31 React hooks (notes, search, tags, collections, capabilities, job queue, import/export, inference, graph/communities, embedding sets, shard, remote) |
 | `apps/standalone/src/capabilities/setup.ts` | Real transformers.js + WebLLM wiring |
 | `.aiwg/` | SDLC documentation (SAD, ADRs, gates, plans, requirements) |
 
 ## Testing
 
-- **Format parity tests are the highest priority** — if they break, nothing ships
-- 40 test files in `packages/core/src/__tests__/` (including `format-parity/` and `shard/` subdirs)
+- **Shard + AIWG index conformance tests are the ship gate** — if the portable-contract gate breaks, nothing ships
+- DB table parity lives in `packages/core/src/__tests__/db-table-parity/` and only guards PGlite table row shapes against server database fixtures
+- 53 test files in `packages/core/src/__tests__/` (including `db-table-parity/` and `shard/` subdirs)
 - E2E tests in `apps/standalone/e2e/` (smoke + loading suites, Playwright)
 - Coverage: 88% statements, 97% repository layer
 
 ## React Hooks Reference
 
-All 21 hooks exported from `@fortemi/react`:
+All 31 hooks exported from `@fortemi/react`:
 
 | Hook | Purpose |
 |------|---------|
@@ -117,6 +121,16 @@ All 21 hooks exported from `@fortemi/react`:
 | `useLocalDiscovery` | Local LLM server discovery (Ollama, LM Studio, etc.) |
 | `useEmbeddingPipeline` | Embedding pipeline lifecycle |
 | `useCapabilitySetup` | Unified capability wiring |
+| `useFortemiContext` | Access the FortemiProvider context (db, events, managers) |
+| `useGraphController` | Graph-source controller (mode selection + load dispatch) |
+| `useCommunities` | Graph community management (create, assign, summarize) |
+| `useSimilarityGraph` | Build a community graph from embedding similarity |
+| `useEmbeddingSets` | Named and virtual embedding set management |
+| `useEmbeddingWorker` | Embedding worker transport lifecycle |
+| `useShard` | Open and read a Knowledge Shard |
+| `useShardPrefetch` | Prefetch and cache a Knowledge Shard |
+| `useRemote` | Remote backend access (notes, search) |
+| `useAiwgIndex` | Query the AIWG artifact index and project it to a community graph |
 
 ## Browser Compatibility
 

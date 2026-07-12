@@ -187,6 +187,27 @@ describe('embedding sets and graph APIs', () => {
     expect(graph.edges).toEqual([])
   })
 
+  it('excludes soft-deleted notes from criteria virtual embedding sets', async () => {
+    const sets = new EmbeddingSetsRepository(db)
+    const base = await sets.create({ name: 'Deletion-filter vectors' })
+    await sets.putEmbedding({ note_id: 'note-a', embedding_set_id: base.id, vector: vec(1, 0) })
+    await sets.putEmbedding({ note_id: 'note-b', embedding_set_id: base.id, vector: vec(0.9, 0.1) })
+    await db.query(`UPDATE note SET deleted_at = now() WHERE id = 'note-b'`)
+
+    const resolved = await sets.resolveSelector({
+      kind: 'virtual-definition',
+      definition: {
+        id: 'active-only', name: 'Active only',
+        source: { type: 'criteria', baseSetId: base.id, criteria: {} },
+        compatibility: {
+          model: 'require-same', dimension: 'require-same',
+          duplicateVectors: 'prefer-set-order', missingVectors: 'omit',
+        },
+      },
+    })
+    expect(resolved.noteIds).toEqual(['note-a'])
+  })
+
   it('resolves criteria virtual embedding sets using note properties and enrichment state', async () => {
     const sets = new EmbeddingSetsRepository(db)
     const base = await sets.create({ name: 'Property vectors', purpose: 'Property-scoped vectors' })

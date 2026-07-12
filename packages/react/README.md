@@ -180,6 +180,72 @@ function AiwgGraph({ exportJson }: { exportJson: unknown }) {
 }
 ```
 
+### Interactive 2D explorer (Sigma)
+
+For a live, force-directed explorer instead of the static SVG, import `SigmaGraphView` from the `@fortemi/react/graph-2d` subpath. It is backed by Sigma + graphology ForceAtlas2, which are **optional peer dependencies loaded lazily** — install them only if you use this view:
+
+```bash
+pnpm add sigma graphology graphology-layout-forceatlas2
+```
+
+```tsx
+import { SigmaGraphView } from '@fortemi/react/graph-2d'
+
+<SigmaGraphView
+  graph={communityGraph}
+  onSelectNode={(id) => setSelected(id)}
+  onOpenNode={(id) => openNote(id)}
+/>
+```
+
+Live LinLog settling, hover-neighborhood dimming, click-select with camera focus, ⌘/ctrl-click to re-anchor and re-settle around a node, double-click to open, and LOD labels. It accepts a `@fortemi/graph` `RenderGraph` directly or a `CommunityGraph` it maps for you, and can warm-start from a baked-position `snapshot`. The heavy renderer only enters your bundle on this subpath.
+
+### 3D force-directed view (Three.js)
+
+For a 3D view, import `ForceGraph3DView` from the `@fortemi/react/graph-3d` subpath. It is backed by `react-force-graph-3d` (Three.js), an **optional peer dependency loaded lazily** — install it only if you use this view:
+
+```bash
+pnpm add react-force-graph-3d three
+```
+
+```tsx
+import { ForceGraph3DView } from '@fortemi/react/graph-3d'
+
+<ForceGraph3DView graph={communityGraph} onOpenNode={(id) => openNote(id)} />
+```
+
+Orbit + scroll-zoom, `zoomToFit` on settle, click to open, and ⌘/ctrl-click to re-anchor and re-settle around a node. Like the 2D explorer it accepts a `RenderGraph` or a `CommunityGraph` it maps for you. Three only enters your bundle on this subpath.
+
+### Node dragging
+
+Pass `draggableNodes` to let users drag nodes and reshape the layout (default off — existing click-to-select behavior is unchanged):
+
+```tsx
+<GraphView graph={graph} draggableNodes />
+```
+
+Dragging a node moves it under the pointer; on release the node is **pinned** and the rest of the graph re-settles around it (an incremental re-layout via `@fortemi/graph`'s `pinned` + warm-start `initialPositions`). Pins persist across subsequent layout updates — **shift-click a pinned node to release its pin**.
+
+### PGlite-free graph subpath
+
+`GraphView` renders a `CommunityGraph` with no database access — it depends only
+on `@fortemi/graph` (layout/filter/color helpers) and React. Consumers that want
+just the graph rendering, and never boot a local archive, should import it from
+the `@fortemi/react/graph` subpath instead of the package root:
+
+```tsx
+import { GraphView } from '@fortemi/react/graph'
+```
+
+This subpath carries no reference to `@fortemi/core`, PGlite, or the DB worker,
+so the PGlite WASM engine stays out of the bundle and Vite code-split builds do
+not trip on the worker/Node-FS chain. Importing `GraphView` from the package
+root still works; it just pulls the full provider surface (and therefore PGlite)
+into the module graph, since the root barrel also exports `FortemiProvider` and
+the DB hooks. PGlite itself is loaded lazily and is an optional dependency of
+`@fortemi/core`, so DB-backed consumers pay for it only when an archive is
+actually opened.
+
 For large static AIWG indexes, use the chunked hook methods so pages fetch only
 the needed manifest parts and the hook does not retain a full export array:
 
