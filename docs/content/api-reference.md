@@ -28,15 +28,22 @@
   - [Job Queue](#job-queue)
   - [Capabilities](#capabilities)
   - [Migrations and Archive](#migrations-and-archive)
+  - [Knowledge Shards](#knowledge-shards)
   - [Service Worker](#service-worker)
   - [Worker Utilities](#worker-utilities)
+  - [AIWG Index (@fortemi/core/aiwg-index)](#aiwg-index-fortemicoreaiwg-index)
 - [@fortemi/graph](#fortemigraph)
   - [Graph Data Model](#graph-data-model)
   - [Graph Helpers](#graph-helpers)
+  - [Render Pipeline](#render-pipeline)
+  - [Control Contract](#control-contract)
+  - [SVG Renderer](#svg-renderer)
+  - [GraphController](#graphcontroller)
 - [@fortemi/react](#fortemireact)
   - [Provider](#provider)
   - [Hooks](#hooks)
     - [Graph and community hooks](#graph-and-community-hooks)
+  - [Graph Views and Subpath Exports](#graph-views-and-subpath-exports)
 
 ---
 
@@ -1432,6 +1439,126 @@ const pglite = await restoreDbSnapshot('/corpus/corpus.pgdata', { persistence: '
 
 ---
 
+### Knowledge Shards
+
+A Knowledge Shard is a gzip-compressed tar archive with 100% format compatibility with the Rust/PostgreSQL Fortemi server. All shard APIs are exported from the `@fortemi/core` root.
+
+#### `exportShard(db, options?)`
+
+```typescript
+function exportShard(db: DatabaseClient, options?: ExportOptions): Promise<Uint8Array>
+
+interface ExportOptions {
+  includeEmbeddings?: boolean
+  collectionId?: string          // export only notes in this collection
+  tag?: string                   // export only notes with this tag (e.g. 'app:research')
+  embeddingSetIds?: string[]     // export only these sets + member/vector rows
+  includeMaterializedSelectors?: boolean
+  clusterNotesSize?: number      // emit clustered notes/000.jsonl files for in-place readers
+  includeBlobs?: boolean         // pack attachment bytes into a content-addressed blobs/<blake3-hex> sidecar
+  blobStore?: BlobStore          // byte source for the sidecar; required when includeBlobs is set
+}
+```
+
+Produces the `.shard` archive bytes. With `includeBlobs`, attachment bytes are read from `blobStore` by `content_hash` and packed as BLAKE3-addressed `blobs/<hex>` sidecar entries, making the shard self-contained; a blob the store cannot return is skipped (that attachment stays reference-only) rather than failing the export.
+
+#### `importShard(db, data, options?)`
+
+```typescript
+function importShard(
+  db: DatabaseClient,
+  data: Uint8Array | ArrayBuffer,
+  options?: ImportOptions,
+): Promise<ImportResult>
+
+type ConflictStrategy = 'skip' | 'replace' | 'error'
+
+interface ImportOptions {
+  conflictStrategy?: ConflictStrategy      // default 'skip'
+  batchSize?: number                       // rows between cooperative yields (default 250)
+  onProgress?: (progress: ImportProgress) => void
+  blobStore?: BlobStore                    // destination for hydrating sidecar attachment bytes
+}
+
+interface ImportResult {
+  success: boolean
+  counts: ImportCounts                     // per-component imported-row counts
+  skipped: Partial<ImportCounts>
+  warnings: string[]
+  errors: string[]
+  duration_ms: number
+}
+```
+
+Structured-error contract: a malformed manifest or component **resolves** to `{ success: false, errors: [...] }` — the promise does not reject. When `blobStore` is provided, sidecar entries matching imported attachments' `content_hash` are written to the store after the import transaction commits, so `getBlob()` returns real bytes; without it, attachments import as reference-only metadata.
+
+#### `openShard(source, options?)`
+
+```typescript
+function openShard(source: ShardReaderSource, options?: OpenShardOptions): Promise<ShardReader>
+
+interface OpenShardOptions {
+  baseUrl?: string
+  fetchImpl?: typeof fetch
+  semantic?: StaticSemanticProvider
+  maxCachedMatches?: number
+  maxComponentBytes?: number
+}
+
+interface ShardReader {
+  readonly manifest: ShardManifest
+  listNotes(options?: ShardListOptions): Promise<{ items: ShardReaderNote[]; total: number }>
+  getNote(id: string): Promise<ShardReaderNote | null>
+  getNoteFull(id: string): Promise<ShardNoteFull | null>
+  search(query: string, options?: ShardSearchOptions): Promise<ShardSearchResult>
+  semantic(query: string, k?: number): Promise<Array<{ note: ShardReaderNote; score: number }>>
+  linksOf(id: string): Promise<ShardLink[]>
+  conceptsOf(id: string): Promise<ShardSkosConcept[]>
+  relationsOf(conceptId: string): Promise<ShardSkosRelation[]>
+  provenanceOf(id: string): Promise<ShardProvenanceEdge[]>
+  close(): void
+}
+```
+
+Read a shard **in place** — no database, no import. Components are fetched and checksum-validated lazily as each is first read (not up front), so opening is cheap even for large shards; clustered-note layouts (`clusterNotesSize` at export) fetch only the clusters they need. Throws when the shard's `min_reader_version` exceeds this build — fall back to `importShard`.
+
+#### `createCosineSemanticProvider(options)`
+
+```typescript
+function createCosineSemanticProvider(options: {
+  embedQuery: (query: string) => Promise<number[]> | number[]
+  vectorsFile?: string           // default 'vectors.jsonl'
+  vectors?: VectorEntry[]        // supply vectors directly instead of reading a file
+}): StaticSemanticProvider
+```
+
+Brute-force cosine provider for `openShard`'s `semantic` option. Fine for small/demo corpora; supply a prebuilt-ANN `StaticSemanticProvider` for full-size corpora.
+
+#### Prefetch / warm API
+
+```typescript
+function prefetchShard(url: string, options?: PrefetchOptions): Promise<PrefetchResult>
+function fromPrefetched(url: string): Uint8Array   // throws if not prefetched
+function isShardPrefetched(url: string): boolean
+function getPrefetchedSha256(url: string): string | undefined
+function clearPrefetchedShard(url?: string): void  // omit url to clear all
+```
+
+`prefetchShard(url, { expectedSha256 })` downloads (optionally via Cache Storage) and verifies the whole-archive SHA-256, warming the bytes for a later `openShard(fromPrefetched(url))` or `importShard`.
+
+#### Schema validation and low-level helpers
+
+| Export | Purpose |
+|---|---|
+| `validateShardArchive` / `validateShardManifest` / `validateShardComponentRecord` / `assertShardComponentRecord` | Validate against the vendored `knowledge-shard.schema.json` authority; return `ShardSchemaValidationResult` |
+| `getKnowledgeShardSchema()` | The parsed JSON Schema object |
+| `packTarGz` / `unpackTarGz` | Tar + gzip primitives used by the pipelines |
+| `sha256Hex` / `validateChecksums` | Component checksum helpers |
+| `noteToShard`, `noteFromShard`, `linkToShard`, `collectionToShard`, … | Per-entity field mappers between browser rows and server-parity shard JSON (one `xToShard`/`xFromShard` pair per component; see `shard/field-mapper.ts`) |
+| `CURRENT_SHARD_VERSION` / `SHARD_FORMAT` | Format constants |
+
+---
+
 ### Service Worker
 
 #### `registerServiceWorker(options)`
@@ -1504,6 +1631,134 @@ Handle passed to transaction callbacks in `PGliteWorkerClient.transaction`. Scop
 
 ---
 
+### AIWG Index (`@fortemi/core/aiwg-index`)
+
+Database-free tooling for AIWG Fortemi index exports (`aiwg.fortemi.index.export.v1`/`v2`): validate, query, chunk, embed, and project static index files without PGlite. Import from the subpath:
+
+```typescript
+import { createAiwgIndexController, queryAiwgFortemiIndex } from '@fortemi/core/aiwg-index'
+```
+
+The schema authority is vendored at `packages/core/schemas/aiwg-fortemi-index-export.schema.json` (pinned with a provenance receipt).
+
+#### `createAiwgIndexController(initialIndex?)`
+
+```typescript
+function createAiwgIndexController(initialIndex?: AiwgFortemiIndexExport): AiwgIndexController
+
+interface AiwgIndexController {
+  // Loading
+  loadIndex(value: unknown): AiwgFortemiIndexExport
+  loadChunkedIndex(manifest: unknown, loader: AiwgChunkedIndexLoader, options?: AiwgChunkedIndexLoadOptions): AiwgFortemiChunkManifest
+  getIndex(): AiwgFortemiIndexExport | null
+  getChunkedManifest(): AiwgFortemiChunkManifest | null
+  getSnapshot(): AiwgIndexControllerSnapshot
+  // Query
+  query(query?: string, options?: AiwgIndexQueryOptions): AiwgIndexQueryResult
+  queryChunked(query?: string, options?: AiwgChunkedIndexQueryOptions): Promise<AiwgChunkedIndexQueryResult>
+  getRecord(id: string): Promise<AiwgFortemiRecord>   // resolves projected records via the detail loader
+  // Relationship traversal
+  neighbors(id: string, options?: AiwgRelationshipTraversalOptions): Promise<AiwgRelationshipTraversalResult>
+  relationshipQuery(options?: AiwgRelationshipQueryOptions): Promise<AiwgRelationshipTraversalResult>
+  relationshipSet(options: AiwgRelationshipSetOptions): Promise<AiwgRelationshipSetResult>
+  // Graph projection
+  toCommunityGraph(options?: AiwgIndexGraphOptions): CommunityGraph
+  toCommunityGraphChunked(options?: AiwgIndexGraphOptions & { onProgress?: (p: AiwgChunkedIndexProgress) => void }): Promise<CommunityGraph>
+  // Review workflow
+  setReviewDecision(input: AiwgReviewInput): AiwgReviewDecision
+  clearReviewDecision(itemId: string): void
+  createReviewDecisionExport(generatedAt?: string): AiwgReviewDecisionExport
+  // Lifecycle
+  clearChunkCache(): void
+  subscribe(listener: AiwgIndexControllerListener): () => void
+}
+```
+
+Stateful controller over a whole or chunked index: load once, then query, traverse relationships, project to a `CommunityGraph`, and record review decisions. `subscribe` notifies on load/decision changes.
+
+#### Query functions
+
+```typescript
+function queryAiwgFortemiIndex(
+  index: AiwgFortemiIndexExport,
+  query?: string,
+  options?: AiwgIndexQueryOptions,
+): AiwgIndexQueryResult
+
+interface AiwgIndexQueryOptions {
+  types?: string[]
+  facets?: Record<string, string[]>
+  tags?: string[]
+  concepts?: string[]
+  privacy?: AiwgPrivacyClassification[]      // 'private' | 'sanitized' | 'public'
+  relationshipTargetId?: string
+  limit?: number
+  offset?: number
+  rank?: boolean
+  snippets?: boolean
+  snippetLength?: number
+  weights?: Partial<AiwgIndexQueryWeights>   // title/text/tag/concept/facet/id/source
+  includeMatches?: boolean
+  searchProfile?: 'default' | 'aiwg-discovery'
+}
+
+interface AiwgIndexQueryResult {
+  items: AiwgFortemiRecord[]
+  total: number
+  facets: Record<string, Record<string, number>>
+  rankedItems?: AiwgIndexQueryRankedItem[]   // when rank: true — rank, snippet, matches
+}
+
+// Semantic and hybrid variants over a static embedding set
+function queryAiwgSemanticIndex(index, embeddingSet, queryEmbedding: number[], options?): AiwgStaticSemanticResult[]
+function queryAiwgHybridIndex(index, embeddingSet, query: string, queryEmbedding: number[], options?): AiwgStaticHybridResult[]
+```
+
+#### Chunked indexes
+
+```typescript
+function buildAiwgChunkedIndex(index: AiwgFortemiIndexExport, options?: { partSize?: number /* default 500 */, ... }): AiwgChunkedIndexBuildResult
+function createAiwgFetchChunkLoader(baseUrl?: string | URL): AiwgChunkedIndexLoader
+function createAiwgFetchDetailLoader(baseUrl?: string | URL): AiwgChunkedIndexDetailLoader
+```
+
+`buildAiwgChunkedIndex` splits a whole index into a manifest + fixed-size parts (optionally search-projected records with per-id detail files) for static hosting. The fetch loaders resolve part/detail `href`s against `baseUrl`. v2 exports with `source.graph` are supported end-to-end.
+
+#### Static embeddings
+
+```typescript
+function buildAiwgStaticEmbeddingSet(
+  index: AiwgFortemiIndexExport,
+  options: BuildAiwgStaticEmbeddingSetOptions,   // embed callback + granularity ('body' default)
+): Promise<AiwgStaticEmbeddingSet>
+
+function findAiwgStaticDuplicatePairs(index, embeddingSet, threshold = 0.9, options?): AiwgStaticDuplicatePair[]
+```
+
+#### Validators
+
+Every validator has a `validate*` form returning `{ valid, errors }` — total on hostile input, never throws — and an `assert*` form that throws on invalid input:
+
+| Validate (total) | Assert (throwing) | Target |
+|---|---|---|
+| `validateAiwgFortemiIndexExport` | `assertAiwgFortemiIndexExport` | Whole index export (v1/v2) |
+| `validateAiwgFortemiChunkManifest` | `assertAiwgFortemiChunkManifest` | Chunk manifest |
+| `validateAiwgFortemiChunkPart` | `assertAiwgFortemiChunkPart` | Chunk part (checked against source export version) |
+| `validateAiwgStaticEmbeddingSet` | `assertAiwgStaticEmbeddingSet` | Static embedding set |
+
+#### Projection and utilities
+
+| Export | Purpose |
+|---|---|
+| `aiwgFortemiIndexToCommunityGraph(index, options?)` | Project records + relationships to a `@fortemi/graph` `CommunityGraph` (relationship weights, community strategy via `AiwgIndexGraphOptions`) |
+| `filterAiwgRecordsByPrivacy(records, options?)` | Drop records above the allowed privacy classification (fails closed on unknown values) |
+| `getAiwgFortemiFacets(items)` | Facet-name → value → count aggregation |
+| `createAiwgReviewDecisionExport(source, decisions, generatedAt?)` | Serialize review decisions for round-trip to AIWG |
+| `resolveAiwgFetchUrl` / `encodeAiwgDetailId` / `aiwgDetailHrefForId` | URL/id helpers used by the fetch loaders |
+| `AIWG_SCAN_REQUIRED_FIELDS` / `DEFAULT_AIWG_DUPLICATE_SCAN_MAX_EMBEDDINGS` | Constants |
+
+---
+
 ## @fortemi/graph
 
 Framework-agnostic graph tooling. The projection helpers operate on plain
@@ -1564,9 +1819,25 @@ projects graphs it is given.
 
 ```typescript
 // Layout — deterministic 2D positions + per-node degree/community
+interface LayoutOptions {
+  algorithm?: GraphLayoutAlgorithm
+  width?: number
+  height?: number
+  seed?: number                     // deterministic PRNG seed (`force`)
+  ticks?: number                    // settlement iterations (`force`)
+  nodeRadius?: NodeRadiusResolver   // per-node render radius
+  linkDistance?: number             // target edge length px (`force`)
+  linkStrength?: number             // spring stiffness 0..1 (`force`)
+  chargeStrength?: number           // repulsion magnitude (`force`)
+  collisionPadding?: number         // extra collision spacing (`force`)
+  communityStrength?: number        // pull toward community centroid (`force`)
+  boundsPadding?: number            // min distance from canvas edges
+  pinned?: PositionMap              // positions held fixed during settlement
+  initialPositions?: PositionMap    // warm-start seed positions
+}
 function layoutCommunityGraph(
   graph: CommunityGraph,
-  options?: { algorithm?: GraphLayoutAlgorithm; width?: number; height?: number },
+  options?: LayoutOptions,
 ): PositionedGraph
 
 // Filter — by community, edge kind, node allow-list, or predicate
@@ -1624,6 +1895,100 @@ function deserializeGraphSnapshot(input: GraphSnapshot | string): CommunityGraph
 
 See `packages/graph/README.md` for a complete vanilla-JS host example that
 fetches a snapshot and renders it to SVG using these helpers.
+
+### Render Pipeline
+
+Prepares a `CommunityGraph` for any renderer tier (SVG, Sigma 2D, 3D) as a `RenderGraph` — plain nodes/links with resolved colors, labels, and optionally baked positions.
+
+```typescript
+// CommunityGraph → RenderGraph (colors + labels resolved, positions optional)
+function mapCommunityGraph(graph: CommunityGraph, options?: MapCommunityGraphOptions): RenderGraph
+
+// Layout + map in one step: positions baked in (x/y on every node)
+function bakeRenderGraph(graph: CommunityGraph, options?: BakeRenderGraphOptions): RenderGraph
+
+// Deterministic JSON (sorted nodes/links) for committing snapshots
+function stringifyRenderGraph(graph: RenderGraph): string
+
+// Load a snapshot from a URL, object, or factory; null on failure
+function loadRenderSnapshot(
+  source: string | RenderGraph | (() => Promise<RenderGraph | null> | RenderGraph | null),
+  options?: { fetchImpl?: typeof fetch; requirePositions?: boolean },  // requirePositions default true
+): Promise<RenderGraph | null>
+
+// Guards and palette helpers
+function isRenderGraph(value: unknown): value is RenderGraph
+function hasBakedPositions(graph: RenderGraph): boolean
+function communityRanks(graph: CommunityGraph): Map<string, number>   // largest community = rank 0
+const GREYSCALE_COMMUNITY_RAMP: readonly string[]
+```
+
+### Control Contract
+
+Every renderer tier honors the shared **`GraphControlContract`** — `algorithm`, `filters`, `selectedNodeId` + `onSelectNode`, `onNavigate`, `labelFor`, `colors` — so switching tiers means passing the same options object.
+
+```typescript
+interface GraphControlFilters {
+  communityIds?: string[]
+  edgeKinds?: string[]
+  nodeIds?: string[]
+  minDegree?: number
+}
+
+// The one filter function every tier runs — visibility is identical across tiers
+function applyControlFilters(graph: CommunityGraph | null | undefined, filters?: GraphControlFilters): CommunityGraph
+
+// Shared legend data: { communityId, color, count }[]
+function communityLegend(graph: CommunityGraph | null | undefined, colors?: readonly string[]): GraphLegendEntry[]
+```
+
+### SVG Renderer
+
+```typescript
+function renderCommunityGraph(
+  container: HTMLElement,
+  graph: CommunityGraph,
+  options?: GraphRenderOptions,   // extends GraphControlContract
+): GraphRenderHandle
+
+interface GraphRenderOptions extends GraphControlContract {
+  layoutOptions?: Omit<LayoutOptions, 'algorithm' | 'width' | 'height'>
+  background?: string       // default '#fafafa'
+  interactive?: boolean     // default true (pan/zoom/click)
+  minScale?: number
+  maxScale?: number
+}
+
+interface GraphRenderHandle {
+  update(next: GraphRenderUpdate): void   // patch graph/filters/algorithm/selection/labels
+  focus(nodeId: string | null): void
+  destroy(): void
+  readonly element: SVGSVGElement
+}
+```
+
+Dependency-free DOM/SVG renderer for vanilla-JS hosts — no React required.
+
+### GraphController
+
+```typescript
+class GraphController {
+  constructor(db: GraphControllerDb, options?: GraphControllerOptions)
+  getState(): GraphControllerState
+  subscribe(listener: GraphControllerListener): () => void
+  start(): Promise<void>
+  refresh(): Promise<void>
+  setMode(mode: GraphSourceMode): void
+  setEmbeddingSetSelector(selector: EmbeddingSetSelector): void
+  setCommunitySource(sourceId: string | null): void
+  setFilters(filters: CommunityFilterDefinition): void
+  recompute(): Promise<void>
+  previewDynamicCommunity(filters: CommunityFilterDefinition): Promise<void>
+  saveCurrentCommunity(input: CommunityCreateInput): Promise<CommunitySourceDescriptor>
+}
+```
+
+Graph-source state machine: selects the source mode, loads/derives the `CommunityGraph` through core's repositories, and publishes `GraphControllerState` to subscribers. This is the package's one dependency on `@fortemi/core`; the React `useGraphController` hook wraps it.
 
 ---
 
@@ -2237,3 +2602,76 @@ function useRemote(config: RemoteBackendConfig): {
 ```
 
 Wraps `createRemoteBackend(config)` for React and exposes the Fortemi server-tier `DataBackend` surface with shared loading and error state.
+
+---
+
+### Graph Views and Subpath Exports
+
+Three renderer tiers over the same `@fortemi/graph` data, each on its own subpath so heavy dependencies never enter a consumer's bundle unless imported:
+
+| Subpath | Component | Extra deps | Best for |
+|---|---|---|---|
+| `@fortemi/react/graph` | `GraphView` | none (PGlite-free; React + `@fortemi/graph` only) | Static SVG rendering, docs-map/static tenants |
+| `@fortemi/react/graph-2d` | `SigmaGraphView` | `sigma` + `graphology` + `graphology-layout-forceatlas2` (optional peers, lazy-loaded) | Live force settling, camera focus, LOD labels |
+| `@fortemi/react/graph-3d` | `ForceGraph3DView` | `react-force-graph-3d` + `three` (optional peers, lazy via `React.lazy`) | Orbitable 3D force graph, 2D/3D toggle |
+
+`GraphView` is also re-exported from the package root; `SigmaGraphView` and `ForceGraph3DView` are subpath-only, so their renderers never enter the root module graph. Import `GraphView` from `@fortemi/react/graph` (rather than the root) when you also want to keep PGlite out of your bundle.
+
+#### `GraphView`
+
+```typescript
+interface GraphViewProps {
+  graph: CommunityGraph | null
+  layout?: Partial<GraphLayoutState>
+  filters?: GraphViewFilters
+  selectedNodeId?: string | null
+  onSelectNode?: (nodeId: string) => void
+  onNavigate?: (nodeId: string) => void
+  labelFor?: (nodeId: string) => string
+  draggableNodes?: boolean
+  width?: number
+  height?: number
+  style?: CSSProperties
+}
+```
+
+Static SVG renderer built on `layoutCommunityGraph`/`filterCommunityGraph`. Carries no runtime dependency on `@fortemi/core` (type-only `CommunityGraph` import, erased at build).
+
+#### `SigmaGraphView`
+
+```typescript
+interface SigmaGraphViewProps {
+  graph: CommunityGraph | RenderGraph | null
+  snapshot?: string | RenderGraph        // URL or prebaked RenderGraph; skips live layout
+  filters?: GraphControlFilters
+  labelFor?: (id: string) => string
+  palette?: CommunityPalette
+  onSelectNode?: (nodeId: string) => void
+  onOpenNode?: (nodeId: string) => void
+  settleMs?: number                      // ForceAtlas2 settle duration
+  theme?: Partial<SigmaTheme>
+  height?: number | string
+  style?: CSSProperties
+}
+```
+
+Interactive 2D explorer backed by Sigma + graphology ForceAtlas2, dynamically imported on mount. Renders an install hint if the optional peers are missing.
+
+#### `ForceGraph3DView`
+
+```typescript
+interface ForceGraph3DViewProps {
+  graph: CommunityGraph | RenderGraph | null
+  snapshot?: string | RenderGraph
+  filters?: GraphControlFilters
+  labelFor?: (id: string) => string
+  palette?: CommunityPalette
+  onSelectNode?: (nodeId: string) => void
+  onOpenNode?: (nodeId: string) => void
+  theme?: Partial<ForceGraph3DTheme>
+  height?: number | string
+  style?: CSSProperties
+}
+```
+
+3D force-directed view backed by `react-force-graph-3d` (Three.js), loaded lazily so Three only ships when the view mounts. Accepts the same data and `GraphControlFilters` as the 2D tiers — 2D/3D parity by construction.

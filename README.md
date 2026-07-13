@@ -100,7 +100,7 @@ function Notebook() {
 |---|---|---|
 | `@fortemi/core` | npm | Headless data layer: PGlite repositories, migrations, workers, tool helpers, event bus, capability system |
 | `@fortemi/graph` | npm | Framework-agnostic graph add-on: pure layout, filtering, coloring, degree sizing, bounds/fit, neighborhood, and snapshot helpers, plus a `GraphController` for graph-source selection. No React. Depends on `@fortemi/core`; consumed by `@fortemi/react` and JS-only hosts |
-| `@fortemi/react` | npm | React 19 provider and hooks for notes, search, tags, collections, jobs, capabilities, shards, embedding sets, similarity graphs, and communities |
+| `@fortemi/react` | npm | React 19 provider, hooks for notes, search, tags, collections, jobs, capabilities, shards, embedding sets, similarity graphs, and communities, plus 2D/3D graph views (`GraphView`, `SigmaGraphView`, `ForceGraph3DView`) |
 | `@fortemi/standalone` | workspace app | Vite application for local development and static deployment |
 
 All packages are versioned together — the npm badges above always show the current release.
@@ -171,14 +171,14 @@ The repository uses Node.js 22, pnpm 10, TypeScript, Vitest, Playwright, and Vit
 
 | Guide | Description |
 |---|---|
-| [Getting Started](docs/getting-started.md) | Installation, provider setup, first note, search |
-| [Package Architecture](docs/architecture/package-architecture.md) | Diagram and capability tables for each npm package and how they layer |
-| [Search](docs/search.md) | Text, semantic, and hybrid search modes, filters, RRF fusion, snippets |
-| [Integration Guide](docs/integration.md) | Embedding in React apps, tool helpers, events, jobs, capabilities |
-| [API Reference](docs/api-reference.md) | Full API surface for `@fortemi/core`, `@fortemi/graph`, and `@fortemi/react` |
-| [Deployment](docs/deployment.md) | Static hosting, Vite config, browser compatibility, WebGPU, CI/CD |
-| [Extending](docs/extending.md) | Custom tools, job handlers, capabilities, migrations, hooks |
-| [Supply Chain](docs/security/supply-chain.md) | Release signing, workflow pinning, and publishing controls |
+| [Getting Started](docs/content/getting-started.md) | Installation, provider setup, first note, search |
+| [Package Architecture](.aiwg/architecture/package-architecture.md) | Diagram and capability tables for each npm package and how they layer |
+| [Search](docs/content/guides/search.md) | Text, semantic, and hybrid search modes, filters, RRF fusion, snippets |
+| [Integration Guide](docs/content/guides/integration.md) | Embedding in React apps, tool helpers, events, jobs, capabilities |
+| [API Reference](docs/content/api-reference.md) | Full API surface for `@fortemi/core`, `@fortemi/graph`, and `@fortemi/react` |
+| [Deployment](docs/content/advanced/deployment.md) | Static hosting, Vite config, browser compatibility, WebGPU, CI/CD |
+| [Extending](docs/content/advanced/extending.md) | Custom tools, job handlers, capabilities, migrations, hooks |
+| [Supply Chain](docs/content/security/supply-chain.md) | Release signing, workflow pinning, and publishing controls |
 
 ## License
 
