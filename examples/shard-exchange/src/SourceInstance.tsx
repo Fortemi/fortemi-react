@@ -46,9 +46,11 @@ export function SourceInstance({
       <p className="muted">Its own in-memory database ({data?.total ?? '…'} notes).</p>
       <div className="row">
         <button onClick={doExport} disabled={!seeded || busy}>
-          {busy ? 'Exporting…' : exported ? 'Re-export shard →' : 'Export shard →'}
+          {!seeded ? 'Seeding notes…' : busy ? 'Exporting…' : exported ? 'Re-export shard →' : 'Export shard →'}
         </button>
       </div>
+      {!seeded && <p className="muted report">Seeding this database… the export unlocks when it’s ready.</p>}
+      {exported && <p className="muted report">Shard ready — import it on instance B →</p>}
       <ul className="note-list">
         {data?.items.map((n) => (
           <li key={n.id} className="note">{n.title ?? 'Untitled'}</li>
