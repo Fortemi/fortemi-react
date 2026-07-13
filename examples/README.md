@@ -19,6 +19,23 @@ pnpm dev                     # open the printed URL
 
 Every example supports `pnpm dev`, `pnpm build`, and `pnpm typecheck`.
 
+## Play with all of them — one demo site
+
+Build every example into a single browsable gallery and serve it locally:
+
+```bash
+pnpm examples:site        # build all 19 → examples/_site/, then serve
+# → http://localhost:4321   (click any card to run that example)
+```
+
+`examples:site` runs `vite build --base=/<id>/` for each example into
+`examples/_site/<id>/`, generates a card-grid `index.html`, and serves the tree
+with the `Cross-Origin-Opener-Policy` / `Cross-Origin-Embedder-Policy` headers the
+PGlite examples need (`SharedArrayBuffer`). The output is a plain static site —
+deploy `examples/_site/` to any host that can send those two headers. Split
+steps: `pnpm examples:site:build` and `pnpm examples:site:serve` (`PORT=8080` to
+override the port). `examples/_site/` is generated and git-ignored.
+
 ## Delivered
 
 The no-DB graph tier + the controls playground — **highest reuse value, zero

@@ -24,6 +24,9 @@
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "report:bundle": "pnpm --filter @fortemi/standalone report:bundle",
-    "test:e2e": "pnpm --filter @fortemi/standalone test:e2e"
+    "test:e2e": "pnpm --filter @fortemi/standalone test:e2e",
+    "examples:site": "node examples/scripts/build-site.mjs && node examples/scripts/serve-site.mjs",
+    "examples:site:build": "node examples/scripts/build-site.mjs",
+    "examples:site:serve": "node examples/scripts/serve-site.mjs"
   }
 }

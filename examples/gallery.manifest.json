@@ -1,0 +1,49 @@
+{
+  "title": "Fortémi — examples gallery",
+  "subtitle": "19 runnable @fortemi/* examples, from single-concept starters to composed applications.",
+  "tiers": [
+    {
+      "name": "Graph stack",
+      "blurb": "The @fortemi/graph views as a standalone product — any CommunityGraph / RenderGraph, no database, no downloads.",
+      "examples": [
+        { "id": "graph-svg-vanilla", "ex": "EX-01", "title": "graph-svg-vanilla", "teaser": "Hand-authored graph → renderCommunityGraph SVG. Zero framework." },
+        { "id": "graph-view-static", "ex": "EX-02", "title": "graph-view-static", "teaser": "The PGlite-free React GraphView with selection + the shared filter contract." },
+        { "id": "graph-2d-live", "ex": "EX-03", "title": "graph-2d-live", "teaser": "SigmaGraphView — ForceAtlas2 settle, hover dimming, click-focus, palettes." },
+        { "id": "graph-3d-orbit", "ex": "EX-04", "title": "graph-3d-orbit", "teaser": "ForceGraph3DView — 3D orbit/zoom, lazy-loaded three.js." },
+        { "id": "snapshot-baking", "ex": "EX-05", "title": "snapshot-baking", "teaser": "bakeRenderGraph at build time → loadRenderSnapshot warm start, zero runtime layout.", "prebuild": "bake" },
+        { "id": "graph-controls-playground", "ex": "EX-09", "title": "graph-controls-playground", "teaser": "One control panel over the shared filter contract, switchable across all three renderer tiers." },
+        { "id": "custom-canvas-renderer", "ex": "EX-15", "title": "custom-canvas-renderer", "teaser": "Render a RenderGraph to a hand-written <canvas> — the data-prep layer feeds any surface." }
+      ]
+    },
+    {
+      "name": "Data tier",
+      "blurb": "The full Fortémi database — PGlite (Postgres in WASM) — inside the tab, no server.",
+      "examples": [
+        { "id": "notes-crud-minimal", "ex": "EX-06", "title": "notes-crud-minimal", "teaser": "The complete note lifecycle — useNotes / useCreateNote / useUpdateNote / useDeleteNote, soft-delete." },
+        { "id": "search-basic", "ex": "EX-07", "title": "search-basic", "teaser": "Postgres full-text search (useSearch, mode:'text'), suggestions, ts_headline snippets, facets — no model." },
+        { "id": "shard-reader", "ex": "EX-08", "title": "shard-reader", "teaser": "exportShard bakes a .shard; useShard browses it read-only with no PGlite on the reader side." },
+        { "id": "shard-exchange", "ex": "EX-13", "title": "shard-exchange", "teaser": "Two independent in-memory instances exchange a .shard with a conflict strategy." }
+      ]
+    },
+    {
+      "name": "Intermediate",
+      "blurb": "Where the starters compose.",
+      "examples": [
+        { "id": "notes-graph-explorer", "ex": "EX-10", "title": "notes-graph-explorer", "teaser": "Derive a CommunityGraph from note tags, explore with GraphView, useNote on click — no embeddings." },
+        { "id": "aiwg-index-map", "ex": "EX-11", "title": "aiwg-index-map", "teaser": "Project an AIWG artifact index with useAiwgIndex → toCommunityGraph; communities are the artifact types." },
+        { "id": "local-ai-setup", "ex": "EX-12", "title": "local-ai-setup", "teaser": "Detect tier, discover local servers, opt-in enable('semantic') to download an embedding model, watch useJobQueue.", "downloads": true },
+        { "id": "remote-backend", "ex": "EX-14", "title": "remote-backend", "teaser": "The starters' note-list + search UI, sourced from a Fortémi server via useRemote. The local/remote seam.", "needsServer": true }
+      ]
+    },
+    {
+      "name": "Composed applications",
+      "blurb": "Focused hooks wired into whole surfaces.",
+      "examples": [
+        { "id": "knowledge-garden", "ex": "EX-16", "title": "knowledge-garden", "teaser": "Notes CRUD + search + tag-graph + detail sharing one selection over one PGlite database." },
+        { "id": "docs-atlas", "ex": "EX-17", "title": "docs-atlas", "teaser": "Build-time markdown → tag-similarity graph → baked snapshot; runtime PGlite-free graph + reader. Deployable static.", "prebuild": "atlas" },
+        { "id": "research-workbench", "ex": "EX-18", "title": "research-workbench", "teaser": "Papers with attachments (extracted text), SKOS concepts, citations, and revision provenance over one PGlite database." },
+        { "id": "dual-instance-sync", "ex": "EX-19", "title": "dual-instance-sync", "teaser": "Two divergent instances converge by exchanging shards both ways — idempotent, server-less sync." }
+      ]
+    }
+  ]
+}
