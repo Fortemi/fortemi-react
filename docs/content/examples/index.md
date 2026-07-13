@@ -51,6 +51,7 @@ beyond the built-in views.
 | ID | Example | What it teaches |
 |----|---------|-----------------|
 | EX-10 | `notes-graph-explorer` | Derive a `CommunityGraph` from note **tags** in PGlite, explore it with `GraphView`, and `useNote` the full record on click — no embeddings. |
+| EX-11 | `aiwg-index-map` | Project an AIWG artifact index (agents, commands, rules) into a `CommunityGraph` with `useAiwgIndex` → `toCommunityGraph`; communities are the artifact **types**, `search` spotlights hits. Static index, nothing boots. |
 | EX-15 | `custom-canvas-renderer` | Render a `RenderGraph` to a hand-written `<canvas>` via `bakeRenderGraph` — the graph views are just one consumer of the data-prep layer. No database. |
 | EX-13 | `shard-exchange` | Two independent in-memory instances exchanging a `.shard`: `exportShard` on one, `useImportShard` on the other with a conflict strategy — the poor-man's-sync transport. |
 
@@ -73,7 +74,7 @@ when you copy an example out.
 
 ## Roadmap
 
-The remaining examples — the rest of the intermediate tier (aiwg-index map,
-local-AI setup, remote backend) and two more composed applications (docs atlas,
-research workbench) — are tracked on
+The remaining examples — the rest of the intermediate tier (local-AI setup,
+remote backend) and two more composed applications (docs atlas, research
+workbench) — are tracked on
 [epic #315](https://git.integrolabs.net/Fortemi/fortemi-react/issues/315).

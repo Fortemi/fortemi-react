@@ -49,6 +49,7 @@ The intermediate tier — where the starters compose.
 | ID | Example | Category | Teaches |
 |----|---------|----------|---------|
 | EX-10 | [`notes-graph-explorer`](./notes-graph-explorer) | Data + Graph · React · PGlite | Derive a `CommunityGraph` from note **tags**, explore with `GraphView`, `useNote` on click — no embeddings. |
+| EX-11 | [`aiwg-index-map`](./aiwg-index-map) | Index + Graph · React · no DB boot | `useAiwgIndex` → `toCommunityGraph` projects an AIWG artifact index into communities by type; `search` spotlights hits. Static index, nothing boots. |
 | EX-15 | [`custom-canvas-renderer`](./custom-canvas-renderer) | Graph · React · no DB | Render a `RenderGraph` to a hand-written `<canvas>` via `bakeRenderGraph` — the data-prep layer feeds any surface. |
 | EX-13 | [`shard-exchange`](./shard-exchange) | Data · React · PGlite×2 | Two independent in-memory instances exchange a `.shard`: `exportShard` on one, `useImportShard` on the other with a conflict strategy. |
 
@@ -107,5 +108,5 @@ export default defineConfig({ plugins: [stubFortemiCore()] })
 The remaining tiers from [epic #315](https://git.integrolabs.net/Fortemi/fortemi-react/issues/315),
 built in the epic's suggested order:
 
-- **Intermediate (remaining):** EX-11 `aiwg-index-map`, EX-12 `local-ai-setup`, EX-14 `remote-backend`
+- **Intermediate (remaining):** EX-12 `local-ai-setup`, EX-14 `remote-backend`
 - **Composed apps (remaining):** EX-17 `docs-atlas`, EX-18 `research-workbench`
