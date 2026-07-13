@@ -1,6 +1,6 @@
 {
   "name": "@fortemi/react",
-  "version": "2026.7.3",
+  "version": "2026.7.4",
   "description": "React 19 hooks and FortemiProvider for the @fortemi/core browser-only knowledge management system. 30 hooks covering notes, hybrid search, tags, collections, SKOS concepts, job queue, capability setup, embeddings, Knowledge Shards, and remote backends.",
   "keywords": [
     "fortemi",

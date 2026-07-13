@@ -11,3 +11,4 @@
 ## [2026-07-08 05:13] deploy | aiwg refresh --all --provider openai
 ## [2026-07-12 23:49] lint | doc-sync code-to-docs: 12 drift items fixed across 7 doc files; report .aiwg/reports/doc-sync-audit-2026-07-12.md
 ## [2026-07-13 00:49] update | authored 4 missing api-reference sections (shard, aiwg-index, graph render/controller, react graph views); +422 lines, TOC updated
+## [2026-07-13 01:44] promote | merged PR #309 (doc-sync + API sections) and PR #310 (OIDC trusted publishing) to main; no release cut

@@ -2,7 +2,7 @@
 
 All notable changes to fortemi-react are documented here.
 
-## Unreleased
+## v2026.7.4 - 2026-07-12
 
 ### `@fortemi/react/graph-3d` — 3D force-directed view (#262)
 
@@ -60,6 +60,66 @@ Non-DB consumers can ship a light, PGlite-free bundle.
   already accepts a `StorageBackendFactory`; PGlite is the opt-in default via
   `defaultStorageBackendFactory`. Hosts wanting a different store pass their own
   factory and never touch PGlite.
+
+### `@fortemi/core` — Knowledge Shard blob sidecar + BLAKE3 attachment hashing (#271)
+
+Attachment binaries now round-trip through Knowledge Shards.
+
+- **`exportShard({ includeBlobs: true })`** writes each attachment's bytes as a
+  content-addressed `blobs/<hash>` sidecar entry in the tar, keyed by BLAKE3 —
+  the same hash the Fortémi server records, so a shard exported here verifies
+  there and vice versa. `importShard` restores sidecar blobs into the local blob
+  store and re-links them to their attachments.
+- **ADR-012 (#282):** attachment blob storage design accepted — bytecask
+  substrate with a `BlobStore` interface and schema parity with the server's
+  attachment metadata (MIME type, extracted text; migration `0010`).
+
+### `@fortemi/core` — AIWG index + Knowledge Shard hardening batch (#265–#294)
+
+A sweep of correctness and security fixes across the portable-schema surface:
+
+- **Security:** the SEC1 prototype-pollution fix is completed — the three
+  remaining untrusted-key-on-`{}` sites now use null-prototype accumulators
+  (#286); public index validators return structured `{ valid: false }` results
+  on hostile input instead of throwing (#288).
+- **Knowledge Shards:** `importShard` resolves with a structured
+  `{ success: false, errors }` result on malformed manifests/components instead
+  of rejecting its promise (#285); the URL reader is bounded, `openShard`
+  verifies checksums, export/import size accounting and skip counts are
+  consistent, and shard version comparison is numeric rather than
+  lexicographic (#289); shard version gates and index traversal corrected (#244).
+- **AIWG index:** chunked indexes built from v2 exports with `source.graph`
+  load correctly (#284); the match cache keys on `searchProfile` and privacy
+  filtering fails closed (#290); discovery ranking aligned with the server
+  (#266); the vendored index schema is pinned with a provenance receipt —
+  reviewed source changes only, never fetched at build time (#293).
+- **Pipeline:** attaching a file re-embeds the note, tool JSON no longer
+  surfaces browser-only fields without parity coverage (#291); soft-deleted
+  notes are excluded from embedding, concept-tagging, and criteria
+  embedding-sets (#287).
+- **Quality:** `db-table-parity/` schema-parity test gate added (#256);
+  dead code and duplicated shard/index types and parsers removed (#294).
+
+### Docs — browser-edition positioning, doc-sync, and API reference (#274, #309)
+
+- README and docs repositioned: fortemi-react is the **browser edition of the
+  Fortémi intelligent-database stack** (#274).
+- Full code-to-docs sync: 12 drift items fixed (test/migration/hook counters,
+  stale guide links) and four missing API-reference sections authored —
+  Knowledge Shards, the AIWG index (`@fortemi/core/aiwg-index`), the
+  `@fortemi/graph` render pipeline/controller, and the React graph views with
+  their subpath/peer-dependency matrix (#309).
+
+### Supply chain — npm trusted publishing with provenance (#310)
+
+Public npmjs.org publishing is now **tokenless**. The GitHub-mirror publish
+workflow authenticates via OIDC trusted publishing: npmjs.org verifies the
+workflow's short-lived identity claims against a per-package trusted-publisher
+configuration, and every publish carries a `--provenance` attestation that the
+workflow independently verifies landed before the run may succeed. The
+long-lived `NPMJS_TOKEN` secret is retired. Verification (typecheck, lint,
+1,061 tests, e2e) stays on Gitea CI; the GitHub leg is delivery-only. This
+release is the first shipped through the OIDC pipeline.
 
 ## v2026.7.3 - 2026-07-07
 
