@@ -1,0 +1,24 @@
+{
+  "name": "@fortemi/examples-shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic synthetic CommunityGraph datasets + a tiny seed-notes corpus shared by the @fortemi examples. Not published. No database required.",
+  "license": "AGPL-3.0-only",
+  "exports": {
+    ".": {
+      "types": "./index.ts",
+      "import": "./index.ts"
+    },
+    "./vite-db": {
+      "types": "./vite-db.ts",
+      "import": "./vite-db.ts"
+    }
+  },
+  "dependencies": {
+    "@fortemi/graph": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "^7.3.1"
+  }
+}

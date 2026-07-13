@@ -1,7 +1,7 @@
 {
   "name": "@fortemi/graph",
   "version": "2026.7.4",
-  "description": "Framework-agnostic graph tooling for fortemi: pure TypeScript helpers for community-graph layout, filtering, color assignment, degree sizing, bounds/fit, neighborhood expansion, and static snapshot serialization, plus a framework-agnostic GraphController for graph-source selection. No React. Depends on @fortemi/core; consumed by @fortemi/react and JS-only hosts.",
+  "description": "Framework-agnostic graph tooling for fortemi: pure TypeScript helpers for community-graph layout, filtering, color assignment, degree sizing, bounds/fit, neighborhood expansion, and static snapshot serialization, plus an optional controller subpath for database-backed graph-source selection. No React; consumed by @fortemi/react and JS-only hosts.",
   "keywords": [
     "fortemi",
     "graph",
@@ -35,6 +35,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./controller": {
+      "types": "./dist/controller.d.ts",
+      "import": "./dist/controller.js"
     },
     "./package.json": "./package.json"
   },

@@ -1,6 +1,7 @@
 packages:
   - 'packages/*'
   - 'apps/*'
+  - 'examples/*'
 
 # Supply-chain hardening baseline from AIWG security-engineering.
 # pnpm interprets this value in minutes. 10080 = 7 days.

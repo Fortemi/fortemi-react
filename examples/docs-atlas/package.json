@@ -1,0 +1,28 @@
+{
+  "name": "@fortemi/example-docs-atlas",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "EX-17 — build-time markdown corpus → tag-similarity graph → baked snapshot; runtime PGlite-free graph + reader. Deployable to any static host.",
+  "scripts": {
+    "atlas": "node scripts/build-atlas.mjs",
+    "predev": "node scripts/build-atlas.mjs",
+    "prebuild": "node scripts/build-atlas.mjs",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fortemi/graph": "workspace:*",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.5.0",
+    "typescript": "^5.8.0",
+    "vite": "^7.3.1"
+  }
+}

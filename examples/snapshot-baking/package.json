@@ -1,0 +1,28 @@
+{
+  "name": "@fortemi/example-snapshot-baking",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "EX-05 — bake graph layout at build time (bakeRenderGraph) and warm-start the render at runtime (loadRenderSnapshot) with zero layout pass.",
+  "scripts": {
+    "bake": "node scripts/bake.mjs",
+    "predev": "node scripts/bake.mjs",
+    "prebuild": "node scripts/bake.mjs",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fortemi/graph": "workspace:*",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.5.0",
+    "typescript": "^5.8.0",
+    "vite": "^7.3.1"
+  }
+}

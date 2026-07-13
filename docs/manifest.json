@@ -41,6 +41,12 @@
       ]
     },
     {
+      "id": "examples",
+      "title": "Examples",
+      "summary": "Runnable example apps for the @fortemi packages, from graph starters to composed applications.",
+      "file": "examples/index.md"
+    },
+    {
       "id": "advanced",
       "title": "Advanced",
       "summary": "Extend and deploy fortemi-react.",

@@ -1,0 +1,27 @@
+{
+  "name": "@fortemi/example-remote-backend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "EX-14 — the local/remote seam: the same note-list + search UI, sourced from a Fortémi server via useRemote instead of the in-browser database.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fortemi/core": "workspace:*",
+    "@fortemi/react": "workspace:*",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.5.0",
+    "typescript": "^5.8.0",
+    "vite": "^7.3.1",
+    "@fortemi/examples-shared": "workspace:*"
+  }
+}
