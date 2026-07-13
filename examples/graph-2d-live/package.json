@@ -1,0 +1,30 @@
+{
+  "name": "@fortemi/example-graph-2d-live",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "EX-03 — interactive 2D graph explorer with Sigma + ForceAtlas2 (SigmaGraphView), no database.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fortemi/examples-shared": "workspace:*",
+    "@fortemi/graph": "workspace:*",
+    "@fortemi/react": "workspace:*",
+    "graphology": "^0.26.0",
+    "graphology-layout-forceatlas2": "^0.10.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "sigma": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.5.0",
+    "typescript": "^5.8.0",
+    "vite": "^7.3.1"
+  }
+}

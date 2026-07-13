@@ -59,6 +59,24 @@ jobs:
       - name: Shard + AIWG index conformance gate
         run: pnpm test:portable-contract
 
+  examples:
+    runs-on: ubuntu-latest
+    container: node:22
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      # Examples import the library packages by their published dist entry
+      # points, so build core → graph → react (dependency order) first.
+      - run: pnpm --filter @fortemi/core build
+      - run: pnpm --filter @fortemi/graph build
+      - run: pnpm --filter @fortemi/react build
+      - name: Typecheck all examples
+        run: pnpm -r --filter './examples/**' typecheck
+      - name: Build all examples
+        run: pnpm -r --filter './examples/**' build
+
   e2e:
     runs-on: ubuntu-latest
     container: mcr.microsoft.com/playwright:v1.58.2-noble

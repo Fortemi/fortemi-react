@@ -11,3 +11,6 @@ apps/standalone/test-results/
 
 # docsite (pagenary): generated per-package pages (READMEs are the source of truth)
 docs/content/packages/
+
+# examples: generated build artifacts
+examples/*/public/graph-snapshot.json
