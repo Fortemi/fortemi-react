@@ -130,3 +130,45 @@
 - Indexes updated (Intermediate tables in docs + README; Planned trimmed to EX-12/14/17/18).
 - Remaining toward epic closure: EX-12 local-ai-setup, EX-14 remote-backend, EX-17 docs-atlas,
   EX-18 research-workbench. 15/19 delivered.
+
+## ⚠ LANDMINE: uncommitted @fortemi/graph controller-subpath refactor (working tree, NOT mine)
+- The working tree carries a large UNCOMMITTED library refactor (done earlier this session,
+  omitted from the compaction summary): GraphController moved out of the @fortemi/graph ROOT
+  barrel to a new `@fortemi/graph/controller` subpath (root becomes core-free); graph-example
+  vite.configs simplified (stub plugin removed); `@fortemi/core/aiwg-index-schema` subpath added;
+  packages/react/src/hooks/useGraphController.ts now imports from `@fortemi/graph/controller`;
+  packages/core/src/aiwg-index.ts +132; tsup configs + package.json exports updated;
+  examples/README.md "Keeping PGlite out" section rewritten to describe the subpath (intermingled
+  with my EX-11 rows). Also present: junk tmux-*.log + .aiwg/smiths/toolsmith/*.
+- HEAD (46cd583) is self-consistent WITHOUT the refactor: committed react imports GraphController
+  from `@fortemi/graph` root; graph root exports it; examples/tsconfig.base.json maps @fortemi/graph
+  → source. CI (dist-hidden `pnpm -r typecheck`) passes at HEAD. VERIFIED by pinning graph/index.ts +
+  useGraphController.ts to HEAD, hiding dist, typechecking EX-11 → exit 0.
+- I did NOT commit the refactor or the junk (provenance uncertain; breaking published-surface change;
+  human-authorization). My EX-11 commit (46cd583) contains ONLY: examples/aiwg-index-map/*, EX-11
+  rows in the two indexes, progress file, and the aiwg-index-map lockfile importer.
+- WHEN THE REFACTOR LANDS: examples/tsconfig.base.json MUST add
+  `"@fortemi/graph/controller": ["../packages/graph/src/controller.ts"]` — else every DB example
+  that imports the @fortemi/react root barrel (EX-06/07/08/11/16/19) fails CI typecheck with
+  TS2307 on `@fortemi/graph/controller` (no dist in the CI typecheck job). This is the same class
+  of failure as run #356. Whoever commits the refactor owns adding that path.
+
+## Tranche 6 — EX-17 docs-atlas — 2026-07-13
+- Delivered EX-17 docs-atlas (Tier 3 composed, PGlite-free static).
+- Build step scripts/build-atlas.mjs (node, @fortemi/graph only): read corpus/*.md (frontmatter
+  title+tags + tiny dependency-free md→html), build tag-similarity CommunityGraph, bakeRenderGraph
+  (palette community, layout seed=42 ticks=320, labelFor), stringifyRenderGraph ->
+  public/atlas-snapshot.json + public/atlas-docs.json. predev/prebuild run it.
+- Runtime App.tsx: loadRenderSnapshot(url) + fetch(docs) -> interactive hand-drawn SVG (baked x/y,
+  no runtime layout, click node -> reader), reader renders doc html, internal [link](doc-id) clicks
+  navigate the atlas, community legend (first-tag -> baked node color). Fetch (not import) the JSONs
+  so tsc needs no generated file.
+- vite.config stubs @fortemi/core (mirror committed EX-05) -> dist is PGlite-free: index.html+css+
+  197KB js + 2 atlas JSONs, ZERO wasm. Committed the baked public/*.json (deterministic seed=42),
+  matching EX-05 committing its snapshot.
+- Verified: workspace typecheck green, lint green, build green (30 modules, no PGlite);
+  committed-state dist-hidden typecheck (graph/react pinned to HEAD) EX17_EXIT=0. Robust to the
+  uncommitted graph-controller refactor either way (EX-17 never imports @fortemi/graph/controller).
+- Indexes updated (Composed tables in docs + README; roadmaps trimmed). 16/19 delivered.
+- Remaining: EX-12 local-ai-setup (capabilities/opt-in downloads), EX-14 remote-backend (useRemote,
+  server prereq), EX-18 research-workbench (attachments+provenance+SKOS+citation graph).

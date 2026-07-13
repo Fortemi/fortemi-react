@@ -58,6 +58,7 @@ The composed applications — focused hooks wired into whole surfaces.
 | ID | Example | Category | Teaches |
 |----|---------|----------|---------|
 | EX-16 | [`knowledge-garden`](./knowledge-garden) | Composed · React · PGlite | Notes CRUD + search + tag-graph + detail sharing one selection over one database. |
+| EX-17 | [`docs-atlas`](./docs-atlas) | Composed · React · no DB (static) | Build-time markdown corpus → tag-similarity graph → baked snapshot; runtime PGlite-free graph + reader. Deployable static. |
 | EX-19 | [`dual-instance-sync`](./dual-instance-sync) | Composed · React · PGlite×2 | Two divergent instances converge by exchanging shards both ways — idempotent, server-less sync. |
 
 ## Shared infrastructure
@@ -88,4 +89,4 @@ The remaining tiers from [epic #315](https://git.integrolabs.net/Fortemi/fortemi
 built in the epic's suggested order:
 
 - **Intermediate (remaining):** EX-12 `local-ai-setup`, EX-14 `remote-backend`
-- **Composed apps (remaining):** EX-17 `docs-atlas`, EX-18 `research-workbench`
+- **Composed apps (remaining):** EX-18 `research-workbench`

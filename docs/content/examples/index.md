@@ -62,6 +62,7 @@ Real surfaces: the focused hooks composed into whole apps.
 | ID | Example | What it teaches |
 |----|---------|-----------------|
 | EX-16 | `knowledge-garden` | Notes CRUD + full-text search + a tag-derived graph + detail, all sharing one selection over a single PGlite database. |
+| EX-17 | `docs-atlas` | Build-time: a markdown corpus → tag-similarity graph → **baked snapshot**. Runtime: PGlite-free graph + reader that renders baked coordinates with no layout pass — deployable to any static host. |
 | EX-19 | `dual-instance-sync` | Two divergent instances converge by exchanging shards both ways — an idempotent, server-less sync loop. |
 
 ## Shared dataset
@@ -75,6 +76,6 @@ when you copy an example out.
 ## Roadmap
 
 The remaining examples — the rest of the intermediate tier (local-AI setup,
-remote backend) and two more composed applications (docs atlas, research
-workbench) — are tracked on
+remote backend) and one more composed application (research workbench) — are
+tracked on
 [epic #315](https://git.integrolabs.net/Fortemi/fortemi-react/issues/315).
