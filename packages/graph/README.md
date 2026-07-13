@@ -177,8 +177,8 @@ The same `CommunityGraph` can be drawn by more than one renderer *tier*. Every t
 |---|---|---|---|
 | **JS-only SVG** | `renderCommunityGraph` (`@fortemi/graph`) | none | Static sites, SSR/snapshot pipelines, no-framework hosts |
 | **React (static)** | `GraphView` (`@fortemi/react`) | React | React apps wanting the component + hooks ecosystem |
-| **Interactive 2D** | Sigma tier (planned, #263) | `sigma` + `graphology` (optional, lazy) | Live force settling, camera focus, LOD labels |
-| **3D** | `Graph3D` (planned, #262) | `react-force-graph-3d` (optional, lazy) | Orbitable 3D force graph, 2D/3D toggle |
+| **Interactive 2D** | `SigmaGraphView` (`@fortemi/react/graph-2d`) | `sigma` + `graphology` (optional, lazy) | Live force settling, camera focus, LOD labels |
+| **3D** | `ForceGraph3DView` (`@fortemi/react/graph-3d`) | `react-force-graph-3d` (optional, lazy) | Orbitable 3D force graph, 2D/3D toggle |
 
 `communityLegend(graph)` returns `{ communityId, color, count }[]` — the shared data any tier can render as a legend and use to drive the `communityIds` show/hide filter. `applyControlFilters(graph, filters)` is the one filter function every tier runs, so visibility is identical across tiers.
 
