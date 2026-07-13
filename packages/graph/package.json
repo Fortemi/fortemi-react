@@ -1,6 +1,6 @@
 {
   "name": "@fortemi/graph",
-  "version": "2026.7.4",
+  "version": "2026.7.5",
   "description": "Framework-agnostic graph tooling for fortemi: pure TypeScript helpers for community-graph layout, filtering, color assignment, degree sizing, bounds/fit, neighborhood expansion, and static snapshot serialization, plus an optional controller subpath for database-backed graph-source selection. No React; consumed by @fortemi/react and JS-only hosts.",
   "keywords": [
     "fortemi",

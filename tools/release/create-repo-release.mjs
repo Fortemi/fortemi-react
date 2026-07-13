@@ -15,7 +15,8 @@
 //   RELEASE_API        API base — GitHub: https://api.github.com ; Gitea: <server>/api/v1
 //   RELEASE_REPO       owner/repo
 //   RELEASE_PACK_DIR   dir holding fortemi-<pkg>-<version>.tgz (default /tmp/fortemi-publish-check)
-//   RELEASE_NOTES_DIR  dir holding <tag>.md release notes (default docs/releases)
+//   RELEASE_NOTES_DIR  dir holding <tag>.md release notes (default docs/releases,
+//                      fallback docs/content/releases)
 
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -47,8 +48,9 @@ if (platform !== 'github' && platform !== 'gitea') {
 const version = tag.replace(/^v/, '');
 const prerelease = version.includes('-');
 const title = `fortemi-react ${tag}`;
-const notesPath = join(notesDir, `${tag}.md`);
-const body = existsSync(notesPath) ? readFileSync(notesPath, 'utf8') : title;
+const notesPath = [join(notesDir, `${tag}.md`), join('docs/content/releases', `${tag}.md`)]
+  .find((candidate) => existsSync(candidate));
+const body = notesPath ? readFileSync(notesPath, 'utf8') : title;
 
 const authHeader = platform === 'github' ? `Bearer ${token}` : `token ${token}`;
 const jsonHeaders = {
