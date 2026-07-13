@@ -9,9 +9,16 @@
     ".": {
       "types": "./index.ts",
       "import": "./index.ts"
+    },
+    "./vite-db": {
+      "types": "./vite-db.ts",
+      "import": "./vite-db.ts"
     }
   },
   "dependencies": {
     "@fortemi/graph": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "^7.3.1"
   }
 }

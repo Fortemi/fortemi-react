@@ -28,6 +28,20 @@ bundle (EX-01 builds to 14 KB).
 | EX-05 | `snapshot-baking` | `bakeRenderGraph` at build time → `loadRenderSnapshot` warm start: instant render with no runtime layout. |
 | EX-09 | `graph-controls-playground` | One control panel driving the shared filter contract across `GraphView`, Sigma, and 3D — switch renderers without rewiring. |
 
+## The data layer, in the browser
+
+The core-data tier runs the full Fortémi database — **PGlite (Postgres compiled
+to WASM)** — inside the tab, no server. These examples legitimately ship the
+~9 MB engine (it is the point); they mount `FortemiProvider` with
+`persistence="memory"` for an instant, disposable demo and share the PGlite/Vite
+wiring via `@fortemi/examples-shared/vite-db`.
+
+| ID | Example | What it teaches |
+|----|---------|-----------------|
+| EX-06 | `notes-crud-minimal` | The complete note lifecycle over PGlite — `useNotes` / `useCreateNote` / `useUpdateNote` / `useDeleteNote`, soft-delete included. |
+| EX-07 | `search-basic` | Postgres full-text search with `useSearch` (`mode: 'text'`), prefix suggestions, `ts_headline` snippets, and tag facets — lexical only, no model download. |
+| EX-08 | `shard-reader` | The Knowledge Shard portability loop: `exportShard(db)` bakes a `.shard`, then `useShard` browses it read-only with **no PGlite** on the reader side. |
+
 ## Shared dataset
 
 Graph examples use `@fortemi/examples-shared` (in `examples/_shared/`) —

@@ -12,3 +12,7 @@
 ## [2026-07-12 23:49] lint | doc-sync code-to-docs: 12 drift items fixed across 7 doc files; report .aiwg/reports/doc-sync-audit-2026-07-12.md
 ## [2026-07-13 00:49] update | authored 4 missing api-reference sections (shard, aiwg-index, graph render/controller, react graph views); +422 lines, TOC updated
 ## [2026-07-13 01:44] promote | merged PR #309 (doc-sync + API sections) and PR #310 (OIDC trusted publishing) to main; no release cut
+## [2026-07-13 02:17] promote | v2026.7.4 tagged (release key) on 5dc60a9; pushed origin+github — first OIDC npm publish
+## [2026-07-13 02:55] update | v2026.7.4 fully delivered: npm OIDC+provenance verified, GitHub release + tarballs, docsite deployed; CI fixes merged (#314, closes #313)
+## [2026-07-13 05:24] create | examples/ program tranche 1 (EX-01..05,09 + infra) — PR #316, Refs #315
+## [2026-07-13 05:49] create | examples EX-06/07/08 core-data tier (notes-crud, search, shard-reader) + _shared/vite-db helper (Refs #315)
