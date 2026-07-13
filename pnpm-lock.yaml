@@ -516,6 +516,40 @@ importers:
         specifier: ^7.3.1
         version: 7.3.1(@types/node@22.19.15)
 
+  examples/remote-backend:
+    dependencies:
+      '@fortemi/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@fortemi/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      react:
+        specifier: ^19.2.4
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.2.4
+        version: 19.2.4(react@19.2.4)
+    devDependencies:
+      '@fortemi/examples-shared':
+        specifier: workspace:*
+        version: link:../_shared
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.14)
+      '@vitejs/plugin-react':
+        specifier: ^4.5.0
+        version: 4.7.0(vite@7.3.1(@types/node@22.19.15))
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+      vite:
+        specifier: ^7.3.1
+        version: 7.3.1(@types/node@22.19.15)
+
   examples/search-basic:
     dependencies:
       '@fortemi/examples-shared':

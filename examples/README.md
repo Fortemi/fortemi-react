@@ -51,6 +51,7 @@ The intermediate tier — where the starters compose.
 | EX-10 | [`notes-graph-explorer`](./notes-graph-explorer) | Data + Graph · React · PGlite | Derive a `CommunityGraph` from note **tags**, explore with `GraphView`, `useNote` on click — no embeddings. |
 | EX-11 | [`aiwg-index-map`](./aiwg-index-map) | Index + Graph · React · no DB boot | `useAiwgIndex` → `toCommunityGraph` projects an AIWG artifact index into communities by type; `search` spotlights hits. Static index, nothing boots. |
 | EX-12 | [`local-ai-setup`](./local-ai-setup) | Capabilities · React · PGlite | Detect tier (`useGpuCapabilities`/`useInferenceCapabilities`), discover local servers (`useLocalDiscovery`), **opt-in** `enable('semantic')` to download an embedding model, watch `useJobQueue`. The one example that downloads — on click only. |
+| EX-14 | [`remote-backend`](./remote-backend) | Remote · React · no DB boot | The PGlite starters' note-list + search UI, sourced from a Fortémi server via `useRemote`. The local/remote seam (needs a running server). |
 | EX-15 | [`custom-canvas-renderer`](./custom-canvas-renderer) | Graph · React · no DB | Render a `RenderGraph` to a hand-written `<canvas>` via `bakeRenderGraph` — the data-prep layer feeds any surface. |
 | EX-13 | [`shard-exchange`](./shard-exchange) | Data · React · PGlite×2 | Two independent in-memory instances exchange a `.shard`: `exportShard` on one, `useImportShard` on the other with a conflict strategy. |
 
@@ -86,8 +87,6 @@ behind `@fortemi/graph/controller`, so static graph views do not pull
 
 ## Planned
 
-The remaining tiers from [epic #315](https://git.integrolabs.net/Fortemi/fortemi-react/issues/315),
-built in the epic's suggested order:
+One example remains from [epic #315](https://git.integrolabs.net/Fortemi/fortemi-react/issues/315):
 
-- **Intermediate (remaining):** EX-14 `remote-backend`
 - **Composed apps (remaining):** EX-18 `research-workbench`

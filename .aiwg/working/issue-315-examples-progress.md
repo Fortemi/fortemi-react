@@ -211,3 +211,18 @@
 - Indexes updated (Intermediate tables + roadmaps trimmed). 17/19 delivered.
 - Remaining: EX-14 remote-backend (useRemote; needs a running Fortémi server — honest compiling demo),
   EX-18 research-workbench (attachments + provenance + SKOS + citation graph, composed).
+
+## Tranche 8 — EX-14 remote-backend — 2026-07-13
+- Delivered EX-14 remote-backend (Tier 2 — the local/remote seam). Intermediate tier now COMPLETE.
+- useRemote({baseUrl, authToken?}) — context-free REST DataBackend client (createRemoteBackend).
+  No FortemiProvider. Same note-list + full-text search + detail UI as EX-06/07, but every read
+  hits a Fortémi server: listNotes, search (server facets), getNoteFull (content+concepts+provenance).
+- Configurable server URL + optional bearer token inputs. With no server reachable, errors surface a
+  clean banner ("start a Fortémi server…"); the demo compiles + renders regardless (honest server-prereq).
+- Types: BackendNote/BackendNoteFull/BackendSearchHit/RemoteBackendConfig from @fortemi/core.
+- vite: fortemiDbConfig (the @fortemi/react root barrel pulls the PGlite module worker -> needs
+  worker.format:'es'). Bundles idle PGlite (documented: react root carries the engine, never boots).
+- Verified: workspace typecheck (dist-hidden) = 0, lint = 0, build = 0 (282KB js + idle PGlite).
+- Indexes updated (Intermediate table + roadmaps; README Planned trimmed to just EX-18). 18/19 delivered.
+- Remaining: EX-18 research-workbench (attachments + provenance + SKOS + citation graph, composed PGlite).
+  After EX-18: convert PR #316 Refs -> Closes #315, post AL cycle comment, verify CI green.

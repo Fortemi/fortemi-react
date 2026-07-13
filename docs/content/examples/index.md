@@ -53,6 +53,7 @@ beyond the built-in views.
 | EX-10 | `notes-graph-explorer` | Derive a `CommunityGraph` from note **tags** in PGlite, explore it with `GraphView`, and `useNote` the full record on click — no embeddings. |
 | EX-11 | `aiwg-index-map` | Project an AIWG artifact index (agents, commands, rules) into a `CommunityGraph` with `useAiwgIndex` → `toCommunityGraph`; communities are the artifact **types**, `search` spotlights hits. Static index, nothing boots. |
 | EX-12 | `local-ai-setup` | Progressive AI enhancement: `useGpuCapabilities` / `useInferenceCapabilities` detect the tier, `useLocalDiscovery` finds Ollama/LM Studio, and an **opt-in** `enable('semantic')` downloads an embedding model — then `useJobQueue` shows the pipeline. The one example that downloads, and only on click. |
+| EX-14 | `remote-backend` | The same note-list + search UI as the PGlite starters, sourced from a Fortémi **server** via `useRemote` — swap the backend, keep the surface. The local/remote seam. |
 | EX-15 | `custom-canvas-renderer` | Render a `RenderGraph` to a hand-written `<canvas>` via `bakeRenderGraph` — the graph views are just one consumer of the data-prep layer. No database. |
 | EX-13 | `shard-exchange` | Two independent in-memory instances exchanging a `.shard`: `exportShard` on one, `useImportShard` on the other with a conflict strategy — the poor-man's-sync transport. |
 
@@ -76,6 +77,6 @@ when you copy an example out.
 
 ## Roadmap
 
-The remaining examples — a remote-backend intermediate demo and one more
-composed application (research workbench) — are tracked on
+One example remains — the `research-workbench` composed application
+(attachments, provenance, and a citation-style graph) — tracked on
 [epic #315](https://git.integrolabs.net/Fortemi/fortemi-react/issues/315).
