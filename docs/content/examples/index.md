@@ -54,6 +54,15 @@ beyond the built-in views.
 | EX-15 | `custom-canvas-renderer` | Render a `RenderGraph` to a hand-written `<canvas>` via `bakeRenderGraph` — the graph views are just one consumer of the data-prep layer. No database. |
 | EX-13 | `shard-exchange` | Two independent in-memory instances exchanging a `.shard`: `exportShard` on one, `useImportShard` on the other with a conflict strategy — the poor-man's-sync transport. |
 
+## Composed applications
+
+Real surfaces: the focused hooks composed into whole apps.
+
+| ID | Example | What it teaches |
+|----|---------|-----------------|
+| EX-16 | `knowledge-garden` | Notes CRUD + full-text search + a tag-derived graph + detail, all sharing one selection over a single PGlite database. |
+| EX-19 | `dual-instance-sync` | Two divergent instances converge by exchanging shards both ways — an idempotent, server-less sync loop. |
+
 ## Shared dataset
 
 Graph examples use `@fortemi/examples-shared` (in `examples/_shared/`) —
@@ -65,6 +74,6 @@ when you copy an example out.
 ## Roadmap
 
 The remaining examples — the rest of the intermediate tier (aiwg-index map,
-local-AI setup, remote backend) and the composed applications (knowledge garden,
-docs atlas, research workbench, dual-instance sync) — are tracked on
+local-AI setup, remote backend) and two more composed applications (docs atlas,
+research workbench) — are tracked on
 [epic #315](https://git.integrolabs.net/Fortemi/fortemi-react/issues/315).
