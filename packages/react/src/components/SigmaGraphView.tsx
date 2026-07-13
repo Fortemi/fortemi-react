@@ -9,7 +9,7 @@
 // `@fortemi/graph` (#264) — pass one directly, or a `CommunityGraph` we map for
 // you, optionally warm-started from a baked-position snapshot.
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import type { CommunityGraph } from '@fortemi/core'
 import {
   applyControlFilters,
@@ -123,7 +123,16 @@ export function SigmaGraphView({
   onSelectRef.current = onSelectNode
   onOpenRef.current = onOpenNode
 
-  const rendered = toRenderGraph(graph, { filters, labelFor, palette })
+  // Memoise the mapped RenderGraph on a *stable* signature of the inputs — not
+  // the (commonly inline) `filters` object identity. Without this, `rendered` is
+  // a fresh object every render, the rebuild effect below re-runs on every render,
+  // and its own setState calls (loading → ready) re-trigger it: an infinite
+  // re-init loop that reads on screen as flicker.
+  const filtersKey = JSON.stringify(filters ?? null)
+  const rendered = useMemo(
+    () => toRenderGraph(graph, { filters, labelFor, palette }),
+    [graph, filtersKey, palette, labelFor],
+  )
 
   useEffect(() => {
     if (!rendered) {

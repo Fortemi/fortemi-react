@@ -183,7 +183,17 @@ export function ForceGraph3DView({
   onSelectRef.current = onSelectNode
   onOpenRef.current = onOpenNode
 
-  const rendered = toRenderGraph(graph, { filters, labelFor, palette })
+  // Memoise the mapped RenderGraph on a *stable* signature of the inputs — not
+  // the (commonly inline) `filters` object identity. Without this, `rendered` is
+  // a fresh object every render, the load effect below re-runs every render and
+  // re-inits the 3D scene, so the force simulation restarts from origin and never
+  // settles (nodes pile on the root; a drag just paints one unsettled frame) —
+  // and the loading→ready setState churn reads as flicker.
+  const filtersKey = JSON.stringify(filters ?? null)
+  const rendered = useMemo(
+    () => toRenderGraph(graph, { filters, labelFor, palette }),
+    [graph, filtersKey, palette, labelFor],
+  )
 
   // Size the renderer to its container (react-force-graph defaults to window).
   useEffect(() => {
