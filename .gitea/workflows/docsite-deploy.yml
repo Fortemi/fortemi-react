@@ -10,13 +10,16 @@
 #
 # Published to docs.fortemi.com/react (a sub-path of the shared docs host).
 #
-# Required secrets:
-#   DEPLOY_SSH_KEY   — private key for the deploy user
+# Required Gitea secrets:
+#   BAO_CI_ROLE_ID   — OpenBao AppRole role_id for this repo
+#   BAO_CI_SECRET_ID — OpenBao AppRole secret_id for this repo
+#
+# Required Gitea variables:
 #   DEPLOY_HOST      — docs server hostname
 #   DEPLOY_PORT      — docs server SSH port
 #   DEPLOY_USER      — deploy user on the docs server
-#   DEPLOY_PATH      — absolute path on the docs server (with trailing slash),
-#                      e.g. /home/roctinam/production-deploy/docs-fortemi-com/react/
+#   DEPLOY_PATH      — absolute path on the docs server, e.g.
+#                      /home/roctinam/production-deploy/docs-fortemi-com/react/
 
 name: Docsite Deploy
 
@@ -57,31 +60,70 @@ jobs:
           echo "Build verification passed"
           ls -lah docsite/dist/fortemi-react/
 
-      - name: Install SSH tools
-        run: apt-get update && apt-get install -y --no-install-recommends openssh-client rsync
+      - name: Install deployment tools
+        run: apt-get update && apt-get install -y --no-install-recommends curl jq openssh-client rsync
+
+      - name: Validate deploy configuration
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          for name in DEPLOY_HOST DEPLOY_PORT DEPLOY_USER DEPLOY_PATH; do
+            if [ -z "${!name:-}" ]; then
+              echo "$name Gitea variable is required" >&2
+              exit 1
+            fi
+          done
+
+      - name: Fetch deploy key from OpenBao
+        env:
+          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
+          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
+        run: ci/openbao-fetch.sh --spec ci/openbao-fetch.docsite-deploy.spec
 
       - name: Configure SSH key
         run: |
+          set -euo pipefail
+          test -s "${DEPLOY_SSH_KEY_FILE:?DEPLOY_SSH_KEY_FILE is required}"
           mkdir -p ~/.ssh
-          printf '%s\n' '${{ secrets.DEPLOY_SSH_KEY }}' > ~/.ssh/deploy_key
+          cp "$DEPLOY_SSH_KEY_FILE" ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
       - name: Deploy to docs server
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
         run: |
+          set -euo pipefail
+          DEPLOY_PATH="${DEPLOY_PATH%/}/"
           rsync -avz --delete \
-            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_PORT }} -o StrictHostKeyChecking=accept-new" \
+            -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new" \
             docsite/dist/fortemi-react/ \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}
+            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
 
       - name: Verify deployment
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
         run: |
-          ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_PORT }} -o StrictHostKeyChecking=accept-new \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            'test -f ${{ secrets.DEPLOY_PATH }}index.html && echo "Deploy verified: index.html present" || { echo "Deploy failed: index.html missing"; exit 1; }'
+          set -euo pipefail
+          DEPLOY_PATH="${DEPLOY_PATH%/}/"
+          ssh -i ~/.ssh/deploy_key -p "$DEPLOY_PORT" -o StrictHostKeyChecking=accept-new \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "test -f '${DEPLOY_PATH}index.html' && echo 'Deploy verified: index.html present' || { echo 'Deploy failed: index.html missing'; exit 1; }"
 
-      - name: Cleanup SSH key
+      - name: Cleanup SSH keys
         if: always()
-        run: rm -f ~/.ssh/deploy_key
+        run: |
+          rm -f ~/.ssh/deploy_key
+          ci/openbao-fetch.sh --cleanup
 
       - name: Log deployment result
         if: success()

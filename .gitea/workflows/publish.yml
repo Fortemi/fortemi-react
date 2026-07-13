@@ -36,6 +36,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
+      - name: Install OpenBao fetch dependencies
+        run: apt-get update && apt-get install -y --no-install-recommends curl jq
+
       - name: Setup pnpm
         uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
 
@@ -165,16 +168,20 @@ jobs:
           }
           CHECK
 
+      - name: Fetch publish token from OpenBao
+        env:
+          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
+          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
+        run: ci/openbao-fetch.sh --spec ci/openbao-fetch.publish.spec
+
       - name: Publish packages to Gitea registry
         env:
-          GT_PUBLISH_TOKEN: ${{ secrets.GT_PUBLISH_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
         run: |
           set -euo pipefail
-          NODE_AUTH_TOKEN="${GT_PUBLISH_TOKEN:-${NPM_TOKEN:-}}"
+          NODE_AUTH_TOKEN="${GT_PUBLISH_TOKEN:-}"
           if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "GT_PUBLISH_TOKEN or NPM_TOKEN is required for internal Gitea package publishing" >&2
+            echo "GT_PUBLISH_TOKEN is required for internal Gitea package publishing" >&2
             exit 1
           fi
 
@@ -239,8 +246,10 @@ jobs:
         env:
           RELEASE_PLATFORM: gitea
           RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
-          RELEASE_TOKEN: ${{ secrets.GT_PUBLISH_TOKEN }}
           RELEASE_API: ${{ github.server_url }}/api/v1
           RELEASE_REPO: ${{ github.repository }}
           RELEASE_PACK_DIR: /tmp/fortemi-publish-check
-        run: node tools/release/create-repo-release.mjs
+        run: |
+          set -euo pipefail
+          export RELEASE_TOKEN="${GT_PUBLISH_TOKEN:?GT_PUBLISH_TOKEN is required}"
+          node tools/release/create-repo-release.mjs
