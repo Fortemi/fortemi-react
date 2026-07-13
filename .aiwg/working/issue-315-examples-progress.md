@@ -226,3 +226,31 @@
 - Indexes updated (Intermediate table + roadmaps; README Planned trimmed to just EX-18). 18/19 delivered.
 - Remaining: EX-18 research-workbench (attachments + provenance + SKOS + citation graph, composed PGlite).
   After EX-18: convert PR #316 Refs -> Closes #315, post AL cycle comment, verify CI green.
+
+## Tranche 9 — EX-18 research-workbench — 2026-07-13 — EPIC COMPLETE (19/19)
+- Delivered EX-18 research-workbench (Tier 3 — composed application). This is the LAST example.
+- Composed app over one in-browser PGlite database. seed.ts seeds a 7-paper library from corpus.ts:
+    * a note per paper (NotesRepository.create, tagged by area)
+    * an ATTACHMENT per paper carrying the full text as extracted_text (manageAttachments 'attach')
+    * a SKOS scheme + area/method concepts, each note tagged (SkosRepository.createScheme/createConcept/tagNote)
+    * citation links (manageLinks 'create', link_type 'cites') for the DAG
+  Returns a citation CommunityGraph (communities = 3 research areas) for GraphView.
+- Surface wires four read paths into one shared selection:
+    * GraphView (citation edges; click focuses citation neighborhood via filters.nodeIds)
+    * useNote (title/abstract), useNoteConcepts (SKOS chips), manageAttachments 'list' (extracted-text preview),
+      manageLinks 'list' (Cites / Cited by), useNoteProvenance (creation + edits).
+    * "Add revision" -> useUpdateNote writes a note_revision; pane remounts (key=selected:tick) so the
+      provenance timeline re-reads and shows "User edit (revision #N)".
+- NO downloads: extracted text is the corpus body; concepts assigned directly (not the embedding pipeline).
+  Honestly documented in README (enable 'semantic' to auto-tag/revise; see EX-12).
+- Verified: workspace typecheck (dist-hidden, all 3 packages + all 19 examples) = 0, EX-18 build = 0
+  (bundles idle PGlite worker as expected for a DB example), lint = 0.
+- Indexes: EX-18 added to docs + README composed tables; both roadmaps closed to "Status: 19/19 delivered".
+
+### EPIC #315 STATUS: all 19 examples delivered + infra.
+Tiers: graph (EX-01/02/03/04/05/09), data (EX-06/07/08), intermediate (EX-10/11/12/13/14/15),
+composed (EX-16/17/18/19). Every example: standalone Vite app + README, @fortemi/* names only,
+CI-safe (dist-hidden `pnpm -r typecheck` = 0), registered in both indexes. Only EX-12 downloads
+(capabilities), and only on user click.
+NEXT (closure): convert PR #316 body Refs #315 -> Closes #315, post AL cycle comment on the epic,
+confirm the examples CI job is green on the merge.

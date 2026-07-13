@@ -65,6 +65,7 @@ Real surfaces: the focused hooks composed into whole apps.
 |----|---------|-----------------|
 | EX-16 | `knowledge-garden` | Notes CRUD + full-text search + a tag-derived graph + detail, all sharing one selection over a single PGlite database. |
 | EX-17 | `docs-atlas` | Build-time: a markdown corpus → tag-similarity graph → **baked snapshot**. Runtime: PGlite-free graph + reader that renders baked coordinates with no layout pass — deployable to any static host. |
+| EX-18 | `research-workbench` | A research library over one PGlite database: papers with **attachments** (`manageAttachments`, extracted text), **SKOS concept** tags (`useNoteConcepts`), **citation** links (`manageLinks`), and **revision provenance** (`useNoteProvenance` + `useUpdateNote`), all sharing one selection with a citation `GraphView`. No downloads. |
 | EX-19 | `dual-instance-sync` | Two divergent instances converge by exchanging shards both ways — an idempotent, server-less sync loop. |
 
 ## Shared dataset
@@ -75,8 +76,8 @@ deterministic synthetic `CommunityGraph` datasets (`smallGraph`, `mediumGraph`,
 infrastructure, not a published package; replace it with your own graph data
 when you copy an example out.
 
-## Roadmap
+## Status
 
-One example remains — the `research-workbench` composed application
-(attachments, provenance, and a citation-style graph) — tracked on
-[epic #315](https://git.integrolabs.net/Fortemi/fortemi-react/issues/315).
+All 19 examples from [epic #315](https://git.integrolabs.net/Fortemi/fortemi-react/issues/315)
+are delivered — the graph stack, the PGlite data tier, the intermediate
+compositions, and the four composed applications.

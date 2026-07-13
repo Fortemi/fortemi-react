@@ -61,6 +61,7 @@ The composed applications — focused hooks wired into whole surfaces.
 |----|---------|----------|---------|
 | EX-16 | [`knowledge-garden`](./knowledge-garden) | Composed · React · PGlite | Notes CRUD + search + tag-graph + detail sharing one selection over one database. |
 | EX-17 | [`docs-atlas`](./docs-atlas) | Composed · React · no DB (static) | Build-time markdown corpus → tag-similarity graph → baked snapshot; runtime PGlite-free graph + reader. Deployable static. |
+| EX-18 | [`research-workbench`](./research-workbench) | Composed · React · PGlite | Papers with **attachments** (extracted text), **SKOS concept** tags, **citation** links, and **revision provenance** — `manageAttachments` / `useNoteConcepts` / `manageLinks` / `useNoteProvenance` / `useUpdateNote`, one selection over a citation `GraphView`. No downloads. |
 | EX-19 | [`dual-instance-sync`](./dual-instance-sync) | Composed · React · PGlite×2 | Two divergent instances converge by exchanging shards both ways — idempotent, server-less sync. |
 
 ## Shared infrastructure
@@ -85,8 +86,7 @@ consumer-side externals or aliases. The database-backed `GraphController` lives
 behind `@fortemi/graph/controller`, so static graph views do not pull
 `@fortemi/core`, the PGlite worker, or WASM assets into their module graph.
 
-## Planned
+## Status
 
-One example remains from [epic #315](https://git.integrolabs.net/Fortemi/fortemi-react/issues/315):
-
-- **Composed apps (remaining):** EX-18 `research-workbench`
+All 19 examples from [epic #315](https://git.integrolabs.net/Fortemi/fortemi-react/issues/315)
+are delivered.
