@@ -172,3 +172,42 @@
 - Indexes updated (Composed tables in docs + README; roadmaps trimmed). 16/19 delivered.
 - Remaining: EX-12 local-ai-setup (capabilities/opt-in downloads), EX-14 remote-backend (useRemote,
   server prereq), EX-18 research-workbench (attachments+provenance+SKOS+citation graph).
+
+## PR #321 landed the graph-controller refactor — landmine RESOLVED — 2026-07-13
+- After EX-11 (46cd583) pushed, PR #321 `fix(core,graph): restore vendorable graph-free subpaths`
+  merged onto feat/315-examples-program (a4f32ef + merge 1ee8f7a): the exact graph-controller-subpath
+  refactor from my working tree, now committed. It DID add the required
+  `"@fortemi/graph/controller": ["../packages/graph/src/controller.ts"]` to examples/tsconfig.base.json
+  (+ root tsconfig.base.json), so DB examples resolve on the new base. Landmine handled by #321.
+- My local EX-17 (35bbe9d) had diverged; push was rejected (force_push_policy: never). Resolution:
+  discarded the now-redundant working-tree refactor copy (`git restore .`; verified all worktree
+  mods ⊆ #321's file set), rebased EX-17 onto origin (clean — README hunks non-overlapping),
+  rebuilt libs (core→graph→react; graph/dist/controller.js + core/dist/aiwg-index-schema.js now exist).
+- Verified on refactored base: dist-hidden `pnpm -r typecheck` = 0 (the CI typecheck job), lint = 0,
+  EX-11 + EX-17 build = 0, EX-17 dist still PGlite-free. Pushed 9edc320. Branch CI-safe.
+- Note: graph example vite.configs on the base no longer stub @fortemi/core (root is core-free now).
+  EX-17's vite.config still stubs — harmless no-op on the refactored base (nothing imports @fortemi/core
+  in EX-17's runtime), keeps it robust if copied out against an older graph. EX-11 still bundles idle
+  PGlite via the @fortemi/react root barrel (documented tradeoff).
+
+## Tranche 7 — EX-12 local-ai-setup — 2026-07-13
+- Delivered EX-12 local-ai-setup (Tier 2 capabilities — THE download example, opt-in only).
+- Real detection: useGpuCapabilities + useInferenceCapabilities (WebGPU/WASM/WebNN/SAB/ChromeAI,
+  estimatedVramMB, recommendedTier high|medium|low|cpu-only, vramTier). Real discovery:
+  useLocalDiscovery({interval:0}) + Rescan (probes localhost Ollama/LM Studio). Both instant, no download.
+- Opt-in embeddings: src/setup.ts registers a transformers.js semantic loader
+  (manager.registerLoader('semantic', async()=>{ import('@huggingface/transformers'); pipeline(
+  'feature-extraction','Xenova/all-MiniLM-L6-v2',{dtype:'fp32',progress_callback}); setEmbedFunction(embed) }).
+  useCapabilitySetup({setup, autoEnable:[]}) registers WITHOUT enabling → nothing downloads on mount.
+  Button calls useFortemiContext().capabilityManager.enable('semantic') → real model fetch (~25MB HF CDN).
+  useJobQueue(1500) watches the pipeline; seed 4 notes to enqueue jobs.
+- vite: fortemiDbConfig (PGlite: worker.format es + optimizeDeps.exclude pglite + COOP/COEP) +
+  manualChunks splitting @huggingface/transformers -> ai-transformers, onnxruntime -> ai-onnx.
+- Build EXIT=0 (283 modules): dist ships PGlite (14MB) + ort-wasm engine (21.6MB, the RUNTIME engine
+  bundled at build — NOT a model download; the model fetches at runtime on enable()). Chunk-size warning
+  is benign (not an error). @huggingface/transformers 3.8.1 (already in store via apps/standalone).
+- Verified: workspace typecheck (dist-hidden) = 0, lint = 0. @fortemi/react root barrel resolves
+  useGraphController -> @fortemi/graph/controller (base has the tsconfig path from #321).
+- Indexes updated (Intermediate tables + roadmaps trimmed). 17/19 delivered.
+- Remaining: EX-14 remote-backend (useRemote; needs a running Fortémi server — honest compiling demo),
+  EX-18 research-workbench (attachments + provenance + SKOS + citation graph, composed).
