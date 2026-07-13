@@ -10,6 +10,6 @@
 container  node:22  sha256:62e4daa6819762bbd3072af77cc282ab72c631c4aed30dd7980192babaf385b3  22.22.2-bookworm  2026-05-23  publish workflow baseline; inherited from AIWG supply-chain pin set
 container  node:24  sha256:050bf2bbe33c1d6754e060bec89378a79ed831f04a7bb1a53fe45e997df7b3bb  24.15.0-bookworm  2026-05-23  GitHub npmjs.org provenance publishing baseline; inherited from AIWG supply-chain pin set
 
-action  actions/checkout    34e114876b0b11c390a56381ad16ebd13914f8d5  v4.3.1  2026-05-23  publish workflow checkout; inherited from AIWG supply-chain pin set
+action  actions/checkout    93cb6efe18208431cddfb8368fd83d5badbf9bfd  v5.0.1  2026-07-12  publish workflow checkout; bumped for Node 24 action runtime alongside OIDC trusted-publishing cutover (matches AIWG pin set)
 action  actions/setup-node  a0853c24544627f65ddf259abe73b1d18a591444  v5.0.0  2026-05-23  npm registry setup for publish workflow
 action  pnpm/action-setup   f40ffcd9367d9f12939873eb1018b921a783ffaa  v4      2026-05-23  pnpm install support for publish workflow
