@@ -15,11 +15,10 @@ server, no model download.
 - `renderCommunityGraph(container, graph, options)` gives you layout, zoom, pan,
   and hover for free in any DOM element — zero framework.
 - `communityLegend(graph)` is the shared legend data every renderer tier uses.
-- **How to keep PGlite out of a graph-only bundle.** `@fortemi/graph` re-exports
-  `GraphController`, which imports the `@fortemi/core` database layer. This demo
-  never constructs a controller, so `vite.config.ts` stubs `@fortemi/core` to an
-  empty module and the ~9 MB PGlite WASM engine never enters the build. The
-  result is a **14 KB** bundle that loads instantly.
+- **How to keep PGlite out of a graph-only bundle.** The `@fortemi/graph` root
+  entry is database-free; live database orchestration lives at
+  `@fortemi/graph/controller`. This demo imports only the root helpers, so
+  PGlite never enters the build.
 
 ## APIs used
 
@@ -41,5 +40,6 @@ Then open the printed URL. `pnpm build` produces a static site in `dist/`.
 ## Copy it out
 
 This example imports only from `@fortemi/graph`. To use it in your own project,
-`npm i @fortemi/graph`, drop in `src/main.ts`, and keep the `stubFortemiCore`
-plugin in `vite.config.ts` if you render graphs without a database.
+`npm i @fortemi/graph` and drop in `src/main.ts`. Import
+`@fortemi/graph/controller` only when you need live database-backed graph
+loading.

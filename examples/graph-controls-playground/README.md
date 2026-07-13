@@ -14,7 +14,7 @@ over one dataset, and you can switch the renderer between `GraphView` (SVG),
 - Per-tier extras where the API supports them: `palette` (Sigma / 3D),
   `layout.algorithm` and `draggableNodes` (GraphView).
 - How to compose all three graph subpaths in one app while keeping PGlite out of
-  the bundle (`stubFortemiCore`).
+  the bundle.
 
 ## Run it
 ```bash

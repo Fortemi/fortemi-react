@@ -12,7 +12,7 @@ loaded so the heavy renderer only ships when mounted.
 - The `palette` prop: `'community'` (qualitative) vs `'greyscale'` (by density).
 - Shared filters (`minDegree`) apply identically to every renderer tier.
 - Sigma + graphology are optional peers — install them only for this view. The
-  `stubFortemiCore` plugin keeps PGlite out of the bundle.
+  graph-only subpaths keep PGlite out of the bundle.
 
 ## Run it
 ```bash

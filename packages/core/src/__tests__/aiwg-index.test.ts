@@ -1779,7 +1779,7 @@ describe('#293 pinned AIWG index schema authority', () => {
   it('M7 — rejects record.v2 items inside an export.v1 envelope', () => {
     const result = validateAiwgFortemiIndexExport({ ...index, items: [v2Record('r', 'aiwg.skill')] })
     expect(result.valid).toBe(false)
-    expect(result.errors.join('\n')).toContain('must be equal to constant')
+    expect(result.errors.join('\n')).toContain('schema_version must match aiwg.fortemi.index.export.v1')
   })
 
   it('L1/L3 — rejects provenance_events on record.v1 and invalid manifest privacy', () => {

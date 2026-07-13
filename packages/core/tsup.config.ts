@@ -10,7 +10,7 @@ export default defineConfig([
   {
     entry: {
       index: 'src/index.ts',
-      'aiwg-index': 'src/aiwg-index.ts',
+      'aiwg-index-schema': 'src/aiwg-index-schema.ts',
     },
     format: ['esm'],
     dts: true,
@@ -27,6 +27,20 @@ export default defineConfig([
       'uuid',
       'zod',
     ],
+  },
+  {
+    entry: {
+      'aiwg-index': 'src/aiwg-index.ts',
+    },
+    format: ['esm'],
+    dts: true,
+    sourcemap: true,
+    clean: false,
+    target: 'es2022',
+    splitting: false,
+    treeshake: true,
+    minify: true,
+    outDir: 'dist',
   },
   {
     entry: { 'pglite-worker': 'src/worker/pglite-worker.ts' },

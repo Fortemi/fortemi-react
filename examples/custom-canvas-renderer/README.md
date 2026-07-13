@@ -26,7 +26,6 @@ WebGL, SVG, a minimap, a print export — the data-prep layer doesn't care.
 
 ## Copy it out
 
-The app imports only `@fortemi/graph` and `@fortemi/examples-shared`. Like the
-other no-database graph examples, `vite.config.ts` stubs `@fortemi/core` to keep
-the ~9 MB PGlite engine out of the bundle (this one builds to ~200 KB). Keep that
-stub whenever you render graphs without a live database.
+The app imports only `@fortemi/graph` and `@fortemi/examples-shared`. The
+database-backed graph controller is isolated behind `@fortemi/graph/controller`,
+so graph-only builds do not need a `@fortemi/core` alias or external.
