@@ -13,6 +13,15 @@
     "isolatedModules": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "baseUrl": ".",
+    "paths": {
+      "@fortemi/graph": ["../packages/graph/src/index.ts"],
+      "@fortemi/core": ["../packages/core/src/index.ts"],
+      "@fortemi/react": ["../packages/react/src/index.ts"],
+      "@fortemi/react/graph": ["../packages/react/src/graph.ts"],
+      "@fortemi/react/graph-2d": ["../packages/react/src/graph-2d.ts"],
+      "@fortemi/react/graph-3d": ["../packages/react/src/graph-3d.ts"]
+    }
   }
 }
