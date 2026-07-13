@@ -42,6 +42,17 @@ wiring via `@fortemi/examples-shared/vite-db`.
 | EX-07 | `search-basic` | Postgres full-text search with `useSearch` (`mode: 'text'`), prefix suggestions, `ts_headline` snippets, and tag facets — lexical only, no model download. |
 | EX-08 | `shard-reader` | The Knowledge Shard portability loop: `exportShard(db)` bakes a `.shard`, then `useShard` browses it read-only with **no PGlite** on the reader side. |
 
+## Intermediate
+
+Where the tiers compose. These build on the starters — deriving graph structure
+from real database content, and proving the data-prep layer feeds surfaces
+beyond the built-in views.
+
+| ID | Example | What it teaches |
+|----|---------|-----------------|
+| EX-10 | `notes-graph-explorer` | Derive a `CommunityGraph` from note **tags** in PGlite, explore it with `GraphView`, and `useNote` the full record on click — no embeddings. |
+| EX-15 | `custom-canvas-renderer` | Render a `RenderGraph` to a hand-written `<canvas>` via `bakeRenderGraph` — the graph views are just one consumer of the data-prep layer. No database. |
+
 ## Shared dataset
 
 Graph examples use `@fortemi/examples-shared` (in `examples/_shared/`) —

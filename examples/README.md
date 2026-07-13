@@ -44,6 +44,13 @@ the point) and share the PGlite/Vite wiring via `@fortemi/examples-shared/vite-d
 | EX-07 | [`search-basic`](./search-basic) | Data · React · PGlite | Postgres full-text search (`useSearch`, `mode: 'text'`), prefix suggestions, `ts_headline` snippets, tag facets — no model download. |
 | EX-08 | [`shard-reader`](./shard-reader) | Data · React · PGlite→reader | The shard portability loop: `exportShard(db)` bakes a `.shard`; `useShard` browses it read-only with **no PGlite** on the reader side. |
 
+The intermediate tier — where the starters compose.
+
+| ID | Example | Category | Teaches |
+|----|---------|----------|---------|
+| EX-10 | [`notes-graph-explorer`](./notes-graph-explorer) | Data + Graph · React · PGlite | Derive a `CommunityGraph` from note **tags**, explore with `GraphView`, `useNote` on click — no embeddings. |
+| EX-15 | [`custom-canvas-renderer`](./custom-canvas-renderer) | Graph · React · no DB | Render a `RenderGraph` to a hand-written `<canvas>` via `bakeRenderGraph` — the data-prep layer feeds any surface. |
+
 ## Shared infrastructure
 
 - **`_shared/`** (`@fortemi/examples-shared`) — deterministic synthetic
@@ -92,5 +99,5 @@ export default defineConfig({ plugins: [stubFortemiCore()] })
 The remaining tiers from [epic #315](https://git.integrolabs.net/Fortemi/fortemi-react/issues/315),
 built in the epic's suggested order:
 
-- **Intermediate:** EX-10 `notes-graph-explorer`, EX-11 `aiwg-index-map`, EX-12 `local-ai-setup`, EX-13 `shard-exchange`, EX-14 `remote-backend`, EX-15 `custom-canvas-renderer`
+- **Intermediate (remaining):** EX-11 `aiwg-index-map`, EX-12 `local-ai-setup`, EX-13 `shard-exchange`, EX-14 `remote-backend`
 - **Composed apps:** EX-16 `knowledge-garden`, EX-17 `docs-atlas`, EX-18 `research-workbench`, EX-19 `dual-instance-sync`

@@ -18,6 +18,9 @@
     "paths": {
       "@fortemi/graph": ["../packages/graph/src/index.ts"],
       "@fortemi/core": ["../packages/core/src/index.ts"],
+      "@fortemi/core/aiwg-index": ["../packages/core/src/aiwg-index.ts"],
+      "@fortemi/core/worker/pglite-worker": ["../packages/core/src/worker/pglite-worker.ts"],
+      "@fortemi/core/service-worker/sw": ["../packages/core/src/service-worker/sw.ts"],
       "@fortemi/react": ["../packages/react/src/index.ts"],
       "@fortemi/react/graph": ["../packages/react/src/graph.ts"],
       "@fortemi/react/graph-2d": ["../packages/react/src/graph-2d.ts"],

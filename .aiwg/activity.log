@@ -16,3 +16,4 @@
 ## [2026-07-13 02:55] update | v2026.7.4 fully delivered: npm OIDC+provenance verified, GitHub release + tarballs, docsite deployed; CI fixes merged (#314, closes #313)
 ## [2026-07-13 05:24] create | examples/ program tranche 1 (EX-01..05,09 + infra) — PR #316, Refs #315
 ## [2026-07-13 05:49] create | examples EX-06/07/08 core-data tier (notes-crud, search, shard-reader) + _shared/vite-db helper (Refs #315)
+## [2026-07-13 06:00] create | examples EX-10 notes-graph-explorer + EX-15 custom-canvas-renderer; fix examples tsconfig core-subpath paths for CI typecheck (Refs #315)
