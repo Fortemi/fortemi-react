@@ -1,16 +1,14 @@
 // @fortemi/graph — framework-agnostic graph presentation/projection helpers
-// plus the graph-source controller.
+// without the database-backed graph-source controller.
 //
-// Depends on @fortemi/core (the base data layer) and is consumed by
-// @fortemi/react and JS-only hosts. Dependency direction is the linear chain:
-// pglite ← @fortemi/core ← @fortemi/graph ← @fortemi/react. @fortemi/core never
-// imports @fortemi/graph.
+// This root entry intentionally has no runtime dependency on @fortemi/core, so
+// JS-only hosts can import graph helpers without pulling the PGlite module
+// graph. Database-backed graph-source orchestration lives at
+// @fortemi/graph/controller.
 //
 // Pure projection helpers (layout, filtering, coloring, sizing, bounds,
 // neighborhood, snapshot) give React and JS-only hosts the shared logic to
-// render their own SVG/canvas views. `GraphController` adds the framework-
-// agnostic graph-source state machine (mode selection + load dispatch) on top
-// of @fortemi/core's repositories.
+// render their own SVG/canvas views.
 //
 // Community *detection* intentionally lives in @fortemi/core (the base layer);
 // this package only renders/projects graphs it is given and orchestrates which
@@ -97,7 +95,6 @@ export type {
   GraphRenderHandle,
 } from './render-dom.js'
 
-export { GraphController } from './controller.js'
 export type {
   GraphControllerDb,
   GraphSourceMode,

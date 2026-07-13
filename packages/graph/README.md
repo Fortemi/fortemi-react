@@ -4,7 +4,7 @@
 
 **Framework-agnostic graph projection helpers for rendering Fortemi community graphs anywhere**
 
-Turn a `CommunityGraph` into something you can draw — deterministic layout, filtering, community coloring, degree-based sizing, bounds/fit, neighborhood expansion, and static snapshot serialization — plus a framework-agnostic `GraphController` for graph-source selection. Framework-agnostic (no React); depends on `@fortemi/core`. The pure projection helpers stay database-free and tree-shakeable for JS-only hosts, and run entirely client-side — no network, no database.
+Turn a `CommunityGraph` into something you can draw — deterministic layout, filtering, community coloring, degree-based sizing, bounds/fit, neighborhood expansion, and static snapshot serialization. Framework-agnostic (no React). The root graph helpers stay database-free and tree-shakeable for JS-only hosts, and run entirely client-side — no network, no database. Database-backed graph-source selection is available from `@fortemi/graph/controller`.
 
 ```bash
 pnpm add @fortemi/graph
@@ -27,7 +27,7 @@ pnpm add @fortemi/graph
 
 `@fortemi/graph` is the framework-agnostic projection layer for Fortemi relationship graphs. It takes a plain `CommunityGraph` — the shape produced by `@fortemi/core`'s `GraphRepository` and AIWG index export — and provides the pure, deterministic helpers needed to lay it out, filter it, color it, size it, fit it to a viewport, and render it as SVG or canvas.
 
-It is an **add-on, not a base layer**. `@fortemi/core` remains the foundation and owns graph *production* (similarity and link graphs built from the PGlite store) and community *detection*. `@fortemi/graph` sits on top and owns graph *projection* and *source orchestration* (`GraphController`). It depends on `@fortemi/core` for the controller and shared graph types, but `@fortemi/core` never depends on it — the chain is `@electric-sql/pglite` ← `@fortemi/core` ← `@fortemi/graph` ← `@fortemi/react`. The projection helpers operate on portable data and reach no database, so they power `@fortemi/react`'s `GraphView` and a JS-only host — a static documentation site, for example — with no React. Only `GraphController` touches the PGlite-backed repositories.
+It is an **add-on, not a base layer**. `@fortemi/core` remains the foundation and owns graph *production* (similarity and link graphs built from the PGlite store) and community *detection*. The `@fortemi/graph` root entry owns graph *projection* and has no runtime dependency on `@fortemi/core`. The optional `@fortemi/graph/controller` subpath owns live graph-source orchestration (`GraphController`) and is the only graph entry that touches the PGlite-backed repositories. `@fortemi/core` never depends on `@fortemi/graph`.
 
 ## Why Fortemi Graph
 

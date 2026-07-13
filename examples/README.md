@@ -76,31 +76,10 @@ The composed applications — focused hooks wired into whole surfaces.
 
 ### Keeping PGlite out of a graph-only bundle
 
-`@fortemi/graph` re-exports `GraphController`, which imports the `@fortemi/core`
-database layer (Postgres-in-WASM) to load graphs *live*. Graph-only demos never
-construct a controller, so each ships a tiny Vite plugin that stubs
-`@fortemi/core` — keeping the ~9 MB PGlite engine out of the build. When you copy
-an example out, keep this plugin if you render graphs without a database:
-
-```ts
-// vite.config.ts
-import { defineConfig, type Plugin } from 'vite'
-
-function stubFortemiCore(): Plugin {
-  const stubId = '\0fortemi-core-stub'
-  return {
-    name: 'stub-fortemi-core',
-    enforce: 'pre',
-    resolveId: (source) => (source === '@fortemi/core' ? stubId : null),
-    load: (id) =>
-      id === stubId
-        ? 'export class GraphRepository {}\nexport class CommunitiesRepository {}\n'
-        : null,
-  }
-}
-
-export default defineConfig({ plugins: [stubFortemiCore()] })
-```
+Graph-only demos import the `@fortemi/graph` root entry and build without
+consumer-side externals or aliases. The database-backed `GraphController` lives
+behind `@fortemi/graph/controller`, so static graph views do not pull
+`@fortemi/core`, the PGlite worker, or WASM assets into their module graph.
 
 ## Planned
 

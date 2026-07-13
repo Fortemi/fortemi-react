@@ -16,8 +16,7 @@ database**.
   `communityIds` (an allow-list) drive live show/hide.
 - `communityLegend(graph)` supplies the legend rows and their colors.
 - The `@fortemi/react/graph` subpath keeps PGlite out of your bundle; the
-  `stubFortemiCore` plugin in `vite.config.ts` also stubs the `GraphController`
-  path so no PGlite WASM is emitted at all.
+  database-backed controller lives behind `@fortemi/graph/controller`.
 
 ## APIs used
 

@@ -11,7 +11,7 @@ ships when the view mounts.
 - `ForceGraph3DView`: orbit (drag), zoom (scroll), click-to-select.
 - The `palette` and `theme` props (`{ background }`).
 - three + react-force-graph-3d are optional peers — install them only for this
-  view. The `stubFortemiCore` plugin keeps PGlite out of the bundle.
+  view. The graph-only subpaths keep PGlite out of the bundle.
 
 ## Run it
 ```bash

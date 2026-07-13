@@ -8,7 +8,7 @@ import {
   GraphController,
   type GraphControllerOptions,
   type GraphSourceMode,
-} from '@fortemi/graph'
+} from '@fortemi/graph/controller'
 import { useFortemiContext } from '../FortemiProvider.js'
 
 // Thin React adapter over @fortemi/graph's framework-agnostic GraphController.
