@@ -50,6 +50,7 @@ The intermediate tier — where the starters compose.
 |----|---------|----------|---------|
 | EX-10 | [`notes-graph-explorer`](./notes-graph-explorer) | Data + Graph · React · PGlite | Derive a `CommunityGraph` from note **tags**, explore with `GraphView`, `useNote` on click — no embeddings. |
 | EX-15 | [`custom-canvas-renderer`](./custom-canvas-renderer) | Graph · React · no DB | Render a `RenderGraph` to a hand-written `<canvas>` via `bakeRenderGraph` — the data-prep layer feeds any surface. |
+| EX-13 | [`shard-exchange`](./shard-exchange) | Data · React · PGlite×2 | Two independent in-memory instances exchange a `.shard`: `exportShard` on one, `useImportShard` on the other with a conflict strategy. |
 
 ## Shared infrastructure
 
@@ -99,5 +100,5 @@ export default defineConfig({ plugins: [stubFortemiCore()] })
 The remaining tiers from [epic #315](https://git.integrolabs.net/Fortemi/fortemi-react/issues/315),
 built in the epic's suggested order:
 
-- **Intermediate (remaining):** EX-11 `aiwg-index-map`, EX-12 `local-ai-setup`, EX-13 `shard-exchange`, EX-14 `remote-backend`
+- **Intermediate (remaining):** EX-11 `aiwg-index-map`, EX-12 `local-ai-setup`, EX-14 `remote-backend`
 - **Composed apps:** EX-16 `knowledge-garden`, EX-17 `docs-atlas`, EX-18 `research-workbench`, EX-19 `dual-instance-sync`

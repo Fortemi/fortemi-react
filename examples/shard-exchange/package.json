@@ -1,0 +1,27 @@
+{
+  "name": "@fortemi/example-shard-exchange",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "EX-13 — two independent in-browser instances exchanging a Knowledge Shard: export from one, import into the other with a conflict strategy.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fortemi/core": "workspace:*",
+    "@fortemi/examples-shared": "workspace:*",
+    "@fortemi/react": "workspace:*",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.5.0",
+    "typescript": "^5.8.0",
+    "vite": "^7.3.1"
+  }
+}
