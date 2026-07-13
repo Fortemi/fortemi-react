@@ -36,12 +36,22 @@ export function useLocalDiscovery(
   const mountedRef = useRef(true)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  // Callers commonly pass an inline options object (e.g. `useLocalDiscovery({ interval: 0 })`),
+  // so `discoveryOptions` is a fresh object every render. Keying `discover` — and,
+  // through it, the mount effect below — on that object identity re-ran discovery
+  // on every render, whose own `setDiscovering` re-render re-triggered it: an
+  // infinite discovery/connect loop that reads on screen as flicker. Key on a
+  // stable JSON signature instead, and read the latest options through a ref.
+  const optionsKey = JSON.stringify(discoveryOptions)
+  const optionsRef = useRef(discoveryOptions)
+  optionsRef.current = discoveryOptions
+
   const discover = useCallback(async () => {
     if (!mountedRef.current) return
     setDiscovering(true)
     setError(null)
     try {
-      const found = await discoverLocalProviders(discoveryOptions)
+      const found = await discoverLocalProviders(optionsRef.current)
       if (mountedRef.current) {
         setProviders(found)
       }
@@ -54,7 +64,8 @@ export function useLocalDiscovery(
         setDiscovering(false)
       }
     }
-  }, [discoveryOptions])
+    // Deps: optionsRef is stable; optionsKey captures option-content changes.
+  }, [optionsKey])
 
   useEffect(() => {
     mountedRef.current = true

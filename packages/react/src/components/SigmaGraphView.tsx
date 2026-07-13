@@ -199,11 +199,15 @@ export function SigmaGraphView({
             const base = (attrs.baseColor as string) ?? (attrs.color as string)
             const focus = hoveredRef.current ?? selectedRef.current
             if (focus) {
-              if (node === focus) return { ...attrs, color: theme.ink, zIndex: 2, forceLabel: true }
-              if (neighborsRef.current.has(node)) return { ...attrs, color: theme.node, zIndex: 1, forceLabel: true }
+              // Keep community colors on the focused node + its neighbors; only the
+              // non-neighbors dim to grey. (Previously everything was recolored to
+              // greyscale ink/node on focus, so a click read as "the graph turns
+              // grey and locks".) The focus node gets a highlight ring instead.
+              if (node === focus) return { ...attrs, color: base, zIndex: 2, forceLabel: true, highlighted: true }
+              if (neighborsRef.current.has(node)) return { ...attrs, color: base, zIndex: 1, forceLabel: true }
               return { ...attrs, color: theme.dimNode, label: '', zIndex: 0 }
             }
-            if (node === anchorRef.current) return { ...attrs, color: theme.ink, zIndex: 1, forceLabel: true }
+            if (node === anchorRef.current) return { ...attrs, color: base, zIndex: 1, forceLabel: true, highlighted: true }
             return { ...attrs, color: base }
           },
           edgeReducer: (edge: string, attrs: Record<string, unknown>) => {
@@ -257,11 +261,49 @@ export function SigmaGraphView({
               re.stop()
               layoutRef.current = null
               setSettling(false)
-              renderer.getCamera().animate({ x: 0.5, y: 0.5, ratio: 1 }, { duration: 600 })
+              // Recentre on the re-rooted node itself (it is pinned at the origin).
+              const pos = renderer.getNodeDisplayData(node)
+              if (pos) renderer.getCamera().animate({ x: pos.x, y: pos.y, ratio: 0.6 }, { duration: 600 })
+              else renderer.getCamera().animate({ x: 0.5, y: 0.5, ratio: 1 }, { duration: 600 })
               renderer.refresh()
             }, 4500),
           )
         }
+
+        // Node dragging: reposition a node with the pointer. It is pinned (`fixed`)
+        // on the first movement so a still-running settle can't fight the drag, and
+        // is left where dropped. A plain press with no movement falls through to the
+        // click handlers (select / re-anchor).
+        let draggingNode: string | null = null
+        let dragMoved = false
+        const mouseCaptor = renderer.getMouseCaptor() as unknown as {
+          on: (
+            event: 'mousemovebody' | 'mouseup',
+            handler: (e: { x: number; y: number; original?: Event; preventSigmaDefault?: () => void }) => void,
+          ) => void
+        }
+        renderer.on('downNode', ({ node }) => {
+          draggingNode = node
+          dragMoved = false
+        })
+        mouseCaptor.on('mousemovebody', (e) => {
+          if (!draggingNode) return
+          if (!dragMoved) {
+            dragMoved = true
+            g.setNodeAttribute(draggingNode, 'fixed', true)
+            if (containerRef.current) containerRef.current.style.cursor = 'grabbing'
+          }
+          const pos = renderer.viewportToGraph({ x: e.x, y: e.y })
+          g.setNodeAttribute(draggingNode, 'x', pos.x)
+          g.setNodeAttribute(draggingNode, 'y', pos.y)
+          e.preventSigmaDefault?.()
+          e.original?.preventDefault?.()
+          e.original?.stopPropagation?.()
+        })
+        mouseCaptor.on('mouseup', () => {
+          if (draggingNode && containerRef.current) containerRef.current.style.cursor = 'default'
+          draggingNode = null
+        })
 
         renderer.on('enterNode', ({ node }) => {
           hoveredRef.current = node
@@ -277,9 +319,21 @@ export function SigmaGraphView({
           if (containerRef.current) containerRef.current.style.cursor = 'default'
         })
         renderer.on('clickNode', ({ node, event }) => {
+          // Swallow the click that ends a drag — a reposition is not a selection.
+          if (dragMoved) {
+            dragMoved = false
+            return
+          }
           const native = (event as { original?: MouseEvent }).original
           if (native && (native.ctrlKey || native.metaKey)) {
             reanchor(node)
+            return
+          }
+          // Toggle focus: clicking the already-focused node releases it.
+          if (selectedRef.current === node) {
+            selectedRef.current = null
+            neighborsRef.current = new Set()
+            renderer.refresh()
             return
           }
           selectedRef.current = node
@@ -384,7 +438,7 @@ export function SigmaGraphView({
       <div style={{ fontFamily: theme.labelFont, fontSize: 12, color: theme.node }}>
         {phase === 'ready'
           ? `${stats.nodes} nodes · ${stats.edges} edges · ${stats.clusters} clusters` +
-            (settling ? ' — settling…' : ' — click to focus · ⌘/ctrl-click to re-anchor · double-click to open')
+            (settling ? ' — settling…' : ' — click to focus · drag to move · ⌘/ctrl-click to re-anchor · double-click to open')
           : phase === 'empty'
             ? 'No links to show'
             : 'Graph'}
