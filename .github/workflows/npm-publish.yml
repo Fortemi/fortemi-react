@@ -1,9 +1,35 @@
-# Public npmjs.org publication for the GitHub mirror.
+# Public npmjs.org publication for the GitHub mirror — OIDC trusted publishing.
 #
-# Gitea remains the primary CI/internal-registry release path. This workflow is
-# the final public distribution leg: it runs only from signed v* release tags,
-# attaches npm provenance from GitHub Actions OIDC, and authenticates with the
-# NPMJS_TOKEN secret configured on the GitHub mirror.
+# Gitea remains the primary CI/internal-registry release path ("verify on
+# Gitea"); this workflow is the minimal public distribution leg ("deliver on
+# GitHub"). It runs only from signed v* release tags, authenticates via npm
+# TRUSTED PUBLISHING (GitHub Actions OIDC — no long-lived NPMJS_TOKEN), and
+# attaches npm provenance linking each tarball to this workflow run and the
+# source commit SHA.
+#
+# Cost posture: typecheck/lint/tests run on Gitea for every push AND again for
+# the same signed tag in .gitea/workflows/publish.yml. This leg deliberately
+# does NOT repeat them — it verifies the signed tag, checks supply-chain gates,
+# builds, inspects the packed artifacts, publishes, and verifies provenance.
+#
+# REQUIREMENTS (one-time, operator-side — per package):
+# For EACH of @fortemi/core, @fortemi/graph, @fortemi/react at
+# https://www.npmjs.com/package/<name>/access → Publishing access →
+# Trusted publisher:
+#   Provider:          GitHub Actions
+#   Organization/user: Fortemi
+#   Repository:        fortemi-react
+#   Workflow filename: npm-publish.yml   (basename only, NOT a path)
+#   Environment:       (leave blank)
+# After the first successful OIDC publish, revoke the legacy NPMJS_TOKEN
+# granular token on npmjs.org and delete the NPMJS_TOKEN secret from the
+# GitHub mirror — a configured token would silently bypass OIDC.
+#
+# Trusted publishing requires npm >= 11.5.1 (node:24 digest below ships npm
+# 11.12.1). `pnpm publish` delegates the registry PUT to the underlying npm
+# CLI, so the container's npm version — not pnpm's — decides OIDC support.
+# pnpm is still required for the publish step itself: it rewrites the
+# workspace:* protocol ranges to concrete versions at pack time.
 
 name: Publish to npmjs.org
 
@@ -38,7 +64,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1 (ci/digests.txt) — Node 24 action runtime
 
       - name: Setup pnpm
         uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
@@ -104,12 +130,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Lint
-        run: pnpm lint
-
+      # No typecheck/lint/tests here — the same signed tag is fully verified
+      # on Gitea (.gitea/workflows/ci.yml on push, publish.yml at release).
+      # GitHub minutes are reserved for the delivery-critical path only.
       - name: Build
         run: pnpm build
 
@@ -175,16 +198,28 @@ jobs:
           }
           CHECK
 
-      - name: Publish packages to npmjs.org
+      - name: Publish packages to npmjs.org (OIDC trusted publishing + provenance)
+        # Tokenless: no NODE_AUTH_TOKEN, no .npmrc auth block. npm >= 11.5.1
+        # (11.12.1 in this container) negotiates OIDC against npmjs.org using
+        # this workflow's id-token claims. pnpm rewrites workspace:* ranges at
+        # pack time and delegates the authenticated PUT to npm.
+        #
+        # Trusted publishers match on: repository_owner ('Fortemi'), repository
+        # name ('fortemi-react'), workflow filename ('npm-publish.yml' —
+        # basename, NOT the full path), and optionally environment. A 404 PUT
+        # means one of these doesn't match the per-package npmjs.org config.
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
           RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
         run: |
           set -euo pipefail
-          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "NPMJS_TOKEN is required on the GitHub mirror" >&2
-            exit 1
-          fi
+          echo "── OIDC publish context ──"
+          echo "  repository:       ${GITHUB_REPOSITORY}"
+          echo "  repository_owner: ${GITHUB_REPOSITORY_OWNER}"
+          echo "  workflow_ref:     ${GITHUB_WORKFLOW_REF}"
+          echo "  ref:              ${GITHUB_REF}"
+          echo "  npm version:      $(npm --version)"
+          echo "  pnpm version:     $(pnpm --version)"
+          echo
 
           TAG_VERSION="${RELEASE_TAG#v}"
           NPM_TAG="latest"
@@ -205,9 +240,22 @@ jobs:
               echo "${package_name}@${package_version} already exists on npmjs.org; skipping publish"
             else
               echo "Publishing ${package_name}@${package_version} to npmjs.org"
-              (cd "$package_dir" && pnpm publish --provenance --access public --no-git-checks --tag "$NPM_TAG")
+              (cd "$package_dir" && pnpm publish --provenance --access public --no-git-checks --tag "$NPM_TAG") 2>&1 | tee "/tmp/publish-${package_name##*/}.txt" || {
+                if grep -qE "404.*PUT|is not in this registry" "/tmp/publish-${package_name##*/}.txt"; then
+                  echo "✗ 404 PUT — trusted-publisher config mismatch for ${package_name}" >&2
+                  echo "  Operator action: https://www.npmjs.com/package/${package_name}/access" >&2
+                  echo "  → Trusted publisher must be: GitHub Actions / Fortemi / fortemi-react / npm-publish.yml" >&2
+                  exit 1
+                fi
+                echo "✗ npmjs.org publish failed for ${package_name}" >&2
+                exit 1
+              }
             fi
 
+            # Visibility check (read-only). The dist-tag is set atomically by
+            # --tag at publish time; `npm dist-tag add` promotion was removed —
+            # it needs write auth that OIDC trusted publishing does not cover
+            # outside the publish PUT itself.
             for attempt in 1 2 3 4 5; do
               published="$(npm view "${package_name}@${package_version}" version --prefer-online --no-update-notifier 2>/dev/null || echo "")"
               if [ "$published" = "$package_version" ]; then
@@ -221,22 +269,46 @@ jobs:
               fi
             done
 
-            for attempt in 1 2 3 4 5; do
-              if npm dist-tag add "${package_name}@${package_version}" "$NPM_TAG"; then
-                break
-              fi
-              echo "Attempt ${attempt}: dist-tag promotion failed; retrying in 10s..."
-              sleep 10
-              if [ "$attempt" = "5" ]; then
-                echo "dist-tag promotion exhausted retries for ${package_name}@${package_version}" >&2
-                exit 1
-              fi
-            done
+            tagged="$(npm view "${package_name}" "dist-tags.${NPM_TAG}" --no-update-notifier 2>/dev/null || echo "")"
+            if [ "$tagged" != "$package_version" ]; then
+              echo "⚠ dist-tag ${NPM_TAG} for ${package_name} points at '${tagged}', expected ${package_version}" >&2
+              echo "  (--tag applies at publish; a stale value here means a newer version owns the tag or propagation lag)" >&2
+            else
+              echo "✓ ${package_name} dist-tag ${NPM_TAG} → ${package_version}"
+            fi
           }
 
           publish_package packages/core
           publish_package packages/graph
           publish_package packages/react
+
+      - name: Verify provenance attestations landed
+        # Independent post-publish check: a publish that silently dropped
+        # provenance must fail HERE, not at audit time. Read-only npm view;
+        # parsed with node (this image ships no jq).
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${RELEASE_TAG#v}"
+          echo "Waiting 10s for npmjs.org propagation..."
+          sleep 10
+          for package_name in @fortemi/core @fortemi/graph @fortemi/react; do
+            npm view "${package_name}@${TAG_VERSION}" --json > /tmp/view.json 2>/dev/null || {
+              echo "✗ Could not fetch ${package_name}@${TAG_VERSION} from npmjs.org" >&2
+              exit 1
+            }
+            PKG_NAME="$package_name" node - <<'CHECK'
+            const fs = require('node:fs');
+            const view = JSON.parse(fs.readFileSync('/tmp/view.json', 'utf8'));
+            const att = view?.dist?.attestations;
+            if (!att || !att.url) {
+              console.error(`✗ No provenance attestation for ${process.env.PKG_NAME} — OIDC trusted publishing likely mis-configured`);
+              process.exit(1);
+            }
+            console.log(`✓ Provenance attestation present for ${process.env.PKG_NAME}: ${att.url}`);
+            CHECK
+          done
 
       - name: Create GitHub release with packages
         env:

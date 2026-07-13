@@ -12,7 +12,8 @@ Fortemi follows the AIWG security-engineering supply-chain baseline for npm publ
 - The publish workflow verifies package versions against the release tag before publishing.
 - The publish workflow packs and inspects both npm artifacts before publish.
 - `@fortemi/core` is published before `@fortemi/react`.
-- Public npmjs.org publishing runs from the GitHub mirror in `.github/workflows/npm-publish.yml` using the mirror's `secrets.NPMJS_TOKEN` and `npm publish --provenance`.
+- Public npmjs.org publishing runs from the GitHub mirror in `.github/workflows/npm-publish.yml` via **npm trusted publishing** (GitHub Actions OIDC) with `--provenance`. There is no long-lived npm token: the workflow's short-lived `id-token` claims are verified by npmjs.org against a per-package trusted-publisher configuration (`GitHub Actions / Fortemi / fortemi-react / npm-publish.yml`, no environment) at `https://www.npmjs.com/package/<name>/access` for each of `@fortemi/core`, `@fortemi/graph`, and `@fortemi/react`.
+- After each publish, the workflow independently verifies that a provenance attestation landed on npmjs.org (`npm view <pkg>@<version> --json → .dist.attestations`); a publish without provenance fails the run.
 - Local Gitea publishing remains in `.gitea/workflows/publish.yml` and uses `secrets.GT_PUBLISH_TOKEN` for the internal Gitea package registry, falling back to `secrets.NPM_TOKEN` only for older repository configurations.
 
 ## Release Tag Recovery
@@ -23,8 +24,8 @@ If a pushed release tag fails the signed-tag gate because it was signed by a per
 
 npm provenance requires a supported OIDC environment. AIWG uses GitHub Actions for the npmjs.org leg because npm does not list Gitea Actions as a trusted-publishing provider. Fortemi follows that split now:
 
-- Gitea Actions verifies the signed release tag, builds, packs, inspects, and publishes `@fortemi/core` and `@fortemi/react` to the local Gitea package registry for internal use.
-- GitHub Actions on the mirror verifies the same signed tag and performs the final npmjs.org distribution with `NPMJS_TOKEN` and `npm publish --provenance`.
-- The public publish job grants `id-token: write` only to attach provenance; it does not run on pull requests.
+- Gitea Actions verifies the signed release tag, typechecks, lints, builds, packs, inspects, and publishes the packages to the local Gitea package registry for internal use. Full test/e2e verification also runs on Gitea CI for every push.
+- GitHub Actions on the mirror verifies the same signed tag and performs the final npmjs.org distribution via OIDC trusted publishing with `--provenance`. To limit spend on the GitHub leg, it does not repeat typecheck/lint/tests — verification lives on Gitea; GitHub is the delivery leg only.
+- The public publish job grants `id-token: write` for the OIDC token exchange and provenance attestation; it does not run on pull requests.
 
 This avoids a dual-publisher race: Gitea no longer publishes to npmjs.org, so the GitHub provenance publish is the only public distribution path.
