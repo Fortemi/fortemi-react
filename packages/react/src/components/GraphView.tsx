@@ -60,7 +60,12 @@ export function GraphView({
   const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map())
   const algorithm = layout?.algorithm ?? 'force'
   const label = labelFor ?? ((id: string) => id)
-  const visible = useMemo(() => applyControlFilters(graph, filters), [graph, filters])
+  // Key on a stable signature of `filters`, not its object identity — callers
+  // commonly pass an inline `filters={{…}}`, which is a fresh object every render
+  // and would otherwise re-run the force layout (and re-seed positions) on every
+  // render, jittering the graph.
+  const filtersKey = JSON.stringify(filters ?? null)
+  const visible = useMemo(() => applyControlFilters(graph, filters), [graph, filtersKey])
   const positioned = useMemo(() => {
     const opts: LayoutOptions = { algorithm, width, height }
     // Only feed pins/warm-start once something is pinned, so the default path is
