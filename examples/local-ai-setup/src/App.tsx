@@ -22,6 +22,21 @@ import {
 import { seedNotes } from '@fortemi/examples-shared'
 import { setupCapabilities } from './setup.js'
 
+// Shown when WebGPU is unavailable (disabled flag, no hardware acceleration, or an
+// unsupported browser). GPU inference tiers need WebGPU; without it detection falls
+// back to CPU/WASM, so we tell the user exactly what to turn on.
+function WebGpuHelp() {
+  return (
+    <p className="muted" style={{ marginTop: 8, lineHeight: 1.5 }}>
+      WebGPU isn’t available in this browser, so GPU-accelerated inference is off and
+      detection falls back to CPU/WASM. To enable it: turn on{' '}
+      <strong>hardware acceleration</strong> in your browser settings; on Linux/Chromium
+      you may also need the WebGPU flag at <code>chrome://flags</code> (“Unsafe WebGPU
+      Support” / “WebGPU Developer Features”). Reload after enabling.
+    </p>
+  )
+}
+
 export function App() {
   const { capabilityManager } = useFortemiContext()
   const gpu = useGpuCapabilities()
@@ -82,17 +97,23 @@ export function App() {
           {inf.loading ? (
             <p className="muted">Detecting…</p>
           ) : caps ? (
-            <ul className="kv">
-              <li><span>Recommended tier</span><strong className={`tier tier-${caps.recommendedTier}`}>{caps.recommendedTier}</strong></li>
-              <li><span>Estimated VRAM</span><b>{caps.estimatedVramMB} MB</b></li>
-              <li><span>WebGPU</span><b>{yn(caps.webgpu)}</b></li>
-              <li><span>WASM</span><b>{yn(caps.wasm)}</b></li>
-              <li><span>WebNN</span><b>{yn(caps.webnn)}</b></li>
-              <li><span>SharedArrayBuffer</span><b>{yn(caps.sharedArrayBuffer)}</b></li>
-              <li><span>Chrome AI</span><b>{yn(caps.chromeAI)}</b></li>
-            </ul>
+            <>
+              <ul className="kv">
+                <li><span>Recommended tier</span><strong className={`tier tier-${caps.recommendedTier}`}>{caps.recommendedTier}</strong></li>
+                <li><span>Estimated VRAM</span><b>{caps.estimatedVramMB} MB</b></li>
+                <li><span>WebGPU</span><b>{yn(caps.webgpu)}</b></li>
+                <li><span>WASM</span><b>{yn(caps.wasm)}</b></li>
+                <li><span>WebNN</span><b>{yn(caps.webnn)}</b></li>
+                <li><span>SharedArrayBuffer</span><b>{yn(caps.sharedArrayBuffer)}</b></li>
+                <li><span>Chrome AI</span><b>{yn(caps.chromeAI)}</b></li>
+              </ul>
+              {!caps.webgpu && <WebGpuHelp />}
+            </>
           ) : (
-            <p className="muted">{inf.error ? inf.error.message : 'Unavailable'}</p>
+            <>
+              <p className="muted">{inf.error ? inf.error.message : 'Detection unavailable.'}</p>
+              <WebGpuHelp />
+            </>
           )}
         </div>
 
@@ -101,15 +122,21 @@ export function App() {
           {gpu.isDetecting ? (
             <p className="muted">Detecting…</p>
           ) : gpu.caps ? (
-            <ul className="kv">
-              <li><span>VRAM tier</span><strong className={`tier tier-${gpu.vramTier}`}>{gpu.vramTier}</strong></li>
-              <li><span>Vendor</span><b>{gpu.caps.vendor || '—'}</b></li>
-              <li><span>Architecture</span><b>{gpu.caps.architecture || '—'}</b></li>
-              <li><span>WebGPU</span><b>{yn(gpu.caps.webgpuAvailable)}</b></li>
-              <li><span>f16</span><b>{yn(gpu.caps.supportsF16)}</b></li>
-            </ul>
+            <>
+              <ul className="kv">
+                <li><span>VRAM tier</span><strong className={`tier tier-${gpu.vramTier}`}>{gpu.vramTier}</strong></li>
+                <li><span>Vendor</span><b>{gpu.caps.vendor || '—'}</b></li>
+                <li><span>Architecture</span><b>{gpu.caps.architecture || '—'}</b></li>
+                <li><span>WebGPU</span><b>{yn(gpu.caps.webgpuAvailable)}</b></li>
+                <li><span>f16</span><b>{yn(gpu.caps.supportsF16)}</b></li>
+              </ul>
+              {!gpu.caps.webgpuAvailable && <WebGpuHelp />}
+            </>
           ) : (
-            <p className="muted">{gpu.error ? gpu.error.message : 'No WebGPU'}</p>
+            <>
+              <p className="muted">{gpu.error ? gpu.error.message : 'WebGPU not available.'}</p>
+              <WebGpuHelp />
+            </>
           )}
         </div>
 
