@@ -73,6 +73,21 @@ describe('NotesRepository', () => {
       expect(note.current.is_user_edited).toBe(false)
     })
 
+    it('honors an explicit id when provided (deterministic seeding)', async () => {
+      const note = await repo.create({ content: 'Shared row', id: 'note-shared-1' })
+      expect(note.id).toBe('note-shared-1')
+
+      // The explicit id is the actual primary key, fetchable by that id.
+      const fetched = await repo.get('note-shared-1')
+      expect(fetched.id).toBe('note-shared-1')
+      expect(fetched.current.content).toBe('Shared row')
+    })
+
+    it('mints a UUIDv7 when no id is supplied (default path unchanged)', async () => {
+      const a = await repo.create({ content: 'auto id' })
+      expect(a.id).toMatch(/^[0-9a-f-]{36}$/)
+    })
+
     it('accepts custom format, source, visibility, and title', async () => {
       const note = await repo.create({
         content: 'Rich text',

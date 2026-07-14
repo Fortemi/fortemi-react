@@ -47,6 +47,13 @@ export interface NoteCreateInput {
   visibility?: string
   tags?: string[]
   archive_id?: string
+  /**
+   * Explicit primary key. When omitted a UUIDv7 is minted (the default). Supply
+   * this only for deterministic seeding or cross-instance identity — e.g. two
+   * in-browser databases that must agree on a shared note's id so a shard swap
+   * can dedupe it under the `skip` conflict strategy.
+   */
+  id?: string
 }
 
 export interface NoteUpdateInput {

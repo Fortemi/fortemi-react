@@ -70,11 +70,19 @@ export function App() {
         </span>
       </div>
 
+      {/*
+        Two live databases on one page → WORKER execution mode for each. Each
+        PGlite engine gets its own Worker realm, so the WASM module is
+        fetched-and-compiled once per realm and the second in-page instance can't
+        hit the shared "already read Response" collision that main mode incurs.
+        Sync is shard export/import (pure SQL), which works over the worker's
+        query/exec/transaction surface.
+      */}
       <section className="exchange">
-        <FortemiProvider persistence="memory" archiveName="left">
+        <FortemiProvider persistence="memory" archiveName="left" executionMode="worker">
           <Instance label="A" slice={LEFT_SLICE} onReady={onLeftReady} onCount={onLeftCount} />
         </FortemiProvider>
-        <FortemiProvider persistence="memory" archiveName="right">
+        <FortemiProvider persistence="memory" archiveName="right" executionMode="worker">
           <Instance label="B" slice={RIGHT_SLICE} onReady={onRightReady} onCount={onRightCount} />
         </FortemiProvider>
       </section>

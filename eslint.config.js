@@ -34,7 +34,10 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ['**/dist/**', '**/node_modules/**', 'docsite/**'],
+    // `examples/_site/**` is the built, minified example gallery (git-ignored);
+    // linting its bundled output produces spurious no-undef/no-unused-expressions
+    // noise, so exclude it alongside dist/.
+    ignores: ['**/dist/**', '**/node_modules/**', 'docsite/**', 'examples/_site/**'],
   },
   {
     // Node-runtime tooling: build/release/fixture scripts and root config files.
