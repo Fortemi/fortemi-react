@@ -14,3 +14,7 @@ docs/content/packages/
 
 # examples: generated build artifacts
 examples/*/public/graph-snapshot.json
+
+# generated examples gallery (pnpm examples:site)
+examples/_site/
+.playwright-mcp/
