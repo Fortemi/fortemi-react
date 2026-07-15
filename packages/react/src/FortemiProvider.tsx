@@ -5,7 +5,7 @@ import {
   PGliteStorageBackend,
   PGliteWorkerStorageBackendFactory,
   TypedEventBus,
-  createBlobStore,
+  createLazyBlobStore,
   restoreDbSnapshot,
   type PersistenceMode,
   type BlobStore,
@@ -73,7 +73,10 @@ function initFortemi(options: InitFortemiOptions) {
     promise = (async () => {
       const events = new TypedEventBus()
       const capManager = new CapabilityManager(events)
-      const blobStore = createBlobStore(archiveName)
+      // Lazy facade: the bytecask substrate loads on the first byte
+      // operation, so hosts that never touch attachment bytes never pay for
+      // it (ADR-012 D6).
+      const blobStore = createLazyBlobStore(archiveName)
 
       if (snapshotUrl) {
         if (executionMode === 'worker') {

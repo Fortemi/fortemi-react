@@ -1012,8 +1012,10 @@ export async function importShard(
   // warning rather than discarding a successful metadata import.
   if (options?.blobStore && blobsToHydrate.size > 0) {
     try {
-      for (const [hash, bytes] of blobsToHydrate) {
-        await options.blobStore.write(hash, bytes)
+      for (const [, bytes] of blobsToHydrate) {
+        // Entries were BLAKE3-verified against ref.checksum before queueing;
+        // put() recomputes the hash, so the stored key always matches.
+        await options.blobStore.put(bytes)
       }
     } catch (err) {
       warnings.push(
