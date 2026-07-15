@@ -369,6 +369,13 @@ export {
   provenanceEdgeToShard,
   exportShard,
   importShard,
+  verifyShardSignature,
+  signShard,
+  isShardSigningSupported,
+  sidecarBlobDigests,
+  AllowlistTrustStore,
+  SIGNATURE_ENTRY,
+  SIGNING_ENVELOPE_VERSION,
   getKnowledgeShardSchema,
   validateShardArchive,
   validateShardManifest,
@@ -383,6 +390,16 @@ export {
   clearPrefetchedShard,
 } from './shard/index.js'
 export type { ShardSchemaValidationResult } from './shard/index.js'
+export type {
+  ShardSignatureVerdict,
+  ShardSignatureEnvelope,
+  ShardSigningPayload,
+  ShardSigner,
+  ShardTrustStore,
+  TrustedKey,
+  VerifyShardSignatureInput,
+  SignShardInput,
+} from './shard/index.js'
 export type {
   ShardReader,
   ShardReaderSource,

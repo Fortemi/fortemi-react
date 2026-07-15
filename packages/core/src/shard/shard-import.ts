@@ -9,6 +9,7 @@ import type { DatabaseClient, QueryExecutor } from '../storage-backend.js'
 import { unpackTarGz } from './shard-tar.js'
 import { validateChecksums } from './checksum.js'
 import { collectSidecarBlobs, blobChecksumToHex } from './blob-sidecar.js'
+import { verifyShardSignature } from './shard-signature.js'
 import {
   noteFromShard,
   linkFromShard,
@@ -47,6 +48,52 @@ import { parseJsonArrayBytes, parseJsonlBytes } from './parse.js'
 
 const decoder = new TextDecoder()
 const DEFAULT_BATCH_SIZE = 250
+
+/**
+ * Apply the ADR-014 signed-shard policy. Returns an error string to abort the
+ * import (nothing persisted yet at the call site), or null to proceed.
+ * Appends warnings for the acknowledged-unauthenticated cases.
+ */
+async function enforceSignaturePolicy(
+  files: Map<string, Uint8Array>,
+  options: ImportOptions | undefined,
+  warnings: string[],
+): Promise<string | null> {
+  const policy = options?.verifySignature ?? (options?.trustStore ? 'require' : undefined)
+  if (!policy) return null // signature verification not requested — unchanged behavior
+
+  if (policy === 'trusted-local-only') {
+    warnings.push(
+      'Signature verification skipped (trusted-local-only): the shard was imported ' +
+        'without authenticating its publisher.',
+    )
+    return null
+  }
+
+  if (!options?.trustStore) {
+    return `verifySignature: '${policy}' requires a trustStore to resolve signer keys.`
+  }
+
+  const verdict = await verifyShardSignature({ files, trustStore: options.trustStore })
+  if (verdict.ok) return null
+
+  if (verdict.reason === 'unsigned') {
+    if (policy === 'prefer') {
+      warnings.push(
+        'Shard is unsigned; imported under verifySignature: prefer. Publisher ' +
+          'provenance was NOT authenticated.',
+      )
+      return null
+    }
+    return 'Shard is unsigned and verifySignature is required.'
+  }
+
+  // Every other reason is a hard rejection under both require and prefer:
+  // a present-but-broken signature is never downgraded to "unsigned".
+  const detail =
+    'detail' in verdict ? `: ${verdict.detail}` : 'keyId' in verdict ? ` (key ${verdict.keyId})` : ''
+  return `Shard signature verification failed [${verdict.reason}]${detail}. No records or bytes were written.`
+}
 
 async function yieldToEventLoop(): Promise<void> {
   const scheduler = (globalThis as unknown as { scheduler?: { yield?: () => Promise<void> } }).scheduler
@@ -174,6 +221,22 @@ export async function importShard(
         `Shard requires reader version ${manifest.min_reader_version}, ` +
         `but this version supports up to ${CURRENT_SHARD_VERSION}`,
       ],
+      duration_ms: performance.now() - start,
+    }
+  }
+
+  // ── Step 2.5: Verify publisher signature BEFORE any persistence ───────
+  // (#324, ADR-013 D6 / ADR-014): nothing is written to canonical records,
+  // the BlobStore, or PGlite until the signature verifies. Opt-in — skipped
+  // entirely when neither a policy nor a trust store is supplied.
+  const sigError = await enforceSignaturePolicy(files, options, warnings)
+  if (sigError) {
+    return {
+      success: false,
+      counts,
+      skipped,
+      warnings,
+      errors: [sigError],
       duration_ms: performance.now() - start,
     }
   }
