@@ -1,0 +1,80 @@
+/*
+ * Shared light/dark theme for the @fortemi examples. Import this BEFORE an
+ * example's own `styles.css`, then reference the variables below instead of
+ * hardcoded colors so the ThemeToggle (which flips `data-theme` on <html>)
+ * restyles the whole page — chrome and graphs alike.
+ *
+ * Theme resolution:
+ *   • no `data-theme`     → follow the OS via prefers-color-scheme
+ *   • data-theme="light"  → force light (even on a dark OS)
+ *   • data-theme="dark"   → force dark
+ *
+ * The `--fortemi-graph-*` variables are read by the SVG `GraphView`; the Sigma
+ * and 3D renderers take explicit theme objects (see `graphThemeFor` in ./ui).
+ */
+
+:root {
+  color-scheme: light;
+
+  --bg: #f4f1ea;
+  --surface: #faf8f4;
+  --surface-2: #ffffff;
+  --ink: #2b2824;
+  --ink-strong: #43403a;
+  --muted: #6e665a;
+  --accent: #585149;
+  --rule: #ddd6c8;
+  --rule-soft: #e7e0d2;
+  --code-bg: #e9e4d8;
+  --warm: #b9946a;
+
+  /* SVG GraphView surface — derives from the page palette, edge/ring explicit. */
+  --fortemi-graph-bg: var(--surface);
+  --fortemi-graph-rule: var(--rule);
+  --fortemi-graph-rule-soft: var(--rule-soft);
+  --fortemi-graph-muted: var(--muted);
+  --fortemi-graph-label: var(--ink);
+  --fortemi-graph-node-stroke: var(--surface);
+  --fortemi-graph-node-strong: var(--ink);
+  --fortemi-graph-edge: #9aa0a6;
+}
+
+/* System dark, unless the user explicitly forced light. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --bg: #14120f;
+    --surface: #1c1915;
+    --surface-2: #23201a;
+    --ink: #ece6da;
+    --ink-strong: #f3eee2;
+    --muted: #a89f8d;
+    --accent: #c9a678;
+    --rule: #38332a;
+    --rule-soft: #2a251d;
+    --code-bg: #26221b;
+    --warm: #cba46f;
+
+    --fortemi-graph-edge: #524d40;
+  }
+}
+
+/* Explicit dark override (wins over the media query and light default). */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #14120f;
+  --surface: #1c1915;
+  --surface-2: #23201a;
+  --ink: #ece6da;
+  --ink-strong: #f3eee2;
+  --muted: #a89f8d;
+  --accent: #c9a678;
+  --rule: #38332a;
+  --rule-soft: #2a251d;
+  --code-bg: #26221b;
+  --warm: #cba46f;
+
+  --fortemi-graph-edge: #524d40;
+}

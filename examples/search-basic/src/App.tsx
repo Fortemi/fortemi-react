@@ -7,6 +7,7 @@
 // capabilities examples) and switch to `mode: 'auto'` to blend in vector recall.
 
 import { useEffect, useMemo, useState } from 'react'
+import { ThemeToggle } from '@fortemi/examples-shared/ui'
 import { useSearch, useSearchSuggestions, useCreateNote, useNotes } from '@fortemi/react'
 import { seedNotes } from '@fortemi/examples-shared'
 
@@ -56,6 +57,7 @@ export function App() {
 
   return (
     <main className="page">
+      <ThemeToggle floating />
       <header>
         <h1>EX-07 · search-basic</h1>
         <p className="lede">

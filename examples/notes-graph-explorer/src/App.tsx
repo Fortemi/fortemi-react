@@ -7,6 +7,14 @@
 // No embeddings, no downloads — the structure comes straight from tag overlap.
 
 import { useEffect, useMemo, useState } from 'react'
+import {
+  GraphModeToggle,
+  Graph3DLazy,
+  ThemeToggle,
+  useThemeMode,
+  graphThemeFor,
+  type GraphMode,
+} from '@fortemi/examples-shared/ui'
 import { GraphView } from '@fortemi/react/graph'
 import { communityLegend, type CommunityGraph, type GraphEdge } from '@fortemi/graph'
 import { useNotes, useCreateNote, useNote } from '@fortemi/react'
@@ -61,6 +69,9 @@ export function App() {
   const { createNote } = useCreateNote()
   const [seeded, setSeeded] = useState(false)
   const [selected, setSelected] = useState<string | null>(null)
+  const [mode, setMode] = useState<GraphMode>('2d')
+  const themeMode = useThemeMode()
+  const graphTheme = graphThemeFor(themeMode)
   const [minDegree, setMinDegree] = useState(0)
 
   const { data: selectedNote } = useNote(selected)
@@ -93,6 +104,7 @@ export function App() {
 
   return (
     <main className="page">
+      <ThemeToggle floating />
       <header>
         <h1>EX-10 · notes-graph-explorer</h1>
         <p className="lede">
@@ -107,17 +119,33 @@ export function App() {
         <p className="selected">Booting the database and seeding notes…</p>
       ) : (
         <section className="layout">
-          <div className="canvas">
-            <GraphView
-              graph={graph}
-              layout={{ algorithm: 'force' }}
-              filters={{ minDegree }}
-              selectedNodeId={selected}
-              onSelectNode={setSelected}
-              labelFor={(id) => titleById.get(id) ?? id}
-              width={720}
-              height={470}
+          <div className="canvas" style={{ position: 'relative' }}>
+            <GraphModeToggle
+              mode={mode}
+              onModeChange={setMode}
+              style={{ margin: 8 }}
             />
+            {mode === '2d' ? (
+              <GraphView
+                graph={graph}
+                layout={{ algorithm: 'force' }}
+                filters={{ minDegree }}
+                selectedNodeId={selected}
+                onSelectNode={setSelected}
+                labelFor={(id) => titleById.get(id) ?? id}
+                width={720}
+                height={470}
+              />
+            ) : (
+              <Graph3DLazy
+                graph={graph}
+                filters={{ minDegree }}
+                labelFor={(id) => titleById.get(id) ?? id}
+                onSelectNode={setSelected}
+                theme={graphTheme.force3d}
+                height={470}
+              />
+            )}
           </div>
 
           <aside className="controls">

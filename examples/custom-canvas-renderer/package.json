@@ -14,7 +14,8 @@
     "@fortemi/examples-shared": "workspace:*",
     "@fortemi/graph": "workspace:*",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "@fortemi/react": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

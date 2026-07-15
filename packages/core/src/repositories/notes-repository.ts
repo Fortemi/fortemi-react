@@ -36,7 +36,9 @@ export class NotesRepository {
    * All writes happen in a single transaction.
    */
   async create(input: NoteCreateInput): Promise<NoteFull> {
-    const noteId = generateId()
+    // Honor a caller-supplied id (deterministic seeding / cross-instance
+    // identity); otherwise mint a fresh UUIDv7 as before.
+    const noteId = input.id ?? generateId()
     const originalId = generateId()
     const contentHash = computeHash(new TextEncoder().encode(input.content))
 

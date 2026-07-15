@@ -13,6 +13,7 @@
 // reader half is entirely independent of where the shard came from.
 
 import { useEffect, useMemo, useState } from 'react'
+import { ThemeToggle } from '@fortemi/examples-shared/ui'
 import { exportShard } from '@fortemi/core'
 import { useFortemiContext, useCreateNote, useNotes } from '@fortemi/react'
 import { seedNotes } from '@fortemi/examples-shared'
@@ -67,6 +68,7 @@ export function App() {
 
   return (
     <main className="page">
+      <ThemeToggle floating />
       <header>
         <h1>EX-08 · shard-reader</h1>
         <p className="lede">

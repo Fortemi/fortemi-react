@@ -59,12 +59,28 @@ const graph: CommunityGraph = {
 
 const container = document.getElementById('graph')
 if (!container) throw new Error('missing #graph container')
+const mount = container
 
-renderCommunityGraph(container, graph, {
-  width: 760,
-  height: 460,
-  background: '#faf8f4',
-  labelFor: (id) => LABELS[id] ?? id,
+// The SVG background follows the page theme via the `--graph-bg` CSS variable.
+// Community node colors read clearly on both light and dark, so swapping the
+// background is all the graph needs — re-rendered whenever the shared theme
+// toggle (in index.html) fires a `themechange` event.
+const graphBg = () =>
+  getComputedStyle(document.documentElement).getPropertyValue('--graph-bg').trim() || '#faf8f4'
+
+function renderGraph() {
+  return renderCommunityGraph(mount, graph, {
+    width: 760,
+    height: 460,
+    background: graphBg(),
+    labelFor: (id) => LABELS[id] ?? id,
+  })
+}
+
+let handle = renderGraph()
+window.addEventListener('themechange', () => {
+  handle.destroy()
+  handle = renderGraph()
 })
 
 // The same `communityLegend` helper every renderer tier uses — sorted by size,

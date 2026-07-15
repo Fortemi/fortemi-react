@@ -8,6 +8,7 @@
 // renderer, no database.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { ThemeToggle, useThemeMode } from '@fortemi/examples-shared/ui'
 import {
   bakeRenderGraph,
   type CommunityPalette,
@@ -26,6 +27,7 @@ export function App() {
   const [palette, setPalette] = useState<CommunityPalette>('community')
   const [hover, setHover] = useState<string | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
+  const themeMode = useThemeMode()
 
   // Bake positions + colors + sizes once per algorithm/palette change. This is
   // the only @fortemi/graph call the renderer needs — everything below is plain
@@ -59,6 +61,13 @@ export function App() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, WIDTH, HEIGHT)
 
+    // Ink colors flip with the page theme (node fills stay the community colors).
+    const dark = themeMode === 'dark'
+    const edgeActive = dark ? 'rgba(210, 175, 120, .6)' : 'rgba(120, 90, 50, .55)'
+    const edgeIdle = dark ? 'rgba(200, 190, 170, .14)' : 'rgba(60, 55, 45, .12)'
+    const selStroke = dark ? '#ece6da' : '#2e2a22'
+    const labelColor = dark ? '#cbc3b2' : '#3f382d'
+
     // Links first, under the nodes.
     ctx.lineWidth = 1
     for (const link of graph.links) {
@@ -66,7 +75,7 @@ export function App() {
       const t = byId.get(link.target)
       if (!s?.x || !t?.x || s.y == null || t.y == null) continue
       const active = hover === s.id || hover === t.id || selected === s.id || selected === t.id
-      ctx.strokeStyle = active ? 'rgba(120, 90, 50, .55)' : 'rgba(60, 55, 45, .12)'
+      ctx.strokeStyle = active ? edgeActive : edgeIdle
       ctx.beginPath()
       ctx.moveTo(s.x, s.y)
       ctx.lineTo(t.x, t.y)
@@ -87,18 +96,18 @@ export function App() {
       if (isSel) {
         ctx.globalAlpha = 1
         ctx.lineWidth = 2
-        ctx.strokeStyle = '#2e2a22'
+        ctx.strokeStyle = selStroke
         ctx.stroke()
       }
       ctx.globalAlpha = 1
       // Label larger / focused nodes only, to keep it legible.
       if (node.size > 9 || isHover || isSel) {
-        ctx.fillStyle = '#3f382d'
+        ctx.fillStyle = labelColor
         ctx.font = '11px ui-sans-serif, system-ui, sans-serif'
         ctx.fillText(node.label, node.x + r + 3, node.y + 4)
       }
     }
-  }, [graph, byId, hover, selected])
+  }, [graph, byId, hover, selected, themeMode])
 
   // Nearest-node hit test in canvas space.
   const pick = (clientX: number, clientY: number): string | null => {
@@ -124,6 +133,7 @@ export function App() {
 
   return (
     <main className="page">
+      <ThemeToggle floating />
       <header>
         <h1>EX-15 · custom-canvas-renderer</h1>
         <p className="lede">

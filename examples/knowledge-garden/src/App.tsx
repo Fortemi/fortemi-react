@@ -7,6 +7,14 @@
 // database the graph is built from. No server, no downloads.
 
 import { useEffect, useMemo, useState } from 'react'
+import {
+  GraphModeToggle,
+  Graph3DLazy,
+  ThemeToggle,
+  useThemeMode,
+  graphThemeFor,
+  type GraphMode,
+} from '@fortemi/examples-shared/ui'
 import { GraphView } from '@fortemi/react/graph'
 import { type CommunityGraph, type GraphEdge } from '@fortemi/graph'
 import {
@@ -47,6 +55,9 @@ export function App() {
   const [seeded, setSeeded] = useState(false)
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
+  const [mode, setMode] = useState<GraphMode>('2d')
+  const themeMode = useThemeMode()
+  const graphTheme = graphThemeFor(themeMode)
   const [draft, setDraft] = useState('')
 
   const { data: selectedNote } = useNote(selected)
@@ -111,6 +122,7 @@ export function App() {
 
   return (
     <main className="page wide">
+      <ThemeToggle floating />
       <header>
         <h1>EX-16 · knowledge-garden</h1>
         <p className="lede">
@@ -167,18 +179,36 @@ export function App() {
         </aside>
 
         <div className="col grow">
-          <div className="canvas">
+          <div className="canvas" style={{ position: 'relative' }}>
             {graph ? (
-              <GraphView
-                graph={graph}
-                layout={{ algorithm: 'force' }}
-                filters={{ nodeIds: matchedIds ?? undefined }}
-                selectedNodeId={selected}
-                onSelectNode={setSelected}
-                labelFor={(id) => titleById.get(id) ?? id}
-                width={620}
-                height={420}
-              />
+              <>
+                <GraphModeToggle
+                  mode={mode}
+                  onModeChange={setMode}
+                  style={{ margin: 8 }}
+                />
+                {mode === '2d' ? (
+                  <GraphView
+                    graph={graph}
+                    layout={{ algorithm: 'force' }}
+                    filters={{ nodeIds: matchedIds ?? undefined }}
+                    selectedNodeId={selected}
+                    onSelectNode={setSelected}
+                    labelFor={(id) => titleById.get(id) ?? id}
+                    width={620}
+                    height={420}
+                  />
+                ) : (
+                  <Graph3DLazy
+                    graph={graph}
+                    filters={{ nodeIds: matchedIds ?? undefined }}
+                    labelFor={(id) => titleById.get(id) ?? id}
+                    onSelectNode={setSelected}
+                    theme={graphTheme.force3d}
+                    height={420}
+                  />
+                )}
+              </>
             ) : (
               <p className="selected">Growing the graph…</p>
             )}

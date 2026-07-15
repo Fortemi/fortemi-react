@@ -8,6 +8,7 @@
 // algorithm, and node-dragging are shown where the tier supports them.
 
 import { useMemo, useState } from 'react'
+import { ThemeToggle, GraphNodeSummary, useThemeMode, graphThemeFor } from '@fortemi/examples-shared/ui'
 import { GraphView } from '@fortemi/react/graph'
 import { SigmaGraphView } from '@fortemi/react/graph-2d'
 import { ForceGraph3DView } from '@fortemi/react/graph-3d'
@@ -28,6 +29,9 @@ export function App() {
   const [hiddenCommunities, setHiddenCommunities] = useState<Set<string>>(() => new Set())
   const [hiddenKinds, setHiddenKinds] = useState<Set<string>>(() => new Set())
   const [selected, setSelected] = useState<string | null>(null)
+
+  const themeMode = useThemeMode()
+  const graphTheme = graphThemeFor(themeMode)
 
   const legend = useMemo(() => communityLegend(mediumGraph), [])
 
@@ -54,6 +58,7 @@ export function App() {
 
   return (
     <main className="page wide">
+      <ThemeToggle floating />
       <header>
         <h1>EX-09 · graph-controls-playground</h1>
         <p className="lede">
@@ -93,6 +98,7 @@ export function App() {
               palette={palette}
               labelFor={labelFor}
               onSelectNode={setSelected}
+              theme={graphTheme.sigma}
               height={500}
             />
           )}
@@ -103,7 +109,7 @@ export function App() {
               palette={palette}
               labelFor={labelFor}
               onSelectNode={setSelected}
-              theme={{ background: '#14120f' }}
+              theme={graphTheme.force3d}
               height={500}
             />
           )}
@@ -198,7 +204,16 @@ export function App() {
 
           <div className="control">
             <span>Selected</span>
-            <p className="selected">{selected ? labelFor(selected) : '— click a node —'}</p>
+            {selected ? (
+              <GraphNodeSummary
+                graph={mediumGraph}
+                nodeId={selected}
+                labelFor={labelFor}
+                onClose={() => setSelected(null)}
+              />
+            ) : (
+              <p className="selected">— click a node —</p>
+            )}
           </div>
         </aside>
       </section>

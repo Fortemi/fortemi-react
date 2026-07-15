@@ -8,6 +8,7 @@
 // compiles and renders regardless; it just needs a server to return data).
 
 import { useMemo, useState } from 'react'
+import { ThemeToggle } from '@fortemi/examples-shared/ui'
 import { useRemote } from '@fortemi/react'
 import type { BackendNote, BackendSearchHit, BackendNoteFull } from '@fortemi/core'
 
@@ -53,6 +54,7 @@ export function App() {
 
   return (
     <main className="page wide">
+      <ThemeToggle floating />
       <header>
         <h1>EX-14 · remote-backend</h1>
         <p className="lede">

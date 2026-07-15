@@ -39,7 +39,11 @@ export function Instance({
       ;(async () => {
         for (const i of slice) {
           const n = seedNotes[i]
-          await createNote({ title: n.title, content: n.body, tags: n.tags })
+          // Seed with the corpus's STABLE id so the overlap note (present in both
+          // slices) gets the same primary key on A and B — that shared id is what
+          // lets the bidirectional shard swap dedupe it under `skip` and converge
+          // to the true union instead of double-counting the shared row.
+          await createNote({ id: n.id, title: n.title, content: n.body, tags: n.tags })
         }
         await refresh()
         setSeeded(true)

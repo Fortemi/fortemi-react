@@ -102,6 +102,10 @@ export function SigmaGraphView({
   style,
 }: SigmaGraphViewProps) {
   const theme = { ...DEFAULT_THEME, ...themeOverride }
+  // Stable signature of the theme so the renderer rebuilds when the *content*
+  // changes (e.g. a light↔dark toggle) — not on every render from a fresh
+  // `themeOverride` object identity. Same idiom as `filtersKey` below.
+  const themeKey = JSON.stringify(themeOverride ?? null)
   const containerRef = useRef<HTMLDivElement>(null)
   const sigmaRef = useRef<SigmaRenderer | null>(null)
   const layoutRef = useRef<FA2LayoutType | null>(null)
@@ -406,7 +410,7 @@ export function SigmaGraphView({
     }
     // Rebuild only when the graph identity or key inputs change; callbacks are
     // read through refs so they don't force a costly renderer rebuild.
-  }, [rendered, snapshot, settleMs])
+  }, [rendered, snapshot, settleMs, themeKey])
 
   const box: CSSProperties = {
     position: 'relative',

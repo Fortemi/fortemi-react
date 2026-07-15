@@ -9,6 +9,7 @@
 // notes you seed — the pipeline you can watch.
 
 import { useMemo, useState } from 'react'
+import { ThemeToggle } from '@fortemi/examples-shared/ui'
 import {
   useFortemiContext,
   useGpuCapabilities,
@@ -81,6 +82,7 @@ export function App() {
 
   return (
     <main className="page wide">
+      <ThemeToggle floating />
       <header>
         <h1>EX-12 · local-ai-setup</h1>
         <p className="lede">

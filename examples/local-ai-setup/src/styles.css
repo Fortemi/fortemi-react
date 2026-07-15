@@ -1,5 +1,19 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+  --bg: #f4f1ea; --panel: #faf8f4; --border: #ddd6c8;
+  --text: #2b2824; --muted: #6e665a; --accent: #3b6fd4;
+  --ok: #15803d; --warn: #b45309; --err: #b91c1c;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1115; --panel: #171a21; --border: #262b36;
+    --text: #e6e9ef; --muted: #9aa4b2; --accent: #6ea8fe;
+    --ok: #34d399; --warn: #fbbf24; --err: #f87171;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
   --bg: #0f1115; --panel: #171a21; --border: #262b36;
   --text: #e6e9ef; --muted: #9aa4b2; --accent: #6ea8fe;
   --ok: #34d399; --warn: #fbbf24; --err: #f87171;
@@ -48,7 +62,7 @@ button.sm { padding: 4px 9px; font-size: 0.8rem; }
 .note-list, .job-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
 .note { font-size: 0.9rem; padding: 4px 0; border-bottom: 1px solid var(--border); }
 .job { display: flex; align-items: center; gap: 8px; font-size: 0.86rem; }
-.badge { font-size: 0.68rem; text-transform: uppercase; padding: 1px 7px; border-radius: 999px; background: #262b36; color: var(--muted); }
+.badge { font-size: 0.68rem; text-transform: uppercase; padding: 1px 7px; border-radius: 999px; background: var(--border); color: var(--muted); }
 .badge.s-completed { background: rgba(52,211,153,.15); color: var(--ok); }
 .badge.s-running, .badge.s-processing { background: rgba(110,168,254,.15); color: var(--accent); }
 .badge.s-pending, .badge.s-queued { background: rgba(251,191,36,.12); color: var(--warn); }

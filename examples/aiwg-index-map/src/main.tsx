@@ -1,9 +1,14 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App.js'
+import { initTheme } from '@fortemi/examples-shared/ui'
+import '@fortemi/examples-shared/theme.css'
 import './styles.css'
 
 // No FortemiProvider: useAiwgIndex reads a static index and needs no database.
+// Apply the persisted light/dark preference before first paint.
+initTheme()
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

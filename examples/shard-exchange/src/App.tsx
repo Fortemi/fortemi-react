@@ -7,6 +7,7 @@
 // just a portable `.shard` handed from one database to another.
 
 import { useState } from 'react'
+import { ThemeToggle } from '@fortemi/examples-shared/ui'
 import { FortemiProvider } from '@fortemi/react'
 import type { ConflictStrategy } from '@fortemi/core'
 import { SourceInstance } from './SourceInstance.js'
@@ -18,6 +19,7 @@ export function App() {
 
   return (
     <main className="page">
+      <ThemeToggle floating />
       <header>
         <h1>EX-13 · shard-exchange</h1>
         <p className="lede">
@@ -27,12 +29,21 @@ export function App() {
         </p>
       </header>
 
+      {/*
+        Two live databases on one page. Each FortemiProvider runs in WORKER
+        execution mode so its PGlite engine lives in its own Worker realm: the
+        PGlite WASM module is fetched-and-compiled once per realm, side-stepping
+        the single-page "already read Response" collision that main-mode incurs
+        when a second in-page instance tries to re-compile the shared WASM
+        Response. The shard export/import path is pure SQL, so it works
+        identically over the worker's query/exec/transaction surface.
+      */}
       <section className="exchange">
-        <FortemiProvider persistence="memory" archiveName="source">
+        <FortemiProvider persistence="memory" archiveName="source" executionMode="worker">
           <SourceInstance onExport={setShard} exported={shard != null} />
         </FortemiProvider>
 
-        <FortemiProvider persistence="memory" archiveName="target">
+        <FortemiProvider persistence="memory" archiveName="target" executionMode="worker">
           <TargetInstance shard={shard} strategy={strategy} onStrategy={setStrategy} />
         </FortemiProvider>
       </section>
