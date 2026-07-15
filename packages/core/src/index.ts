@@ -538,3 +538,6 @@ export type {
   AiwgStaticSemanticQueryOptions,
   AiwgStaticSemanticResult,
 } from './aiwg-index.js'
+
+// Canonical record layer (#323, ADR-013): DB-free writable records + journal.
+export * from './records/index.js'
