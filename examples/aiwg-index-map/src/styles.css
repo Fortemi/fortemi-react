@@ -1,5 +1,25 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+  --bg: #f4f1ea;
+  --panel: #faf8f4;
+  --border: #ddd6c8;
+  --text: #2b2824;
+  --muted: #6e665a;
+  --accent: #3b6fd4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1115;
+    --panel: #171a21;
+    --border: #262b36;
+    --text: #e6e9ef;
+    --muted: #9aa4b2;
+    --accent: #6ea8fe;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
   --bg: #0f1115;
   --panel: #171a21;
   --border: #262b36;

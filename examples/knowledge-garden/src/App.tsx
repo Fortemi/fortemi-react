@@ -185,7 +185,7 @@ export function App() {
                 <GraphModeToggle
                   mode={mode}
                   onModeChange={setMode}
-                  style={{ position: 'absolute', top: 8, left: 8, zIndex: 5 }}
+                  style={{ margin: 8 }}
                 />
                 {mode === '2d' ? (
                   <GraphView

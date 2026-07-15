@@ -1,4 +1,30 @@
 :root {
+  color-scheme: light;
+  --bg: #f4f1ea;
+  --panel: #faf8f4;
+  --panel-2: #ffffff;
+  --border: #ddd6c8;
+  --text: #2b2824;
+  --muted: #6e665a;
+  --accent: #3b6fd4;
+  /* community colors are data categories — constant across themes */
+  --retrieval: #56b877;
+  --reasoning: #d9a441;
+  --agents: #b57edc;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0e1116;
+    --panel: #161b22;
+    --panel-2: #1c232d;
+    --border: #2b333d;
+    --text: #e6e9ef;
+    --muted: #8b95a3;
+    --accent: #6ea8fe;
+  }
+}
+:root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #0e1116;
   --panel: #161b22;
@@ -7,9 +33,6 @@
   --text: #e6e9ef;
   --muted: #8b95a3;
   --accent: #6ea8fe;
-  --retrieval: #56b877;
-  --reasoning: #d9a441;
-  --agents: #b57edc;
 }
 
 * { box-sizing: border-box; }
@@ -65,7 +88,7 @@ code { background: var(--panel-2); padding: 0.05rem 0.35rem; border-radius: 4px;
   gap: 0.2rem;
 }
 .paper-pick:hover { border-color: var(--border); }
-.paper-pick.active { border-color: var(--accent); background: #1a2432; }
+.paper-pick.active { border-color: var(--accent); background: var(--panel-2); }
 .paper-pick strong { font-weight: 600; font-size: 0.92rem; }
 .paper-pick .meta { color: var(--muted); font-size: 0.78rem; }
 
