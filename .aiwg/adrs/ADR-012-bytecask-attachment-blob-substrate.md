@@ -1,6 +1,6 @@
 # ADR-012: Adopt bytecask as the browser attachment-blob substrate
 
-- **Status**: Proposed
+- **Status**: Proposed — **D4 amended by ADR-013** (canonical attachment manifests are the sole lifecycle authority; bytecask refcounts and the PGlite `reference_count` column are non-authoritative)
 - **Date**: 2026-07-12
 - **Issue**: #282 (design child of epic #281)
 - **Relates**: ADR-009 (pluggable storage backend), ADR-011 §4 (binary/attachment contract convergence), server `Fortemi/fortemi#1013` (projection contract, closed) and `Fortemi/fortemi#1046` (shard byte-sidecar proposal), `roctinam/bytecask` ADRs 0001–0004, #271 (byte round-trip residual), #280 (storage spike)

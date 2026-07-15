@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Date**: 2026-06-16
 - **Issue**: #191 (epic #190)
-- **Supersedes / relates**: builds on the static-file backend (#189) and the physical snapshot backend (#187); the remote-server backend is explicitly out of scope here (deferred under #190).
+- **Supersedes / relates**: builds on the static-file backend (#189) and the physical snapshot backend (#187); the remote-server backend is explicitly out of scope here (deferred under #190). **Amended by ADR-013 (#322)**: the "write/merge stays PGlite/remote only" scoping is superseded — a canonical writable RecordStore tier without PGlite is introduced by #323.
 
 ## Context
 
