@@ -38,3 +38,6 @@ export type {
 
 export { CanonicalAttachmentsRepository } from './canonical-attachments-repository.js'
 export type { CanonicalAttachInput } from './canonical-attachments-repository.js'
+
+export { projectAttachments, dropAttachmentProjection } from './attachment-projection.js'
+export type { AttachmentProjectionResult } from './attachment-projection.js'

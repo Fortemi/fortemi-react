@@ -18,6 +18,30 @@ export const ManageAttachmentsInputSchema = z.object({
 })
 export type ManageAttachmentsInput = z.infer<typeof ManageAttachmentsInputSchema>
 
+/**
+ * Project a repository row to the tool's pinned JSON surface.
+ *
+ * The tool contract is an explicit allowlist — schema migrations (0017 adds
+ * status/extraction/preview columns) MUST NOT silently widen the tool JSON.
+ * Widening it is a deliberate format-parity decision made against the server
+ * tool surface, not a side effect of `SELECT *`.
+ */
+function toToolAttachment(row: AttachmentRow): AttachmentRow {
+  return {
+    id: row.id,
+    note_id: row.note_id,
+    blob_id: row.blob_id,
+    document_type_id: row.document_type_id,
+    mime_type: row.mime_type,
+    extracted_text: row.extracted_text,
+    filename: row.filename,
+    display_name: row.display_name,
+    position: row.position,
+    created_at: row.created_at,
+    deleted_at: row.deleted_at,
+  }
+}
+
 export interface ManageAttachmentsResult {
   action: string
   attachment?: AttachmentRow
@@ -59,17 +83,17 @@ export async function manageAttachments(
         await enqueueJob(db, { noteId: input.note_id, jobType: 'embedding' })
         await enqueueJob(db, { noteId: input.note_id, jobType: 'concept_tagging' })
       }
-      return { action: 'attach', attachment, size_bytes: data.length }
+      return { action: 'attach', attachment: toToolAttachment(attachment), size_bytes: data.length }
     }
     case 'list': {
       if (!input.note_id) throw new Error('note_id required for list')
       const attachments = await repo.list(input.note_id)
-      return { action: 'list', attachments }
+      return { action: 'list', attachments: attachments.map(toToolAttachment) }
     }
     case 'get': {
       if (!input.attachment_id) throw new Error('attachment_id required for get')
       const attachment = await repo.get(input.attachment_id)
-      return { action: 'get', attachment }
+      return { action: 'get', attachment: toToolAttachment(attachment) }
     }
     case 'get_blob': {
       if (!input.attachment_id) throw new Error('attachment_id required for get_blob')
