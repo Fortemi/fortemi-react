@@ -19,3 +19,4 @@
 ## [2026-07-13 06:00] create | examples EX-10 notes-graph-explorer + EX-15 custom-canvas-renderer; fix examples tsconfig core-subpath paths for CI typecheck (Refs #315)
 ## [2026-07-13 06:06] create | examples EX-13 shard-exchange (two in-memory instances exchange a shard) (Refs #315)
 ## [2026-07-13 06:12] create | examples EX-16 knowledge-garden (composed) + EX-19 dual-instance-sync (Refs #315)
+## [2026-07-15 03:34] update | doc-sync code-to-docs: reconciled CLAUDE.md + AIWG.md to merged storage subsystem (migrations 17, records/, blob-store, signed shards)
