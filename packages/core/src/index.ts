@@ -116,8 +116,19 @@ export type { SWRegistrationResult } from './service-worker/register.js'
 export { createRoutes, matchRoute } from './service-worker/routes.js'
 export type { RouteHandler } from './service-worker/routes.js'
 
-export { createBlobStore, MemoryBlobStore } from './blob-store.js'
-export type { BlobStore } from './blob-store.js'
+export { createBlobStore, createLazyBlobStore, MemoryBlobStore } from './blob-store.js'
+export type {
+  BlobStore,
+  BlobBackendKind,
+  BlobStoreDiagnostics,
+  BlobReconcileOptions,
+  BlobReconcileResult,
+  BlobGcOptions,
+  BlobGcResult,
+  CreateBlobStoreOptions,
+} from './blob-store.js'
+export { migrateLegacyBlobStore } from './blob-store-legacy.js'
+export type { LegacyMigrationReport } from './blob-store-legacy.js'
 
 export type { WorkerRequest, WorkerResponse } from './worker/protocol.js'
 export { PGliteWorkerClient, TransactionProxy } from './worker/worker-client.js'

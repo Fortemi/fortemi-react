@@ -70,6 +70,7 @@
     "prepack": "pnpm build"
   },
   "dependencies": {
+    "@bytecask/core": "^2026.7.1",
     "@noble/hashes": "^1.7.2",
     "ajv": "^8.17.1",
     "fflate": "^0.8.2",
@@ -82,6 +83,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "^4.1.1",
+    "fake-indexeddb": "^6.2.5",
     "tsup": "^8.3.5",
     "typescript": "^5.8.0",
     "vitest": "^4.1.0"

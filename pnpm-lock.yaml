@@ -776,6 +776,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@bytecask/core':
+        specifier: ^2026.7.1
+        version: 2026.7.1
       '@noble/hashes':
         specifier: ^1.7.2
         version: 1.8.0
@@ -798,6 +801,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.1.1
         version: 4.1.1(vitest@4.1.0(@types/node@22.19.15)(vite@7.3.1(@types/node@22.19.15)))
+      fake-indexeddb:
+        specifier: ^6.2.5
+        version: 6.2.5
       tsup:
         specifier: ^8.3.5
         version: 8.5.1(postcss@8.5.8)(typescript@5.9.3)
@@ -964,6 +970,14 @@ packages:
   '@bcoe/v8-coverage@1.0.2':
     resolution: {integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==}
     engines: {node: '>=18'}
+
+  '@bytecask/core@2026.7.1':
+    resolution: {integrity: sha512-RFEDKweiYoa/prVwQa9162URpokj1cwLAuLDIUKAqIepk+LokeN4dDioOjEmpT6ZB5k418JcsONK7LTeB8Mkdw==, tarball: https://git.integrolabs.net/api/packages/roctinam/npm/%40bytecask%2Fcore/-/2026.7.1/core-2026.7.1.tgz}
+    peerDependencies:
+      '@bytecask/worker': 2026.7.1
+    peerDependenciesMeta:
+      '@bytecask/worker':
+        optional: true
 
   '@electric-sql/pglite@0.4.1':
     resolution: {integrity: sha512-mZ9NzzUSYPOCnxHH1oAHPRzoMFJHY472raDKwXl/+6oPbpdJ7g8LsCN4FSaIIfkiCKHhb3iF/Zqo3NYxaIhU7Q==}
@@ -1970,6 +1984,10 @@ packages:
     resolution: {integrity: sha512-knvyeauYhqjOYvQ66MznSMs83wmHrCycNEN6Ao+2AeYEfxUIkuiVxdEa1qlGEPK+We3n0THiDciYSsCcgW/DoA==}
     engines: {node: '>=12.0.0'}
 
+  fake-indexeddb@6.2.5:
+    resolution: {integrity: sha512-CGnyrvbhPlWYMngksqrSSUT1BAVP49dZocrHuK0SvtR0D5TMs5wP0o3j7jexDJW01KSadjBp1M/71o/KR3nD1w==}
+    engines: {node: '>=18'}
+
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
 
@@ -2879,6 +2897,10 @@ snapshots:
 
   '@bcoe/v8-coverage@1.0.2': {}
 
+  '@bytecask/core@2026.7.1':
+    dependencies:
+      '@noble/hashes': 1.8.0
+
   '@electric-sql/pglite@0.4.1':
     optional: true
 
@@ -3784,6 +3806,8 @@ snapshots:
   events@3.3.0: {}
 
   expect-type@1.3.0: {}
+
+  fake-indexeddb@6.2.5: {}
 
   fast-deep-equal@3.1.3: {}
 
