@@ -1,6 +1,6 @@
 # Attachment blob storage — BlobStore seam & PGlite schema-parity design
 
-- **Status**: Design (companion to ADR-012)
+- **Status**: Design (companion to ADR-012) — **§2.1 refcount framing amended by ADR-013**: `reference_count` and its trigger are derived, rebuildable projection state, never lifecycle authority (#322)
 - **Date**: 2026-07-12
 - **Issue**: #282 (design child of epic #281)
 - **Relates**: ADR-012 (substrate decision), ADR-011 (shard conformance), server `Fortemi/fortemi#1046` (byte-sidecar proposal), `roctinam/bytecask#8` (integration epic), #271 (byte round-trip)
