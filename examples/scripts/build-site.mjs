@@ -31,12 +31,17 @@ console.log(`\n▸ Building ${all.length} examples into examples/_site/\n`)
 rmSync(siteDir, { recursive: true, force: true })
 mkdirSync(siteDir, { recursive: true })
 
+// Optional path prefix so the whole gallery can live under a sub-path (e.g.
+// `/react` on demo.fortemi.com). Empty by default → each example is host-root
+// at `/<id>/`. Set SITE_BASE=/react → assets resolve under `/react/<id>/`.
+const SITE_BASE = (process.env.SITE_BASE || '').replace(/\/+$/, '')
+
 let built = 0
 for (const e of all) {
   const pkg = `@fortemi/example-${e.id}`
   console.log(`── ${e.ex} ${e.id}`)
   if (e.prebuild) run('pnpm', ['--filter', pkg, 'run', e.prebuild])
-  run('pnpm', ['--filter', pkg, 'exec', 'vite', 'build', '--base', `/${e.id}/`])
+  run('pnpm', ['--filter', pkg, 'exec', 'vite', 'build', '--base', `${SITE_BASE}/${e.id}/`])
 
   const dist = join(examplesDir, e.id, 'dist')
   if (!existsSync(dist)) throw new Error(`no dist produced for ${e.id}`)

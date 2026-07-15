@@ -1,8 +1,9 @@
 # Demo Deploy
 #
 # Builds the interactive examples gallery and deploys it to demo.fortemi.com/react
-# (a sub-path of the shared demo host on integro dev4), following the same shape
-# as docsite-deploy.yml and the fortemi.com deploy.
+# (a sub-path of the shared demo host on integro dev4), plus a small landing page
+# at the demo-site root that points into /react. Follows the same shape as
+# docsite-deploy.yml and the fortemi.com deploy.
 #
 # The gallery is the pnpm workspace's examples/_site output: build the library
 # packages (core -> graph -> react, dependency order) then run the site builder,
@@ -72,6 +73,10 @@ jobs:
           pnpm --filter @fortemi/react build
 
       - name: Build examples gallery
+        # SITE_BASE nests every example's assets under /react so they resolve
+        # when the gallery is served from demo.fortemi.com/react/ (see build-site.mjs).
+        env:
+          SITE_BASE: /react
         run: pnpm examples:site:build
 
       - name: Verify build output
@@ -142,6 +147,24 @@ jobs:
             examples/_site/ \
             "${DEPLOY_USER}@${DEPLOY_HOST}:${DEMO_DEPLOY_PATH}"
 
+      - name: Deploy landing page to demo root
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEMO_DEPLOY_PATH: ${{ vars.DEMO_DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          # The gallery lives at .../react/; the landing page sits one level up at
+          # the demo-site root and links into /react/. Derive the root from the
+          # gallery path so this stays correct regardless of the sub-path name.
+          # No --delete here — that would wipe the sibling react/ gallery.
+          DEMO_ROOT="$(dirname "${DEMO_DEPLOY_PATH%/}")/"
+          rsync -avz \
+            -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
+            examples/demo-landing/index.html \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEMO_ROOT}"
+
       - name: Verify deployment
         env:
           DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
@@ -150,10 +173,11 @@ jobs:
           DEMO_DEPLOY_PATH: ${{ vars.DEMO_DEPLOY_PATH }}
         run: |
           set -euo pipefail
+          DEMO_ROOT="$(dirname "${DEMO_DEPLOY_PATH%/}")/"
           ssh -i ~/.ssh/deploy_key -p "$DEPLOY_PORT" \
             -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new \
             "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            "test -f '${DEMO_DEPLOY_PATH}index.html' && echo 'Deploy verified: index.html present' || { echo '::error::Deploy failed: index.html missing'; exit 1; }"
+            "test -f '${DEMO_DEPLOY_PATH}index.html' && test -f '${DEMO_ROOT}index.html' && echo 'Deploy verified: gallery + landing index.html present' || { echo '::error::Deploy failed: gallery or landing index.html missing'; exit 1; }"
 
       - name: Purge Cloudflare cache (demo.fortemi.com)
         if: success()
