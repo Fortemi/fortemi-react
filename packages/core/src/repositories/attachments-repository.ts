@@ -100,10 +100,13 @@ export class AttachmentsRepository {
     }
 
     // ── attachment record ───────────────────────────────────────────────────
+    // Browser extraction happens at attach time: text present == processing
+    // done, which keeps the status-gated searchable-text join (0017, server
+    // parity) including these rows.
     const attachmentId = generateId()
     await this.db.query(
-      `INSERT INTO attachment (id, note_id, blob_id, filename, display_name, mime_type, extracted_text)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      `INSERT INTO attachment (id, note_id, blob_id, filename, display_name, mime_type, extracted_text, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
       [
         attachmentId,
         input.noteId,
@@ -112,6 +115,7 @@ export class AttachmentsRepository {
         input.displayName ?? null,
         input.mimeType ?? null,
         input.extractedText ?? null,
+        input.extractedText ? 'completed' : 'uploaded',
       ],
     )
 

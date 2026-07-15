@@ -12,7 +12,7 @@ const ATTACHMENT_TEXT_JOIN = `
                 string_agg(extracted_text, ' ' ORDER BY position, created_at)
                   FILTER (WHERE extracted_text IS NOT NULL AND extracted_text <> '') as extracted_text
          FROM attachment
-         WHERE deleted_at IS NULL
+         WHERE deleted_at IS NULL AND status = 'completed'
          GROUP BY note_id
        ) ax ON ax.note_id = n.id`
 const COMBINED_TEXT_VECTOR_SQL = `to_tsvector('english', (coalesce(c.content, '') || ' ' || coalesce(ax.extracted_text, '')))`
