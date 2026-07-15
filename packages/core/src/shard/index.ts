@@ -50,6 +50,27 @@ export { packTarGz, unpackTarGz } from './shard-tar.js'
 // Checksums
 export { sha256Hex, validateChecksums } from './checksum.js'
 
+// Signed-shard verification (#324, ADR-014)
+export {
+  verifyShardSignature,
+  signShard,
+  isShardSigningSupported,
+  sidecarBlobDigests,
+  AllowlistTrustStore,
+  SIGNATURE_ENTRY,
+  SIGNING_ENVELOPE_VERSION,
+} from './shard-signature.js'
+export type {
+  ShardSignatureVerdict,
+  ShardSignatureEnvelope,
+  ShardSigningPayload,
+  ShardSigner,
+  ShardTrustStore,
+  TrustedKey,
+  VerifyShardSignatureInput,
+  SignShardInput,
+} from './shard-signature.js'
+
 // Field mapping
 export {
   noteToShard,

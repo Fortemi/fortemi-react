@@ -13,21 +13,20 @@
 # docsite deploy workflows.
 #
 # Required Gitea secrets:
-#   BAO_CI_ROLE_ID      — OpenBao AppRole role_id for this repo
-#   BAO_CI_SECRET_ID    — OpenBao AppRole secret_id for this repo
+#   VAULT_CI_ROLE_ID      — vault AppRole role_id for this repo
+#   VAULT_CI_SECRET_ID    — vault AppRole secret_id for this repo
 #   DEMO_CF_ZONE_ID     — (optional) Cloudflare zone id for the fortemi.com zone
 #   DEMO_CF_CACHE_PURGE — (optional) Cloudflare API token with cache-purge scope
 #                         If either is unset the purge step is skipped.
 #
 # Required Gitea variables:
-#   DEPLOY_HOST      — demo/docs server hostname (shared with docsite deploy)
-#   DEPLOY_PORT      — server SSH port
-#   DEPLOY_USER      — deploy user on the server
+#   DEMO_DEPLOY_HOST — demo server hostname
+#   DEMO_DEPLOY_PORT — server SSH port
+#   DEMO_DEPLOY_USER — deploy user on the server
 #   DEMO_DEPLOY_PATH — absolute path on the server, trailing slash, e.g.
-#                      /home/roctinam/production-deploy/demo-fortemi-com/react/
 #
-# The deploy SSH key is fetched from OpenBao (the shared docs-deploy key — see
-# ci/openbao-fetch.demo-deploy.spec), so demo.fortemi.com is assumed to be served
+# The deploy SSH key is fetched from vault (the shared docs-deploy key — see
+# ci/vault-fetch.demo-deploy.spec), so demo.fortemi.com is assumed to be served
 # from the same host/user as docs.fortemi.com.
 
 name: Demo Deploy
@@ -91,13 +90,13 @@ jobs:
 
       - name: Validate deploy configuration
         env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEMO_DEPLOY_HOST: ${{ vars.DEMO_DEPLOY_HOST }}
+          DEMO_DEPLOY_PORT: ${{ vars.DEMO_DEPLOY_PORT }}
+          DEMO_DEPLOY_USER: ${{ vars.DEMO_DEPLOY_USER }}
           DEMO_DEPLOY_PATH: ${{ vars.DEMO_DEPLOY_PATH }}
         run: |
           set -euo pipefail
-          for name in DEPLOY_HOST DEPLOY_PORT DEPLOY_USER DEMO_DEPLOY_PATH; do
+          for name in DEMO_DEPLOY_HOST DEMO_DEPLOY_PORT DEMO_DEPLOY_USER DEMO_DEPLOY_PATH; do
             if [ -z "${!name:-}" ]; then
               echo "::error::$name Gitea variable is required" >&2
               exit 1
@@ -108,11 +107,14 @@ jobs:
             *) echo "::error::DEMO_DEPLOY_PATH must be an absolute path ending in '/'" >&2; exit 1 ;;
           esac
 
-      - name: Fetch deploy key from OpenBao
+      - name: Fetch deploy key from vault
         env:
-          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
-          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
-        run: ci/openbao-fetch.sh --spec ci/openbao-fetch.demo-deploy.spec
+          VAULT_ADDR: ${{ vars.VAULT_ADDR }}
+          VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
+          VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
+          DEPLOY_SSH_KEY_VAULT_PATH: ${{ vars.DEPLOY_SSH_KEY_VAULT_PATH }}
+          DEPLOY_SSH_KEY_VAULT_FIELD: ${{ vars.DEPLOY_SSH_KEY_VAULT_FIELD }}
+        run: ci/vault-fetch.sh --spec ci/vault-fetch.demo-deploy.spec
 
       - name: Configure SSH key
         run: |
@@ -124,34 +126,34 @@ jobs:
 
       - name: Remote preflight
         env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEMO_DEPLOY_HOST: ${{ vars.DEMO_DEPLOY_HOST }}
+          DEMO_DEPLOY_PORT: ${{ vars.DEMO_DEPLOY_PORT }}
+          DEMO_DEPLOY_USER: ${{ vars.DEMO_DEPLOY_USER }}
           DEMO_DEPLOY_PATH: ${{ vars.DEMO_DEPLOY_PATH }}
         run: |
           set -euo pipefail
-          ssh -i ~/.ssh/deploy_key -p "$DEPLOY_PORT" \
+          ssh -i ~/.ssh/deploy_key -p "$DEMO_DEPLOY_PORT" \
             -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new \
-            "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p \"${DEMO_DEPLOY_PATH}\""
+            "${DEMO_DEPLOY_USER}@${DEMO_DEPLOY_HOST}" "mkdir -p \"${DEMO_DEPLOY_PATH}\""
 
       - name: Deploy to demo host
         env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEMO_DEPLOY_HOST: ${{ vars.DEMO_DEPLOY_HOST }}
+          DEMO_DEPLOY_PORT: ${{ vars.DEMO_DEPLOY_PORT }}
+          DEMO_DEPLOY_USER: ${{ vars.DEMO_DEPLOY_USER }}
           DEMO_DEPLOY_PATH: ${{ vars.DEMO_DEPLOY_PATH }}
         run: |
           set -euo pipefail
           rsync -avz --delete \
-            -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
+            -e "ssh -i ~/.ssh/deploy_key -p ${DEMO_DEPLOY_PORT} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
             examples/_site/ \
-            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEMO_DEPLOY_PATH}"
+            "${DEMO_DEPLOY_USER}@${DEMO_DEPLOY_HOST}:${DEMO_DEPLOY_PATH}"
 
       - name: Deploy landing page to demo root
         env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEMO_DEPLOY_HOST: ${{ vars.DEMO_DEPLOY_HOST }}
+          DEMO_DEPLOY_PORT: ${{ vars.DEMO_DEPLOY_PORT }}
+          DEMO_DEPLOY_USER: ${{ vars.DEMO_DEPLOY_USER }}
           DEMO_DEPLOY_PATH: ${{ vars.DEMO_DEPLOY_PATH }}
         run: |
           set -euo pipefail
@@ -161,22 +163,22 @@ jobs:
           # No --delete here — that would wipe the sibling react/ gallery.
           DEMO_ROOT="$(dirname "${DEMO_DEPLOY_PATH%/}")/"
           rsync -avz \
-            -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
+            -e "ssh -i ~/.ssh/deploy_key -p ${DEMO_DEPLOY_PORT} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
             examples/demo-landing/index.html \
-            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEMO_ROOT}"
+            "${DEMO_DEPLOY_USER}@${DEMO_DEPLOY_HOST}:${DEMO_ROOT}"
 
       - name: Verify deployment
         env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEMO_DEPLOY_HOST: ${{ vars.DEMO_DEPLOY_HOST }}
+          DEMO_DEPLOY_PORT: ${{ vars.DEMO_DEPLOY_PORT }}
+          DEMO_DEPLOY_USER: ${{ vars.DEMO_DEPLOY_USER }}
           DEMO_DEPLOY_PATH: ${{ vars.DEMO_DEPLOY_PATH }}
         run: |
           set -euo pipefail
           DEMO_ROOT="$(dirname "${DEMO_DEPLOY_PATH%/}")/"
-          ssh -i ~/.ssh/deploy_key -p "$DEPLOY_PORT" \
+          ssh -i ~/.ssh/deploy_key -p "$DEMO_DEPLOY_PORT" \
             -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new \
-            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "${DEMO_DEPLOY_USER}@${DEMO_DEPLOY_HOST}" \
             "test -f '${DEMO_DEPLOY_PATH}index.html' && test -f '${DEMO_ROOT}index.html' && echo 'Deploy verified: gallery + landing index.html present' || { echo '::error::Deploy failed: gallery or landing index.html missing'; exit 1; }"
 
       - name: Purge Cloudflare cache (demo.fortemi.com)
@@ -207,7 +209,7 @@ jobs:
         if: always()
         run: |
           rm -f ~/.ssh/deploy_key
-          ci/openbao-fetch.sh --cleanup
+          ci/vault-fetch.sh --cleanup
 
       - name: Log deployment result
         if: success()

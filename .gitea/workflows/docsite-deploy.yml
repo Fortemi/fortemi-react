@@ -11,15 +11,14 @@
 # Published to docs.fortemi.com/react (a sub-path of the shared docs host).
 #
 # Required Gitea secrets:
-#   BAO_CI_ROLE_ID   — OpenBao AppRole role_id for this repo
-#   BAO_CI_SECRET_ID — OpenBao AppRole secret_id for this repo
+#   VAULT_CI_ROLE_ID   — vault AppRole role_id for this repo
+#   VAULT_CI_SECRET_ID — vault AppRole secret_id for this repo
 #
 # Required Gitea variables:
-#   DEPLOY_HOST      — docs server hostname
-#   DEPLOY_PORT      — docs server SSH port
-#   DEPLOY_USER      — deploy user on the docs server
-#   DEPLOY_PATH      — absolute path on the docs server, e.g.
-#                      /home/roctinam/production-deploy/docs-fortemi-com/react/
+#   DOCSITE_DEPLOY_HOST — docs server hostname
+#   DOCSITE_DEPLOY_PORT — docs server SSH port
+#   DOCSITE_DEPLOY_USER — deploy user on the docs server
+#   DOCSITE_DEPLOY_PATH — absolute path on the docs server
 
 name: Docsite Deploy
 
@@ -72,24 +71,27 @@ jobs:
 
       - name: Validate deploy configuration
         env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
-          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          DOCSITE_DEPLOY_HOST: ${{ vars.DOCSITE_DEPLOY_HOST }}
+          DOCSITE_DEPLOY_PORT: ${{ vars.DOCSITE_DEPLOY_PORT }}
+          DOCSITE_DEPLOY_USER: ${{ vars.DOCSITE_DEPLOY_USER }}
+          DOCSITE_DEPLOY_PATH: ${{ vars.DOCSITE_DEPLOY_PATH }}
         run: |
           set -euo pipefail
-          for name in DEPLOY_HOST DEPLOY_PORT DEPLOY_USER DEPLOY_PATH; do
+          for name in DOCSITE_DEPLOY_HOST DOCSITE_DEPLOY_PORT DOCSITE_DEPLOY_USER DOCSITE_DEPLOY_PATH; do
             if [ -z "${!name:-}" ]; then
               echo "$name Gitea variable is required" >&2
               exit 1
             fi
           done
 
-      - name: Fetch deploy key from OpenBao
+      - name: Fetch deploy key from vault
         env:
-          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
-          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
-        run: ci/openbao-fetch.sh --spec ci/openbao-fetch.docsite-deploy.spec
+          VAULT_ADDR: ${{ vars.VAULT_ADDR }}
+          VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
+          VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
+          DEPLOY_SSH_KEY_VAULT_PATH: ${{ vars.DEPLOY_SSH_KEY_VAULT_PATH }}
+          DEPLOY_SSH_KEY_VAULT_FIELD: ${{ vars.DEPLOY_SSH_KEY_VAULT_FIELD }}
+        run: ci/vault-fetch.sh --spec ci/vault-fetch.docsite-deploy.spec
 
       - name: Configure SSH key
         run: |
@@ -101,36 +103,36 @@ jobs:
 
       - name: Deploy to docs server
         env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
-          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          DOCSITE_DEPLOY_HOST: ${{ vars.DOCSITE_DEPLOY_HOST }}
+          DOCSITE_DEPLOY_PORT: ${{ vars.DOCSITE_DEPLOY_PORT }}
+          DOCSITE_DEPLOY_USER: ${{ vars.DOCSITE_DEPLOY_USER }}
+          DOCSITE_DEPLOY_PATH: ${{ vars.DOCSITE_DEPLOY_PATH }}
         run: |
           set -euo pipefail
-          DEPLOY_PATH="${DEPLOY_PATH%/}/"
+          DOCSITE_DEPLOY_PATH="${DOCSITE_DEPLOY_PATH%/}/"
           rsync -avz --delete \
-            -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT} -o StrictHostKeyChecking=accept-new" \
+            -e "ssh -i ~/.ssh/deploy_key -p ${DOCSITE_DEPLOY_PORT} -o StrictHostKeyChecking=accept-new" \
             docsite/dist/fortemi-react/ \
-            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
+            "${DOCSITE_DEPLOY_USER}@${DOCSITE_DEPLOY_HOST}:${DOCSITE_DEPLOY_PATH}"
 
       - name: Verify deployment
         env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
-          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          DOCSITE_DEPLOY_HOST: ${{ vars.DOCSITE_DEPLOY_HOST }}
+          DOCSITE_DEPLOY_PORT: ${{ vars.DOCSITE_DEPLOY_PORT }}
+          DOCSITE_DEPLOY_USER: ${{ vars.DOCSITE_DEPLOY_USER }}
+          DOCSITE_DEPLOY_PATH: ${{ vars.DOCSITE_DEPLOY_PATH }}
         run: |
           set -euo pipefail
-          DEPLOY_PATH="${DEPLOY_PATH%/}/"
-          ssh -i ~/.ssh/deploy_key -p "$DEPLOY_PORT" -o StrictHostKeyChecking=accept-new \
-            "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            "test -f '${DEPLOY_PATH}index.html' && echo 'Deploy verified: index.html present' || { echo 'Deploy failed: index.html missing'; exit 1; }"
+          DOCSITE_DEPLOY_PATH="${DOCSITE_DEPLOY_PATH%/}/"
+          ssh -i ~/.ssh/deploy_key -p "$DOCSITE_DEPLOY_PORT" -o StrictHostKeyChecking=accept-new \
+            "${DOCSITE_DEPLOY_USER}@${DOCSITE_DEPLOY_HOST}" \
+            "test -f '${DOCSITE_DEPLOY_PATH}index.html' && echo 'Deploy verified: index.html present' || { echo 'Deploy failed: index.html missing'; exit 1; }"
 
       - name: Cleanup SSH keys
         if: always()
         run: |
           rm -f ~/.ssh/deploy_key
-          ci/openbao-fetch.sh --cleanup
+          ci/vault-fetch.sh --cleanup
 
       - name: Log deployment result
         if: success()

@@ -1,0 +1,58 @@
+{
+  "repository": "Fortemi/fortemi-react",
+  "reader_approle": "ci-fortemi-react",
+  "bootstrap_tracker_secrets": [
+    "VAULT_CI_ROLE_ID",
+    "VAULT_CI_SECRET_ID"
+  ],
+  "tracker_variables": [
+    "VAULT_ADDR",
+    "FORTEMI_REACT_VAULT_MOUNT",
+    "FORTEMI_REACT_VAULT_DATA_PREFIX",
+    "FORTEMI_REACT_VAULT_METADATA_PREFIX",
+    "GT_PUBLISH_TOKEN_VAULT_PATH",
+    "GT_PUBLISH_TOKEN_VAULT_FIELD",
+    "DEPLOY_SSH_KEY_VAULT_PATH",
+    "DEPLOY_SSH_KEY_VAULT_FIELD",
+    "DOCS_DEPLOY_KEY_VAULT_DATA_PATH",
+    "DOCS_DEPLOY_KEY_VAULT_METADATA_PATH",
+    "DOCSITE_DEPLOY_HOST",
+    "DOCSITE_DEPLOY_PORT",
+    "DOCSITE_DEPLOY_USER",
+    "DOCSITE_DEPLOY_PATH",
+    "DEMO_DEPLOY_HOST",
+    "DEMO_DEPLOY_PORT",
+    "DEMO_DEPLOY_USER",
+    "DEMO_DEPLOY_PATH"
+  ],
+  "leaves": [
+    {
+      "path_variable": "GT_PUBLISH_TOKEN_VAULT_PATH",
+      "field_variable": "GT_PUBLISH_TOKEN_VAULT_FIELD",
+      "type": "api-token",
+      "service": "ci/fortemi-react",
+      "owner": "itops",
+      "tenant": "internal",
+      "purpose": "Gitea package publish and release creation token for Fortemi React",
+      "consumers": "gitea-actions:fortemi-react:publish",
+      "reader_approle": "ci-fortemi-react",
+      "sensitivity": "high",
+      "rotation": "quarterly",
+      "sop": "itops/docs/security/ci-secret-migration.md"
+    },
+    {
+      "path_variable": "DEPLOY_SSH_KEY_VAULT_PATH",
+      "field_variable": "DEPLOY_SSH_KEY_VAULT_FIELD",
+      "type": "ssh-private-key",
+      "service": "ci/shared/docs-deploy",
+      "owner": "itops",
+      "tenant": "internal",
+      "purpose": "Shared documentation host deploy SSH private key",
+      "consumers": "gitea-actions:fortemi-react:docsite-deploy,demo-deploy",
+      "reader_approle": "ci-fortemi-react",
+      "sensitivity": "critical",
+      "rotation": "on-exposure",
+      "sop": "itops/docs/security/ci-secret-migration.md"
+    }
+  ]
+}
