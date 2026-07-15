@@ -16,17 +16,22 @@
 :root {
   color-scheme: light;
 
-  --bg: #f4f1ea;
-  --surface: #faf8f4;
-  --surface-2: #ffffff;
-  --ink: #2b2824;
-  --ink-strong: #43403a;
-  --muted: #6e665a;
-  --accent: #585149;
-  --rule: #ddd6c8;
-  --rule-soft: #e7e0d2;
-  --code-bg: #e9e4d8;
-  --warm: #b9946a;
+  /* Canonical fortemi.com light palette. */
+  --bg: #f6f8fe;
+  --surface: #ffffff;
+  --surface-2: #eef3ff;
+  --ink: #0e1726;
+  --ink-strong: #070b14;
+  --muted: #41527a;
+  --dim: #6b7ca0;
+  --accent: #2563eb;
+  --accent-lift: #5b8cff;
+  --rule: #d9e2f4;
+  --rule-soft: #e8eef9;
+  --code-bg: #eef3ff;
+  --warm: #f5a623;
+  --warm-soft: #ffcf7a;
+  --concept: #0f8f87;
 
   /* SVG GraphView surface — derives from the page palette, edge/ring explicit. */
   --fortemi-graph-bg: var(--surface);
@@ -36,7 +41,7 @@
   --fortemi-graph-label: var(--ink);
   --fortemi-graph-node-stroke: var(--surface);
   --fortemi-graph-node-strong: var(--ink);
-  --fortemi-graph-edge: #9aa0a6;
+  --fortemi-graph-edge: #9aaccc;
 }
 
 /* System dark, unless the user explicitly forced light. */
@@ -44,19 +49,23 @@
   :root:not([data-theme='light']) {
     color-scheme: dark;
 
-    --bg: #14120f;
-    --surface: #1c1915;
-    --surface-2: #23201a;
-    --ink: #ece6da;
-    --ink-strong: #f3eee2;
-    --muted: #a89f8d;
-    --accent: #c9a678;
-    --rule: #38332a;
-    --rule-soft: #2a251d;
-    --code-bg: #26221b;
-    --warm: #cba46f;
+    --bg: #070b14;
+    --surface: #0f1830;
+    --surface-2: #16223c;
+    --ink: #e8eef9;
+    --ink-strong: #ffffff;
+    --muted: #93a3c4;
+    --dim: #5f6f8f;
+    --accent: #5b8cff;
+    --accent-lift: #7ba2ff;
+    --rule: #223050;
+    --rule-soft: #182541;
+    --code-bg: #0d1424;
+    --warm: #f5a623;
+    --warm-soft: #ffcf7a;
+    --concept: #4fd1c5;
 
-    --fortemi-graph-edge: #524d40;
+    --fortemi-graph-edge: #314264;
   }
 }
 
@@ -64,17 +73,21 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: #14120f;
-  --surface: #1c1915;
-  --surface-2: #23201a;
-  --ink: #ece6da;
-  --ink-strong: #f3eee2;
-  --muted: #a89f8d;
-  --accent: #c9a678;
-  --rule: #38332a;
-  --rule-soft: #2a251d;
-  --code-bg: #26221b;
-  --warm: #cba46f;
+  --bg: #070b14;
+  --surface: #0f1830;
+  --surface-2: #16223c;
+  --ink: #e8eef9;
+  --ink-strong: #ffffff;
+  --muted: #93a3c4;
+  --dim: #5f6f8f;
+  --accent: #5b8cff;
+  --accent-lift: #7ba2ff;
+  --rule: #223050;
+  --rule-soft: #182541;
+  --code-bg: #0d1424;
+  --warm: #f5a623;
+  --warm-soft: #ffcf7a;
+  --concept: #4fd1c5;
 
-  --fortemi-graph-edge: #524d40;
+  --fortemi-graph-edge: #314264;
 }

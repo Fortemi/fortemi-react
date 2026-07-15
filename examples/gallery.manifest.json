@@ -1,7 +1,14 @@
 {
   "title": "Fortémi — examples gallery",
-  "subtitle": "19 runnable @fortemi/* examples, from single-concept starters to composed applications.",
+  "subtitle": "20 runnable @fortemi/* examples, from one complete application to focused implementation patterns.",
   "tiers": [
+    {
+      "name": "Complete application",
+      "blurb": "Start here to see Fortemi used as the data primitive behind a real product workflow, with complexity revealed only when the user needs it.",
+      "examples": [
+        { "id": "knowledge-workspace", "ex": "EX-20", "title": "knowledge-workspace", "teaser": "A Magly-derived local-first research and notes workspace: shard reader, search, writes, semantic retrieval, AI enrichment, SKOS, PROV, and optional relationship views.", "downloads": true }
+      ]
+    },
     {
       "name": "Graph stack",
       "blurb": "The @fortemi/graph views as a standalone product — any CommunityGraph / RenderGraph, no database, no downloads.",

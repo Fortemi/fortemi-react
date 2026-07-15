@@ -187,7 +187,7 @@ export function GraphNodeSummary({
 //    fallbacks, so these controls follow the page's light/dark mode. ──
 const seg: CSSProperties = {
   display: 'inline-flex',
-  border: '1px solid var(--rule, #d5d1c7)',
+  border: '1px solid var(--rule, #d9e2f4)',
   borderRadius: 6,
   overflow: 'hidden',
 }
@@ -198,15 +198,15 @@ function segBtn(active: boolean): CSSProperties {
     fontWeight: 600,
     border: 'none',
     cursor: 'pointer',
-    background: active ? 'var(--ink, #2f2b24)' : 'transparent',
-    color: active ? 'var(--bg, #faf7f0)' : 'var(--muted, #5a5348)',
+    background: active ? 'var(--accent, #2563eb)' : 'transparent',
+    color: active ? '#ffffff' : 'var(--muted, #41527a)',
   }
 }
 const detail: CSSProperties = {
-  border: '1px solid var(--rule, #d5d1c7)',
+  border: '1px solid var(--rule, #d9e2f4)',
   borderRadius: 6,
   padding: 12,
-  background: 'var(--surface, #fbfaf7)',
+  background: 'var(--surface, #ffffff)',
   display: 'flex',
   flexDirection: 'column',
   gap: 8,
@@ -217,17 +217,17 @@ const detailHead: CSSProperties = {
   justifyContent: 'space-between',
   gap: 8,
 }
-const detailTitle: CSSProperties = { margin: 0, fontSize: 15, color: 'var(--ink, #1c1a16)' }
+const detailTitle: CSSProperties = { margin: 0, fontSize: 15, color: 'var(--ink, #0e1726)' }
 const chipRow: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 6 }
 const chip: CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: 6,
-  border: '1px solid var(--rule, #d5d1c7)',
+  border: '1px solid var(--rule, #d9e2f4)',
   borderRadius: 999,
   padding: '2px 8px',
   fontSize: 11,
-  color: 'var(--muted, #5a5348)',
+  color: 'var(--muted, #41527a)',
   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
 }
 const swatch: CSSProperties = { width: 9, height: 9, borderRadius: 999, display: 'inline-block' }
@@ -236,10 +236,10 @@ const openBtn: CSSProperties = {
   padding: '4px 10px',
   fontSize: 12,
   borderRadius: 6,
-  border: '1px solid var(--rule, #d5d1c7)',
+  border: '1px solid var(--rule, #d9e2f4)',
   background: 'var(--surface-2, #fff)',
   cursor: 'pointer',
-  color: 'var(--ink, #2f2b24)',
+  color: 'var(--ink, #0e1726)',
 }
 const closeBtn: CSSProperties = {
   border: 'none',
@@ -247,12 +247,12 @@ const closeBtn: CSSProperties = {
   fontSize: 18,
   lineHeight: 1,
   cursor: 'pointer',
-  color: 'var(--muted, #8a8172)',
+  color: 'var(--muted, #41527a)',
   padding: 0,
 }
 const lazyFallback: CSSProperties = {
   padding: 24,
-  color: 'var(--muted, #8a8172)',
+  color: 'var(--muted, #41527a)',
   fontSize: 13,
   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
   textAlign: 'center',
@@ -344,26 +344,26 @@ export function graphThemeFor(mode: ThemeMode): {
   if (mode === 'dark') {
     return {
       sigma: {
-        node: '#c9b78f',
-        ink: '#f3eee2',
-        edge: '#3a352a',
-        dimNode: '#2a251d',
-        dimEdge: '#211d16',
-        label: '#ece6da',
+        node: '#5b8cff',
+        ink: '#ffffff',
+        edge: '#314264',
+        dimNode: '#182541',
+        dimEdge: '#111c32',
+        label: '#e8eef9',
       },
-      force3d: { background: '#14120f', link: '#524d40' },
+      force3d: { background: '#070b14', link: '#314264' },
     }
   }
   return {
     sigma: {
-      node: '#5C5852',
-      ink: '#1A1816',
-      edge: '#E4E0D6',
-      dimNode: '#E2DDD3',
-      dimEdge: '#EFECE4',
-      label: '#1A1816',
+      node: '#2563eb',
+      ink: '#0e1726',
+      edge: '#9aaccc',
+      dimNode: '#d9e2f4',
+      dimEdge: '#e8eef9',
+      label: '#0e1726',
     },
-    force3d: { background: '#faf8f4', link: '#c9c2b4' },
+    force3d: { background: '#ffffff', link: '#9aaccc' },
   }
 }
 

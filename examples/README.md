@@ -24,7 +24,7 @@ Every example supports `pnpm dev`, `pnpm build`, and `pnpm typecheck`.
 Build every example into a single browsable gallery and serve it locally:
 
 ```bash
-pnpm examples:site        # build all 19 → examples/_site/, then serve
+pnpm examples:site        # build all 20 → examples/_site/, then serve
 # → http://localhost:4321   (click any card to run that example)
 ```
 
@@ -37,6 +37,14 @@ steps: `pnpm examples:site:build` and `pnpm examples:site:serve` (`PORT=8080` to
 override the port). `examples/_site/` is generated and git-ignored.
 
 ## Delivered
+
+The premium application tier shows the user-facing result of composing Fortemi's
+data capabilities. Its relationship view is optional; search, reading, capture,
+enrichment, taxonomy, and provenance are the primary workflows.
+
+| ID | Example | Category | Teaches |
+|----|---------|----------|---------|
+| EX-20 | [`knowledge-workspace`](./knowledge-workspace) | Complete app · React · shard + PGlite | A production-shaped Magly replica: instant shard-backed reading and text search, opt-in database writes and semantic search, note enrichment, SKOS concepts, PROV history, local/remote AI, and an optional 2D/3D relationship view. |
 
 The no-DB graph tier + the controls playground — **highest reuse value, zero
 capability downloads, no database.** These prove the graph stack is a standalone

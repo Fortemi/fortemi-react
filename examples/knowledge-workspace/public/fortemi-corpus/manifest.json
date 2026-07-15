@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 4,
+  "generatedAt": "2026-06-18T00:16:10.846Z",
+  "status": "built",
+  "artifacts": {
+    "corpus.notes.shard": "notes only — homepage embed, fast full-text import",
+    "corpus.summaries.shard": "notes + \"AI summaries\" set only (~1 vector/doc) — /fortemi default semantic, light import",
+    "corpus.shard": "notes + all embeddings — /fortemi deep/content search, loaded on demand (drop/rebuild HNSW on import)",
+    "graph.citations.snapshot.json": "precomputed citation graph (nodes+links+positions) — Graph tab renders instantly, no DB build",
+    "graph.topics.snapshot.json": "precomputed topical (AI-summary k-NN) graph — renders without loading any vectors"
+  },
+  "format": "fortemi-knowledge-shard",
+  "model": "all-MiniLM-L6-v2",
+  "embeddingModelId": "Xenova/all-MiniLM-L6-v2",
+  "dimensions": 384,
+  "embeddingParams": {
+    "pooling": "mean",
+    "normalize": true
+  },
+  "chunkCount": 4215,
+  "embeddedChunks": 3123,
+  "ftsOnlyChunks": 1092,
+  "docCount": 363,
+  "ftsOnlyDocs": 100,
+  "citationLinks": 1958,
+  "byKind": {
+    "research": 350,
+    "resume": 13
+  },
+  "bytes": {
+    "notesShardTarGz": 2854393,
+    "summariesShardTarGz": 3582598,
+    "fullShardTarGz": 9831719
+  },
+  "graphSnapshots": {
+    "citations": 269778,
+    "topics": 220158
+  },
+  "roundTrip": {
+    "importedNotes": 4215,
+    "counts": {
+      "notes": 4215,
+      "collections": 0,
+      "tags": 0,
+      "links": 1958,
+      "embedding_sets": 0,
+      "embedding_set_members": 0,
+      "embeddings": 0,
+      "skos_schemes": 1,
+      "skos_concepts": 1566,
+      "skos_relations": 0,
+      "note_skos_tags": 1871,
+      "provenance_edges": 1089,
+      "graph_sources": 0,
+      "graph_edges": 0,
+      "community_sets": 0,
+      "communities": 0,
+      "community_assignments": 0
+    }
+  },
+  "chunkPolicy": {
+    "maxCharsPerChunk": 2000,
+    "researchRefCap": 250,
+    "ftsOnlyTarget": 100,
+    "researchFullDocument": true
+  }
+}
