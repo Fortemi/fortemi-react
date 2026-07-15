@@ -63,7 +63,9 @@ function parseNotes(archive: Uint8Array): ShardNote[] {
     .map((line) => JSON.parse(line) as ShardNote)
 }
 
-describe('shard byte sidecar round-trip (#271 / Fortemi/fortemi#1046)', () => {
+// Every test boots at least one PGlite WASM instance (two for the cross-DB
+// round-trips), which can exceed the 5s default under full-suite CPU load (#312).
+describe('shard byte sidecar round-trip (#271 / Fortemi/fortemi#1046)', { timeout: 30_000 }, () => {
   it('attaches with a BLAKE3 content hash', async () => {
     const db = await setupDb()
     try {
