@@ -7,6 +7,14 @@
 // graph. No database boots — no FortemiProvider, so PGlite never runs.
 
 import { useMemo, useState } from 'react'
+import {
+  GraphModeToggle,
+  Graph3DLazy,
+  ThemeToggle,
+  useThemeMode,
+  graphThemeFor,
+  type GraphMode,
+} from '@fortemi/examples-shared/ui'
 import { GraphView } from '@fortemi/react/graph'
 import { useAiwgIndex } from '@fortemi/react'
 import type { AiwgFortemiRecord } from '@fortemi/core/aiwg-index'
@@ -20,6 +28,9 @@ export function App() {
   const [query, setQuery] = useState('')
   const [layout, setLayout] = useState<Layout>('community')
   const [selected, setSelected] = useState<string | null>(null)
+  const [mode, setMode] = useState<GraphMode>('2d')
+  const themeMode = useThemeMode()
+  const graphTheme = graphThemeFor(themeMode)
 
   // The index → CommunityGraph projection. Communities are `type:<kind>` because
   // the records carry no concepts; the graph legend becomes the artifact taxonomy.
@@ -50,6 +61,7 @@ export function App() {
 
   return (
     <main className="page wide">
+      <ThemeToggle floating />
       <header>
         <h1>EX-11 · aiwg-index-map</h1>
         <p className="lede">
@@ -93,17 +105,33 @@ export function App() {
       </form>
 
       <section className="split">
-        <div className="canvas">
-          <GraphView
-            graph={graph}
-            layout={{ algorithm: layout }}
-            filters={{ nodeIds: matchedIds ?? undefined }}
-            selectedNodeId={selected}
-            onSelectNode={setSelected}
-            labelFor={labelFor}
-            width={640}
-            height={460}
+        <div className="canvas" style={{ position: 'relative' }}>
+          <GraphModeToggle
+            mode={mode}
+            onModeChange={setMode}
+            style={{ position: 'absolute', top: 8, left: 8, zIndex: 5 }}
           />
+          {mode === '2d' ? (
+            <GraphView
+              graph={graph}
+              layout={{ algorithm: layout }}
+              filters={{ nodeIds: matchedIds ?? undefined }}
+              selectedNodeId={selected}
+              onSelectNode={setSelected}
+              labelFor={labelFor}
+              width={640}
+              height={460}
+            />
+          ) : (
+            <Graph3DLazy
+              graph={graph}
+              filters={{ nodeIds: matchedIds ?? undefined }}
+              labelFor={labelFor}
+              onSelectNode={setSelected}
+              theme={graphTheme.force3d}
+              height={460}
+            />
+          )}
         </div>
 
         <aside className="detail">

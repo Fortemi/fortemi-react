@@ -8,6 +8,7 @@
 // a node — the docs.fortemi.com pattern, generalized to any static host.
 
 import { useEffect, useMemo, useState } from 'react'
+import { ThemeToggle } from '@fortemi/examples-shared/ui'
 import { loadRenderSnapshot } from '@fortemi/graph'
 import type { RenderGraph } from '@fortemi/graph'
 
@@ -75,6 +76,7 @@ export function App() {
 
   return (
     <main className="page wide">
+      <ThemeToggle floating />
       <header>
         <h1>EX-17 · docs-atlas</h1>
         <p className="lede">

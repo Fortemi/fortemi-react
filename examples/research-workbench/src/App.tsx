@@ -16,6 +16,14 @@
 // concepts are assigned directly rather than by an embedding pipeline.
 
 import { useEffect, useMemo, useState } from 'react'
+import {
+  GraphModeToggle,
+  Graph3DLazy,
+  ThemeToggle,
+  useThemeMode,
+  graphThemeFor,
+  type GraphMode,
+} from '@fortemi/examples-shared/ui'
 import { GraphView } from '@fortemi/react/graph'
 import {
   useFortemiContext,
@@ -36,6 +44,9 @@ export function App() {
   const { db, blobStore } = useFortemiContext()
   const [wb, setWb] = useState<SeededWorkbench | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
+  const [mode, setMode] = useState<GraphMode>('2d')
+  const themeMode = useThemeMode()
+  const graphTheme = graphThemeFor(themeMode)
   const [tick, setTick] = useState(0) // bump to remount the detail after a revision
 
   useEffect(() => {
@@ -64,6 +75,7 @@ export function App() {
 
   return (
     <main className="page wide">
+      <ThemeToggle floating />
       <header>
         <h1>EX-18 · research-workbench</h1>
         <p className="lede">
@@ -107,17 +119,33 @@ export function App() {
             </div>
           </aside>
 
-          <div className="canvas">
-            <GraphView
-              graph={wb.graph}
-              layout={{ algorithm: 'force' }}
-              filters={{ nodeIds: spotlight }}
-              selectedNodeId={selected}
-              onSelectNode={setSelected}
-              labelFor={(id) => wb.titleByNode.get(id) ?? id}
-              width={560}
-              height={460}
+          <div className="canvas" style={{ position: 'relative' }}>
+            <GraphModeToggle
+              mode={mode}
+              onModeChange={setMode}
+              style={{ position: 'absolute', top: 8, left: 8, zIndex: 5 }}
             />
+            {mode === '2d' ? (
+              <GraphView
+                graph={wb.graph}
+                layout={{ algorithm: 'force' }}
+                filters={{ nodeIds: spotlight }}
+                selectedNodeId={selected}
+                onSelectNode={setSelected}
+                labelFor={(id) => wb.titleByNode.get(id) ?? id}
+                width={560}
+                height={460}
+              />
+            ) : (
+              <Graph3DLazy
+                graph={wb.graph}
+                filters={{ nodeIds: spotlight }}
+                labelFor={(id) => wb.titleByNode.get(id) ?? id}
+                onSelectNode={setSelected}
+                theme={graphTheme.force3d}
+                height={460}
+              />
+            )}
             <p className="caption">
               {wb.graph.edges.length} citations across {wb.graph.communities.length} areas — click a
               node to focus its citation neighbourhood.

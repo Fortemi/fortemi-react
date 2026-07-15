@@ -15,7 +15,9 @@
     "@fortemi/graph": "workspace:*",
     "@fortemi/react": "workspace:*",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "react-force-graph-3d": "^1.29.1",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@fortemi/examples-shared": "workspace:*",

@@ -7,6 +7,7 @@
 // just a portable `.shard` handed from one database to another.
 
 import { useState } from 'react'
+import { ThemeToggle } from '@fortemi/examples-shared/ui'
 import { FortemiProvider } from '@fortemi/react'
 import type { ConflictStrategy } from '@fortemi/core'
 import { SourceInstance } from './SourceInstance.js'
@@ -18,6 +19,7 @@ export function App() {
 
   return (
     <main className="page">
+      <ThemeToggle floating />
       <header>
         <h1>EX-13 · shard-exchange</h1>
         <p className="lede">

@@ -26,7 +26,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0
   padding: 6px 8px; border-radius: 7px; cursor: pointer; font-size: 0.9rem;
 }
 .doc-pick:hover { background: #20242e; }
-.doc-pick.active { background: #263041; color: #fff; }
+.doc-pick.active { background: #263041; color: var(--surface-2); }
 
 .legend { display: flex; flex-direction: column; gap: 5px; border-top: 1px solid var(--border); padding-top: 10px; }
 .legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--muted); }

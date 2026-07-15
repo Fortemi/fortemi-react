@@ -6,6 +6,7 @@
 // database; these hooks are the CRUD surface over it.
 
 import { useEffect, useState } from 'react'
+import { ThemeToggle } from '@fortemi/examples-shared/ui'
 import { useNotes, useCreateNote, useUpdateNote, useDeleteNote } from '@fortemi/react'
 import { seedNotes } from '@fortemi/examples-shared'
 
@@ -62,6 +63,7 @@ export function App() {
 
   return (
     <main className="page">
+      <ThemeToggle floating />
       <header>
         <h1>EX-06 · notes-crud-minimal</h1>
         <p className="lede">

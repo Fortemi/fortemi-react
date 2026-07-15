@@ -8,6 +8,7 @@
 // missing or lacks positions, so a real app can fall back to a live build.
 
 import { useEffect, useState } from 'react'
+import { ThemeToggle } from '@fortemi/examples-shared/ui'
 import { loadRenderSnapshot } from '@fortemi/graph'
 import type { RenderGraph } from '@fortemi/graph'
 
@@ -39,6 +40,7 @@ export function App() {
 
   return (
     <main className="page">
+      <ThemeToggle floating />
       <header>
         <h1>EX-05 · snapshot-baking</h1>
         <p className="lede">

@@ -7,6 +7,15 @@
 // `CommunityGraph`; no database in the module graph.
 
 import { useState } from 'react'
+import {
+  GraphModeToggle,
+  Graph3DLazy,
+  GraphNodeSummary,
+  ThemeToggle,
+  useThemeMode,
+  graphThemeFor,
+  type GraphMode,
+} from '@fortemi/examples-shared/ui'
 import { SigmaGraphView } from '@fortemi/react/graph-2d'
 import type { CommunityPalette } from '@fortemi/graph'
 import { mediumGraph, labelFor } from '@fortemi/examples-shared'
@@ -20,9 +29,14 @@ export function App() {
   const [palette, setPalette] = useState<CommunityPalette>('community')
   const [minDegree, setMinDegree] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
+  const [mode, setMode] = useState<GraphMode>('2d')
+
+  const themeMode = useThemeMode()
+  const graphTheme = graphThemeFor(themeMode)
 
   return (
     <main className="page">
+      <ThemeToggle floating />
       <header>
         <h1>EX-03 · graph-2d-live</h1>
         <p className="lede">
@@ -34,17 +48,35 @@ export function App() {
 
       <section className="layout">
         <div className="canvas" style={{ height: 480 }}>
-          <SigmaGraphView
-            graph={mediumGraph}
-            palette={palette}
-            filters={{ minDegree }}
-            labelFor={labelFor}
-            onSelectNode={setSelected}
-            height={480}
-          />
+          {mode === '2d' ? (
+            <SigmaGraphView
+              graph={mediumGraph}
+              palette={palette}
+              filters={{ minDegree }}
+              labelFor={labelFor}
+              onSelectNode={setSelected}
+              theme={graphTheme.sigma}
+              height={480}
+            />
+          ) : (
+            <Graph3DLazy
+              graph={mediumGraph}
+              palette={palette}
+              filters={{ minDegree }}
+              labelFor={labelFor}
+              onSelectNode={setSelected}
+              theme={graphTheme.force3d}
+              height={480}
+            />
+          )}
         </div>
 
         <aside className="controls">
+          <div className="control">
+            <span>Dimension</span>
+            <GraphModeToggle mode={mode} onModeChange={setMode} />
+          </div>
+
           <div className="control">
             <span>Palette</span>
             <div className="chips column">
@@ -75,7 +107,16 @@ export function App() {
 
           <div className="control">
             <span>Last focused</span>
-            <p className="selected">{selected ? labelFor(selected) : '— click a node —'}</p>
+            {selected ? (
+              <GraphNodeSummary
+                graph={mediumGraph}
+                nodeId={selected}
+                labelFor={labelFor}
+                onClose={() => setSelected(null)}
+              />
+            ) : (
+              <p className="selected">— click a node —</p>
+            )}
           </div>
         </aside>
       </section>

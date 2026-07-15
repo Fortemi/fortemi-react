@@ -124,7 +124,15 @@ export function GraphView({
 
   if (!graph || graph.nodes.length === 0) {
     return (
-      <div style={{ border: '1px solid #ddd', borderRadius: 6, padding: 16, color: '#666', ...style }}>
+      <div
+        style={{
+          border: '1px solid var(--fortemi-graph-rule, #ddd)',
+          borderRadius: 6,
+          padding: 16,
+          color: 'var(--fortemi-graph-muted, #666)',
+          ...style,
+        }}
+      >
         No graph data
       </div>
     )
@@ -138,15 +146,30 @@ export function GraphView({
     drag && drag.id === nodeId ? { x: drag.x, y: drag.y } : fallback
 
   return (
-    <div style={{ border: '1px solid #ddd', borderRadius: 6, overflow: 'hidden', ...style }}>
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center', padding: 8, borderBottom: '1px solid #eee' }}>
+    <div
+      style={{
+        border: '1px solid var(--fortemi-graph-rule, #ddd)',
+        borderRadius: 6,
+        overflow: 'hidden',
+        ...style,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          gap: 6,
+          alignItems: 'center',
+          padding: 8,
+          borderBottom: '1px solid var(--fortemi-graph-rule-soft, #eee)',
+        }}
+      >
         <button type="button" aria-label="Zoom out" onClick={() => zoom(-0.15)}>-</button>
         <button type="button" aria-label="Zoom in" onClick={() => zoom(0.15)}>+</button>
         <button type="button" aria-label="Pan left" onClick={() => pan(-24, 0)}>←</button>
         <button type="button" aria-label="Pan right" onClick={() => pan(24, 0)}>→</button>
         <button type="button" aria-label="Pan up" onClick={() => pan(0, -24)}>↑</button>
         <button type="button" aria-label="Pan down" onClick={() => pan(0, 24)}>↓</button>
-        <span style={{ marginLeft: 'auto', fontSize: 12, color: '#666' }}>
+        <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--fortemi-graph-muted, #666)' }}>
           {positioned.nodes.length} nodes · {positioned.edges.length} edges
         </span>
       </div>
@@ -156,7 +179,11 @@ export function GraphView({
         aria-label="Community graph"
         viewBox={`0 0 ${width} ${height}`}
         width="100%"
-        style={{ display: 'block', aspectRatio: `${width} / ${height}`, background: '#fafafa' }}
+        style={{
+          display: 'block',
+          aspectRatio: `${width} / ${height}`,
+          background: 'var(--fortemi-graph-bg, #fafafa)',
+        }}
         onPointerMove={draggableNodes ? handlePointerMove : undefined}
         onPointerUp={draggableNodes ? endDrag : undefined}
         onPointerLeave={draggableNodes ? endDrag : undefined}
@@ -175,9 +202,10 @@ export function GraphView({
                 y1={sp.y}
                 x2={tp.x}
                 y2={tp.y}
-                stroke="#9aa0a6"
                 strokeWidth={Math.max(1, Math.min(5, edge.weight))}
                 opacity={0.55}
+                // Presentation attributes don't accept var(); set color via style.
+                style={{ stroke: 'var(--fortemi-graph-edge, #9aa0a6)' }}
               />
             )
           })}
@@ -193,7 +221,6 @@ export function GraphView({
                 <circle
                   r={selected ? radius + 3 : radius}
                   fill={color}
-                  stroke={pinned ? '#111' : selected ? '#111' : '#fff'}
                   strokeWidth={selected ? 3 : pinned ? 2.5 : 1.5}
                   strokeDasharray={pinned && !selected ? '3 2' : undefined}
                   tabIndex={0}
@@ -214,6 +241,12 @@ export function GraphView({
                   style={{
                     cursor: draggableNodes ? (dragging ? 'grabbing' : 'grab') : onSelectNode || onNavigate ? 'pointer' : 'default',
                     outline: 'none',
+                    // Presentation attributes don't accept var(); set stroke via style so
+                    // the ring themes with the ambient --fortemi-graph-* variables.
+                    stroke:
+                      pinned || selected
+                        ? 'var(--fortemi-graph-node-strong, #111)'
+                        : 'var(--fortemi-graph-node-stroke, #fff)',
                   }}
                 />
                 <title>{label(node.id)}</title>

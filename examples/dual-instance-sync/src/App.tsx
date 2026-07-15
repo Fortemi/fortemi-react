@@ -8,6 +8,7 @@
 // eventually consistent.
 
 import { useCallback, useRef, useState } from 'react'
+import { ThemeToggle } from '@fortemi/examples-shared/ui'
 import { FortemiProvider } from '@fortemi/react'
 import { seedNotes } from '@fortemi/examples-shared'
 import { Instance, type SyncHandle } from './Instance.js'
@@ -51,6 +52,7 @@ export function App() {
 
   return (
     <main className="page">
+      <ThemeToggle floating />
       <header>
         <h1>EX-19 · dual-instance-sync</h1>
         <p className="lede">

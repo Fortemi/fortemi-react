@@ -6,6 +6,15 @@
 // ships when this view mounts. Drag to orbit, scroll to zoom, click to select.
 
 import { useState } from 'react'
+import {
+  GraphModeToggle,
+  GraphNodeSummary,
+  ThemeToggle,
+  useThemeMode,
+  graphThemeFor,
+  type GraphMode,
+} from '@fortemi/examples-shared/ui'
+import { GraphView } from '@fortemi/react/graph'
 import { ForceGraph3DView } from '@fortemi/react/graph-3d'
 import type { CommunityPalette } from '@fortemi/graph'
 import { mediumGraph, labelFor } from '@fortemi/examples-shared'
@@ -18,9 +27,14 @@ const PALETTES: { id: CommunityPalette; label: string }[] = [
 export function App() {
   const [palette, setPalette] = useState<CommunityPalette>('community')
   const [selected, setSelected] = useState<string | null>(null)
+  const [mode, setMode] = useState<GraphMode>('3d')
+
+  const themeMode = useThemeMode()
+  const graphTheme = graphThemeFor(themeMode)
 
   return (
     <main className="page">
+      <ThemeToggle floating />
       <header>
         <h1>EX-04 · graph-3d-orbit</h1>
         <p className="lede">
@@ -30,18 +44,35 @@ export function App() {
       </header>
 
       <section className="layout">
-        <div className="canvas dark" style={{ height: 500 }}>
-          <ForceGraph3DView
-            graph={mediumGraph}
-            palette={palette}
-            labelFor={labelFor}
-            onSelectNode={setSelected}
-            theme={{ background: '#14120f' }}
-            height={500}
-          />
+        <div className={mode === '3d' ? 'canvas dark' : 'canvas'} style={{ height: 500 }}>
+          {mode === '3d' ? (
+            <ForceGraph3DView
+              graph={mediumGraph}
+              palette={palette}
+              labelFor={labelFor}
+              onSelectNode={setSelected}
+              theme={graphTheme.force3d}
+              height={500}
+            />
+          ) : (
+            <GraphView
+              graph={mediumGraph}
+              layout={{ algorithm: 'force' }}
+              selectedNodeId={selected}
+              onSelectNode={setSelected}
+              labelFor={labelFor}
+              width={720}
+              height={500}
+            />
+          )}
         </div>
 
         <aside className="controls">
+          <div className="control">
+            <span>Dimension</span>
+            <GraphModeToggle mode={mode} onModeChange={setMode} />
+          </div>
+
           <div className="control">
             <span>Palette</span>
             <div className="chips column">
@@ -61,7 +92,16 @@ export function App() {
 
           <div className="control">
             <span>Selected</span>
-            <p className="selected">{selected ? labelFor(selected) : '— click a node —'}</p>
+            {selected ? (
+              <GraphNodeSummary
+                graph={mediumGraph}
+                nodeId={selected}
+                labelFor={labelFor}
+                onClose={() => setSelected(null)}
+              />
+            ) : (
+              <p className="selected">— click a node —</p>
+            )}
           </div>
         </aside>
       </section>

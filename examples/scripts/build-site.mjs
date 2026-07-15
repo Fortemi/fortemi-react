@@ -84,8 +84,13 @@ function renderIndex(m) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>${esc(m.title)}</title>
 <style>
-  :root { color-scheme: dark; --bg:#0e1116; --panel:#161b22; --panel2:#1c232d; --border:#2b333d; --text:#e6e9ef; --muted:#8b95a3; --accent:#6ea8fe; }
+  :root { color-scheme: light; --bg:#f4f1ea; --panel:#faf8f4; --panel2:#efe9dd; --border:#ddd6c8; --text:#2b2824; --muted:#6e665a; --accent:#585149; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme:dark; --bg:#0e1116; --panel:#161b22; --panel2:#1c232d; --border:#2b333d; --text:#e6e9ef; --muted:#8b95a3; --accent:#6ea8fe; } }
+  :root[data-theme="dark"] { color-scheme:dark; --bg:#0e1116; --panel:#161b22; --panel2:#1c232d; --border:#2b333d; --text:#e6e9ef; --muted:#8b95a3; --accent:#6ea8fe; }
   * { box-sizing: border-box; }
+  .theme-toggle { position:fixed; top:16px; right:16px; z-index:50; display:inline-flex; border:1px solid var(--border); border-radius:6px; overflow:hidden; background:var(--panel); box-shadow:0 1px 6px rgba(0,0,0,.15); }
+  .theme-toggle button { border:none; background:transparent; color:var(--muted); font:14px/1 system-ui; padding:5px 11px; cursor:pointer; }
+  .theme-toggle button[aria-pressed="true"] { background:var(--text); color:var(--bg); }
   body { margin:0; background:var(--bg); color:var(--text); font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
   .wrap { max-width:1180px; margin:0 auto; padding:2.5rem 1.5rem 5rem; }
   header h1 { margin:0 0 .35rem; font-size:1.7rem; }
@@ -108,8 +113,14 @@ function renderIndex(m) {
   footer { margin-top:3rem; color:var(--muted); font-size:.8rem; }
   code { background:var(--panel2); padding:.05rem .35rem; border-radius:4px; }
 </style>
+<script>try{var v=localStorage.getItem('fortemi-theme');if(v==='light'||v==='dark')document.documentElement.setAttribute('data-theme',v);}catch(e){}</script>
 </head>
 <body>
+  <div class="theme-toggle" role="group" aria-label="Color theme">
+    <button data-theme-set="light" aria-label="Light" title="Light">☀</button>
+    <button data-theme-set="system" aria-label="System" title="System">◐</button>
+    <button data-theme-set="dark" aria-label="Dark" title="Dark">☾</button>
+  </div>
   <div class="wrap">
     <header>
       <h1>${esc(m.title)}</h1>
@@ -122,6 +133,16 @@ function renderIndex(m) {
       out and it runs on its own. Built with <code>pnpm examples:site</code>.
     </footer>
   </div>
+  <script>
+  (function(){
+    var KEY='fortemi-theme';
+    function pref(){ try{ var v=localStorage.getItem(KEY); return v==='light'||v==='dark'?v:'system'; }catch(e){ return 'system'; } }
+    function mark(p){ document.querySelectorAll('[data-theme-set]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-theme-set')===p)); }); }
+    function apply(p){ if(p==='system'){ document.documentElement.removeAttribute('data-theme'); } else { document.documentElement.setAttribute('data-theme',p); } mark(p); }
+    document.querySelectorAll('[data-theme-set]').forEach(function(b){ b.addEventListener('click', function(){ var p=b.getAttribute('data-theme-set'); try{ if(p==='system') localStorage.removeItem(KEY); else localStorage.setItem(KEY,p); }catch(e){} apply(p); }); });
+    apply(pref());
+  })();
+  </script>
 </body>
 </html>`
 }
