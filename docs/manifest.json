@@ -69,6 +69,7 @@
       "title": "Releases",
       "summary": "Release notes.",
       "sections": [
+        { "id": "releases/v2026.7.7", "title": "v2026.7.7", "summary": "fortemi-react v2026.7.7 release notes.", "file": "releases/v2026.7.7.md" },
         { "id": "releases/v2026.7.6", "title": "v2026.7.6", "summary": "fortemi-react v2026.7.6 release notes.", "file": "releases/v2026.7.6.md" },
         { "id": "releases/v2026.7.5", "title": "v2026.7.5", "summary": "fortemi-react v2026.7.5 release notes.", "file": "releases/v2026.7.5.md" },
         { "id": "releases/v2026.7.4", "title": "v2026.7.4", "summary": "fortemi-react v2026.7.4 release notes.", "file": "releases/v2026.7.4.md" },

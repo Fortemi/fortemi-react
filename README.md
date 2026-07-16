@@ -163,6 +163,7 @@ pnpm lint
 pnpm test:core
 pnpm test:e2e
 pnpm build
+pnpm examples:site:build && pnpm examples:site:e2e   # built-gallery smoke test
 ```
 
 The repository uses Node.js 22, pnpm 10, TypeScript, Vitest, Playwright, and Vite.

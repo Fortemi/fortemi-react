@@ -16,12 +16,12 @@ fortemi-react is the React port of the fortemi knowledge management server (Rust
 - **UI**: React 19.2.4
 - **Database**: PGlite 0.4.1 (PostgreSQL WASM) with pgvector
 - **Build**: Vite 7.3.1, pnpm 10.6.5 workspaces
-- **Test**: Vitest 4.1.0 (62 core test files under `packages/core/src/__tests__/` — run `pnpm test:core` for the live count; + graph & react suites), Playwright 1.52.x (E2E)
+- **Test**: Vitest 4.1.0 (63 core test files under `packages/core/src/__tests__/` — run `pnpm test:core` for the live count; + graph & react suites), Playwright 1.52.x (E2E)
 - **Lint**: ESLint 9.x (flat config) + typescript-eslint v8
 - **AI**: transformers.js (embeddings), WebLLM (local LLM), InferenceProvider system (remote + local + fallback)
 - **License**: AGPL-3.0-only
 - **Versioning**: CalVer YYYY.M.PATCH (no leading zeros)
-- **Current version**: 2026.7.4
+- **Current version**: 2026.7.7
 
 ## Monorepo Structure
 
@@ -39,8 +39,9 @@ Dependency direction (linear chain, no cycles): `@electric-sql/pglite` ← `@for
 ```bash
 pnpm dev              # Vite dev server on :5173
 pnpm build            # Build all packages
-pnpm test:core        # core unit/integration suite (Vitest, 62 test files)
+pnpm test:core        # core unit/integration suite (Vitest, 63 test files)
 pnpm test:e2e         # E2E tests (Playwright, Chromium + Firefox)
+pnpm examples:site:e2e # Built-gallery smoke test (build with examples:site:build first)
 pnpm typecheck        # TypeScript strict across all packages
 pnpm lint             # ESLint
 ```
@@ -56,7 +57,7 @@ Test parallelism is capped at half available CPUs (PGlite WASM is CPU-heavy). Ov
 - **Job queue** — server-compatible pipeline: ai_revision (1), title_generation (2), embedding (3), concept_tagging (4), linking (5). Lower number = higher priority.
 - **Content-addressed blob store** — attachment bytes stored via `@bytecask/core` (BLAKE3 content addressing; IndexedDB/OPFS/memory tiers). The `BlobStore` seam speaks canonical `blake3:<hex>`; canonical manifests are the sole lifecycle authority and refcounts are derived/rebuildable (ADR-013, #319)
 - **Canonical RecordStore** — DB-free writable structured-record layer with journaled atomic commits (record + journal entry in one IDB transaction); PGlite is a derived, rebuildable projection consuming the change journal (ADR-013, #323)
-- **Knowledge Shard** — import/export system: tar.gz bundles with checksums, portable blob sidecars (BLAKE3 attachment hashing), Ed25519 signed-manifest verification (verify-before-persist, ADR-014, #324), conflict strategies, field-mapped JSON format parity
+- **Knowledge Shard** — import/export system: tar.gz bundles with checksums, portable blob sidecars (BLAKE3 attachment hashing), Ed25519 signed-manifest verification (verify-before-persist, ADR-014, #324), conflict strategies, field-mapped JSON format parity. Import is backward compatible with legacy React shards: absent server metadata on embeddings/links/members/sets normalizes to schema defaults, and `validateShardArchive` accepts exactly what the importer accepts (#344)
 - **Format parity** — JSON output must match fortemi server exactly. Format parity tests enforce this.
 - **Tiered persistence** — Chrome: OPFS, Firefox: IndexedDB, Safari: in-memory
 
@@ -93,8 +94,8 @@ Test parallelism is capped at half available CPUs (PGlite WASM is CPU-heavy). Ov
 ## Testing
 
 - **Format parity tests are the highest priority** — if they break, nothing ships
-- 62 test files in `packages/core/src/__tests__/` (run `pnpm test:core` for the live count), including `db-table-parity/`, shard conformance, the canonical `records/` layer, and `shard/` subdirs
-- E2E tests in `apps/standalone/e2e/` (`smoke`, `loading`, and `webkit-compat`, Playwright)
+- 63 test files in `packages/core/src/__tests__/` (run `pnpm test:core` for the live count), including `db-table-parity/`, shard conformance, bundled example-shard validation, the canonical `records/` layer, and `shard/` subdirs
+- E2E tests in `apps/standalone/e2e/` (`smoke`, `loading`, and `webkit-compat`, Playwright) and `examples/e2e/` (built-gallery knowledge-workspace semantic-upgrade smoke test — `pnpm examples:site:build` then `pnpm examples:site:e2e`)
 - Run `pnpm test:coverage` for current coverage; do not rely on hardcoded historical percentages.
 
 ## React Hooks Reference

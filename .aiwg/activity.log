@@ -20,3 +20,8 @@
 ## [2026-07-13 06:06] create | examples EX-13 shard-exchange (two in-memory instances exchange a shard) (Refs #315)
 ## [2026-07-13 06:12] create | examples EX-16 knowledge-garden (composed) + EX-19 dual-instance-sync (Refs #315)
 ## [2026-07-15 03:34] update | doc-sync code-to-docs: reconciled CLAUDE.md + AIWG.md to merged storage subsystem (migrations 17, records/, blob-store, signed shards)
+## [2026-07-16 18:06] update | PRs #346 (Closes #344, CI green) and #347 (Closes #345, CI running) opened; AL CYCLE comments posted on both issues
+## [2026-07-16 18:15] update | PR #347 CI fully green (8/8 incl. first examples-e2e run); AL CYCLE #2 ready-to-merge comments posted on #344 and #345
+## [2026-07-16 18:31] promote | PRs #346, #347, #338 merged to main (operator-authorized); issues #344, #345 auto-closed; watching main CI @ 9828c63
+## [2026-07-16 18:42] update | main CI fully green @ 9828c63 (8/8 jobs incl. examples-e2e); address-issues #344 #345 delivery complete
+## [2026-07-16 23:03] update | doc-sync code-to-docs: CLAUDE.md/AIWG.md/README reconciled to #346/#347 (63 tests, examples e2e, legacy shard compat, version 2026.7.6)
