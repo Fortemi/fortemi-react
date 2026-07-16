@@ -1,1 +1,5 @@
-2026-07-12 | code-to-docs | scope=incremental since 2026-07-01 (shard blob sidecar, aiwg-index, migrations 0011-0016, 3D graph) | 12 drift items fixed + 4 API sections authored | report=.aiwg/reports/doc-sync-audit-2026-07-12.md
+direction: code-to-docs
+date: 2026-07-15
+scope: CLAUDE.md, AIWG.md (storage subsystem reconcile)
+baseline_sha: 9fcd1584
+report: .aiwg/reports/doc-sync-audit-2026-07-15.md
