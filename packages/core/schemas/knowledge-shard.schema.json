@@ -272,7 +272,7 @@
     "embedding": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "note_id", "chunk_index", "text", "vector", "model"],
+      "required": ["id", "note_id", "vector"],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
         "note_id": { "type": "string", "minLength": 1 },

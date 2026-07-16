@@ -659,6 +659,76 @@ describe('importShard', { timeout: 30_000 }, () => {
     expect(rows.rows[0]).toEqual({ embedding_id: embedding.id, membership_type: 'materialized' })
   })
 
+  it('imports legacy React embedding rows without server metadata fields (#344)', async () => {
+    // Legacy React shards (pre-migration-0016) carry only id, note_id,
+    // embedding_set_id, vector, created_at on embedding rows — no
+    // chunk_index/text/model. Import must normalize to schema defaults
+    // instead of rolling back on the NOT NULL chunk_index constraint.
+    const sourceDb = await createTestDb()
+    const sourceNotes = new NotesRepository(sourceDb)
+    const sourceSets = new EmbeddingSetsRepository(sourceDb)
+    const note = await sourceNotes.create({ content: 'Legacy embedded note' })
+    const set = await sourceSets.create({ name: 'Legacy embedding set' })
+    const embedding = await sourceSets.putEmbedding({
+      note_id: note.id,
+      embedding_set_id: set.id,
+      vector: [1, ...Array(383).fill(0)],
+    })
+
+    const currentArchive = await exportShard(sourceDb, { includeEmbeddings: true })
+    const files = unpackTarGz(currentArchive)
+
+    // Rewrite embeddings.jsonl to the legacy React row shape.
+    const legacyRows = decoder
+      .decode(files.get('embeddings.jsonl')!)
+      .split('\n')
+      .filter((line) => line.trim().length > 0)
+      .map((line) => {
+        const row = JSON.parse(line)
+        return JSON.stringify({
+          id: row.id,
+          note_id: row.note_id,
+          embedding_set_id: row.embedding_set_id,
+          vector: row.vector,
+          created_at: row.created_at,
+        })
+      })
+      .join('\n')
+    const legacyData = encoder.encode(legacyRows + '\n')
+    files.set('embeddings.jsonl', legacyData)
+
+    const manifest: ShardManifest = JSON.parse(decoder.decode(files.get('manifest.json')!))
+    manifest.checksums['embeddings.jsonl'] = await sha256Hex(legacyData)
+    files.set('manifest.json', encoder.encode(JSON.stringify(manifest)))
+    const archive = packTarGz(files)
+
+    // Legacy rows also pass archive schema validation.
+    expect(validateShardArchive(archive)).toEqual({ valid: true, errors: [] })
+
+    const result = await importShard(db, archive)
+    await sourceDb.close()
+
+    expect(result.success).toBe(true)
+    expect(result.errors).toEqual([])
+    expect(result.counts.embeddings).toBe(1)
+
+    const rows = await db.query<{
+      chunk_index: number
+      text: string
+      model: string | null
+      embedding_set_id: string
+    }>(
+      `SELECT chunk_index, text, model, embedding_set_id FROM embedding WHERE id = $1`,
+      [embedding.id],
+    )
+    expect(rows.rows[0]).toEqual({
+      chunk_index: 0,
+      text: '',
+      model: null,
+      embedding_set_id: set.id,
+    })
+  })
+
   it('imports server-shaped embedding rows without React embedding_set_id', async () => {
     const iso = '2026-01-01T00:00:00.000Z'
     const vector = Array.from({ length: 384 }, (_, index) => index === 0 ? 1 : 0)

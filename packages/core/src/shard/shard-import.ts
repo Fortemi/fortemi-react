@@ -1110,16 +1110,19 @@ export async function importShard(
 
 async function resolveEmbeddingSetIdForServerEmbedding(
   db: QueryExecutor,
-  model: string,
+  model: string | null,
   vector: string,
 ): Promise<string> {
+  // Legacy rows without a model normally carry embedding_set_id and never
+  // reach this resolver; the fallback name keeps a rowless-model shard usable.
+  const modelName = model ?? 'unknown'
   const dimension = vectorDimension(vector)
   const existing = await db.query<{ id: string }>(
     `SELECT id FROM embedding_set
      WHERE model_name = $1 AND dimensions = $2
      ORDER BY created_at, id
      LIMIT 1`,
-    [model, dimension],
+    [modelName, dimension],
   )
   if (existing.rows[0]?.id) return existing.rows[0].id
 
@@ -1129,7 +1132,7 @@ async function resolveEmbeddingSetIdForServerEmbedding(
        id, name, slug, description, purpose, document_count, embedding_count,
        is_system, keywords_json, model_name, dimensions, kind, created_at, updated_at
      ) VALUES ($1, $2, $3, NULL, NULL, 0, 0, false, '[]'::jsonb, $2, $4, 'physical', now(), now())`,
-    [id, model, slugifyServerEmbeddingSet(model), dimension],
+    [id, modelName, slugifyServerEmbeddingSet(modelName), dimension],
   )
   return id
 }

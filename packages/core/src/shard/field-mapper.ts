@@ -395,17 +395,19 @@ export function embeddingFromShard(shard: ShardEmbedding): {
   chunk_index: number
   text: string
   vector: string
-  model: string
+  model: string | null
   created_at: string | null
 } {
+  // Legacy React shards (pre-migration-0016) omit chunk_index/text/model;
+  // normalize to the schema defaults so the NOT NULL columns accept them.
   return {
     id: shard.id,
     note_id: shard.note_id,
     embedding_set_id: shard.embedding_set_id ?? null,
-    chunk_index: shard.chunk_index,
-    text: shard.text,
+    chunk_index: shard.chunk_index ?? 0,
+    text: shard.text ?? '',
     vector: `[${shard.vector.join(',')}]`,
-    model: shard.model,
+    model: shard.model ?? null,
     created_at: shard.created_at ?? null,
   }
 }
