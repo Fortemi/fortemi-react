@@ -8,8 +8,8 @@
  *
  * This keeps the original compact JSON-Schema-subset checker as a lightweight
  * regression sentinel. The production AJV validator is covered in
- * schema-validator.test.ts; golden fixtures from a real server remain tracked by
- * #255.
+ * schema-validator.test.ts and shard-import.test.ts; the pinned current-server
+ * golden fixture is maintained under #339.
  */
 import { describe, expect, it } from 'vitest'
 import type { ShardNote } from '../../shard/types.js'

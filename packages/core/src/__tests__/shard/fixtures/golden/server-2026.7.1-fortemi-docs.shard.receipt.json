@@ -1,0 +1,13 @@
+{
+  "fixture": "server-2026.7.1-fortemi-docs.shard",
+  "source_repository": "Fortemi/fortemi",
+  "source_artifact": "docker/seed-data/fortemi-docs.shard",
+  "source_commit": "3e1e93857dbfc1d36c1d7ee06c6f77d06b28dcf9",
+  "server_commit": "bda3598d5dde002a4fd147992addd26c7d487044",
+  "server_image": "git.integrolabs.net/fortemi/fortemi:2026.7.1",
+  "pinned_version": "2026.7.1",
+  "fetched_at": "2026-07-16T14:15:42.000Z",
+  "bytes": 1952822,
+  "sha256": "f2f5bad3f792934cf56413b33092a34cd9c143d129e98c5dd2cb8f4092568282",
+  "note": "Exact server-generated artifact from Fortemi/fortemi#1055; no React-authored fixture data."
+}

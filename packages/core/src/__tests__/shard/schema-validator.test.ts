@@ -22,7 +22,7 @@ const iso = '2026-07-09T00:00:00.000Z'
 const testDir = fileURLToPath(new URL('.', import.meta.url))
 const goldenFixturePath = resolve(
   testDir,
-  'fixtures/golden/server-2026.2.9-fortemi-docs.shard',
+  'fixtures/golden/server-2026.7.1-fortemi-docs.shard',
 )
 const goldenReceiptPath = `${goldenFixturePath}.receipt.json`
 
@@ -168,7 +168,7 @@ describe('knowledge shard AJV schema validator (#255)', () => {
       pinned_version: string
     }
 
-    expect(receipt.pinned_version).toBe('2026.2.9')
+    expect(receipt.pinned_version).toBe('2026.7.1')
     expect(receipt.bytes).toBe(bytes.byteLength)
     expect(receipt.sha256).toBe(createHash('sha256').update(bytes).digest('hex'))
     expect(validateShardArchive(bytes)).toEqual({ valid: true, errors: [] })

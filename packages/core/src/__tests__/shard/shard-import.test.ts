@@ -33,7 +33,7 @@ const decoder = new TextDecoder()
 const testDir = fileURLToPath(new URL('.', import.meta.url))
 const goldenFixturePath = resolve(
   testDir,
-  'fixtures/golden/server-2026.2.9-fortemi-docs.shard',
+  'fixtures/golden/server-2026.7.1-fortemi-docs.shard',
 )
 
 async function createTestDb(): Promise<PGlite> {
@@ -511,11 +511,11 @@ describe('importShard', { timeout: 30_000 }, () => {
     const result = await importShard(db, archive)
 
     expect(result.success).toBe(true)
-    expect(result.counts.notes).toBe(180)
+    expect(result.counts.notes).toBe(329)
     expect(result.counts.templates).toBe(0)
     expect(result.counts.embedding_sets).toBe(1)
     expect(result.counts.embedding_configs).toBe(8)
-    expect(result.counts.embedding_set_members).toBe(180)
+    expect(result.counts.embedding_set_members).toBe(329)
     expect(result.skipped.embedding_set_members ?? 0).toBe(0)
     expect(result.warnings).not.toContain('templates.json skipped (not supported in browser)')
     expect(result.warnings).not.toContain('embedding_configs.json skipped (not supported in browser)')
@@ -537,11 +537,11 @@ describe('importShard', { timeout: 30_000 }, () => {
          MIN(membership_type) AS membership_type
        FROM embedding_set_member`,
     )
-    expect(notes.rows[0].n).toBe(180)
+    expect(notes.rows[0].n).toBe(329)
     expect(embeddingSets.rows[0].n).toBe(1)
     expect(embeddingConfigs.rows[0]).toEqual({ n: 8, default_count: 1 })
-    expect(embeddingSetMembers.rows[0].n).toBe(180)
-    expect(embeddingSetMembers.rows[0].null_embeddings).toBe(180)
+    expect(embeddingSetMembers.rows[0].n).toBe(329)
+    expect(embeddingSetMembers.rows[0].null_embeddings).toBe(329)
     expect(embeddingSetMembers.rows[0].membership_type).toBe('auto')
 
     const exportedArchive = await exportShard(db, { includeEmbeddings: true })
@@ -555,10 +555,10 @@ describe('importShard', { timeout: 30_000 }, () => {
       'embedding_configs',
       'embedding_set_members',
     ]))
-    expect(exportedManifest.counts.notes).toBe(180)
+    expect(exportedManifest.counts.notes).toBe(329)
     expect(exportedManifest.counts.embedding_sets).toBe(1)
     expect(exportedManifest.counts.embedding_configs).toBe(8)
-    expect(exportedManifest.counts.embedding_set_members).toBe(180)
+    expect(exportedManifest.counts.embedding_set_members).toBe(329)
 
     const exportedConfigs = JSON.parse(
       new TextDecoder().decode(exported.get('embedding_configs.json')!),
