@@ -234,15 +234,92 @@ describe('AttachmentsRepository', () => {
         filename: 'ghost.bin',
       })
 
-      // Manually remove the data from the BlobStore (simulates storage gap)
-      const blobRow = await db.query<{ content_hash: string }>(
-        `SELECT content_hash FROM attachment_blob WHERE id = $1`,
-        [att.blob_id],
-      )
-      await blobStore.remove(blobRow.rows[0].content_hash)
+      // Sweep the bytes out of the store (simulates storage eviction) — the
+      // attachment becomes reference-only, which is recoverable, not an error.
+      await blobStore.reconcile([], { removeUnreferenced: true })
 
       const result = await repo.getBlob(att.id)
       expect(result).toBeNull()
+      expect(await repo.hasBlob(att.id)).toBe(false)
+    })
+  })
+
+  // ── lifecycle: reconcile + gc (ADR-013 D2/D4) ─────────────────────────────
+
+  describe('blob lifecycle', () => {
+    it('hasBlob is true while bytes are present', async () => {
+      const att = await repo.attach({
+        noteId: 'note-1',
+        data: makeBytes('present'),
+        filename: 'present.bin',
+      })
+      expect(await repo.hasBlob(att.id)).toBe(true)
+    })
+
+    it('liveBlobChecksums reflects only non-deleted attachments', async () => {
+      const kept = await repo.attach({
+        noteId: 'note-1',
+        data: makeBytes('kept'),
+        filename: 'kept.bin',
+      })
+      const dropped = await repo.attach({
+        noteId: 'note-1',
+        data: makeBytes('dropped'),
+        filename: 'dropped.bin',
+      })
+      await repo.delete(dropped.id)
+
+      const live = await repo.liveBlobChecksums()
+      expect(live).toHaveLength(1)
+      const keptRow = await db.query<{ content_hash: string }>(
+        `SELECT content_hash FROM attachment_blob WHERE id = $1`,
+        [kept.blob_id],
+      )
+      expect(live[0]).toBe(keptRow.rows[0].content_hash)
+    })
+
+    it('soft-deleted attachment bytes become unreferenced and gc-able', async () => {
+      const kept = await repo.attach({
+        noteId: 'note-1',
+        data: makeBytes('kept'),
+        filename: 'kept.bin',
+      })
+      const dropped = await repo.attach({
+        noteId: 'note-1',
+        data: makeBytes('dropped'),
+        filename: 'dropped.bin',
+      })
+      await repo.delete(dropped.id)
+
+      const reconciled = await repo.reconcileBlobs()
+      expect(reconciled.referenced).toBe(1)
+      expect(reconciled.unreferenced).toHaveLength(1)
+      expect(reconciled.missing).toEqual([])
+
+      const gc = await repo.gcBlobs({ minAgeMs: 0 })
+      expect(gc.collected).toBe(1)
+      expect(await repo.hasBlob(kept.id)).toBe(true)
+      expect(await repo.hasBlob(dropped.id)).toBe(false)
+      expect(await repo.getBlob(dropped.id)).toBeNull() // reference-only
+    })
+
+    it('re-attaching identical content heals a reference-only blob', async () => {
+      const att = await repo.attach({
+        noteId: 'note-1',
+        data: makeBytes('heal me'),
+        filename: 'heal.bin',
+      })
+      await blobStore.reconcile([], { removeUnreferenced: true }) // evict bytes
+      expect(await repo.hasBlob(att.id)).toBe(false)
+
+      const again = await repo.attach({
+        noteId: 'note-2',
+        data: makeBytes('heal me'),
+        filename: 'heal-again.bin',
+      })
+      // Same blob row (dedup) and the original attachment reads again.
+      expect(again.blob_id).toBe(att.blob_id)
+      expect(await repo.getBlob(att.id)).toEqual(makeBytes('heal me'))
     })
   })
 

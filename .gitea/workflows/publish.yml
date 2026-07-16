@@ -36,7 +36,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-      - name: Install OpenBao fetch dependencies
+      - name: Install vault fetch dependencies
         run: apt-get update && apt-get install -y --no-install-recommends curl jq
 
       - name: Setup pnpm
@@ -168,11 +168,14 @@ jobs:
           }
           CHECK
 
-      - name: Fetch publish token from OpenBao
+      - name: Fetch publish token from vault
         env:
-          BAO_CI_ROLE_ID: ${{ secrets.BAO_CI_ROLE_ID }}
-          BAO_CI_SECRET_ID: ${{ secrets.BAO_CI_SECRET_ID }}
-        run: ci/openbao-fetch.sh --spec ci/openbao-fetch.publish.spec
+          VAULT_ADDR: ${{ vars.VAULT_ADDR }}
+          VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
+          VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
+          GT_PUBLISH_TOKEN_VAULT_PATH: ${{ vars.GT_PUBLISH_TOKEN_VAULT_PATH }}
+          GT_PUBLISH_TOKEN_VAULT_FIELD: ${{ vars.GT_PUBLISH_TOKEN_VAULT_FIELD }}
+        run: ci/vault-fetch.sh --spec ci/vault-fetch.publish.spec
 
       - name: Publish packages to Gitea registry
         env:

@@ -60,9 +60,11 @@ async function insertAttachmentText(db: PGlite, noteId: string, text: string): P
     `INSERT INTO attachment_blob (id, content_hash, size_bytes) VALUES ($1, $2, $3)`,
     [blobId, `sha256:${noteId.padEnd(64, '0').slice(0, 64)}`, 128],
   )
+  // status = 'completed' mirrors attach()/the 0017 backfill: extracted text
+  // present means processing finished; the searchable-text join is gated on it.
   await db.query(
-    `INSERT INTO attachment (id, note_id, blob_id, filename, mime_type, extracted_text)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
+    `INSERT INTO attachment (id, note_id, blob_id, filename, mime_type, extracted_text, status)
+     VALUES ($1, $2, $3, $4, $5, $6, 'completed')`,
     [`att-${noteId}`, noteId, blobId, 'scan.pdf', 'application/pdf', text],
   )
 }

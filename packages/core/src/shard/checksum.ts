@@ -29,6 +29,12 @@ export async function sha256Hex(data: Uint8Array): Promise<string> {
  * checked against the whole archive (see `prefetchShard`'s `expectedSha256`,
  * which is real integrity because the hash arrives on a separate channel).
  *
+ * The signed-manifest path is now implemented: `verifyShardSignature`
+ * (`shard-signature.ts`, #324/ADR-014) authenticates publisher provenance via
+ * an Ed25519 signature over the manifest digest + blob-digest set, and
+ * `importShard` runs it BEFORE any record or blob mutation. These in-archive
+ * checksums remain the consistency layer *inside* that verified boundary.
+ *
  * @returns Object with `valid` flag and list of failed filenames.
  */
 export async function validateChecksums(

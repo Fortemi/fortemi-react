@@ -7,5 +7,11 @@ packages:
 # pnpm interprets this value in minutes. 10080 = 7 days.
 minimumReleaseAge: 10080
 
+# First-party packages from the internal Gitea registry are exempt from the
+# release-age gate: we control publication end-to-end, and gating them would
+# block same-week integration of our own releases.
+minimumReleaseAgeExclude:
+  - '@bytecask/*'
+
 # Reject git+, tarball URL, file:, and link: subdependency sources.
 blockExoticSubdeps: true

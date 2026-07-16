@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fortémi · Demos</title>
+    <meta name="description" content="Live, in-browser demos of Fortémi — the semantic memory system." />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f1ea; --panel: #faf8f4; --panel-2: #ffffff; --rule: #ddd6c8;
+        --ink: #2b2824; --muted: #6e665a; --accent: #585149; --code-bg: #e9e4d8;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          color-scheme: dark;
+          --bg: #0e1116; --panel: #161b22; --panel-2: #1c232d; --rule: #2b333d;
+          --ink: #e6e9ef; --muted: #8b95a3; --accent: #adb6c4; --code-bg: #1c232d;
+        }
+      }
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #0e1116; --panel: #161b22; --panel-2: #1c232d; --rule: #2b333d;
+        --ink: #e6e9ef; --muted: #8b95a3; --accent: #adb6c4; --code-bg: #1c232d;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; background: var(--bg); color: var(--ink);
+        font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      .wrap { max-width: 760px; margin: 0 auto; padding: clamp(2.5rem, 8vh, 6rem) 1.5rem 5rem; }
+      header h1 { margin: 0 0 .4rem; font-size: clamp(1.7rem, 4vw, 2.3rem); letter-spacing: -0.01em; }
+      header p { margin: 0; color: var(--muted); max-width: 60ch; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-top: 2.4rem; }
+      .card {
+        display: flex; flex-direction: column; gap: .5rem;
+        background: var(--panel); border: 1px solid var(--rule); border-radius: 14px;
+        padding: 1.4rem 1.5rem; text-decoration: none; color: inherit;
+        transition: border-color .12s, transform .12s;
+      }
+      a.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+      .card .tag {
+        align-self: flex-start; font-size: .7rem; letter-spacing: .07em; text-transform: uppercase;
+        color: var(--muted); background: var(--panel-2); border: 1px solid var(--rule);
+        border-radius: 999px; padding: .12rem .55rem;
+      }
+      .card h2 { margin: .3rem 0 0; font-size: 1.15rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .card p { margin: 0; color: var(--muted); font-size: .9rem; flex: 1; }
+      .card .go { color: var(--accent); font-size: .85rem; font-weight: 600; }
+      .card.soon { opacity: .72; cursor: default; }
+      .card.soon .go { color: var(--muted); }
+      footer { margin-top: 3rem; color: var(--muted); font-size: .82rem; }
+      footer a { color: var(--accent); }
+      code { background: var(--code-bg); padding: .05rem .35rem; border-radius: 4px; font-size: .9em; }
+      .theme-toggle {
+        position: fixed; top: 16px; right: 16px; z-index: 50; display: inline-flex;
+        border: 1px solid var(--rule); border-radius: 6px; overflow: hidden;
+        background: var(--panel); box-shadow: 0 1px 6px rgba(0, 0, 0, .15);
+      }
+      .theme-toggle button {
+        border: none; background: transparent; color: var(--muted);
+        font: 14px/1 system-ui; padding: 5px 11px; cursor: pointer;
+      }
+      .theme-toggle button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+    </style>
+    <script>
+      try {
+        var v = localStorage.getItem('fortemi-theme')
+        if (v === 'light' || v === 'dark') document.documentElement.setAttribute('data-theme', v)
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div class="theme-toggle" role="group" aria-label="Color theme">
+      <button data-theme-set="light" aria-label="Light" title="Light">☀</button>
+      <button data-theme-set="system" aria-label="System" title="System">◐</button>
+      <button data-theme-set="dark" aria-label="Dark" title="Dark">☾</button>
+    </div>
+    <div class="wrap">
+      <header>
+        <h1>Fortémi Demos</h1>
+        <p>Live, in-browser demonstrations of Fortémi — the semantic memory system. Everything runs client-side; no server, no sign-up.</p>
+      </header>
+
+      <div class="grid">
+        <a class="card" href="/react/">
+          <span class="tag">Browser</span>
+          <h2>React demos</h2>
+          <p>The full example gallery — notes, search, knowledge graphs (2D &amp; 3D), knowledge shards, and local AI, all running on <code>PGlite</code> in your browser.</p>
+          <span class="go">Open the gallery →</span>
+        </a>
+
+        <div class="card soon" aria-disabled="true">
+          <span class="tag">Server</span>
+          <h2>Server demo</h2>
+          <p>A hosted tour of the full Fortémi server — the Rust/PostgreSQL engine the browser build mirrors.</p>
+          <span class="go">Coming soon</span>
+        </div>
+      </div>
+
+      <footer>
+        Fortémi runs the same knowledge model in the browser and on the server, with 100% JSON format parity.
+      </footer>
+    </div>
+    <script>
+      (function () {
+        var KEY = 'fortemi-theme'
+        var media = window.matchMedia('(prefers-color-scheme: dark)')
+        function pref() {
+          try { var v = localStorage.getItem(KEY); return v === 'light' || v === 'dark' ? v : 'system' } catch (e) { return 'system' }
+        }
+        function mark(p) {
+          document.querySelectorAll('[data-theme-set]').forEach(function (b) {
+            b.setAttribute('aria-pressed', String(b.getAttribute('data-theme-set') === p))
+          })
+        }
+        function apply(p) {
+          if (p === 'system') document.documentElement.removeAttribute('data-theme')
+          else document.documentElement.setAttribute('data-theme', p)
+          mark(p)
+        }
+        document.querySelectorAll('[data-theme-set]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            var p = b.getAttribute('data-theme-set')
+            try { if (p === 'system') localStorage.removeItem(KEY); else localStorage.setItem(KEY, p) } catch (e) {}
+            apply(p)
+          })
+        })
+        media.addEventListener('change', function () { if (pref() === 'system') apply('system') })
+        apply(pref())
+      })()
+    </script>
+  </body>
+</html>

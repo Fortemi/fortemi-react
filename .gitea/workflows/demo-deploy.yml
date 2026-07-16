@@ -1,0 +1,222 @@
+# Demo Deploy
+#
+# Builds the interactive examples gallery and deploys it to demo.fortemi.com/react
+# (a sub-path of the shared demo host on integro dev4), plus a small landing page
+# at the demo-site root that points into /react. Follows the same shape as
+# docsite-deploy.yml and the fortemi.com deploy.
+#
+# The gallery is the pnpm workspace's examples/_site output: build the library
+# packages (core -> graph -> react, dependency order) then run the site builder,
+# which vite-builds every example under examples/_site/ with a generated index.
+#
+# Runs on release tags and on demand — independent of the package publish and
+# docsite deploy workflows.
+#
+# Required Gitea secrets:
+#   VAULT_CI_ROLE_ID      — vault AppRole role_id for this repo
+#   VAULT_CI_SECRET_ID    — vault AppRole secret_id for this repo
+#   DEMO_CF_ZONE_ID     — (optional) Cloudflare zone id for the fortemi.com zone
+#   DEMO_CF_CACHE_PURGE — (optional) Cloudflare API token with cache-purge scope
+#                         If either is unset the purge step is skipped.
+#
+# Required Gitea variables:
+#   DEMO_DEPLOY_HOST — demo server hostname
+#   DEMO_DEPLOY_PORT — server SSH port
+#   DEMO_DEPLOY_USER — deploy user on the server
+#   DEMO_DEPLOY_PATH — absolute path on the server, trailing slash, e.g.
+#
+# The deploy SSH key is fetched from vault (the shared docs-deploy key — see
+# ci/vault-fetch.demo-deploy.spec), so demo.fortemi.com is assumed to be served
+# from the same host/user as docs.fortemi.com.
+
+name: Demo Deploy
+
+on:
+  push:
+    tags: ['v*']
+  # Redeploy the gallery on demand without cutting a release.
+  workflow_dispatch: {}
+
+concurrency:
+  group: demo-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-demo:
+    name: Build & Deploy Examples Gallery
+    runs-on: ubuntu-latest
+    container: node:22@sha256:62e4daa6819762bbd3072af77cc282ab72c631c4aed30dd7980192babaf385b3  # 22.22.2-bookworm
+    timeout-minutes: 20
+
+    # Several steps use bashisms (`set -o pipefail`, `${!name}` indirection).
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout fortemi-react
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa  # v4
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Examples import the library packages by their published dist entry points,
+      # so build core -> graph -> react (dependency order) before the site build.
+      - name: Build library packages
+        run: |
+          set -euo pipefail
+          pnpm --filter @fortemi/core build
+          pnpm --filter @fortemi/graph build
+          pnpm --filter @fortemi/react build
+
+      - name: Build examples gallery
+        # SITE_BASE nests every example's assets under /react so they resolve
+        # when the gallery is served from demo.fortemi.com/react/ (see build-site.mjs).
+        env:
+          SITE_BASE: /react
+        run: pnpm examples:site:build
+
+      - name: Verify build output
+        run: |
+          set -euo pipefail
+          test -d examples/_site || { echo "::error::Missing examples/_site"; exit 1; }
+          test -f examples/_site/index.html || { echo "::error::Missing examples/_site/index.html"; exit 1; }
+          echo "Build verification passed ($(find examples/_site -maxdepth 1 -mindepth 1 -type d | wc -l) example dirs)"
+
+      - name: Install deployment tools
+        run: apt-get update && apt-get install -y --no-install-recommends curl jq openssh-client rsync
+
+      - name: Validate deploy configuration
+        env:
+          DEMO_DEPLOY_HOST: ${{ vars.DEMO_DEPLOY_HOST }}
+          DEMO_DEPLOY_PORT: ${{ vars.DEMO_DEPLOY_PORT }}
+          DEMO_DEPLOY_USER: ${{ vars.DEMO_DEPLOY_USER }}
+          DEMO_DEPLOY_PATH: ${{ vars.DEMO_DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          for name in DEMO_DEPLOY_HOST DEMO_DEPLOY_PORT DEMO_DEPLOY_USER DEMO_DEPLOY_PATH; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::$name Gitea variable is required" >&2
+              exit 1
+            fi
+          done
+          case "${DEMO_DEPLOY_PATH}" in
+            /*/) : ;;
+            *) echo "::error::DEMO_DEPLOY_PATH must be an absolute path ending in '/'" >&2; exit 1 ;;
+          esac
+
+      - name: Fetch deploy key from vault
+        env:
+          VAULT_ADDR: ${{ vars.VAULT_ADDR }}
+          VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
+          VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
+          DEPLOY_SSH_KEY_VAULT_PATH: ${{ vars.DEPLOY_SSH_KEY_VAULT_PATH }}
+          DEPLOY_SSH_KEY_VAULT_FIELD: ${{ vars.DEPLOY_SSH_KEY_VAULT_FIELD }}
+        run: ci/vault-fetch.sh --spec ci/vault-fetch.demo-deploy.spec
+
+      - name: Configure SSH key
+        run: |
+          set -euo pipefail
+          test -s "${DEPLOY_SSH_KEY_FILE:?DEPLOY_SSH_KEY_FILE is required}"
+          mkdir -p ~/.ssh
+          cp "$DEPLOY_SSH_KEY_FILE" ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+      - name: Remote preflight
+        env:
+          DEMO_DEPLOY_HOST: ${{ vars.DEMO_DEPLOY_HOST }}
+          DEMO_DEPLOY_PORT: ${{ vars.DEMO_DEPLOY_PORT }}
+          DEMO_DEPLOY_USER: ${{ vars.DEMO_DEPLOY_USER }}
+          DEMO_DEPLOY_PATH: ${{ vars.DEMO_DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key -p "$DEMO_DEPLOY_PORT" \
+            -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new \
+            "${DEMO_DEPLOY_USER}@${DEMO_DEPLOY_HOST}" "mkdir -p \"${DEMO_DEPLOY_PATH}\""
+
+      - name: Deploy to demo host
+        env:
+          DEMO_DEPLOY_HOST: ${{ vars.DEMO_DEPLOY_HOST }}
+          DEMO_DEPLOY_PORT: ${{ vars.DEMO_DEPLOY_PORT }}
+          DEMO_DEPLOY_USER: ${{ vars.DEMO_DEPLOY_USER }}
+          DEMO_DEPLOY_PATH: ${{ vars.DEMO_DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p ${DEMO_DEPLOY_PORT} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
+            examples/_site/ \
+            "${DEMO_DEPLOY_USER}@${DEMO_DEPLOY_HOST}:${DEMO_DEPLOY_PATH}"
+
+      - name: Deploy landing page to demo root
+        env:
+          DEMO_DEPLOY_HOST: ${{ vars.DEMO_DEPLOY_HOST }}
+          DEMO_DEPLOY_PORT: ${{ vars.DEMO_DEPLOY_PORT }}
+          DEMO_DEPLOY_USER: ${{ vars.DEMO_DEPLOY_USER }}
+          DEMO_DEPLOY_PATH: ${{ vars.DEMO_DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          # The gallery lives at .../react/; the landing page sits one level up at
+          # the demo-site root and links into /react/. Derive the root from the
+          # gallery path so this stays correct regardless of the sub-path name.
+          # No --delete here — that would wipe the sibling react/ gallery.
+          DEMO_ROOT="$(dirname "${DEMO_DEPLOY_PATH%/}")/"
+          rsync -avz \
+            -e "ssh -i ~/.ssh/deploy_key -p ${DEMO_DEPLOY_PORT} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
+            examples/demo-landing/index.html \
+            "${DEMO_DEPLOY_USER}@${DEMO_DEPLOY_HOST}:${DEMO_ROOT}"
+
+      - name: Verify deployment
+        env:
+          DEMO_DEPLOY_HOST: ${{ vars.DEMO_DEPLOY_HOST }}
+          DEMO_DEPLOY_PORT: ${{ vars.DEMO_DEPLOY_PORT }}
+          DEMO_DEPLOY_USER: ${{ vars.DEMO_DEPLOY_USER }}
+          DEMO_DEPLOY_PATH: ${{ vars.DEMO_DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          DEMO_ROOT="$(dirname "${DEMO_DEPLOY_PATH%/}")/"
+          ssh -i ~/.ssh/deploy_key -p "$DEMO_DEPLOY_PORT" \
+            -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new \
+            "${DEMO_DEPLOY_USER}@${DEMO_DEPLOY_HOST}" \
+            "test -f '${DEMO_DEPLOY_PATH}index.html' && test -f '${DEMO_ROOT}index.html' && echo 'Deploy verified: gallery + landing index.html present' || { echo '::error::Deploy failed: gallery or landing index.html missing'; exit 1; }"
+
+      - name: Purge Cloudflare cache (demo.fortemi.com)
+        if: success()
+        env:
+          CF_ZONE_ID: ${{ secrets.DEMO_CF_ZONE_ID }}
+          CF_TOKEN: ${{ secrets.DEMO_CF_CACHE_PURGE }}
+        run: |
+          set -uo pipefail
+          if [ -z "${CF_ZONE_ID:-}" ] || [ -z "${CF_TOKEN:-}" ]; then
+            echo "DEMO_CF_ZONE_ID / DEMO_CF_CACHE_PURGE not set — skipping cache purge."
+            exit 0
+          fi
+          # Host-scoped purge so a shared fortemi.com zone is never wiped wholesale.
+          # Best-effort: the deploy already succeeded, so a purge failure only warns.
+          resp=$(curl -sS -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/purge_cache" \
+            -H "Authorization: Bearer ${CF_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{"hosts":["demo.fortemi.com"]}') || true
+          if grep -q '"success":true' <<<"${resp:-}"; then
+            echo "Cloudflare cache purged for demo.fortemi.com"
+          else
+            echo "::warning::Cloudflare purge did not report success (deploy still succeeded). Response: ${resp:-<none>}"
+          fi
+
+      - name: Cleanup SSH keys
+        if: always()
+        run: |
+          rm -f ~/.ssh/deploy_key
+          ci/vault-fetch.sh --cleanup
+
+      - name: Log deployment result
+        if: success()
+        env:
+          REF_NAME: ${{ gitea.ref_name }}
+          TRIGGER_SHA: ${{ gitea.sha }}
+        run: |
+          echo "Deployed demo.fortemi.com/react"
+          echo "Ref: ${REF_NAME}"
+          echo "Commit: ${TRIGGER_SHA}"

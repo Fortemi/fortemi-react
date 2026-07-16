@@ -116,8 +116,19 @@ export type { SWRegistrationResult } from './service-worker/register.js'
 export { createRoutes, matchRoute } from './service-worker/routes.js'
 export type { RouteHandler } from './service-worker/routes.js'
 
-export { createBlobStore, MemoryBlobStore } from './blob-store.js'
-export type { BlobStore } from './blob-store.js'
+export { createBlobStore, createLazyBlobStore, MemoryBlobStore } from './blob-store.js'
+export type {
+  BlobStore,
+  BlobBackendKind,
+  BlobStoreDiagnostics,
+  BlobReconcileOptions,
+  BlobReconcileResult,
+  BlobGcOptions,
+  BlobGcResult,
+  CreateBlobStoreOptions,
+} from './blob-store.js'
+export { migrateLegacyBlobStore } from './blob-store-legacy.js'
+export type { LegacyMigrationReport } from './blob-store-legacy.js'
 
 export type { WorkerRequest, WorkerResponse } from './worker/protocol.js'
 export { PGliteWorkerClient, TransactionProxy } from './worker/worker-client.js'
@@ -369,6 +380,13 @@ export {
   provenanceEdgeToShard,
   exportShard,
   importShard,
+  verifyShardSignature,
+  signShard,
+  isShardSigningSupported,
+  sidecarBlobDigests,
+  AllowlistTrustStore,
+  SIGNATURE_ENTRY,
+  SIGNING_ENVELOPE_VERSION,
   getKnowledgeShardSchema,
   validateShardArchive,
   validateShardManifest,
@@ -383,6 +401,16 @@ export {
   clearPrefetchedShard,
 } from './shard/index.js'
 export type { ShardSchemaValidationResult } from './shard/index.js'
+export type {
+  ShardSignatureVerdict,
+  ShardSignatureEnvelope,
+  ShardSigningPayload,
+  ShardSigner,
+  ShardTrustStore,
+  TrustedKey,
+  VerifyShardSignatureInput,
+  SignShardInput,
+} from './shard/index.js'
 export type {
   ShardReader,
   ShardReaderSource,
@@ -527,3 +555,6 @@ export type {
   AiwgStaticSemanticQueryOptions,
   AiwgStaticSemanticResult,
 } from './aiwg-index.js'
+
+// Canonical record layer (#323, ADR-013): DB-free writable records + journal.
+export * from './records/index.js'

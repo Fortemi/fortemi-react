@@ -181,8 +181,13 @@ describe('DB Table Parity', () => {
 
     const comparison = matchServerShape(result.rows[0], serverFixture[0])
 
-    expect(comparison.missing).toEqual([])
-    expect(comparison.extra).toEqual([])
+    // Documented divergences (0017 / ADR-013): the server's byte-carrying
+    // columns are intentionally omitted — attachment bytes never live in
+    // PGlite in the browser (they live in the Bytecask BlobStore). The
+    // browser-only `storage_path` is a deprecated legacy column (never
+    // exposed; superseded by storage_type = 'bytecask').
+    expect([...comparison.missing].sort()).toEqual(['data', 'object_bucket', 'object_key'])
+    expect(comparison.extra).toEqual(['storage_path'])
     expect(comparison.typeMismatch).toEqual([])
   })
 
@@ -201,8 +206,11 @@ describe('DB Table Parity', () => {
     const comparison = matchServerShape(result.rows[0], serverFixture[0])
 
     // Server columns must never be dropped, renamed, or retyped — JSON output
-    // parity depends on them (missing/typeMismatch stay strict).
-    expect(comparison.missing).toEqual([])
+    // parity depends on them (missing/typeMismatch stay strict). One
+    // documented exception (0017): the server's `display_order` maps to the
+    // browser's `position` in the shard field-mapper (same pattern as
+    // starred/is_starred), so it is intentionally not a physical column here.
+    expect(comparison.missing).toEqual(['display_order'])
     expect(comparison.typeMismatch).toEqual([])
     // The browser adds two intentional, additive columns not present on the
     // server (migration 0010): `mime_type` and `extracted_text`. Raw bytes stay
@@ -212,7 +220,9 @@ describe('DB Table Parity', () => {
     // extracted text, so these appear here as browser-only extras. Export JSON
     // parity is preserved elsewhere (notes carry `attachments`, not attachment
     // columns). Assert the exact allowed set so any *other* divergence still fails.
-    expect([...comparison.extra].sort()).toEqual(['extracted_text', 'mime_type'])
+    // Browser-only additive columns: mime_type + extracted_text (0010) and
+    // position (carries the server's display_order semantics locally).
+    expect([...comparison.extra].sort()).toEqual(['extracted_text', 'mime_type', 'position'])
   })
 
   it('job_queue table shape matches server', async () => {

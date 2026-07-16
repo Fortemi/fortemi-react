@@ -6,6 +6,7 @@
  */
 
 import type { BlobStore } from '../blob-store.js'
+import type { ShardTrustStore } from './shard-signature.js'
 
 export const CURRENT_SHARD_VERSION = '1.0.0'
 export const SHARD_FORMAT = 'matric-shard'
@@ -162,6 +163,19 @@ export interface ImportOptions {
    * bytes. Absent → attachments import as reference-only metadata (unchanged).
    */
   blobStore?: BlobStore
+  /**
+   * Publisher-provenance policy for signed shards (#324, ADR-014):
+   * - `require` — reject unsigned or bad-signature shards (default when a
+   *   `trustStore` is supplied);
+   * - `prefer` — verify signed shards; import unsigned ones with a warning;
+   *   still reject a present-but-invalid signature;
+   * - `trusted-local-only` — ignore signatures (own-export import).
+   * When both `trustStore` and this are omitted, verification is skipped
+   * entirely (checksum-only, unchanged behavior).
+   */
+  verifySignature?: 'require' | 'prefer' | 'trusted-local-only'
+  /** Trust store resolving signer key_id → public key (required for `require`/`prefer`). */
+  trustStore?: ShardTrustStore
 }
 
 export type ImportProgressPhase =
