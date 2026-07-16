@@ -7,13 +7,22 @@ published to npm — copy one out, `npm i` the packages it names, and it runs.
 
 ```bash
 pnpm install                 # once, from the repo root
-cd examples/graph-svg-vanilla
-pnpm dev
+pnpm --filter @fortemi/example-knowledge-workspace dev
 ```
+
+## Start here: complete knowledge workspace
+
+| ID | Example | What it teaches |
+|----|---------|-----------------|
+| EX-20 | [`knowledge-workspace`](https://github.com/Fortemi/fortemi-react/tree/main/examples/knowledge-workspace) | A production-shaped, local-first application using Fortemi as its data primitive: instant shard-backed reading and text search, opt-in writes and semantic retrieval, local or remote AI enrichment, SKOS concepts, PROV history, and optional 2D/3D relationship views. |
+
+This is the primary product demo. It shows how the focused APIs below compose
+into a useful application while keeping database, model, and graph complexity
+out of the default reading and search workflow.
 
 ## The graph stack, standalone
 
-The first tranche showcases `@fortemi/graph` and the three React view tiers as a
+This tranche showcases `@fortemi/graph` and the three React view tiers as a
 **standalone product** — they work over any `CommunityGraph`/`RenderGraph` with
 no database, no Fortémi server, and no model downloads. Each ships a small Vite
 plugin that stubs `@fortemi/core`, keeping the ~9 MB PGlite engine out of the
@@ -78,6 +87,6 @@ when you copy an example out.
 
 ## Status
 
-All 19 examples from [epic #315](https://git.integrolabs.net/Fortemi/fortemi-react/issues/315)
-are delivered — the graph stack, the PGlite data tier, the intermediate
-compositions, and the four composed applications.
+All 20 examples are delivered: the complete knowledge workspace, graph stack,
+PGlite data tier, intermediate compositions, and four focused composed
+applications.

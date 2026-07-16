@@ -56,10 +56,11 @@ function esc(s) {
 
 function card(e) {
   const badges = [
+    e.featured ? '<span class="badge featured">start here</span>' : '',
     e.downloads ? '<span class="badge dl" title="Downloads a model — on user click only">downloads</span>' : '',
     e.needsServer ? '<span class="badge srv" title="Needs a running Fortémi server">needs server</span>' : '',
   ].join('')
-  return `<a class="card" href="./${esc(e.id)}/">
+  return `<a class="card${e.featured ? ' featured' : ''}" href="./${esc(e.id)}/">
   <div class="card-head"><span class="ex">${esc(e.ex)}</span>${badges}</div>
   <h3>${esc(e.title)}</h3>
   <p>${esc(e.teaser)}</p>
@@ -101,10 +102,14 @@ function renderIndex(m) {
   .blurb { margin:0 0 1rem; color:var(--muted); max-width:74ch; }
   .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:.9rem; }
   .card { display:flex; flex-direction:column; gap:.4rem; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:1rem 1.1rem; text-decoration:none; color:inherit; transition:border-color .12s, transform .12s; }
+  .card.featured { grid-column:1/-1; border-color:var(--accent); border-left-width:4px; padding:1.25rem 1.35rem; }
+  .card.featured h3 { font-size:1.15rem; }
+  .card.featured p { max-width:86ch; font-size:.92rem; }
   .card:hover { border-color:var(--accent); transform:translateY(-2px); }
   .card-head { display:flex; align-items:center; gap:.5rem; }
   .ex { font-size:.72rem; letter-spacing:.06em; color:var(--muted); background:var(--panel2); border-radius:999px; padding:.1rem .5rem; }
   .badge { font-size:.68rem; border-radius:999px; padding:.1rem .5rem; font-weight:600; }
+  .badge.featured { background:var(--accent); color:var(--bg); }
   .badge.dl { background:color-mix(in srgb,var(--warm) 16%,var(--panel)); color:var(--warm); }
   .badge.srv { background:color-mix(in srgb,var(--concept) 16%,var(--panel)); color:var(--concept); }
   .card h3 { margin:.1rem 0 0; font-size:1rem; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }

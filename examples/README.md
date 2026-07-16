@@ -13,8 +13,8 @@ and it runs.
 
 ```bash
 pnpm install                 # once, from the repo root
-cd examples/graph-svg-vanilla
-pnpm dev                     # open the printed URL
+pnpm --filter @fortemi/example-knowledge-workspace dev
+# open the printed URL
 ```
 
 Every example supports `pnpm dev`, `pnpm build`, and `pnpm typecheck`.
@@ -113,5 +113,5 @@ behind `@fortemi/graph/controller`, so static graph views do not pull
 
 ## Status
 
-All 19 examples from [epic #315](https://git.integrolabs.net/Fortemi/fortemi-react/issues/315)
-are delivered.
+All 20 examples are delivered. Start with `knowledge-workspace` for the complete
+application, then use the focused examples as implementation references.

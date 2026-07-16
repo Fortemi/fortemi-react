@@ -1,5 +1,21 @@
 # Example Applications
 
+## Start with the complete workspace
+
+The primary Fortemi demo is
+[`examples/knowledge-workspace`](https://github.com/Fortemi/fortemi-react/tree/main/examples/knowledge-workspace).
+It is a production-shaped, local-first research workspace that composes shard
+reading, full-text and semantic search, writes, AI enrichment, SKOS concepts,
+PROV history, and optional relationship views into one user-facing application.
+
+```bash
+pnpm install
+pnpm --filter @fortemi/example-knowledge-workspace dev
+```
+
+Use the focused applications below when you need a smaller reference for one
+specific integration pattern.
+
 Fortemi ships with four example applications that demonstrate how to build different types of apps on top of the fortemi data layer. All examples run at `pnpm dev` (http://localhost:5173) — click **Examples** in the header to access them.
 
 Each example includes a **Load Sample Data** button so you can see it working immediately without entering data manually.
