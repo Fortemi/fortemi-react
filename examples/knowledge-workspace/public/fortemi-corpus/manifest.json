@@ -1,6 +1,6 @@
 {
   "schemaVersion": 4,
-  "generatedAt": "2026-06-18T00:16:10.846Z",
+  "generatedAt": "2026-07-16T04:54:25.762Z",
   "status": "built",
   "artifacts": {
     "corpus.notes.shard": "notes only — homepage embed, fast full-text import",
@@ -17,29 +17,28 @@
     "pooling": "mean",
     "normalize": true
   },
-  "chunkCount": 4215,
-  "embeddedChunks": 3123,
+  "chunkCount": 4201,
+  "embeddedChunks": 3109,
   "ftsOnlyChunks": 1092,
-  "docCount": 363,
+  "docCount": 350,
   "ftsOnlyDocs": 100,
   "citationLinks": 1958,
   "byKind": {
-    "research": 350,
-    "resume": 13
+    "research": 350
   },
   "bytes": {
-    "notesShardTarGz": 2854393,
-    "summariesShardTarGz": 3582598,
-    "fullShardTarGz": 9831719
+    "notesShardTarGz": 2754002,
+    "summariesShardTarGz": 3438359,
+    "fullShardTarGz": 9499602
   },
   "graphSnapshots": {
     "citations": 269778,
-    "topics": 220158
+    "topics": 212146
   },
   "roundTrip": {
-    "importedNotes": 4215,
+    "importedNotes": 4201,
     "counts": {
-      "notes": 4215,
+      "notes": 4201,
       "collections": 0,
       "tags": 0,
       "links": 1958,
@@ -47,10 +46,10 @@
       "embedding_set_members": 0,
       "embeddings": 0,
       "skos_schemes": 1,
-      "skos_concepts": 1566,
+      "skos_concepts": 1518,
       "skos_relations": 0,
-      "note_skos_tags": 1871,
-      "provenance_edges": 1089,
+      "note_skos_tags": 1819,
+      "provenance_edges": 1050,
       "graph_sources": 0,
       "graph_edges": 0,
       "community_sets": 0,

@@ -15,8 +15,9 @@ data primitive rather than a graph widget.
 - optional citation/topic exploration in 2D and 3D
 - responsive Fortemi light and dark themes
 
-The bundled corpus and graph snapshots are the same demonstration dataset used
-by the Magly implementation. User-authored notes stay in the browser.
+The bundled corpus and graph snapshots preserve the Magly implementation's
+curated research references while excluding resume and personal-history
+documents. User-authored notes stay in the browser.
 
 ```bash
 pnpm install

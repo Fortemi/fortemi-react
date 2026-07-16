@@ -568,7 +568,7 @@ function NotesTab({
 }) {
   // Fetch all chunk-notes so every document groups into the list. The limit caps
   // CHUNKS, not documents — full-doc research is ~11 chunks each, so a low limit
-  // drops most documents (and resume, which is inserted last). 10000 covers the
+  // drops most documents. 10000 covers the
   // whole corpus with headroom; grouping + pagination happen client-side below.
   const { data, loading, refresh } = useNotes({ limit: 10000, sort: 'created_at', order: 'asc' });
   const create = useCreateNote();
