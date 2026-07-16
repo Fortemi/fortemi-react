@@ -1,9 +1,0 @@
-{
-  "fixture": "server-2026.2.9-fortemi-docs.shard",
-  "source_url": "file:///home/roctinam/dev/fortemi/fortemi/docker/seed-data/fortemi-docs.shard",
-  "pinned_version": "2026.2.9",
-  "fetched_at": "2026-07-09T18:08:00.000Z",
-  "bytes": 1287040,
-  "sha256": "9bca5e4835d3136f430f33f1538e890b18408bfbc575b2980f9ba6330694676e",
-  "note": "Copied from Fortemi/fortemi docker/seed-data; server-generated fixture without attachment byte payloads."
-}
