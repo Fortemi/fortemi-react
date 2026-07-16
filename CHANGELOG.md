@@ -2,6 +2,34 @@
 
 All notable changes to fortemi-react are documented here.
 
+## v2026.7.7 - 2026-07-16
+
+### `@fortemi/core` - Legacy Knowledge Shard compatibility (#344)
+
+- Shard import now accepts legacy React embedding rows that omit the server
+  metadata fields (`chunk_index`, `text`, `model`), normalizing them to schema
+  defaults instead of rolling back the transaction.
+- `validateShardArchive` accepts exactly what the importer accepts: legacy
+  link rows (no `to_url`/`metadata`), legacy `embedding_id`-only set-member
+  rows, and legacy embedding-set rows are all valid archive content.
+- Server-shaped rows retain their supplied metadata unchanged.
+
+### Examples - Semantic-upgrade validation gates (#345)
+
+- New bundled-shard conformance suite replays the knowledge-workspace demo's
+  exact import sequence (notes, summaries, full content) against the
+  checked-in corpus artifacts, with schema and checksum verification, as part
+  of the portable-contract CI gate.
+- New `examples-e2e` CI job builds the deployable gallery and drives the
+  featured demo's full semantic-upgrade path in a real browser: text search,
+  semantic enablement, summaries shard import, query-model load, and a hybrid
+  query with rendered results.
+
+### Documentation
+
+- Project context docs synced to the merged storage subsystem and the new
+  validation gates.
+
 ## v2026.7.6 - 2026-07-16
 
 ### `@fortemi/core` - Lossless AIWG Knowledge Shard transport
