@@ -202,7 +202,7 @@
     "link": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "from_note_id", "to_note_id", "to_url", "kind", "score", "created_at", "metadata"],
+      "required": ["id", "from_note_id", "to_note_id", "kind", "score", "created_at"],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
         "from_note_id": { "type": "string", "minLength": 1 },
@@ -217,7 +217,7 @@
     "embeddingSet": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "name", "slug", "description", "purpose", "document_count", "embedding_count", "is_system", "keywords", "model", "dimension"],
+      "required": ["id", "model", "dimension"],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
         "name": { "type": "string" },
@@ -245,10 +245,11 @@
     "embeddingSetMember": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["embedding_set_id", "note_id", "membership_type", "added_at", "added_by"],
+      "required": ["embedding_set_id", "note_id"],
       "properties": {
         "embedding_set_id": { "type": "string", "minLength": 1 },
         "note_id": { "type": "string", "minLength": 1 },
+        "embedding_id": { "type": "string", "minLength": 1 },
         "membership_type": { "type": "string" },
         "added_at": { "$ref": "#/$defs/isoDateTime" },
         "added_by": { "type": ["string", "null"] }
