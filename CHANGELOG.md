@@ -2,6 +2,20 @@
 
 All notable changes to fortemi-react are documented here.
 
+## v2026.7.6 - 2026-07-16
+
+### `@fortemi/core` - Lossless AIWG Knowledge Shard transport
+
+- Added `aiwgFortemiIndexToKnowledgeShard` and
+  `aiwgFortemiIndexFromKnowledgeShard` on `@fortemi/core/aiwg-index`.
+- Uses deterministic UUID identities and native note, tag, and relationship
+  projections while retaining the complete AIWG v2 envelope and source records
+  in note metadata for exact reconstruction.
+- Added optional React-native SKOS and provenance component projections.
+- Preserves shard note metadata through browser import/export.
+- Verified against the latest AIWG Gitea export: 907 records converted and
+  reconstructed exactly.
+
 ## v2026.7.4 - 2026-07-12
 
 ### `@fortemi/react/graph-3d` — 3D force-directed view (#262)
