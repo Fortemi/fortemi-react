@@ -145,11 +145,11 @@ export function linkFromShard(shard: ShardLink): {
     id: shard.id,
     source_note_id: shard.from_note_id,
     target_note_id: shard.to_note_id,
-    to_url: shard.to_url,
+    to_url: shard.to_url ?? null,
     link_type: shard.kind,
     confidence: shard.score,
     created_at: shard.created_at,
-    metadata: shard.metadata,
+    metadata: shard.metadata ?? null,
   }
 }
 

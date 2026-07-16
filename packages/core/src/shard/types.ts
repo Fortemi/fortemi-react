@@ -291,24 +291,32 @@ export interface ShardLink {
   id: string
   from_note_id: string
   to_note_id: string | null
-  to_url: string | null
+  /** Optional for legacy React shards exported before URL links existed. */
+  to_url?: string | null
   kind: string
   score: number | null
   created_at: string
-  metadata: Record<string, unknown> | null
+  /** Optional for legacy React shards exported before link metadata existed. */
+  metadata?: Record<string, unknown> | null
 }
 
-/** Embedding set as serialized in the shard JSON array. */
+/**
+ * Embedding set as serialized in the shard JSON array.
+ *
+ * Fields beyond id/model/dimension are optional for backward compatibility:
+ * legacy React shards omit them and import falls back to the same defaults
+ * `embeddingSetFromShard` applies (name → model, is_system → false, …).
+ */
 export interface ShardEmbeddingSet {
   id: string
-  name: string
-  slug: string | null
-  description: string | null
-  purpose: string | null
-  document_count: number
-  embedding_count: number
-  is_system: boolean
-  keywords: string[]
+  name?: string
+  slug?: string | null
+  description?: string | null
+  purpose?: string | null
+  document_count?: number
+  embedding_count?: number
+  is_system?: boolean
+  keywords?: string[]
   model: string
   dimension: number
   kind?: 'physical' | 'filter' | 'virtual'
@@ -329,9 +337,12 @@ export interface ShardEmbeddingSetMember {
   note_id: string
   /** Legacy React shard field; new exports use server membership metadata instead. */
   embedding_id?: string
-  membership_type: string
-  added_at: string
-  added_by: string | null
+  /** Optional for legacy React shards; import defaults to 'materialized'. */
+  membership_type?: string
+  /** Optional for legacy React shards; import falls back to the manifest timestamp. */
+  added_at?: string
+  /** Optional for legacy React shards; import defaults to NULL. */
+  added_by?: string | null
 }
 
 /** Embedding config as serialized in the shard JSON array. */
