@@ -79,6 +79,7 @@ export async function exportShard(
               n.created_at, n.updated_at, n.deleted_at,
               o.content as original_content,
               c.content as revised_content,
+              c.ai_metadata,
               $1::text as collection_id
        FROM note n
        LEFT JOIN note_original o ON o.note_id = n.id
@@ -92,6 +93,7 @@ export async function exportShard(
               n.created_at, n.updated_at, n.deleted_at,
               o.content as original_content,
               c.content as revised_content,
+              c.ai_metadata,
               (
                 SELECT cn.collection_id
                 FROM collection_note cn
@@ -111,6 +113,7 @@ export async function exportShard(
               n.created_at, n.updated_at, n.deleted_at,
               o.content as original_content,
               c.content as revised_content,
+              c.ai_metadata,
               (
                 SELECT cn.collection_id
                 FROM collection_note cn
@@ -138,6 +141,7 @@ export async function exportShard(
     deleted_at: Date | null
     original_content: string
     revised_content: string | null
+    ai_metadata: Record<string, unknown> | null
     collection_id: string | null
   }>(noteQuery, noteParams)
 

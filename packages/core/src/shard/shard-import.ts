@@ -478,10 +478,14 @@ export async function importShard(
           }
           // Upsert current revision (note_id is PK)
           await tx.query(
-            `INSERT INTO note_revised_current (note_id, content)
-             VALUES ($1, $2)
-             ON CONFLICT (note_id) DO UPDATE SET content = $2`,
-            [note.id, note.revised_content ?? note.original_content],
+            `INSERT INTO note_revised_current (note_id, content, ai_metadata)
+             VALUES ($1, $2, $3::jsonb)
+             ON CONFLICT (note_id) DO UPDATE SET content = $2, ai_metadata = $3::jsonb`,
+            [
+              note.id,
+              note.revised_content ?? note.original_content,
+              note.ai_metadata == null ? null : JSON.stringify(note.ai_metadata),
+            ],
           )
         } else {
           // Insert note
@@ -502,9 +506,13 @@ export async function importShard(
           )
           // Insert current revision
           await tx.query(
-            `INSERT INTO note_revised_current (note_id, content)
-             VALUES ($1, $2) ${conflictClause}`,
-            [note.id, note.revised_content ?? note.original_content],
+            `INSERT INTO note_revised_current (note_id, content, ai_metadata)
+             VALUES ($1, $2, $3::jsonb) ${conflictClause}`,
+            [
+              note.id,
+              note.revised_content ?? note.original_content,
+              note.ai_metadata == null ? null : JSON.stringify(note.ai_metadata),
+            ],
           )
         }
 

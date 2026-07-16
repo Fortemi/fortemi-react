@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   AIWG_SCAN_REQUIRED_FIELDS,
   aiwgDetailHrefForId,
+  aiwgFortemiIndexFromKnowledgeShard,
+  aiwgFortemiIndexToKnowledgeShard,
   aiwgFortemiIndexToCommunityGraph,
   buildAiwgChunkedIndex,
   buildAiwgStaticEmbeddingSet,
@@ -28,6 +30,7 @@ import {
   type AiwgFortemiRecord,
   type AiwgStaticEmbeddingSet,
 } from '../aiwg-index.js'
+import { unpackTarGz } from '../shard/shard-tar.js'
 import {
   getAiwgFortemiIndexExportSchema,
   validateAiwgFortemiIndexExportSchema,
@@ -146,6 +149,92 @@ function createChunkedFixture(partSize = 2): {
 }
 
 describe('AIWG Fortemi index adapter', () => {
+  it('converts v2 exports into reversible Knowledge Shards with native graph metadata', async () => {
+    const portableIndex: AiwgFortemiIndexExport = {
+      schema_version: 'aiwg.fortemi.index.export.v2',
+      generated_at: '2026-07-16T00:00:00.000Z',
+      source: { repo: 'roctinam/aiwg', privacy: 'sanitized', graph: 'project' },
+      compatibility: {
+        previous_schema_version: 'aiwg.fortemi.index.export.v1',
+        strategy: 'supported',
+      },
+      items: [
+        v2Record('aiwg:agent:architect', 'aiwg.agent', {
+          title: 'Architect',
+          text: 'Architecture specialist.',
+          tags: ['architecture'],
+          concepts: ['concept:architecture'],
+          relationships: [{
+            type: 'uses',
+            target_id: 'aiwg:skill:design-review',
+            confidence: 0.9,
+            privacy: 'sanitized',
+            metadata: { source: 'frontmatter' },
+          }],
+          skos_concepts: [{
+            id: 'concept:architecture',
+            prefLabel: 'Architecture',
+            scheme: 'aiwg-capabilities',
+            definition: 'System structure and technical decisions.',
+          }],
+          provenance_events: [{
+            id: 'prov:architect-export',
+            activity: 'indexed',
+            agent: 'aiwg',
+            started_at: '2026-07-16T00:00:00.000Z',
+            attributes: { graph: 'project' },
+          }],
+        }),
+        v2Record('aiwg:skill:design-review', 'aiwg.skill', {
+          title: 'Design Review',
+          text: 'Review an architecture design.',
+          tags: ['review'],
+          concepts: ['concept:architecture'],
+        }),
+      ],
+    }
+
+    const shard = await aiwgFortemiIndexToKnowledgeShard(portableIndex, {
+      includeNativeRichComponents: true,
+    })
+    const restored = aiwgFortemiIndexFromKnowledgeShard(shard)
+    const files = unpackTarGz(shard)
+    const manifest = JSON.parse(new TextDecoder().decode(files.get('manifest.json'))) as {
+      components: string[]
+      counts: Record<string, number>
+    }
+    const notes = new TextDecoder().decode(files.get('notes.jsonl'))
+      .split('\n')
+      .map((line) => JSON.parse(line) as { id: string; metadata: Record<string, unknown> })
+    const links = new TextDecoder().decode(files.get('links.jsonl'))
+      .split('\n')
+      .map((line) => JSON.parse(line) as { from_note_id: string; to_note_id: string })
+
+    expect(restored).toEqual(portableIndex)
+    expect(manifest.components).toEqual([
+      'notes',
+      'tags',
+      'links',
+      'skos_schemes',
+      'skos_concepts',
+      'note_skos_tags',
+      'provenance_edges',
+    ])
+    expect(manifest.counts).toMatchObject({
+      notes: 2,
+      links: 1,
+      skos_concepts: 1,
+      note_skos_tags: 2,
+      provenance_edges: 3,
+    })
+    expect(notes[0].id).toMatch(/^[0-9a-f-]{36}$/)
+    expect(notes[0].metadata).toHaveProperty('aiwg_fortemi_index')
+    expect(links[0]).toMatchObject({
+      from_note_id: notes[0].id,
+      to_note_id: notes[1].id,
+    })
+  })
+
   it('validates the shared CRM fixture contract', () => {
     const result = validateAiwgFortemiIndexExport(index)
 

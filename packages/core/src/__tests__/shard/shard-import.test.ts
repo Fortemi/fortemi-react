@@ -211,6 +211,60 @@ describe('importShard', { timeout: 30_000 }, () => {
     })
   })
 
+  it('round-trips portable note metadata without modification', async () => {
+    const metadata = {
+      aiwg_fortemi_index: {
+        envelope: {
+          schema_version: 'aiwg.fortemi.index.export.v2',
+          generated_at: '2026-07-16T00:00:00.000Z',
+        },
+        record: {
+          id: 'aiwg:skill:design-review',
+          relationships: [{ type: 'uses', target_id: 'aiwg:agent:architect' }],
+        },
+      },
+    }
+    const note: ShardNote = {
+      id: '01981f44-a9d0-7c6f-a8b0-701d514d0d52',
+      title: 'Design Review',
+      original_content: 'Review an architecture design.',
+      revised_content: null,
+      metadata,
+      format: 'markdown',
+      source: 'aiwg-index',
+      starred: false,
+      archived: false,
+      tags: ['review'],
+      created_at: '2026-07-16T00:00:00.000Z',
+      updated_at: '2026-07-16T00:00:00.000Z',
+      deleted_at: null,
+    }
+    const noteData = encoder.encode(JSON.stringify(note))
+    const manifest: ShardManifest = {
+      version: '1.0.0',
+      matric_version: 'fortemi-core-aiwg-index',
+      format: 'matric-shard',
+      created_at: '2026-07-16T00:00:00.000Z',
+      components: ['notes'],
+      counts: { notes: 1 },
+      checksums: { 'notes.jsonl': await sha256Hex(noteData) },
+      min_reader_version: '1.0.0',
+    }
+    const files = new Map<string, Uint8Array>([
+      ['manifest.json', encoder.encode(JSON.stringify(manifest))],
+      ['notes.jsonl', noteData],
+    ])
+
+    expect((await importShard(db, packTarGz(files))).success).toBe(true)
+    const exported = unpackTarGz(await exportShard(db))
+    const exportedNote = JSON.parse(
+      decoder.decode(exported.get('notes.jsonl')!),
+    ) as ShardNote
+
+    expect(exportedNote.id).toBe(note.id)
+    expect(exportedNote.metadata).toEqual(metadata)
+  })
+
   it('skip strategy: existing records untouched', async () => {
     const { archive, sourceDb } = await createTestShard()
 
