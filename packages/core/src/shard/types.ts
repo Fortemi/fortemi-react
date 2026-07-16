@@ -346,14 +346,21 @@ export interface ShardEmbeddingConfig {
   is_default: boolean
 }
 
-/** Embedding as serialized in the shard JSONL. */
+/**
+ * Embedding as serialized in the shard JSONL.
+ *
+ * Server metadata fields (`chunk_index`, `text`, `model`) are optional for
+ * backward compatibility: legacy React shards exported before migration 0016
+ * carry only `id`, `note_id`, `embedding_set_id`, `vector`, `created_at`.
+ * Import normalizes absent metadata to schema defaults (0, '', NULL).
+ */
 export interface ShardEmbedding {
   id: string
   note_id: string
-  chunk_index: number
-  text: string
+  chunk_index?: number
+  text?: string
   vector: number[]
-  model: string
+  model?: string
   /** React shard extension used to preserve local embedding-set scoping. */
   embedding_set_id?: string
   /** React shard extension used to preserve local creation ordering. */

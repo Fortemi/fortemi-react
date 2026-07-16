@@ -361,4 +361,25 @@ describe('field-mapper: embeddings', () => {
       created_at: null,
     })
   })
+
+  it('normalizes legacy React rows without server metadata fields (#344)', () => {
+    const legacy = {
+      id: 'emb-legacy-1',
+      note_id: 'note-1',
+      embedding_set_id: 'es-1',
+      vector: [0.1, 0.2, 0.3],
+      created_at: '2026-01-01T00:00:00.000Z',
+    }
+    const back = embeddingFromShard(legacy)
+    expect(back).toEqual({
+      id: 'emb-legacy-1',
+      note_id: 'note-1',
+      embedding_set_id: 'es-1',
+      chunk_index: 0,
+      text: '',
+      vector: '[0.1,0.2,0.3]',
+      model: null,
+      created_at: '2026-01-01T00:00:00.000Z',
+    })
+  })
 })

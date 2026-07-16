@@ -221,4 +221,15 @@ describe('knowledge shard AJV schema validator (#255)', () => {
       expect(() => assertShardComponentRecord(component, sample)).not.toThrow()
     }
   })
+
+  it('accepts legacy React embedding rows without chunk_index/text/model (#344)', () => {
+    const legacy = {
+      id: 'emb-legacy-1',
+      note_id: 'note-1',
+      embedding_set_id: 'set-1',
+      vector: [0.1, 0.2],
+      created_at: iso,
+    }
+    expect(validateShardComponentRecord('embeddings', legacy)).toEqual({ valid: true, errors: [] })
+  })
 })
