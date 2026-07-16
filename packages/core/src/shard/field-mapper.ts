@@ -40,6 +40,7 @@ export interface BrowserNoteExport {
   deleted_at: Date | string | null
   original_content: string
   revised_content: string | null
+  ai_metadata?: Record<string, unknown> | null
   collection_id?: string | null
   attachments?: ShardAttachmentProjection[]
   tags: string[]
@@ -52,6 +53,7 @@ export function noteToShard(note: BrowserNoteExport): ShardNote {
     title: note.title,
     original_content: note.original_content,
     revised_content: note.revised_content,
+    ...(note.ai_metadata != null ? { metadata: note.ai_metadata } : {}),
     collection_id: note.collection_id ?? null,
     ...(note.attachments?.length ? { attachments: note.attachments } : {}),
     format: note.format,
@@ -77,6 +79,7 @@ export function noteFromShard(shard: ShardNote): BrowserNoteExport {
     is_archived: shard.archived,
     original_content: shard.original_content,
     revised_content: shard.revised_content,
+    ai_metadata: shard.metadata ?? null,
     collection_id: shard.collection_id ?? null,
     attachments,
     tags: shard.tags,

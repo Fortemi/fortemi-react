@@ -242,6 +242,7 @@ export interface ShardNote {
   title: string | null
   original_content: string
   revised_content: string | null
+  metadata?: Record<string, unknown> | null
   collection_id?: string | null
   attachments?: ShardAttachmentProjection[]
   /** @deprecated Legacy React shard field name. Use `attachments`. */
