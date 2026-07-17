@@ -53,8 +53,11 @@ const DEFAULT_BATCH_SIZE = 250
  * Apply the ADR-014 signed-shard policy. Returns an error string to abort the
  * import (nothing persisted yet at the call site), or null to proceed.
  * Appends warnings for the acknowledged-unauthenticated cases.
+ *
+ * Exported for the canonical record-tier importer (`records/record-shard.ts`),
+ * which runs the identical verify-before-persist gate without PGlite.
  */
-async function enforceSignaturePolicy(
+export async function enforceSignaturePolicy(
   files: Map<string, Uint8Array>,
   options: ImportOptions | undefined,
   warnings: string[],

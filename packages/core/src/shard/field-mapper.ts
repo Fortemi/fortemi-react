@@ -22,8 +22,6 @@ import type {
   ShardNoteSkosTag,
   ShardProvenanceEdge,
 } from './types.js'
-import type { LinkRow } from '../repositories/links-repository.js'
-import type { CollectionRow } from '../repositories/collections-repository.js'
 
 // ── Notes ────────────────────────────────────────────────────────────────
 
@@ -91,8 +89,15 @@ export function noteFromShard(shard: ShardNote): BrowserNoteExport {
 
 // ── Links ────────────────────────────────────────────────────────────────
 
-/** Convert a browser link to shard format. */
-export function linkToShard(link: LinkRow): ShardLink {
+/** Convert a browser link to shard format (accepts SQL rows or canonical ISO-string records). */
+export function linkToShard(link: {
+  id: string
+  source_note_id: string
+  target_note_id: string
+  link_type: string
+  confidence: number | null
+  created_at: Date | string
+}): ShardLink {
   return {
     id: link.id,
     from_note_id: link.source_note_id,
@@ -155,9 +160,15 @@ export function linkFromShard(shard: ShardLink): {
 
 // ── Collections ──────────────────────────────────────────────────────────
 
-/** Convert a browser collection to shard format. */
+/** Convert a browser collection to shard format (accepts SQL rows or canonical ISO-string records). */
 export function collectionToShard(
-  collection: CollectionRow,
+  collection: {
+    id: string
+    name: string
+    description: string | null
+    parent_id: string | null
+    created_at: Date | string
+  },
   noteCount?: number,
 ): ShardCollection {
   return {

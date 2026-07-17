@@ -41,3 +41,11 @@ export type { CanonicalAttachInput } from './canonical-attachments-repository.js
 
 export { projectAttachments, dropAttachmentProjection } from './attachment-projection.js'
 export type { AttachmentProjectionResult } from './attachment-projection.js'
+
+export { projectNotes, projectRecords, dropNoteProjection } from './record-projection.js'
+export type { NoteProjectionResult, RecordProjectionResult } from './record-projection.js'
+
+export { createRecordBackend } from './record-backend.js'
+export type { RecordBackendOptions, RecordBackendManageNoteResult } from './record-backend.js'
+
+export { exportShardFromRecords, importShardToRecords } from './record-shard.js'

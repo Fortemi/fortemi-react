@@ -30,6 +30,8 @@ export interface CanonicalNoteCreateInput {
 export interface CanonicalNoteUpdateInput {
   title?: string
   content?: string
+  format?: string
+  visibility?: string
   is_starred?: boolean
   is_pinned?: boolean
   is_archived?: boolean
@@ -117,6 +119,8 @@ export class CanonicalNotesRepository {
     await this.store.put('note', {
       ...note,
       title: input.title !== undefined ? input.title : note.title,
+      format: input.format ?? note.format,
+      visibility: input.visibility ?? note.visibility,
       is_starred: input.is_starred ?? note.is_starred,
       is_pinned: input.is_pinned ?? note.is_pinned,
       is_archived: input.is_archived ?? note.is_archived,
