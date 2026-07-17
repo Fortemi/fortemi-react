@@ -25,10 +25,19 @@ All notable changes to fortemi-react are documented here.
   semantic enablement, summaries shard import, query-model load, and a hybrid
   query with rendered results.
 
+### Dependencies
+
+- `@bytecask/core` now resolves from public npmjs (2026.7.5) instead of the
+  internal registry, unblocking installs outside the internal network —
+  including the public npm publish workflow.
+
 ### Documentation
 
 - Project context docs synced to the merged storage subsystem and the new
   validation gates.
+
+Note: v2026.7.6 was published to the internal registry only; its changes ship
+publicly in this release.
 
 ## v2026.7.6 - 2026-07-16
 
