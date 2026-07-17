@@ -109,6 +109,7 @@ All packages are versioned together — the npm badges above always show the cur
 
 - Full note CRUD with revision history, soft delete, starring, pinning, and archiving
 - PGlite-backed local storage with `opfs`, `idb`, and `memory` persistence modes
+- Writable canonical record tier that runs without PGlite — journaled IndexedDB records, Bytecask attachment bytes, DB-free shard import/export, and a rebuildable PGlite projection
 - Full-text search with PostgreSQL `tsvector` / `tsquery`, phrase search, filters, facets, and snippets
 - Hybrid semantic search with pgvector HNSW and BM25 reciprocal-rank fusion
 - Virtual embedding-set selectors, cached similarity graphs, and graph/community artifact persistence

@@ -25,3 +25,12 @@
 ## [2026-07-16 18:31] promote | PRs #346, #347, #338 merged to main (operator-authorized); issues #344, #345 auto-closed; watching main CI @ 9828c63
 ## [2026-07-16 18:42] update | main CI fully green @ 9828c63 (8/8 jobs incl. examples-e2e); address-issues #344 #345 delivery complete
 ## [2026-07-16 23:03] update | doc-sync code-to-docs: CLAUDE.md/AIWG.md/README reconciled to #346/#347 (63 tests, examples e2e, legacy shard compat, version 2026.7.6)
+## [2026-07-17 00:24 ] promote | v2026.7.6 (internal) + v2026.7.7 tags cut and pushed; PR #348 (release prep) and #349 (bytecask npmjs fix) merged
+## [2026-07-17 00:32] promote | v2026.7.7 released: all Gitea workflows green @ 5013e09, GitHub npm-publish success, npmjs latest=2026.7.7 for @fortemi/{core,graph,react}, release entries on both forges
+## [2026-07-17 05:53] create | PR #350 opened: #323 cycle 2 record-tier backend + DB-free shard round-trip + projection parity; AL CYCLE comments on #323/#322
+## [2026-07-17 06:04] update | PR #350 CI green (run 425); #323 cycle 2 + #322 close-out ready-to-merge
+## [2026-07-17 06:09] promote | PR #350 merged to main (565c354); issues #323 and #322 auto-closed; branch deleted
+## [2026-07-17 06:19] update | Post-merge main CI run 426 green — #323/#322 delivery fully complete
+## [2026-07-17 06:25] update | fortemi.com PR #24 conflict resolved (merged origin/main, lockfile regenerated, build+lint green); pushed 5f7fd75; awaiting CI 21243
+## [2026-07-17 06:27] promote | fortemi.com PR #24 merged to main (6232003); branch deleted; watching post-merge runs 21244/21245
+## [2026-07-17 06:28] update | fortemi.com post-merge runs 21244/21245 both green — all outstanding PRs delivered

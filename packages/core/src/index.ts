@@ -1,4 +1,4 @@
-export const VERSION = '2026.7.7'
+export const VERSION = '2026.7.8'
 
 export { generateId } from './uuid.js'
 

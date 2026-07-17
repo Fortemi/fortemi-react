@@ -14,12 +14,12 @@ fortemi-react is the React port of the fortemi knowledge management server (Rust
 - **UI**: React 19.2.4
 - **Database**: PGlite 0.4.1 (PostgreSQL WASM) with pgvector
 - **Build**: Vite 7.3.1, pnpm 10.6.5 workspaces
-- **Test**: Vitest 4.1.0 (63 core test files under `packages/core/src/__tests__/` — run `pnpm test:core` for the live count; + graph & react suites), Playwright 1.52.x (E2E)
+- **Test**: Vitest 4.1.0 (66 core test files under `packages/core/src/__tests__/` — run `pnpm test:core` for the live count; + graph & react suites), Playwright 1.52.x (E2E)
 - **Lint**: ESLint 9.x (flat config) + typescript-eslint v8
 - **AI**: transformers.js (embeddings), WebLLM (local LLM), InferenceProvider system (remote + local + fallback)
 - **License**: AGPL-3.0-only
 - **Versioning**: CalVer YYYY.M.PATCH (no leading zeros)
-- **Current version**: 2026.7.7
+- **Current version**: 2026.7.8
 
 ## Monorepo Structure
 
@@ -37,7 +37,7 @@ Dependency direction (linear chain, no cycles): `@electric-sql/pglite` ← `@for
 ```bash
 pnpm dev              # Vite dev server on :5173
 pnpm build            # Build all packages
-pnpm test:core        # core unit/integration suite (Vitest, 63 test files)
+pnpm test:core        # core unit/integration suite (Vitest, 66 test files)
 pnpm test:e2e         # E2E tests (Playwright, Chromium + Firefox)
 pnpm examples:site:e2e # Built-gallery smoke test (build with examples:site:build first)
 pnpm typecheck        # TypeScript strict across all packages
@@ -77,7 +77,7 @@ Test parallelism is capped at half available CPUs (PGlite WASM is CPU-heavy). Ov
 | `packages/core/src/migrations/` | 17 numbered migrations (schema must match server); `0010` adds attachment MIME/extracted-text metadata, `0011`–`0016` cover embedding, template, URL-link, and server-metadata parity, and `0017` projects attachment/blob parity (content_type, storage_type, derived trigger-free reference_count, attachment status/extraction columns, attachment_embedding table) |
 | `packages/core/src/tools/` | 11 MCP tool functions (capture-knowledge, get-note, list-notes, manage-note, manage-tags, manage-collections, manage-links, manage-archive, manage-capabilities, manage-attachments, search) |
 | `packages/core/src/repositories/` | 11 data access repositories (notes, search, tags, collections, links, skos, attachments, communities, graph, provenance, embedding-sets) |
-| `packages/core/src/records/` | Canonical record layer (ADR-013, #323): `RecordStore` contract + `IdbRecordStore`/`MemoryRecordStore` (journaled atomic commits), canonical notes/attachments repositories, and the PGlite attachment projection (`attachment-projection.ts`) |
+| `packages/core/src/records/` | Canonical record layer (ADR-013, #323): `RecordStore` contract + `IdbRecordStore`/`MemoryRecordStore` (journaled atomic commits), canonical notes/attachments repositories, the writable record-tier `DataBackend` (`record-backend.ts`), DB-free shard round-trip (`record-shard.ts`), and the full PGlite projection (`record-projection.ts` + `attachment-projection.ts`) |
 | `packages/core/src/blob-store.ts` | Content-addressed `BlobStore` seam (put/read/has/reconcile/gc/diagnostics) over `@bytecask/core`; `blob-store-legacy.ts` one-shot migrates pre-bytecask `sha256` blob layouts to `blake3` |
 | `packages/core/src/capabilities/` | 14 files: InferenceProvider interface, ProviderRegistry, OpenAICompatibleProvider, FallbackRouter, local-discovery, gpu-detect, inference-detect, embedding-handler, embed-worker-transport, llm-handler, semantic-loader, llm-loader, auto-tag, chunking |
 | `packages/core/src/shard/` | Knowledge Shard import/export: tar packaging, checksums, blob sidecar (BLAKE3 attachment hashing), Ed25519 signed-manifest verification (`shard-signature.ts`, ADR-014 — verify-before-persist), field-mapper, types, and shard↔server conformance harness |
@@ -92,7 +92,7 @@ Test parallelism is capped at half available CPUs (PGlite WASM is CPU-heavy). Ov
 ## Testing
 
 - **Format parity tests are the highest priority** — if they break, nothing ships
-- 63 test files in `packages/core/src/__tests__/` (run `pnpm test:core` for the live count), including `db-table-parity/`, shard conformance, bundled example-shard validation, the canonical `records/` layer, and `shard/` subdirs
+- 66 test files in `packages/core/src/__tests__/` (run `pnpm test:core` for the live count), including `db-table-parity/`, shard conformance, bundled example-shard validation, the canonical `records/` layer, and `shard/` subdirs
 - E2E tests in `apps/standalone/e2e/` (`smoke`, `loading`, and `webkit-compat`, Playwright) and `examples/e2e/` (built-gallery knowledge-workspace semantic-upgrade smoke test — `pnpm examples:site:build` then `pnpm examples:site:e2e`)
 - Run `pnpm test:coverage` for current coverage; do not rely on hardcoded historical percentages.
 

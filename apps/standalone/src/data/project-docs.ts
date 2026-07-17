@@ -32,6 +32,7 @@ import release20260703 from '../../../../docs/content/releases/v2026.7.3.md?raw'
 import release20260704 from '../../../../docs/content/releases/v2026.7.4.md?raw'
 import release20260706 from '../../../../docs/content/releases/v2026.7.6.md?raw'
 import release20260707 from '../../../../docs/content/releases/v2026.7.7.md?raw'
+import release20260708 from '../../../../docs/content/releases/v2026.7.8.md?raw'
 import release20260705 from '../../../../docs/content/releases/v2026.7.5.md?raw'
 import pluginContentSecurity from '../../../../docs/content/security/plugin-content-security.md?raw'
 import supplyChain from '../../../../docs/content/security/supply-chain.md?raw'
@@ -90,6 +91,7 @@ export const PROJECT_DOCS: ProjectDoc[] = [
   doc('docs/content/releases/v2026.7.2.md', release20260702, ['docs:release']),
   doc('docs/content/releases/v2026.7.3.md', release20260703, ['docs:release']),
   doc('docs/content/releases/v2026.7.4.md', release20260704, ['docs:release']),
+  doc('docs/content/releases/v2026.7.8.md', release20260708, ['docs:release']),
   doc('docs/content/releases/v2026.7.7.md', release20260707, ['docs:release']),
   doc('docs/content/releases/v2026.7.6.md', release20260706, ['docs:release']),
   doc('docs/content/releases/v2026.7.5.md', release20260705, ['docs:release']),
