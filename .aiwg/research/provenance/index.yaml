@@ -1,7 +1,7 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-07-17T22:32:08Z"
-  record_count: 13
+  updated_at: "2026-07-17T23:10:58Z"
+  record_count: 18
 records:
   - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-006-public-api-first.md"
     record: "records/ADR-006-public-api-first.md.prov.yaml"
@@ -13,12 +13,20 @@ records:
     record: "records/SAD.md.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/index.ts"
     record: "records/packages-core-src-index.ts.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/src/records/index.ts"
+    record: "records/packages-core-src-records-index.ts.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/records/record-shard.ts"
     record: "records/packages-core-src-records-record-shard.ts.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/src/shard/field-mapper.ts"
+    record: "records/packages-core-src-shard-field-mapper.ts.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/shard/index.ts"
     record: "records/packages-core-src-shard-index.ts.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/src/shard/profile-registry.ts"
+    record: "records/packages-core-src-shard-profile-registry.ts.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/shard/schema-validator.ts"
     record: "records/packages-core-src-shard-schema-validator.ts.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/src/shard/shard-export.ts"
+    record: "records/packages-core-src-shard-shard-export.ts.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/shard/shard-import.ts"
     record: "records/packages-core-src-shard-shard-import.ts.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/shard/types.ts"
@@ -27,5 +35,7 @@ records:
     record: "records/packages-core-src-tests-records-record-shard.test.ts.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/schema-validator.test.ts"
     record: "records/packages-core-src-tests-shard-schema-validator.test.ts.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/profile-registry.test.ts"
+    record: "records/packages-core-src-tests-shard-profile-registry.test.ts.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/shard-import.test.ts"
     record: "records/packages-core-src-tests-shard-shard-import.test.ts.prov.yaml"

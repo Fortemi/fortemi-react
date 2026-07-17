@@ -2,6 +2,12 @@
  * Shard export pipeline — query all entities, serialize, pack into .shard archive.
  *
  * Pipeline: query DB → field-map → serialize (JSONL/JSON) → compute checksums → build manifest → tar.gz
+ *
+ * @implements @.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md
+ * @depends @packages/core/src/shard/profile-registry.ts
+ * @schema @packages/core/schemas/knowledge-shard.schema.receipt.json
+ * @created 2026-07-17
+ * @agent Codex
  */
 
 import type { DatabaseClient } from '../storage-backend.js'
@@ -9,6 +15,12 @@ import { VERSION } from '../index.js'
 import { packTarGz } from './shard-tar.js'
 import { sha256Hex } from './checksum.js'
 import { sidecarEntryName } from './blob-sidecar.js'
+import { validateCoreV1ShardArchive } from './schema-validator.js'
+import {
+  CORE_V1_COMPONENTS,
+  createShardCapabilityReport,
+  profileSupportError,
+} from './profile-registry.js'
 import {
   noteToShard,
   linkToShard,
@@ -41,9 +53,34 @@ import type {
   ShardLayout,
   ShardAttachmentProjection,
   ShardEmbeddingConfig,
+  ShardExportResult,
+  ShardLossEntry,
+  ShardNote,
 } from './types.js'
 
 const encoder = new TextEncoder()
+const CORE_V1_FILES = new Set([
+  'notes.jsonl',
+  'collections.json',
+  'tags.json',
+  'templates.json',
+  'links.jsonl',
+])
+const CORE_V1_OMITTED_COMPONENTS: readonly ShardComponent[] = [
+  'embedding_sets',
+  'embedding_configs',
+  'embedding_set_members',
+  'embeddings',
+  'skos_schemes',
+  'skos_concepts',
+  'skos_relations',
+  'note_skos_tags',
+  'provenance_edges',
+  'graph_sources',
+  'graph_edges',
+  'communities',
+  'community_assignments',
+]
 
 function jsonObject(value: unknown): Record<string, unknown> | undefined {
   if (value == null) return undefined
@@ -53,6 +90,162 @@ function jsonObject(value: unknown): Record<string, unknown> | undefined {
 
 function iso(value: Date | string): string {
   return value instanceof Date ? value.toISOString() : value
+}
+
+function coreV1OptionErrors(options: ExportOptions): string[] {
+  const errors: string[] = []
+  if (options.clusterNotesSize !== undefined) {
+    errors.push('core-v1 does not declare clustered note files')
+  }
+  if (options.includeBlobs) {
+    errors.push('core-v1 declares attachment references but not blob sidecar files')
+  }
+  return errors
+}
+
+function toCoreV1Note(note: ShardNote): ShardNote {
+  const liveNote = { ...note }
+  delete liveNote.deleted_at
+  return {
+    ...liveNote,
+    revised_content: note.revised_content ?? note.original_content,
+    metadata: note.metadata ?? null,
+    attachments: (note.attachments ?? []).map((projection) => ({
+      ...projection,
+      extraction_status: projection.extracted_text === null ? 'deferred' : 'extracted',
+      reason: projection.extracted_text === null ? 'no_extracted_text' : null,
+    })),
+  }
+}
+
+async function rowCount(db: DatabaseClient, sql: string): Promise<number> {
+  const result = await db.query<{ count: number | string }>(sql)
+  return Number(result.rows[0]?.count ?? 0)
+}
+
+async function collectCoreV1Losses(
+  db: DatabaseClient,
+  options: ExportOptions,
+): Promise<ShardLossEntry[]> {
+  const losses: ShardLossEntry[] = []
+  const componentCounts: Array<{
+    component: ShardComponent
+    table: string
+  }> = [
+    { component: 'embedding_sets', table: 'embedding_set' },
+    { component: 'embedding_configs', table: 'embedding_config' },
+    { component: 'embedding_set_members', table: 'embedding_set_member' },
+    { component: 'embeddings', table: 'embedding' },
+    { component: 'skos_schemes', table: 'skos_scheme' },
+    { component: 'skos_concepts', table: 'skos_concept' },
+    { component: 'skos_relations', table: 'skos_concept_relation' },
+    { component: 'note_skos_tags', table: 'note_skos_tag' },
+    { component: 'provenance_edges', table: 'provenance_edge' },
+    { component: 'graph_sources', table: 'graph_source' },
+    { component: 'graph_edges', table: 'graph_edge_artifact' },
+    { component: 'communities', table: 'community' },
+    { component: 'community_assignments', table: 'community_assignment' },
+  ]
+  for (const { component, table } of componentCounts) {
+    const count = await rowCount(db, `SELECT COUNT(*) AS count FROM ${table}`)
+    if (count > 0) {
+      losses.push({
+        code: 'component-outside-profile',
+        component,
+        count,
+        message: `${count} ${component} record(s) are outside core-v1 and were omitted.`,
+      })
+    }
+  }
+
+  const deletedNotes = await rowCount(
+    db,
+    'SELECT COUNT(*) AS count FROM note WHERE deleted_at IS NOT NULL',
+  )
+  if (deletedNotes > 0) {
+    losses.push({
+      code: 'tombstones-outside-profile',
+      component: 'notes',
+      count: deletedNotes,
+      message: `${deletedNotes} deleted note tombstone(s) are outside core-v1 and were omitted.`,
+    })
+  }
+
+  const nullRevisions = await rowCount(
+    db,
+    `SELECT COUNT(*) AS count
+       FROM note n
+       LEFT JOIN note_revised_current r ON r.note_id = n.id
+       WHERE n.deleted_at IS NULL AND r.content IS NULL`,
+  )
+  if (nullRevisions > 0) {
+    losses.push({
+      code: 'null-revision-normalized',
+      component: 'notes',
+      count: nullRevisions,
+      message: `${nullRevisions} null revised-content value(s) were normalized to original content as required by core-v1.`,
+    })
+  }
+
+  if (options.includeEmbeddings || options.embeddingSetIds?.length) {
+    losses.push({
+      code: 'export-option-outside-profile',
+      component: 'embeddings',
+      message: 'Embedding export options were ignored because embeddings are outside core-v1.',
+    })
+  }
+  if (options.includeMaterializedSelectors) {
+    losses.push({
+      code: 'export-option-outside-profile',
+      component: 'embedding_set_members',
+      message: 'Materialized selector metadata was omitted because it is outside core-v1.',
+    })
+  }
+  return losses
+}
+
+export async function exportShardWithReport(
+  db: DatabaseClient,
+  options: ExportOptions & { profile: string },
+): Promise<ShardExportResult> {
+  let capabilityReport = createShardCapabilityReport({
+    backend: 'pglite',
+    operation: 'export',
+    requestedProfile: options.profile,
+    declaredComponents: options.profile === 'core-v1' ? CORE_V1_COMPONENTS : [],
+    omittedComponents: options.profile === 'core-v1' ? CORE_V1_OMITTED_COMPONENTS : [],
+  })
+  const errors = [
+    ...(profileSupportError(capabilityReport)
+      ? [profileSupportError(capabilityReport)!]
+      : []),
+    ...(options.profile === 'core-v1' ? coreV1OptionErrors(options) : []),
+  ]
+  if (errors.length > 0) {
+    return { success: false, archive: null, errors, capability_report: capabilityReport }
+  }
+
+  const losses = await collectCoreV1Losses(db, options)
+  capabilityReport = {
+    ...capabilityReport,
+    losses,
+  }
+  try {
+    const archive = await exportShardBytes(db, options)
+    return {
+      success: true,
+      archive,
+      errors: [],
+      capability_report: capabilityReport,
+    }
+  } catch (error) {
+    return {
+      success: false,
+      archive: null,
+      errors: [error instanceof Error ? error.message : String(error)],
+      capability_report: capabilityReport,
+    }
+  }
 }
 
 /**
@@ -66,6 +259,32 @@ export async function exportShard(
   db: DatabaseClient,
   options?: ExportOptions,
 ): Promise<Uint8Array> {
+  if (options?.profile) {
+    throw new Error(
+      'Named portability profiles require exportShardWithReport so capability and loss data cannot be discarded',
+    )
+  }
+  return exportShardBytes(db, options)
+}
+
+async function exportShardBytes(
+  db: DatabaseClient,
+  options?: ExportOptions,
+): Promise<Uint8Array> {
+  const coreV1 = options?.profile === 'core-v1'
+  if (options?.profile) {
+    const capabilityReport = createShardCapabilityReport({
+      backend: 'pglite',
+      operation: 'export',
+      requestedProfile: options.profile,
+      declaredComponents: coreV1 ? CORE_V1_COMPONENTS : [],
+    })
+    const profileError = profileSupportError(capabilityReport)
+    if (profileError) throw new Error(profileError)
+    const optionErrors = coreV1OptionErrors(options)
+    if (optionErrors.length > 0) throw new Error(optionErrors.join('; '))
+  }
+
   const files = new Map<string, Uint8Array>()
   const components: ShardComponent[] = []
   const counts: ShardManifest['counts'] = {}
@@ -207,7 +426,10 @@ export async function exportShard(
   // Collect exported note IDs for scoping related data
   const exportedNoteIds = new Set(notes.map((n) => n.id))
 
-  const shardNotes = notes.map((n) => noteToShard(n))
+  const shardNotes = notes.map((n) => {
+    const shardNote = noteToShard(n)
+    return coreV1 ? toCoreV1Note(shardNote) : shardNote
+  })
   let layout: ShardLayout | undefined
   const clusterSize = options?.clusterNotesSize
   if (clusterSize && Number.isInteger(clusterSize) && clusterSize > 0 && shardNotes.length > 0) {
@@ -279,7 +501,7 @@ export async function exportShard(
     created_at: Date
     updated_at: Date
   }>(`SELECT * FROM template ORDER BY created_at, id`)
-  if (templateRows.rows.length > 0) {
+  if (templateRows.rows.length > 0 || coreV1) {
     const shardTemplates = templateRows.rows.map((template) => templateToShard(template))
     files.set('templates.json', encoder.encode(JSON.stringify(shardTemplates)))
     components.push('templates')
@@ -712,6 +934,47 @@ export async function exportShard(
     counts.community_assignments = scopedAssignmentRows.length
   }
 
+  if (coreV1) {
+    for (const filename of [...files.keys()]) {
+      if (!CORE_V1_FILES.has(filename)) files.delete(filename)
+    }
+
+    const tagsByName = new Map(shardTags.map((tag) => [tag.name, tag]))
+    for (const template of templateRows.rows) {
+      const defaultTags = Array.isArray(template.default_tags)
+        ? template.default_tags
+        : JSON.parse(template.default_tags) as string[]
+      for (const name of defaultTags) {
+        if (!tagsByName.has(name)) {
+          tagsByName.set(name, {
+            name,
+            created_at: iso(template.created_at),
+          })
+        }
+      }
+    }
+    const coreTags = [...tagsByName.values()].sort((left, right) =>
+      left.name.localeCompare(right.name),
+    )
+    files.set('tags.json', encoder.encode(JSON.stringify(coreTags)))
+
+    components.splice(0, components.length, ...CORE_V1_COMPONENTS)
+    for (const key of Object.keys(counts) as Array<keyof typeof counts>) {
+      if (!(CORE_V1_COMPONENTS as readonly string[]).includes(key)) delete counts[key]
+    }
+    Object.assign(counts, {
+      notes: shardNotes.length,
+      collections: shardCollections.length,
+      tags: coreTags.length,
+      templates: templateRows.rows.length,
+      links: shardLinks.length,
+      embedding_sets: 0,
+      embedding_set_members: 0,
+      embeddings: 0,
+      embedding_configs: 0,
+    })
+  }
+
   // ── Compute checksums ───────────────────────────────────────────────
   const checksums: Record<string, string> = {}
   for (const [filename, data] of files) {
@@ -721,16 +984,24 @@ export async function exportShard(
   // ── Build manifest ──────────────────────────────────────────────────
   const manifest: ShardManifest = {
     version: CURRENT_SHARD_VERSION,
-    matric_version: VERSION,
+    ...(coreV1
+      ? {
+          profile: 'core-v1',
+          producer: {
+            name: 'fortemi-react',
+            version: VERSION,
+          },
+        }
+      : { matric_version: VERSION }),
     format: SHARD_FORMAT,
     created_at: new Date().toISOString(),
     components,
     counts,
     checksums,
     min_reader_version: '1.0.0',
-    migrated_from: null,
     migration_history: [],
-    ...(layout ? { layout } : {}),
+    ...(!coreV1 ? { migrated_from: null } : {}),
+    ...(!coreV1 && layout ? { layout } : {}),
   }
   files.set('manifest.json', encoder.encode(JSON.stringify(manifest, null, 2)))
 
@@ -748,6 +1019,13 @@ export async function exportShard(
       packed.add(checksum)
       const bytes = await options.blobStore.read(checksum)
       if (bytes) files.set(sidecarEntryName(checksum), bytes)
+    }
+  }
+
+  if (coreV1) {
+    const validation = await validateCoreV1ShardArchive(files)
+    if (!validation.valid) {
+      throw new Error(`Generated core-v1 shard failed canonical validation: ${validation.errors.join('; ')}`)
     }
   }
 

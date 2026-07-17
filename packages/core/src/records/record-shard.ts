@@ -55,9 +55,15 @@ import type {
   ShardLink,
   ShardCollection,
   ShardAttachmentProjection,
+  ShardCapabilityReport,
+  ShardExportResult,
 } from '../shard/types.js'
 import { parseJsonArrayBytes, parseJsonlBytes } from '../shard/parse.js'
 import { validateCoreV1ShardArchive } from '../shard/schema-validator.js'
+import {
+  createShardCapabilityReport,
+  profileSupportError,
+} from '../shard/profile-registry.js'
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
@@ -88,6 +94,25 @@ function emptyCounts(): ImportCounts {
 
 // ── Export ───────────────────────────────────────────────────────────────────
 
+export async function exportShardFromRecordsWithReport(
+  _store: RecordStore,
+  options: ExportOptions & { profile: string },
+): Promise<ShardExportResult> {
+  const capabilityReport = createShardCapabilityReport({
+    backend: 'record-store',
+    operation: 'export',
+    requestedProfile: options.profile,
+  })
+  const error = profileSupportError(capabilityReport)
+    ?? `Knowledge Shard profile '${options.profile}' is not supported by the record-store export path`
+  return {
+    success: false,
+    archive: null,
+    errors: [error],
+    capability_report: capabilityReport,
+  }
+}
+
 /**
  * Export canonical records as a `.shard` archive (Uint8Array), format-parity
  * with the PGlite `exportShard`. Honored options: `collectionId` / `tag`
@@ -99,6 +124,11 @@ export async function exportShardFromRecords(
   store: RecordStore,
   options?: ExportOptions,
 ): Promise<Uint8Array> {
+  if (options?.profile) {
+    throw new Error(
+      'Named portability profiles require exportShardFromRecordsWithReport so capability and loss data cannot be discarded',
+    )
+  }
   const files = new Map<string, Uint8Array>()
   const components: ShardComponent[] = []
   const counts: ShardManifest['counts'] = {}
@@ -322,6 +352,7 @@ function failure(
   warnings: string[],
   error: string,
   start: number,
+  capabilityReport: ShardCapabilityReport,
 ): ImportResult {
   return {
     success: false,
@@ -330,6 +361,7 @@ function failure(
     warnings,
     errors: [error],
     duration_ms: performance.now() - start,
+    capability_report: capabilityReport,
   }
 }
 
@@ -353,6 +385,11 @@ export async function importShardToRecords(
   const counts = emptyCounts()
   const skipped: Partial<ImportCounts> = {}
   const warnings: string[] = []
+  let capabilityReport = createShardCapabilityReport({
+    backend: 'record-store',
+    operation: 'import',
+    requestedProfile: null,
+  })
   const inputData = data instanceof ArrayBuffer ? new Uint8Array(data) : data
 
   // ── Unpack + validate everything BEFORE any write ─────────────────────────
@@ -360,13 +397,26 @@ export async function importShardToRecords(
   try {
     files = unpackTarGz(inputData)
   } catch (err) {
-    return failure(counts, skipped, warnings,
-      `Failed to decompress archive: ${err instanceof Error ? err.message : String(err)}`, start)
+    return failure(
+      counts,
+      skipped,
+      warnings,
+      `Failed to decompress archive: ${err instanceof Error ? err.message : String(err)}`,
+      start,
+      capabilityReport,
+    )
   }
 
   const manifestData = files.get('manifest.json')
   if (!manifestData) {
-    return failure(counts, skipped, warnings, 'Missing manifest.json in shard archive', start)
+    return failure(
+      counts,
+      skipped,
+      warnings,
+      'Missing manifest.json in shard archive',
+      start,
+      capabilityReport,
+    )
   }
   let manifest: ShardManifest
   try {
@@ -375,8 +425,28 @@ export async function importShardToRecords(
       throw new Error('manifest must be a JSON object')
     }
   } catch {
-    return failure(counts, skipped, warnings, 'Invalid manifest.json: failed to parse JSON', start)
+    return failure(
+      counts,
+      skipped,
+      warnings,
+      'Invalid manifest.json: failed to parse JSON',
+      start,
+      capabilityReport,
+    )
   }
+
+  capabilityReport = createShardCapabilityReport({
+    backend: 'record-store',
+    operation: 'import',
+    requestedProfile: manifest.profile ?? null,
+    declaredComponents: manifest.components ?? [],
+    losses: manifest.profile
+      ? []
+      : [{
+          code: 'legacy-unprofiled',
+          message: 'The archive has no authority-owned portability profile and is not advertised as portable.',
+        }],
+  })
 
   if (manifest.profile === 'core-v1') {
     const validation = await validateCoreV1ShardArchive(files)
@@ -387,27 +457,50 @@ export async function importShardToRecords(
         warnings,
         `Canonical core-v1 validation failed: ${validation.errors.join('; ')}`,
         start,
+        capabilityReport,
       )
     }
+  }
+
+  const unsupportedProfile = profileSupportError(capabilityReport)
+  if (unsupportedProfile) {
+    return failure(
+      counts,
+      skipped,
+      warnings,
+      unsupportedProfile,
+      start,
+      capabilityReport,
+    )
   }
 
   if (manifest.min_reader_version && compareShardVersions(manifest.min_reader_version, CURRENT_SHARD_VERSION) > 0) {
     return failure(counts, skipped, warnings,
       `Shard requires reader version ${manifest.min_reader_version}, ` +
-        `but this version supports up to ${CURRENT_SHARD_VERSION}`, start)
+        `but this version supports up to ${CURRENT_SHARD_VERSION}`, start, capabilityReport)
   }
 
   // ADR-014 verify-before-persist: identical gate to the PGlite importer.
   const sigError = await enforceSignaturePolicy(files, options, warnings)
-  if (sigError) return failure(counts, skipped, warnings, sigError, start)
+  if (sigError) return failure(counts, skipped, warnings, sigError, start, capabilityReport)
 
   if (!manifest.checksums || typeof manifest.checksums !== 'object') {
-    return failure(counts, skipped, warnings, 'Invalid manifest.json: checksums must be an object', start)
+    return failure(
+      counts,
+      skipped,
+      warnings,
+      'Invalid manifest.json: checksums must be an object',
+      start,
+      capabilityReport,
+    )
   }
   const checksumResult = await validateChecksums(manifest.checksums, files)
   if (!checksumResult.valid) {
     return failure(counts, skipped, warnings,
-      `Checksum validation failed for: ${checksumResult.failures.join(', ')}`, start)
+      `Checksum validation failed for: ${checksumResult.failures.join(', ')}`,
+      start,
+      capabilityReport,
+    )
   }
 
   const sidecarBlobs = options?.blobStore ? collectSidecarBlobs(files) : null
@@ -425,7 +518,10 @@ export async function importShardToRecords(
     parsedLinks = parseJsonlBytes<ShardLink>(files.get('links.jsonl'))
   } catch (err) {
     return failure(counts, skipped, warnings,
-      `Failed to parse shard component: ${err instanceof Error ? err.message : String(err)}`, start)
+      `Failed to parse shard component: ${err instanceof Error ? err.message : String(err)}`,
+      start,
+      capabilityReport,
+    )
   }
 
   // Report the capability boundary explicitly: components present in the
@@ -446,12 +542,26 @@ export async function importShardToRecords(
   if (strategy === 'error') {
     for (const col of parsedCollections) {
       if (await store.get('collection', col.id)) {
-        return failure(counts, skipped, warnings, `Collection already exists: ${col.id}`, start)
+        return failure(
+          counts,
+          skipped,
+          warnings,
+          `Collection already exists: ${col.id}`,
+          start,
+          capabilityReport,
+        )
       }
     }
     for (const shardNote of parsedNotes) {
       if (await store.get('note', shardNote.id)) {
-        return failure(counts, skipped, warnings, `Note already exists: ${shardNote.id}`, start)
+        return failure(
+          counts,
+          skipped,
+          warnings,
+          `Note already exists: ${shardNote.id}`,
+          start,
+          capabilityReport,
+        )
       }
     }
   }
@@ -681,5 +791,6 @@ export async function importShardToRecords(
     warnings,
     errors,
     duration_ms: performance.now() - start,
+    capability_report: capabilityReport,
   }
 }

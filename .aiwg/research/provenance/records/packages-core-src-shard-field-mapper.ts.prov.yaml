@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-17T23:10:58Z"
+  description: "Provenance for canonical core-v1 note field mapping"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/shard/field-mapper.ts"
+  type: code
+  created_at: "2026-07-17T23:10:58Z"
+  checksum: "sha256:d8f0ea9c3efd1334e59fbff0ba26d625361cf2441587a250c02cdd68d3c43413"
+  size_bytes: 18315
+  attributes:
+    change_scope: "named-portability-profiles"
+    base_revision: "2f30626922a7dfad4dec1f4673ec76349335bba9"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-src-shard-field-mapper-ts:001"
+  type: modification
+  started_at: "2026-07-17T23:10:58Z"
+  ended_at: "2026-07-17T23:10:58Z"
+  description: "Accept canonical notes that omit the legacy deleted_at field"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: ai_assistant
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/shard/field-mapper.ts"
+    activity: "urn:aiwg:activity:modification:packages-core-src-shard-field-mapper-ts:001"
+    time: "2026-07-17T23:10:58Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-src-shard-field-mapper-ts:001"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:2f30626922a7dfad4dec1f4673ec76349335bba9:packages/core/src/shard/field-mapper.ts"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/shard/field-mapper.ts"
+      source: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard.schema.receipt.json"
+      derivation_type: "derives_from"
+      activity: "urn:aiwg:activity:modification:packages-core-src-shard-field-mapper-ts:001"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-src-shard-field-mapper-ts:001"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/shard/field-mapper.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

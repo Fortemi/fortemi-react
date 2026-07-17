@@ -56,6 +56,46 @@ export type ShardComponent =
   | 'graph_edges'
   | 'graph_sources'
 
+export type KnowledgeShardProfile = 'core-v1' | 'full-v1' | 'record-v1'
+export type ShardBackend = 'pglite' | 'record-store'
+export type ShardOperation = 'export' | 'import'
+export type ShardAuthorityStatus = 'supported' | 'reserved' | 'unknown' | 'unprofiled'
+
+export interface ShardProfileRegistryEntry {
+  profile: KnowledgeShardProfile
+  authority_status: 'supported' | 'reserved'
+  components: ShardComponent[]
+}
+
+export interface ShardLossEntry {
+  code: string
+  message: string
+  component?: ShardComponent
+  count?: number
+}
+
+export interface ShardCapabilityReport {
+  schema_version: 'fortemi.shard.capability-report.v1'
+  backend: ShardBackend
+  operation: ShardOperation
+  requested_profile: string | null
+  authority_status: ShardAuthorityStatus
+  backend_supported: boolean
+  portable: boolean
+  authority: {
+    repository: string
+    commit: string
+    contract_sha256: string
+    schema_bundle_sha256: string
+  }
+  advertised_profiles: KnowledgeShardProfile[]
+  supported_components: ShardComponent[]
+  declared_components: ShardComponent[]
+  unsupported_components: ShardComponent[]
+  omitted_components: ShardComponent[]
+  losses: ShardLossEntry[]
+}
+
 export interface ShardAttachmentReference {
   id: string
   path: string
@@ -66,6 +106,15 @@ export interface ShardAttachmentReference {
 
 export interface ShardAttachmentProjection {
   extracted_text: string | null
+  extraction_status?: 'extracted' | 'pending' | 'failed' | 'blocked' | 'deferred'
+  reason?:
+    | null
+    | 'extraction_pending'
+    | 'extractor_failed'
+    | 'quarantined'
+    | 'large_binary'
+    | 'unsupported_mime'
+    | 'no_extracted_text'
   attachment: ShardAttachmentReference
 }
 
@@ -129,6 +178,11 @@ export interface ShardManifest {
 
 /** Options for shard export. */
 export interface ExportOptions {
+  /**
+   * Explicit portability profile. Only profiles advertised by the selected
+   * producer are accepted. Omit to retain the legacy unprofiled React archive.
+   */
+  profile?: string
   includeEmbeddings?: boolean
   /** Filter to specific collection (export only notes in this collection). */
   collectionId?: string
@@ -248,6 +302,14 @@ export interface ImportResult {
   warnings: string[]
   errors: string[]
   duration_ms: number
+  capability_report: ShardCapabilityReport
+}
+
+export interface ShardExportResult {
+  success: boolean
+  archive: Uint8Array | null
+  errors: string[]
+  capability_report: ShardCapabilityReport
 }
 
 // ── Shard-format entity shapes (server-compatible) ──────────────────────
@@ -270,7 +332,8 @@ export interface ShardNote {
   tags: string[]
   created_at: string
   updated_at: string
-  deleted_at: string | null
+  /** Legacy unprofiled tombstone field; core-v1 exports only live notes. */
+  deleted_at?: string | null
 }
 
 /** Collection as serialized in the shard JSON array. */

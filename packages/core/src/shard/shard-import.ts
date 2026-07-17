@@ -51,6 +51,10 @@ import type {
 } from './types.js'
 import { parseJsonArrayBytes, parseJsonlBytes } from './parse.js'
 import { validateCoreV1ShardArchive } from './schema-validator.js'
+import {
+  createShardCapabilityReport,
+  profileSupportError,
+} from './profile-registry.js'
 
 const decoder = new TextDecoder()
 const DEFAULT_BATCH_SIZE = 250
@@ -169,6 +173,11 @@ export async function importShard(
     community_assignments: 0,
   }
   const skipped: Partial<ImportCounts> = {}
+  let capabilityReport = createShardCapabilityReport({
+    backend: 'pglite',
+    operation: 'import',
+    requestedProfile: null,
+  })
 
   const inputData = data instanceof ArrayBuffer ? new Uint8Array(data) : data
 
@@ -186,6 +195,7 @@ export async function importShard(
       warnings,
       errors: [`Failed to decompress archive: ${err instanceof Error ? err.message : String(err)}`],
       duration_ms: performance.now() - start,
+      capability_report: capabilityReport,
     }
   }
 
@@ -199,6 +209,7 @@ export async function importShard(
       warnings,
       errors: ['Missing manifest.json in shard archive'],
       duration_ms: performance.now() - start,
+      capability_report: capabilityReport,
     }
   }
 
@@ -216,6 +227,32 @@ export async function importShard(
       warnings,
       errors: ['Invalid manifest.json: failed to parse JSON'],
       duration_ms: performance.now() - start,
+      capability_report: capabilityReport,
+    }
+  }
+
+  capabilityReport = createShardCapabilityReport({
+    backend: 'pglite',
+    operation: 'import',
+    requestedProfile: manifest.profile ?? null,
+    declaredComponents: manifest.components ?? [],
+    losses: manifest.profile
+      ? []
+      : [{
+          code: 'legacy-unprofiled',
+          message: 'The archive has no authority-owned portability profile and is not advertised as portable.',
+        }],
+  })
+  const unsupportedProfile = profileSupportError(capabilityReport)
+  if (unsupportedProfile) {
+    return {
+      success: false,
+      counts,
+      skipped,
+      warnings,
+      errors: [unsupportedProfile],
+      duration_ms: performance.now() - start,
+      capability_report: capabilityReport,
     }
   }
 
@@ -229,6 +266,7 @@ export async function importShard(
         warnings,
         errors: [`Canonical core-v1 validation failed: ${validation.errors.join('; ')}`],
         duration_ms: performance.now() - start,
+        capability_report: capabilityReport,
       }
     }
   }
@@ -245,6 +283,7 @@ export async function importShard(
         `but this version supports up to ${CURRENT_SHARD_VERSION}`,
       ],
       duration_ms: performance.now() - start,
+      capability_report: capabilityReport,
     }
   }
 
@@ -261,6 +300,7 @@ export async function importShard(
       warnings,
       errors: [sigError],
       duration_ms: performance.now() - start,
+      capability_report: capabilityReport,
     }
   }
 
@@ -271,6 +311,7 @@ export async function importShard(
       success: false, counts, skipped, warnings,
       errors: ['Invalid manifest.json: checksums must be an object'],
       duration_ms: performance.now() - start,
+      capability_report: capabilityReport,
     }
   }
   const checksumResult = await validateChecksums(manifest.checksums, files)
@@ -282,6 +323,7 @@ export async function importShard(
       warnings,
       errors: [`Checksum validation failed for: ${checksumResult.failures.join(', ')}`],
       duration_ms: performance.now() - start,
+      capability_report: capabilityReport,
     }
   }
   report?.({ phase: 'validate', done: 1, total: 1 })
@@ -344,6 +386,7 @@ export async function importShard(
       success: false, counts, skipped, warnings,
       errors: [`Failed to parse shard component: ${err instanceof Error ? err.message : String(err)}`],
       duration_ms: performance.now() - start,
+      capability_report: capabilityReport,
     }
   }
 
@@ -1096,6 +1139,7 @@ export async function importShard(
       warnings,
       errors: [`Transaction failed (rolled back): ${err instanceof Error ? err.message : String(err)}`],
       duration_ms: performance.now() - start,
+      capability_report: capabilityReport,
     }
   }
 
@@ -1126,6 +1170,7 @@ export async function importShard(
     warnings,
     errors,
     duration_ms: performance.now() - start,
+    capability_report: capabilityReport,
   }
 }
 

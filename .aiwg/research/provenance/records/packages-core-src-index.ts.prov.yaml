@@ -1,22 +1,22 @@
 metadata:
   schema_version: "1.0.0"
-  created_at: "2026-07-17T22:32:08Z"
-  description: "Provenance for canonical Knowledge Shard public exports"
+  created_at: "2026-07-17T23:10:58Z"
+  description: "Provenance for named-profile public API exports"
 entity:
   id: "urn:aiwg:artifact:packages/core/src/index.ts"
   type: code
-  created_at: "2026-07-17T22:32:08Z"
-  checksum: "sha256:875159513c7ab5e34f2ef483bc215de931ead52de48299540e63b0afb2b0f63b"
-  size_bytes: 17357
+  created_at: "2026-07-17T23:10:58Z"
+  checksum: "sha256:57ad7ce2e84c02d6d228303389b5d8a09a49745d860fe054651344dda842dbfc"
+  size_bytes: 17670
   attributes:
-    change_scope: "canonical-knowledge-shard-enforcement"
-    base_revision: "bd53e81a690a41e830fa9f39d04748d4c01b7feb"
+    change_scope: "named-portability-profiles"
+    base_revision: "2f30626922a7dfad4dec1f4673ec76349335bba9"
 activity:
-  id: "urn:aiwg:activity:modification:packages-core-src-index-ts:001"
+  id: "urn:aiwg:activity:modification:packages-core-src-index-ts:002"
   type: modification
-  started_at: "2026-07-17T22:32:08Z"
-  ended_at: "2026-07-17T22:32:08Z"
-  description: "Expose canonical shard contract receipt and archive validation"
+  started_at: "2026-07-17T23:10:58Z"
+  ended_at: "2026-07-17T23:10:58Z"
+  description: "Expose profile registry, report types, and profile-aware exporter"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
   type: ai_assistant
@@ -26,23 +26,19 @@ agent:
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:packages/core/src/index.ts"
-    activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:001"
-    time: "2026-07-17T22:32:08Z"
+    activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:002"
+    time: "2026-07-17T23:10:58Z"
   used:
-    - activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:001"
-      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:bd53e81a690a41e830fa9f39d04748d4c01b7feb:packages/core/src/index.ts"
+    - activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:002"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:2f30626922a7dfad4dec1f4673ec76349335bba9:packages/core/src/index.ts"
       role: "previous_revision"
   wasDerivedFrom:
     - entity: "urn:aiwg:artifact:packages/core/src/index.ts"
-      source: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
-      derivation_type: "implements"
-      activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:001"
-    - entity: "urn:aiwg:artifact:packages/core/src/index.ts"
-      source: "urn:aiwg:artifact:packages/core/src/shard/schema-validator.ts"
-      derivation_type: "derives_from"
-      activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:001"
+      source: "urn:aiwg:artifact:packages/core/src/shard/profile-registry.ts"
+      derivation_type: "depends"
+      activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:002"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:001"
+    activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:002"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:

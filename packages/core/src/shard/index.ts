@@ -19,6 +19,14 @@ export {
 export type {
   ShardManifest,
   ShardComponent,
+  KnowledgeShardProfile,
+  ShardBackend,
+  ShardOperation,
+  ShardAuthorityStatus,
+  ShardProfileRegistryEntry,
+  ShardLossEntry,
+  ShardCapabilityReport,
+  ShardExportResult,
   ShardAttachmentReference,
   ShardBinarySource,
   ExportOptions,
@@ -49,6 +57,13 @@ export type {
   ShardCommunity,
   ShardCommunityAssignment,
 } from './types.js'
+
+export {
+  CORE_V1_COMPONENTS,
+  createShardCapabilityReport,
+  getKnowledgeShardProfileRegistry,
+  profileSupportError,
+} from './profile-registry.js'
 
 // Tar + gzip
 export { packTarGz, unpackTarGz } from './shard-tar.js'
@@ -103,7 +118,7 @@ export {
 export type { BrowserNoteExport } from './field-mapper.js'
 
 // Export pipeline
-export { exportShard } from './shard-export.js'
+export { exportShard, exportShardWithReport } from './shard-export.js'
 
 // Import pipeline
 export { importShard } from './shard-import.js'

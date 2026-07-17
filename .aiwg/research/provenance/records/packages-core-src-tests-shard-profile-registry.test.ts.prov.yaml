@@ -1,0 +1,49 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-17T23:10:58Z"
+  description: "Provenance for named-profile producer and importer tests"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/__tests__/shard/profile-registry.test.ts"
+  type: test
+  created_at: "2026-07-17T23:10:58Z"
+  checksum: "sha256:deca05597dcc9f609e9d5166f2bf16ee147d18dc7f42b50a0594a84fa917b1c1"
+  size_bytes: 10012
+  attributes:
+    change_scope: "named-portability-profiles"
+    base_revision: "2f30626922a7dfad4dec1f4673ec76349335bba9"
+activity:
+  id: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:001"
+  type: generation
+  started_at: "2026-07-17T23:10:58Z"
+  ended_at: "2026-07-17T23:10:58Z"
+  description: "Verify profile advertisements, canonical output, round trip, and fail-closed behavior"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: ai_assistant
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/profile-registry.test.ts"
+    activity: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:001"
+    time: "2026-07-17T23:10:58Z"
+  used:
+    - activity: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:001"
+      entity: "urn:aiwg:artifact:packages/core/src/shard/profile-registry.ts"
+      role: "system_under_test"
+    - activity: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:001"
+      entity: "urn:aiwg:artifact:packages/core/src/shard/shard-export.ts"
+      role: "system_under_test"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/profile-registry.test.ts"
+      source: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+      derivation_type: "tests"
+      activity: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:001"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:001"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/profile-registry.test.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

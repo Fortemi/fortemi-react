@@ -1,6 +1,13 @@
-// Canonical record layer (#323, ADR-013 D3): writable structured records
-// without PGlite. RecordStore contract + durable/memory implementations +
-// canonical repositories.
+/**
+ * Canonical record layer (#323, ADR-013 D3): writable structured records
+ * without PGlite. RecordStore contract + durable/memory implementations +
+ * canonical repositories.
+ *
+ * @implements @.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md
+ * @source @packages/core/src/records/record-shard.ts
+ * @created 2026-07-17
+ * @agent Codex
+ */
 
 export type {
   AttachmentBlobRecord,
@@ -48,4 +55,8 @@ export type { NoteProjectionResult, RecordProjectionResult } from './record-proj
 export { createRecordBackend } from './record-backend.js'
 export type { RecordBackendOptions, RecordBackendManageNoteResult } from './record-backend.js'
 
-export { exportShardFromRecords, importShardToRecords } from './record-shard.js'
+export {
+  exportShardFromRecords,
+  exportShardFromRecordsWithReport,
+  importShardToRecords,
+} from './record-shard.js'

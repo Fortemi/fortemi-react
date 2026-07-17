@@ -3,6 +3,11 @@
  *
  * The browser uses different field names than the server shard format.
  * This module handles all rename transforms bidirectionally.
+ *
+ * @implements @.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md
+ * @schema @packages/core/schemas/knowledge-shard.schema.receipt.json
+ * @created 2026-07-17
+ * @agent Codex
  */
 
 import type {
@@ -83,7 +88,7 @@ export function noteFromShard(shard: ShardNote): BrowserNoteExport {
     tags: shard.tags,
     created_at: shard.created_at,
     updated_at: shard.updated_at,
-    deleted_at: shard.deleted_at,
+    deleted_at: shard.deleted_at ?? null,
   }
 }
 

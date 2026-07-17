@@ -130,6 +130,13 @@ Compatibility claims MUST name one of these profiles and the evidence version:
 | `core-v1` | Consumers preserve the explicitly declared core components and fail on undeclared required components; no silent component loss | Reduced interoperability for producers such as the AIWG converter |
 | `record-v1` | RecordStore preserves its declared canonical-record subset and returns an explicit loss/unsupported-component report for anything outside it | DB-free record-tier backup and interchange; never described as full parity |
 
+The pinned Fortemi receipt is normative for current availability, not this
+conceptual profile table. At receipt commit
+`6f13e7ad86243f39666f8bbb0bb680b3cebab9e9`, only `core-v1` is supported;
+`full-v1` and `record-v1` are reserved. PGlite advertises `core-v1` only.
+RecordStore advertises no named profile until an authority-owned profile and
+producer/consumer fixture evidence exist.
+
 An importer must unpack into staging, validate the manifest, semantic version,
 checksums, profile, component records, counts, and required sidecars, and only
 then begin an atomic write transaction. Unsupported required components or

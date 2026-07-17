@@ -83,7 +83,11 @@ insufficient release evidence.
 - @packages/core/src/shard/shard-import.ts runs canonical validation before PGlite mutation.
 - @packages/core/src/records/record-shard.ts runs the same gate before RecordStore mutation.
 - @packages/core/src/__tests__/shard/shard-import.test.ts and @packages/core/src/__tests__/records/record-shard.test.ts verify validation failures leave both destinations unchanged.
-- Profile selection and canonical producer output remain tracked by issue #355; convergence semantics remain tracked by issue #356.
+- @packages/core/src/shard/profile-registry.ts derives authority status and backend advertisements from the pinned receipt.
+- @packages/core/src/shard/shard-export.ts emits and self-validates explicit PGlite `core-v1` archives with machine-readable capability/loss reports.
+- @packages/core/src/__tests__/shard/profile-registry.test.ts verifies supported/reserved status, strict producer output, PGlite import, and RecordStore fail-closed behavior.
+- On 2026-07-17, a React-produced archive (`sha256:5444ca75a9a4d76dfff118e1a5afc05f0e33cbc66b6900d63513311608d6849c`) passed both dry-run and mutating multipart import through Fortemi commit `6f13e7ad86243f39666f8bbb0bb680b3cebab9e9`; Fortemi then re-exported the clean database (`sha256:ce42b96733fdbac18ca98a1d70afc97c6fdab92b04e87f77d56486fb2ce9df47`), and a clean PGlite import restored the note and tags. This is evidence for `core-v1` only.
+- Remaining profile convergence semantics remain tracked by issue #356; the reserved profiles are not covered by the round-trip evidence.
 
 ## Consequences
 

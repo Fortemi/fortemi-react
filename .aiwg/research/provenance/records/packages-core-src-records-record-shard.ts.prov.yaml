@@ -1,22 +1,22 @@
 metadata:
   schema_version: "1.0.0"
-  created_at: "2026-07-17T22:32:08Z"
-  description: "Provenance for canonical RecordStore pre-write validation"
+  created_at: "2026-07-17T23:10:58Z"
+  description: "Provenance for RecordStore profile capability enforcement"
 entity:
   id: "urn:aiwg:artifact:packages/core/src/records/record-shard.ts"
   type: code
-  created_at: "2026-07-17T22:32:08Z"
-  checksum: "sha256:0c4e7cce82c3821b039c89a3b966894a9f4fee770420eb4ee7df680eeea0a5df"
-  size_bytes: 26234
+  created_at: "2026-07-17T23:10:58Z"
+  checksum: "sha256:5069c3d54ccfd8020b6936bb09a8f990cccf22e6d3497aee893e6931087618e0"
+  size_bytes: 28626
   attributes:
-    change_scope: "canonical-knowledge-shard-enforcement"
-    base_revision: "bd53e81a690a41e830fa9f39d04748d4c01b7feb"
+    change_scope: "named-portability-profiles"
+    base_revision: "2f30626922a7dfad4dec1f4673ec76349335bba9"
 activity:
-  id: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:001"
+  id: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:002"
   type: modification
-  started_at: "2026-07-17T22:32:08Z"
-  ended_at: "2026-07-17T22:32:08Z"
-  description: "Reject invalid core-v1 archives before RecordStore mutation"
+  started_at: "2026-07-17T23:10:58Z"
+  ended_at: "2026-07-17T23:10:58Z"
+  description: "Reject named profiles unsupported by RecordStore before mutation"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
   type: ai_assistant
@@ -26,23 +26,19 @@ agent:
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:packages/core/src/records/record-shard.ts"
-    activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:001"
-    time: "2026-07-17T22:32:08Z"
+    activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:002"
+    time: "2026-07-17T23:10:58Z"
   used:
-    - activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:001"
-      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:bd53e81a690a41e830fa9f39d04748d4c01b7feb:packages/core/src/records/record-shard.ts"
+    - activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:002"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:2f30626922a7dfad4dec1f4673ec76349335bba9:packages/core/src/records/record-shard.ts"
       role: "previous_revision"
   wasDerivedFrom:
     - entity: "urn:aiwg:artifact:packages/core/src/records/record-shard.ts"
-      source: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
-      derivation_type: "implements"
-      activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:001"
-    - entity: "urn:aiwg:artifact:packages/core/src/records/record-shard.ts"
-      source: "urn:aiwg:artifact:packages/core/src/shard/schema-validator.ts"
+      source: "urn:aiwg:artifact:packages/core/src/shard/profile-registry.ts"
       derivation_type: "depends"
-      activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:001"
+      activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:002"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:001"
+    activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:002"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:
