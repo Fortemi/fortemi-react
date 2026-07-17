@@ -1,0 +1,50 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-17T22:32:08Z"
+  description: "Provenance for canonical Knowledge Shard manifest types"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/shard/types.ts"
+  type: code
+  created_at: "2026-07-17T22:32:08Z"
+  checksum: "sha256:6f361e90d937ae073c468a7bda9aa7b625d3f8a1ac182dc2e4ab680438fe7a3d"
+  size_bytes: 15639
+  attributes:
+    change_scope: "canonical-knowledge-shard-enforcement"
+    base_revision: "bd53e81a690a41e830fa9f39d04748d4c01b7feb"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:001"
+  type: modification
+  started_at: "2026-07-17T22:32:08Z"
+  ended_at: "2026-07-17T22:32:08Z"
+  description: "Represent named shard profiles and structured producer identity"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: ai_assistant
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/shard/types.ts"
+    activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:001"
+    time: "2026-07-17T22:32:08Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:001"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:bd53e81a690a41e830fa9f39d04748d4c01b7feb:packages/core/src/shard/types.ts"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/shard/types.ts"
+      source: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:001"
+    - entity: "urn:aiwg:artifact:packages/core/src/shard/types.ts"
+      source: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard.schema.receipt.json"
+      derivation_type: "conforms_to"
+      activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:001"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:001"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/shard/types.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

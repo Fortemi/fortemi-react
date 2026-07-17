@@ -4,6 +4,11 @@
  * A shard is a gzip-compressed tar archive containing serialized knowledge
  * data governed by a named portability profile. Server compatibility is
  * limited to profiles proven by cross-repository conformance tests.
+ *
+ * @implements @.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md
+ * @source @packages/core/src/shard/schema-validator.ts
+ * @created 2026-07-17
+ * @agent Codex
  */
 
 // Types
@@ -105,7 +110,9 @@ export { importShard } from './shard-import.js'
 
 // Schema validation
 export {
+  getKnowledgeShardContractReceipt,
   getKnowledgeShardSchema,
+  validateCoreV1ShardArchive,
   validateShardArchive,
   validateShardManifest,
   validateShardComponentRecord,

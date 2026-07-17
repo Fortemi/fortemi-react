@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "https://git.integrolabs.net/Fortemi/fortemi",
+    "commit": "6f13e7ad86243f39666f8bbb0bb680b3cebab9e9",
+    "contractPath": "contracts/knowledge-shard/contract.json",
+    "contractSha256": "c6a64ce71bb5368b4fafbe4ec405e95760c3acb0f75d87a7203a9dd5c9642de7"
+  },
+  "knowledgeShard": {
+    "schemaVersion": "1.0.0",
+    "profile": "core-v1",
+    "minimumReaderVersion": "1.0.0"
+  },
+  "schemaBundle": {
+    "sourceRoot": "contracts/knowledge-shard/1.0.0/core-v1",
+    "vendoredRoot": "schemas/knowledge-shard/1.0.0/core-v1",
+    "aggregateAlgorithm": "sha256(raw file bytes concatenated in lexicographic path order)",
+    "sha256": "2520ba0b3a8a020f5c540e88fd31233c7ddbe0d343d1e6a884ed689c8e1d3710",
+    "files": {
+      "collection.schema.json": "af4bd6b0acaf79d7f750c24ee3eb049efaff154f31bd2c17dd10b2b5aa949af4",
+      "link.schema.json": "dc9d610944c515d96012f4c4151ac7d2e001d72b2eb134c26a8fcf02a81cfd64",
+      "manifest.schema.json": "65a6cf021d2fb3f167aab54253f54e1ea9f649f37bbc5944449a9cc456e4ee47",
+      "note.schema.json": "e89728c7d722956b32ebc35cda70190398758bb00d6d7832bdc3da3d36d3db3f",
+      "tag.schema.json": "18e59bc020ca2f4304dd6bd9dc5d2e8fd082b677d745f4f1b742ff0ccf9af01d",
+      "template.schema.json": "5504829dcf4053d573b359b355885757ab053553b9be39a0930b02fb235dde59"
+    }
+  },
+  "goldenCorpus": {
+    "sourceRoot": "tests/fixtures/shards/core-v1-valid",
+    "vendoredRoot": "src/__tests__/shard/fixtures/canonical-core-v1",
+    "aggregateAlgorithm": "sha256(raw file bytes concatenated in lexicographic path order)",
+    "sha256": "7e8c529b7f5ac404d27302499c74470e137b03d27fce54111acf8989b1147ae1",
+    "files": {
+      "collections.json": "463e593c963de97a4f676374da0dafd38d38433cbdecddf3b58632263dac5e43",
+      "links.jsonl": "1962da6f5ac3f43e54b7711ee91dc8867109bec9a0f89f95893bed2016b63125",
+      "manifest.json": "fc9398a55f7afe66ad0e2fc94f6484c5312cc13b0b5e959071822a69b3f56214",
+      "notes.jsonl": "6c21ab9bc21615619a303bcf3521709beeb83573b74d38c3df43cc737035b346",
+      "tags.json": "36b794bb9dda00a6ac09653c0a68dab306b20cdc716eaf8fc25d85ccf7e28e42",
+      "templates.json": "7d364d22cdfca298817620b81bffdbd716977535922e887c6b0bbc5bb1c11291"
+    }
+  },
+  "limitations": [
+    "This receipt proves exact vendored bytes and local core-v1 validation only.",
+    "Profile selection and server-compatible producer output remain tracked by fortemi-react issue 355.",
+    "Historical migrations, atomic semantic convergence, and attachment-byte portability are not established."
+  ]
+}

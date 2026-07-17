@@ -3,6 +3,11 @@
  *
  * A shard is a gzip-compressed tar archive (.shard) containing serialized
  * knowledge data with a manifest for integrity verification.
+ *
+ * @implements @.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md
+ * @schema @packages/core/schemas/knowledge-shard.schema.receipt.json
+ * @created 2026-07-17
+ * @agent Codex
  */
 
 import type { BlobStore } from '../blob-store.js'
@@ -96,9 +101,20 @@ export interface ShardMigrationHistoryEntry {
 }
 
 /** Manifest included in every shard as manifest.json. */
+export interface ShardProducer {
+  name: string
+  version: string
+  revision?: string
+}
+
 export interface ShardManifest {
   version: string
-  matric_version: string
+  /** Named server-owned portability profile. Required for canonical interchange. */
+  profile?: string
+  /** Structured producer identity used by canonical profiles. */
+  producer?: ShardProducer
+  /** @deprecated Legacy producer release field. */
+  matric_version?: string
   format: typeof SHARD_FORMAT
   created_at: string // ISO 8601
   components: ShardComponent[]

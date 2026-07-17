@@ -1,22 +1,22 @@
 metadata:
   schema_version: "1.0.0"
-  created_at: "2026-07-17T19:16:22Z"
-  description: "Provenance for integration-contract documentation update"
+  created_at: "2026-07-17T22:32:08Z"
+  description: "Provenance for canonical Knowledge Shard implementation references"
 entity:
   id: "urn:aiwg:artifact:.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md"
   type: document
-  created_at: "2026-07-17T19:16:22Z"
-  checksum: "sha256:c73f9bab1da6123c74dbf8501386e591243e942e9fababf1c9e6d705d9ce657d"
-  size_bytes: 6888
+  created_at: "2026-07-17T22:32:08Z"
+  checksum: "sha256:8b18214154b364a68befe11d1c0db828f6e78935ad148f0a583582af85ef45f7"
+  size_bytes: 7535
   attributes:
-    change_scope: "suite-integration-contract"
-    base_revision: "274d84220804ca75658e128da3cf33830fc6a508"
+    change_scope: "canonical-knowledge-shard-enforcement"
+    base_revision: "bd53e81a690a41e830fa9f39d04748d4c01b7feb"
 activity:
-  id: "urn:aiwg:activity:modification:aiwg-adrs-ADR-010-portable-schema-topology-and-source-of-truth-md:001"
+  id: "urn:aiwg:activity:modification:aiwg-adrs-ADR-010-portable-schema-topology-and-source-of-truth-md:002"
   type: modification
-  started_at: "2026-07-17T19:16:22Z"
-  ended_at: "2026-07-17T19:16:22Z"
-  description: "Align integration architecture, requirements, tests, and current-state claims"
+  started_at: "2026-07-17T22:32:08Z"
+  ended_at: "2026-07-17T22:32:08Z"
+  description: "Link the accepted source-of-truth decision to its canonical validator, tests, and pinned receipt"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
   type: ai_assistant
@@ -31,19 +31,35 @@ agent:
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md"
-    activity: "urn:aiwg:activity:modification:aiwg-adrs-ADR-010-portable-schema-topology-and-source-of-truth-md:001"
-    time: "2026-07-17T19:16:22Z"
+    activity: "urn:aiwg:activity:modification:aiwg-adrs-ADR-010-portable-schema-topology-and-source-of-truth-md:002"
+    time: "2026-07-17T22:32:08Z"
   used:
-    - activity: "urn:aiwg:activity:modification:aiwg-adrs-ADR-010-portable-schema-topology-and-source-of-truth-md:001"
-      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:274d84220804ca75658e128da3cf33830fc6a508:.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md"
+    - activity: "urn:aiwg:activity:modification:aiwg-adrs-ADR-010-portable-schema-topology-and-source-of-truth-md:002"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:bd53e81a690a41e830fa9f39d04748d4c01b7feb:.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md"
       role: "previous_revision"
   wasDerivedFrom:
     - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md"
-      source: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:274d84220804ca75658e128da3cf33830fc6a508:.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md"
+      source: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:bd53e81a690a41e830fa9f39d04748d4c01b7feb:.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md"
       derivation_type: "modifies"
-      activity: "urn:aiwg:activity:modification:aiwg-adrs-ADR-010-portable-schema-topology-and-source-of-truth-md:001"
+      activity: "urn:aiwg:activity:modification:aiwg-adrs-ADR-010-portable-schema-topology-and-source-of-truth-md:002"
+    - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md"
+      source: "urn:aiwg:artifact:packages/core/src/shard/schema-validator.ts"
+      derivation_type: "documents"
+      activity: "urn:aiwg:activity:modification:aiwg-adrs-ADR-010-portable-schema-topology-and-source-of-truth-md:002"
+    - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md"
+      source: "urn:aiwg:artifact:packages/core/src/__tests__/shard/schema-validator.test.ts"
+      derivation_type: "documents"
+      activity: "urn:aiwg:activity:modification:aiwg-adrs-ADR-010-portable-schema-topology-and-source-of-truth-md:002"
+    - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md"
+      source: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard.schema.receipt.json"
+      derivation_type: "documents"
+      activity: "urn:aiwg:activity:modification:aiwg-adrs-ADR-010-portable-schema-topology-and-source-of-truth-md:002"
+    - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md"
+      source: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+      derivation_type: "derives_from"
+      activity: "urn:aiwg:activity:modification:aiwg-adrs-ADR-010-portable-schema-topology-and-source-of-truth-md:002"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:aiwg-adrs-ADR-010-portable-schema-topology-and-source-of-truth-md:001"
+    activity: "urn:aiwg:activity:modification:aiwg-adrs-ADR-010-portable-schema-topology-and-source-of-truth-md:002"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:

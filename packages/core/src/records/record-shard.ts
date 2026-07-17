@@ -16,6 +16,11 @@
  * nothing. Each record commit is then individually atomic and journaled; an
  * interrupted import leaves a recoverable prefix that a re-import with
  * `conflictStrategy: 'skip'` completes idempotently.
+ *
+ * @implements @.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md
+ * @depends @packages/core/src/shard/schema-validator.ts
+ * @created 2026-07-17
+ * @agent Codex
  */
 
 import type { RecordStore, AttachmentRecord, AttachmentBlobRecord } from './types.js'
@@ -52,6 +57,7 @@ import type {
   ShardAttachmentProjection,
 } from '../shard/types.js'
 import { parseJsonArrayBytes, parseJsonlBytes } from '../shard/parse.js'
+import { validateCoreV1ShardArchive } from '../shard/schema-validator.js'
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
@@ -370,6 +376,19 @@ export async function importShardToRecords(
     }
   } catch {
     return failure(counts, skipped, warnings, 'Invalid manifest.json: failed to parse JSON', start)
+  }
+
+  if (manifest.profile === 'core-v1') {
+    const validation = await validateCoreV1ShardArchive(files)
+    if (!validation.valid) {
+      return failure(
+        counts,
+        skipped,
+        warnings,
+        `Canonical core-v1 validation failed: ${validation.errors.join('; ')}`,
+        start,
+      )
+    }
   }
 
   if (manifest.min_reader_version && compareShardVersions(manifest.min_reader_version, CURRENT_SHARD_VERSION) > 0) {

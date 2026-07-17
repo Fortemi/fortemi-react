@@ -3,6 +3,11 @@
  *
  * Tests the full import flow: unpack → validate → field-map → transactional insert.
  * Uses exportShard to create test archives, then imports them into fresh databases.
+ *
+ * @source @packages/core/src/shard/shard-import.ts
+ * @requirement @.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md
+ * @created 2026-07-17
+ * @agent Codex
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
@@ -35,6 +40,20 @@ const goldenFixturePath = resolve(
   testDir,
   'fixtures/golden/server-2026.7.1-fortemi-docs.shard',
 )
+const canonicalFixtureRoot = resolve(testDir, 'fixtures/canonical-core-v1')
+
+function canonicalCoreV1Files(): Map<string, Uint8Array> {
+  return new Map(
+    [
+      'manifest.json',
+      'notes.jsonl',
+      'collections.json',
+      'tags.json',
+      'templates.json',
+      'links.jsonl',
+    ].map((name) => [name, readFileSync(resolve(canonicalFixtureRoot, name))]),
+  )
+}
 
 async function createTestDb(): Promise<PGlite> {
   const db = await PGlite.create({ extensions: { vector } })
@@ -82,6 +101,26 @@ describe('importShard', { timeout: 30_000 }, () => {
     expect(result.counts.collections).toBe(1)
     expect(result.counts.links).toBe(1)
     expect(result.errors).toEqual([])
+  })
+
+  it('rejects malformed core-v1 records before any PGlite mutation', async () => {
+    const files = canonicalCoreV1Files()
+    const note = JSON.parse(decoder.decode(files.get('notes.jsonl'))) as Record<string, unknown>
+    note.id = 'not-a-uuid'
+    const noteData = encoder.encode(JSON.stringify(note))
+    files.set('notes.jsonl', noteData)
+    const manifest = JSON.parse(decoder.decode(files.get('manifest.json'))) as ShardManifest
+    manifest.checksums['notes.jsonl'] = await sha256Hex(noteData)
+    files.set('manifest.json', encoder.encode(JSON.stringify(manifest)))
+
+    const before = await db.query<{ count: number }>('SELECT COUNT(*)::int AS count FROM note')
+    const result = await importShard(db, packTarGz(files))
+    const after = await db.query<{ count: number }>('SELECT COUNT(*)::int AS count FROM note')
+
+    expect(result.success).toBe(false)
+    expect(result.errors.join('\n')).toContain('Canonical core-v1 validation failed')
+    expect(result.errors.join('\n')).toContain('must match format "uuid"')
+    expect(after.rows[0].count).toBe(before.rows[0].count)
   })
 
   it('reports import progress phases without changing existing result shape', async () => {

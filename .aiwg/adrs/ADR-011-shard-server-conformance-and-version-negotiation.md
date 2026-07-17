@@ -77,6 +77,14 @@ until all applicable cells in this matrix pass against pinned revisions:
 Local source tests, self-round trips, and schema validation alone are
 insufficient release evidence.
 
+## Implementation
+
+- @packages/core/src/shard/schema-validator.ts enforces the pinned `core-v1` manifest and record schemas, archive topology, counts, references, and checksums.
+- @packages/core/src/shard/shard-import.ts runs canonical validation before PGlite mutation.
+- @packages/core/src/records/record-shard.ts runs the same gate before RecordStore mutation.
+- @packages/core/src/__tests__/shard/shard-import.test.ts and @packages/core/src/__tests__/records/record-shard.test.ts verify validation failures leave both destinations unchanged.
+- Profile selection and canonical producer output remain tracked by issue #355; convergence semantics remain tracked by issue #356.
+
 ## Consequences
 
 **Positive:** the parity non-negotiable becomes real and CI-enforced; server↔react shard exchange actually round-trips; version skew fails safe; the attachment contract stops diverging.
@@ -93,3 +101,8 @@ than relying on implicit ignore behavior.
 
 - **Drop the parity claim, treat the shard as react-only backup** — viable and honest, but forecloses the stated interchange use case ("import/export pipelines using Knowledge Shards instead of app-specific backup formats"). If chosen, the SAD non-negotiable and marketing must be corrected instead. This ADR assumes interchange is intended.
 - **Generate the react shard mapper from the server Rust** — the server hand-rolls the shard separately from its models, so codegen-from-models would not match; committed schema + golden fixtures is the pragmatic authority.
+
+## References
+
+- @.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md - Contract ownership and pinned-receipt decision.
+- @packages/core/schemas/knowledge-shard.schema.receipt.json - Pinned Fortemi authority receipt.

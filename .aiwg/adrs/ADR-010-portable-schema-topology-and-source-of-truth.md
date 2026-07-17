@@ -58,8 +58,19 @@ import gate. The MCP adapter is not part of that proof.
 
 **Follow-on:** with a source of truth established, `aiwg-index.ts` (2168 LOC) can be decomposed along its natural seams (types/validation/chunked/discovery/semantic/controller/graph), extracting the schema-bound validation into the generated layer (audit D8).
 
+## Implementation
+
+- @packages/core/src/shard/schema-validator.ts consumes the pinned Fortemi schema receipt and validates `core-v1` archives.
+- @packages/core/src/__tests__/shard/schema-validator.test.ts verifies the receipt, authoritative corpus, strict formats, file/count coherence, references, and checksums.
+- @packages/core/schemas/knowledge-shard.schema.receipt.json records the immutable upstream revision and digests.
+
 ## Alternatives considered
 
 - **Keep three hand-maintained copies** (status quo) — rejected; drift already occurred and is undetected.
 - **Make fortemi-react the schema authority** — rejected; AIWG owns generation and already publishes a JSON Schema with a canonical `$id`; inverting ownership would fork the ecosystem.
 - **Codegen the shard format from the server's Rust models** — attractive but the server itself hand-rolls the shard separately from its models, so model-codegen would not match the shard; a committed schema + golden fixtures is the pragmatic authority (ADR-011).
+
+## References
+
+- @.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md - Profile and enforcement requirements.
+- @packages/core/schemas/knowledge-shard.schema.receipt.json - Pinned consumer receipt.

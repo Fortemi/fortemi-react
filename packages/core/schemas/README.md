@@ -15,14 +15,21 @@ pnpm --filter @fortemi/core exec vitest run src/__tests__/aiwg-index-schema.test
 Do not fetch or execute upstream content during builds. Schema updates are
 reviewed source changes committed through the normal pull-request workflow.
 
-## `knowledge-shard.schema.json` (transitional validation copy)
+## Knowledge Shard `1.0.0` / `core-v1` (vendored)
 
-This local schema is consumed by `src/shard/schema-validator.ts` and the shard
-conformance tests under `src/__tests__/shard/`. It is not the cross-repository
-authority. The Fortemi server owns that contract.
+The exact Fortemi-owned schemas live under
+`knowledge-shard/1.0.0/core-v1/`. The upstream contract and consumer receipt
+record the immutable Fortemi commit, source paths, individual file digests,
+schema-bundle digest, and golden-corpus digest.
 
-Before server-compatibility claims can ship, replace this transitional copy
-with a receipt that records the exact Fortemi repository, source path,
-revision, and SHA-256, then validate it against server-produced golden
-fixtures. React extension components are portable only when a named
-server-owned profile declares them.
+Run the blocking drift check with:
+
+```bash
+pnpm --filter @fortemi/core verify:knowledge-shard-contract
+```
+
+The older `knowledge-shard.schema.json` remains only as a transitional validator
+for React extension records that do not yet have a server-owned profile. It is
+not used as authority for `core-v1`. Profile selection and portable treatment
+of extensions remain tracked separately; no extension is implicitly part of
+the canonical profile.

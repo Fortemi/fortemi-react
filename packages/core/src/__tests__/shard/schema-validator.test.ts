@@ -1,3 +1,10 @@
+/**
+ * @source @packages/core/src/shard/schema-validator.ts
+ * @requirement @.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md
+ * @requirement @.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md
+ * @created 2026-07-17
+ * @agent Codex
+ */
 import { describe, expect, it } from 'vitest'
 import { PGlite } from '@electric-sql/pglite'
 import { vector } from '@electric-sql/pglite/vector'
@@ -12,7 +19,9 @@ import { LinksRepository } from '../../repositories/links-repository.js'
 import { exportShard } from '../../shard/shard-export.js'
 import {
   assertShardComponentRecord,
+  getKnowledgeShardContractReceipt,
   getKnowledgeShardSchema,
+  validateCoreV1ShardArchive,
   validateShardArchive,
   validateShardComponentRecord,
   validateShardManifest,
@@ -25,6 +34,27 @@ const goldenFixturePath = resolve(
   'fixtures/golden/server-2026.7.1-fortemi-docs.shard',
 )
 const goldenReceiptPath = `${goldenFixturePath}.receipt.json`
+const canonicalFixtureRoot = resolve(testDir, 'fixtures/canonical-core-v1')
+const canonicalFixtureNames = [
+  'manifest.json',
+  'notes.jsonl',
+  'collections.json',
+  'tags.json',
+  'templates.json',
+  'links.jsonl',
+] as const
+
+function canonicalCoreV1Files(): Map<string, Uint8Array> {
+  return new Map(
+    canonicalFixtureNames.map((name) => [name, readFileSync(resolve(canonicalFixtureRoot, name))]),
+  )
+}
+
+function canonicalNote(): Record<string, unknown> {
+  return JSON.parse(
+    readFileSync(resolve(canonicalFixtureRoot, 'notes.jsonl'), 'utf8'),
+  ) as Record<string, unknown>
+}
 
 async function createTestDb(): Promise<PGlite> {
   const db = await PGlite.create({ extensions: { vector } })
@@ -35,6 +65,102 @@ async function createTestDb(): Promise<PGlite> {
 }
 
 describe('knowledge shard AJV schema validator (#255)', () => {
+  it('pins the exact corrected Fortemi core-v1 authority receipt', () => {
+    const receipt = getKnowledgeShardContractReceipt() as {
+      source: { repository: string; commit: string; contractPath: string; contractSha256: string }
+      schemaBundle: { sha256: string }
+      goldenCorpus: { sha256: string }
+    }
+
+    expect(receipt.source).toEqual({
+      repository: 'https://git.integrolabs.net/Fortemi/fortemi',
+      commit: '6f13e7ad86243f39666f8bbb0bb680b3cebab9e9',
+      contractPath: 'contracts/knowledge-shard/contract.json',
+      contractSha256: 'c6a64ce71bb5368b4fafbe4ec405e95760c3acb0f75d87a7203a9dd5c9642de7',
+    })
+    expect(receipt.schemaBundle.sha256).toBe(
+      '2520ba0b3a8a020f5c540e88fd31233c7ddbe0d343d1e6a884ed689c8e1d3710',
+    )
+    expect(receipt.goldenCorpus.sha256).toBe(
+      '7e8c529b7f5ac404d27302499c74470e137b03d27fce54111acf8989b1147ae1',
+    )
+  })
+
+  it('validates the exact Fortemi core-v1 golden corpus and checksums', async () => {
+    const files = canonicalCoreV1Files()
+
+    expect(validateShardArchive(files)).toEqual({ valid: true, errors: [] })
+    await expect(validateCoreV1ShardArchive(files)).resolves.toEqual({
+      valid: true,
+      errors: [],
+    })
+  })
+
+  it('enforces canonical UUID, timestamp, attachment digest, and URI formats', () => {
+    const valid = canonicalNote()
+    for (const [path, value] of [
+      ['id', 'not-a-uuid'],
+      ['created_at', 'not-a-timestamp'],
+    ] as const) {
+      const invalid = structuredClone(valid)
+      invalid[path] = value
+      expect(validateShardComponentRecord('notes', invalid, 'core-v1').valid, path).toBe(false)
+    }
+
+    const invalidDigest = structuredClone(valid)
+    const attachments = invalidDigest.attachments as Array<{
+      attachment: { checksum: string }
+    }>
+    attachments[0].attachment.checksum = `sha256:${'0'.repeat(64)}`
+    expect(validateShardComponentRecord('notes', invalidDigest, 'core-v1').valid).toBe(false)
+
+    const invalidLink = {
+      id: '018f2d2d-bc00-7cc8-8ad2-f147d6a2e77e',
+      from_note_id: valid.id,
+      to_note_id: null,
+      to_url: 'not a URI',
+      kind: 'reference',
+      score: 1,
+      created_at: valid.created_at,
+      metadata: null,
+    }
+    expect(validateShardComponentRecord('links', invalidLink, 'core-v1').valid).toBe(false)
+  })
+
+  it('rejects core-v1 count, file, reference, and checksum drift', async () => {
+    const countDrift = canonicalCoreV1Files()
+    const countManifest = JSON.parse(new TextDecoder().decode(countDrift.get('manifest.json'))) as {
+      counts: { notes: number }
+    }
+    countManifest.counts.notes += 1
+    countDrift.set('manifest.json', new TextEncoder().encode(JSON.stringify(countManifest)))
+    expect(validateShardArchive(countDrift).errors.join('\n')).toContain('count mismatch')
+
+    const unknownFile = canonicalCoreV1Files()
+    unknownFile.set('unexpected.json', new TextEncoder().encode('{}'))
+    expect(validateShardArchive(unknownFile).errors.join('\n')).toContain(
+      'archive contains undeclared file unexpected.json',
+    )
+
+    const brokenReference = canonicalCoreV1Files()
+    const note = canonicalNote()
+    note.collection_id = '018f2d2d-bc00-7cc8-8ad2-f147d6a2e700'
+    brokenReference.set('notes.jsonl', new TextEncoder().encode(JSON.stringify(note)))
+    expect(validateShardArchive(brokenReference).errors.join('\n')).toContain(
+      'collection_id does not reference a declared collection',
+    )
+
+    const checksumDrift = canonicalCoreV1Files()
+    const notes = checksumDrift.get('notes.jsonl')!
+    const padded = new Uint8Array(notes.byteLength + 1)
+    padded.set(notes)
+    padded[notes.byteLength] = 0x0a
+    checksumDrift.set('notes.jsonl', padded)
+    expect((await validateCoreV1ShardArchive(checksumDrift)).errors.join('\n')).toContain(
+      'notes.jsonl checksum mismatch',
+    )
+  })
+
   it('compiles the committed schema and validates a manifest', () => {
     expect(getKnowledgeShardSchema()).toBeTruthy()
     const result = validateShardManifest({

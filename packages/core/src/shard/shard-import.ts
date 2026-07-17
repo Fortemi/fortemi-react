@@ -3,6 +3,11 @@
  *
  * Pipeline: ArrayBuffer → gunzip → untar → parse manifest → validate checksums →
  *           parse components → field-map → BEGIN transaction → INSERT all → COMMIT
+ *
+ * @implements @.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md
+ * @depends @packages/core/src/shard/schema-validator.ts
+ * @created 2026-07-17
+ * @agent Codex
  */
 
 import type { DatabaseClient, QueryExecutor } from '../storage-backend.js'
@@ -45,6 +50,7 @@ import type {
   ShardCommunityAssignment,
 } from './types.js'
 import { parseJsonArrayBytes, parseJsonlBytes } from './parse.js'
+import { validateCoreV1ShardArchive } from './schema-validator.js'
 
 const decoder = new TextDecoder()
 const DEFAULT_BATCH_SIZE = 250
@@ -210,6 +216,20 @@ export async function importShard(
       warnings,
       errors: ['Invalid manifest.json: failed to parse JSON'],
       duration_ms: performance.now() - start,
+    }
+  }
+
+  if (manifest.profile === 'core-v1') {
+    const validation = await validateCoreV1ShardArchive(files)
+    if (!validation.valid) {
+      return {
+        success: false,
+        counts,
+        skipped,
+        warnings,
+        errors: [`Canonical core-v1 validation failed: ${validation.errors.join('; ')}`],
+        duration_ms: performance.now() - start,
+      }
     }
   }
 

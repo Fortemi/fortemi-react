@@ -3,9 +3,17 @@
  * canonical RecordStore + Bytecask BlobStore with zero PGlite, including byte
  * sidecars, conflict strategies, the ADR-014 verify-before-persist gate, and
  * cross-tier format parity (a record-exported shard imports into PGlite).
+ *
+ * @source @packages/core/src/records/record-shard.ts
+ * @requirement @.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md
+ * @created 2026-07-17
+ * @agent Codex
  */
 
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { PGlite } from '@electric-sql/pglite'
 import { vector } from '@electric-sql/pglite/vector'
 import { MigrationRunner } from '../../migration-runner.js'
@@ -16,11 +24,27 @@ import { CanonicalAttachmentsRepository } from '../../records/canonical-attachme
 import { exportShardFromRecords, importShardToRecords } from '../../records/record-shard.js'
 import { importShard } from '../../shard/shard-import.js'
 import { exportShard } from '../../shard/shard-export.js'
+import { packTarGz } from '../../shard/shard-tar.js'
 import { AllowlistTrustStore } from '../../shard/shard-signature.js'
 import { MemoryBlobStore } from '../../blob-store.js'
 import type { DatabaseClient } from '../../storage-backend.js'
 
 const bytes = (s: string) => new TextEncoder().encode(s)
+const testDir = fileURLToPath(new URL('../shard/', import.meta.url))
+const canonicalFixtureRoot = resolve(testDir, 'fixtures/canonical-core-v1')
+
+function canonicalCoreV1Files(): Map<string, Uint8Array> {
+  return new Map(
+    [
+      'manifest.json',
+      'notes.jsonl',
+      'collections.json',
+      'tags.json',
+      'templates.json',
+      'links.jsonl',
+    ].map((name) => [name, readFileSync(resolve(canonicalFixtureRoot, name))]),
+  )
+}
 
 async function seededStore() {
   const store = new MemoryRecordStore()
@@ -151,6 +175,23 @@ describe('record-shard (DB-free)', () => {
     expect(result.success).toBe(false)
     expect(result.errors[0]).toMatch(/unsigned/)
     expect(await dst.headSeq()).toBe(0) // verify-before-persist
+  })
+
+  it('rejects core-v1 count drift before any RecordStore mutation', async () => {
+    const files = canonicalCoreV1Files()
+    const manifest = JSON.parse(
+      new TextDecoder().decode(files.get('manifest.json')),
+    ) as { counts: { notes: number } }
+    manifest.counts.notes += 1
+    files.set('manifest.json', bytes(JSON.stringify(manifest)))
+
+    const dst = new MemoryRecordStore()
+    const result = await importShardToRecords(dst, packTarGz(files))
+
+    expect(result.success).toBe(false)
+    expect(result.errors.join('\n')).toContain('Canonical core-v1 validation failed')
+    expect(result.errors.join('\n')).toContain('count mismatch')
+    expect(await dst.headSeq()).toBe(0)
   })
 
   it('reports the capability boundary when a shard carries unsupported components', async () => {

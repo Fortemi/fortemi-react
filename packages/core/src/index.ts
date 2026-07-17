@@ -1,3 +1,9 @@
+/**
+ * @implements @.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md
+ * @source @packages/core/src/shard/schema-validator.ts
+ * @created 2026-07-17
+ * @agent Codex
+ */
 export const VERSION = '2026.7.8'
 
 export { generateId } from './uuid.js'
@@ -387,7 +393,9 @@ export {
   AllowlistTrustStore,
   SIGNATURE_ENTRY,
   SIGNING_ENVELOPE_VERSION,
+  getKnowledgeShardContractReceipt,
   getKnowledgeShardSchema,
+  validateCoreV1ShardArchive,
   validateShardArchive,
   validateShardManifest,
   validateShardComponentRecord,

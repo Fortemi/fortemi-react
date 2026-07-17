@@ -1,0 +1,54 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-17T22:32:08Z"
+  description: "Provenance for canonical Knowledge Shard validator tests"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/__tests__/shard/schema-validator.test.ts"
+  type: test
+  created_at: "2026-07-17T22:32:08Z"
+  checksum: "sha256:0358036637b9189ffd09fa6bc3113d7b49b57f30120a1c035c20fe79d87831ba"
+  size_bytes: 14404
+  attributes:
+    change_scope: "canonical-knowledge-shard-enforcement"
+    base_revision: "bd53e81a690a41e830fa9f39d04748d4c01b7feb"
+activity:
+  id: "urn:aiwg:activity:testing:packages-core-src-tests-shard-schema-validator-test-ts:001"
+  type: testing
+  started_at: "2026-07-17T22:32:08Z"
+  ended_at: "2026-07-17T22:32:08Z"
+  description: "Verify pinned receipt, authoritative corpus, strict formats, references, counts, files, and checksums"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: ai_assistant
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/schema-validator.test.ts"
+    activity: "urn:aiwg:activity:testing:packages-core-src-tests-shard-schema-validator-test-ts:001"
+    time: "2026-07-17T22:32:08Z"
+  used:
+    - activity: "urn:aiwg:activity:testing:packages-core-src-tests-shard-schema-validator-test-ts:001"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:bd53e81a690a41e830fa9f39d04748d4c01b7feb:packages/core/src/__tests__/shard/schema-validator.test.ts"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/schema-validator.test.ts"
+      source: "urn:aiwg:artifact:packages/core/src/shard/schema-validator.ts"
+      derivation_type: "tests"
+      activity: "urn:aiwg:activity:testing:packages-core-src-tests-shard-schema-validator-test-ts:001"
+    - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/schema-validator.test.ts"
+      source: "urn:aiwg:artifact:.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md"
+      derivation_type: "tests"
+      activity: "urn:aiwg:activity:testing:packages-core-src-tests-shard-schema-validator-test-ts:001"
+    - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/schema-validator.test.ts"
+      source: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+      derivation_type: "tests"
+      activity: "urn:aiwg:activity:testing:packages-core-src-tests-shard-schema-validator-test-ts:001"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:testing:packages-core-src-tests-shard-schema-validator-test-ts:001"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "test_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/schema-validator.test.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"
