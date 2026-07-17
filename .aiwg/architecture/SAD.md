@@ -1,10 +1,10 @@
 # Software Architecture Document — fortemi-react
 
-**Version**: 2026.3.0
+**Version**: 2026.7.8 contract amendment
 **Author**: roctinam
 **Reviewers**: Architecture Designer (agent), Database Optimizer (agent)
 **Status**: Baselined (updated for C3)
-**Last Updated**: 2026-03-23
+**Last Updated**: 2026-07-17
 
 ---
 
@@ -20,7 +20,9 @@ fortemi-react runs entirely in the browser (no server required after initial loa
 - Persists data in PGlite (PostgreSQL WASM) via OPFS
 - Exposes 38 MCP tools via a Service Worker REST API
 - Provides a React 19 UI for direct user interaction
-- Maintains full data format parity with the Rust/PostgreSQL fortemi server
+- Implements named, mechanically tested portability profiles for exchange with
+  the Rust/PostgreSQL fortemi server; compatibility is profile-scoped, not a
+  blanket claim over every repository or API shape
 
 ### 1.3 Monorepo Structure
 
@@ -57,7 +59,7 @@ The following constraints are non-negotiable (from option-matrix.md):
 |---|---|---|
 | UUIDv7 primary keys everywhere | Sync compatibility with server | All INSERT statements must generate UUIDv7 |
 | Soft-delete (`deleted_at`) on all mutable entities | Sync tombstoning protocol | All DELETE operations must be `UPDATE ... SET deleted_at = now()` |
-| JSON field names identical to server | Format parity | Repository layer must match server OpenAPI response shapes exactly |
+| Portable fields follow the selected profile | Profile-scoped interoperability | Shard import/export must validate against the pinned server-owned schema receipt; repository and API shapes may differ outside the selected profile |
 | Capability module system before any WASM | No forced downloads | CapabilityManager must be initialized before transformers.js, WebLLM, or Whisper.js |
 | AGPL-3.0 | License compliance | No proprietary dependencies |
 | CalVer YYYY.M.PATCH no leading zeros | Server versioning match | Enforced in package.json and git tags |
@@ -89,29 +91,54 @@ C4Context
 
 ### 3.1 Portable Contract Data Flow
 
-The audit behind ADR-010/011 split the former "AIWG -> React -> server"
-story into two independent portable contracts. They do not share a bridge,
-owner, or version cadence.
+ADR-010/011 separate three data planes that have different authorities and
+lifecycle guarantees. The planes may be connected by explicit converters, but
+they do not become one contract as a result.
 
 ```mermaid
 flowchart LR
-    aiwg[AIWG generator] -->|AIWG Fortemi index export v1/v2| react_index[@fortemi/core index reader]
+    aiwg[AIWG generator] -->|AIWG Fortemi index export v1/v2| react_index[@fortemi/core static index reader]
     aiwg_schema[AIWG JSON Schema] -->|source of truth| react_index
     react_index -->|query/projection only| react_ui[React/graph consumers]
 
-    react_shard[@fortemi/core shard export/import] <-->|Knowledge Shard matric-shard v1.0.0| server[fortemi Rust server]
-    server_schema[Server-produced shard schema + golden fixtures] -->|source of truth| react_shard
+    aiwg -->|explicit v2 index-to-shard conversion| converter[@fortemi/core converter]
+    converter -->|Knowledge Shard, declared profile| react_shard[@fortemi/core shard reader/importer]
+    react_shard <-->|profile-scoped interchange| server[fortemi Rust server]
+    server_schema[Server-owned schema + golden fixtures] -->|pinned receipt| react_shard
 
-    react_index -. no sync/import bridge .- react_shard
+    aiwg_mcp[AIWG Fortemi MCP storage adapter] -->|live persistence calls| server
+    aiwg_mcp -. separate from static index and shard conversion .- react_index
 ```
 
 Contract ownership:
 
-| Contract | Hop | Authority | Enforcement |
+| Plane / contract | Hop | Authority | Enforcement |
 |---|---|---|---|
-| AIWG Fortemi index | AIWG <-> React | AIWG JSON Schema (`aiwg-fortemi-index-export`) | `validateAiwgFortemiIndexExport` plus `test:portable-contract` index conformance |
-| Knowledge Shard | React <-> Server | Server shard export format, captured as committed schema + server golden fixtures | `knowledge-shard.schema.json`, shard conformance proof now, full AJV/golden-fixture suite under #255 |
-| DB table parity | Browser DB <-> server DB fixture shapes | Server database fixtures | `db-table-parity` suite; storage-shape guard only |
+| Static index | AIWG -> React | AIWG JSON Schema (`aiwg-fortemi-index-export`) | `validateAiwgFortemiIndexExport` plus portable-contract index conformance |
+| Index-to-shard conversion | AIWG v2 index -> Knowledge Shard | AIWG owns source-record semantics; `@fortemi/core` owns the converter; the server owns the shard envelope and profile schema | Converter fixture, pinned published-package smoke test, and destination-import proof |
+| Knowledge Shard | PGlite / RecordStore <-> Server | Server-owned shard schema and server-produced golden fixtures, consumed through a commit-and-digest-pinned receipt | Schema/checksum/version validation before mutation, profile round trips, and server import/export fixtures |
+| Live MCP persistence | AIWG storage adapter -> Server | Server MCP tool contract | Live integration test; it is not evidence for static-index or shard compatibility |
+| DB table parity | Browser DB <-> server fixture shapes | Server database fixtures | `db-table-parity` suite; storage-shape guard only |
+
+### 3.2 Portability Profiles
+
+Compatibility claims MUST name one of these profiles and the evidence version:
+
+| Profile | Required consumer behavior | Permitted scope |
+|---|---|---|
+| `full-v1` | PGlite and the server preserve every component declared by the profile, stable identities and relationships, null/tombstone/timestamp semantics, attachment references, and attachment bytes/sidecars | Lossless server/PGlite interchange only after both directions pass the same schema and golden-fixture gate |
+| `core-v1` | Consumers preserve the explicitly declared core components and fail on undeclared required components; no silent component loss | Reduced interoperability for producers such as the AIWG converter |
+| `record-v1` | RecordStore preserves its declared canonical-record subset and returns an explicit loss/unsupported-component report for anything outside it | DB-free record-tier backup and interchange; never described as full parity |
+
+An importer must unpack into staging, validate the manifest, semantic version,
+checksums, profile, component records, counts, and required sidecars, and only
+then begin an atomic write transaction. Unsupported required components or
+profiles fail before the first destination mutation.
+
+The vendored shard schema is a receipt, not an independent authority. Its
+metadata must identify the upstream Fortemi repository revision and content
+digest. Updating it requires matching server golden fixtures and the
+cross-repository release matrix described in ADR-011.
 
 ---
 
@@ -473,7 +500,7 @@ After Elaboration Iteration 1 PoC:
 | Risk | Residual Concern | Mitigation |
 |---|---|---|
 | R-001 | Safari 17 OPFS sync in practice | Tested in PoC; documented in ADR-005 |
-| R-002 | Schema drift across portable contracts (**materialized** — audit 2026-07-05; mitigation active) | ADR-010/011 replace the old single "format parity" mitigation with two explicit contract gates. **(1) AIWG index contract** — AIWG's index JSON Schema is the authority; `validateAiwgFortemiIndexExport` is the enforcement point AIWG re-imports, with conformance coverage for v1/v2 field drift, enum constraints, version gating, and discovery-ranking parity (#239/#240). **(2) Knowledge Shard contract** — the committed `packages/core/schemas/knowledge-shard.schema.json` and current CI-runnable shard conformance proof guard the server shard shape until #255 adds the full AJV + server golden-fixture suite. **(3) Storage shape guard** — `packages/core/src/__tests__/db-table-parity/` guards PGlite DB table rows only and is not the portable contract gate. CI now exposes the shard + AIWG index `portable-contract` job as the "nothing ships if it breaks" gate (#256). Remaining high-risk work is tracked under #237/#255. |
+| R-002 | Drift or silent loss across the static-index, conversion, shard, and live-persistence planes (**materialized**) | ADR-010/011 require named profiles, a server-owned schema receipt, fail-before-write validation, and cross-repository release evidence. Local round trips and DB-table parity are necessary but do not prove server interoperability. No release may use an unqualified "full" or "100% parity" claim. |
 | R-004 | WASM download UX | Capability module system (opt-in, progress bar) |
 | R-005 | OPFS storage quota | Warn at 80%; guide user to purge |
 
@@ -495,4 +522,5 @@ After Elaboration Iteration 1 PoC:
 
 | Version | Date | Author | Change |
 |---|---|---|---|
+| 2026.7.8 contract amendment | 2026-07-17 | Architecture team | Replaced obsolete no-bridge topology and blanket parity claims with three data planes, named shard profiles, schema receipts, and pre-write/cross-repository gates |
 | 2026.3.0 | 2026-03-21 | roctinam | Initial draft — Inception completion |

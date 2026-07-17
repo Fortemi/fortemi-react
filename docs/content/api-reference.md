@@ -1498,7 +1498,11 @@ Project canonical state into the optional PGlite tables. `projectNotes` covers t
 
 ### Knowledge Shards
 
-A Knowledge Shard is a gzip-compressed tar archive with 100% format compatibility with the Rust/PostgreSQL Fortemi server. All shard APIs are exported from the `@fortemi/core` root.
+A Knowledge Shard is a gzip-compressed tar archive with a declared portability
+profile. Compatibility with the Rust/PostgreSQL Fortemi server is limited to
+profiles verified by the server-owned schema and cross-repository
+import/re-export fixtures; it is not implied for every component. All shard
+APIs are exported from the `@fortemi/core` root.
 
 #### `exportShard(db, options?)`
 
@@ -1607,7 +1611,7 @@ function clearPrefetchedShard(url?: string): void  // omit url to clear all
 
 | Export | Purpose |
 |---|---|
-| `validateShardArchive` / `validateShardManifest` / `validateShardComponentRecord` / `assertShardComponentRecord` | Validate against the vendored `knowledge-shard.schema.json` authority; return `ShardSchemaValidationResult` |
+| `validateShardArchive` / `validateShardManifest` / `validateShardComponentRecord` / `assertShardComponentRecord` | Validate against the local `knowledge-shard.schema.json` copy; this is a structural gate, not server-compatibility evidence, until the copy has a pinned server receipt and cross-repository fixtures; returns `ShardSchemaValidationResult` |
 | `getKnowledgeShardSchema()` | The parsed JSON Schema object |
 | `packTarGz` / `unpackTarGz` | Tar + gzip primitives used by the pipelines |
 | `sha256Hex` / `validateChecksums` | Component checksum helpers |
