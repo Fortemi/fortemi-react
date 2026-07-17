@@ -299,7 +299,7 @@ export function ReaderShell({ onUpgrade }: { onUpgrade: (i: UpgradeIntent) => vo
   // /fortemi opens on the citation graph — the most immediate read of what the
   // corpus *is* (papers + how they cite each other), before the visitor narrows
   // with search. Reader-driven, so it runs on the no-database base surface.
-  const [tab, setTab] = useState<Tab>('search');
+  const [tab, setTab] = useState<Tab>('graph');
 
   useEffect(() => {
     let alive = true;
