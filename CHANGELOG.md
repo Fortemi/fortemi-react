@@ -2,6 +2,35 @@
 
 All notable changes to fortemi-react are documented here.
 
+## v2026.7.8 - 2026-07-17
+
+### `@fortemi/core` - Writable record tier without PGlite (#323, #322)
+
+- New `createRecordBackend` wraps the canonical RecordStore as a writable
+  `DataBackend`: instant startup, read+write+merge, the full manage-note
+  action surface (update / delete / restore / archive / unarchive / star /
+  unstar) through the same Zod-validated input as the PGlite tool, and a
+  bounded unranked text scan. Capabilities are reported honestly
+  (`semantic: 'none'`; `conceptsOf`/`provenanceOf` absent rather than
+  emulated), and the seam selects it as the lightest writable backend.
+- New DB-free Knowledge Shard round-trip: `exportShardFromRecords` /
+  `importShardToRecords` produce and consume the standard `.shard` format
+  with zero PGlite. Byte sidecars hydrate through the Bytecask BlobStore,
+  missing bytes stay recoverable reference-only, the ADR-014 signed-manifest
+  policy runs verify-before-persist, unsupported components skip with
+  explicit warnings, and `error`-strategy conflicts are pre-scanned so a
+  conflicting archive writes nothing. Format parity is tested in both
+  directions (record-exported shards import into PGlite and vice versa).
+- New `projectNotes` / `projectRecords` complete the PGlite projection:
+  the note tier (notes, originals, revisions, tags, links, collections,
+  memberships) joins the attachment tier from migration 0017. The projection
+  is idempotent, reconciles canonically hard-removed rows, and can be
+  dropped and rebuilt with row-for-row parity — canonical records and
+  Bytecask bytes are never touched. This completes the single-substrate
+  storage epic (#322): PGlite is now fully optional and rebuildable.
+- `CanonicalNoteUpdateInput` accepts `format` and `visibility`;
+  `linkToShard` / `collectionToShard` accept canonical ISO-string records.
+
 ## v2026.7.7 - 2026-07-16
 
 ### `@fortemi/core` - Legacy Knowledge Shard compatibility (#344)

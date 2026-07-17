@@ -52,8 +52,8 @@ If you are consuming published packages rather than a local checkout, replace `w
 ```json
 {
   "dependencies": {
-    "@fortemi/core": "2026.7.7",
-    "@fortemi/react": "2026.7.7"
+    "@fortemi/core": "2026.7.8",
+    "@fortemi/react": "2026.7.8"
   }
 }
 ```
@@ -1248,14 +1248,17 @@ function NotesBrowser() {
 
 ### Backend seam — uniform tool-intent dispatch + capability negotiation (`selectBackend`)
 
-The PGlite database backend and the static-file shard reader expose the same
-operations through a single `DataBackend` interface, so UI code can run against
-either without branching on storage. `selectBackend` negotiates which one to use
+The PGlite database backend, the static-file shard reader, the writable
+canonical record tier, and the remote server tier expose the same operations
+through a single `DataBackend` interface, so UI code can run against any of
+them without branching on storage. `selectBackend` negotiates which one to use
 from the capabilities a caller needs:
 
 ```ts
 import {
   createPGliteBackend,
+  createRecordBackend,
+  createRecordStore,
   createRemoteBackend,
   createShardBackend,
   selectBackend,
@@ -1268,6 +1271,9 @@ const pglite = createPGliteBackend(db) // read+write+merge, semantic 'ann-full' 
 // Instant, read-only, fetched on demand.
 const shard = createShardBackend(await openShard({ baseUrl: '/shards/notes' }))
 
+// Instant AND writable, no PGlite: the canonical record tier (bounded scan, no vectors).
+const records = createRecordBackend(await createRecordStore())
+
 // Network-backed, multi-user server tier.
 const remote = createRemoteBackend({ baseUrl: 'https://fortemi.example', headers: () => getSessionHeaders() })
 
@@ -1276,7 +1282,10 @@ const { backend, missing } = selectBackend({ read: true }, [pglite, shard, remot
 // → backend.id === 'static-file' (instant beats index-build), missing === []
 
 const writable = selectBackend({ read: true, write: true }, [pglite, shard])
-// → writable.backend.id === 'pglite' (only it can write)
+// → writable.backend.id === 'pglite' (only it can write among these two candidates)
+
+const lightWritable = selectBackend({ read: true, write: true }, [pglite, records])
+// → lightWritable.backend.id === 'canonical-records' (writable AND instant; PGlite only wins when semantic/FTS is requested)
 
 const serverTier = selectBackend({ read: true, write: true, merge: true, multiUser: true, semantic: 'server' }, [pglite, shard, remote])
 // → serverTier.backend.id === 'remote-server'

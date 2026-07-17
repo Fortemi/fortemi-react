@@ -1,7 +1,7 @@
 # API Reference
 
 **Packages:** `@fortemi/core` · `@fortemi/graph` · `@fortemi/react`
-**Version:** 2026.7.7
+**Version:** 2026.7.8
 
 ---
 
@@ -28,6 +28,7 @@
   - [Job Queue](#job-queue)
   - [Capabilities](#capabilities)
   - [Migrations and Archive](#migrations-and-archive)
+  - [Canonical Records](#canonical-records)
   - [Knowledge Shards](#knowledge-shards)
   - [Service Worker](#service-worker)
   - [Worker Utilities](#worker-utilities)
@@ -57,7 +58,7 @@
 const VERSION: string
 ```
 
-The current package version string. Value: `'2026.7.7'`.
+The current package version string. Value: `'2026.7.8'`.
 
 ---
 
@@ -973,6 +974,8 @@ function createRemoteBackend(config: {
 
 Creates the network-backed Fortemi server tier for `selectBackend`. The returned backend advertises `read`, `write`, `merge`, `multiUser`, `semantic: 'server'`, and `startupCost: 'network'`.
 
+A fourth seam adapter, [`createRecordBackend`](#canonical-records), serves the writable canonical record tier with no PGlite at all — see Canonical Records.
+
 Readable `DataBackend` implementations expose `listNotes`, `getNote`, `search`, `getNoteFull`, `linksOf`, `conceptsOf`, and `provenanceOf`; write-capable backends expose `manageNote`, and semantic-capable backends expose `semantic`.
 
 ---
@@ -1439,6 +1442,60 @@ const pglite = await restoreDbSnapshot('/corpus/corpus.pgdata', { persistence: '
 
 ---
 
+### Canonical Records
+
+The canonical record layer (ADR-013, `records/`) is the writable structured-record tier that exists independently of PGlite: records mirror the SQL rows one-to-one, every mutation commits atomically with a change-journal entry, and the PGlite tables become an optional, rebuildable projection. All exports below come from the `@fortemi/core` root.
+
+#### `RecordStore` / `createRecordStore(options?)` / `MemoryRecordStore`
+
+```typescript
+interface RecordStore {
+  get<C extends RecordCollectionName>(collection: C, id: string): Promise<RecordCollections[C] | null>
+  put<C extends RecordCollectionName>(collection: C, record: RecordCollections[C]): Promise<JournalEntry>
+  remove(collection: RecordCollectionName, id: string): Promise<JournalEntry>
+  list<C extends RecordCollectionName>(collection: C, opts?: RecordListOptions): Promise<RecordCollections[C][]>
+  journalSince(sinceSeq: number, limit?: number): Promise<JournalEntry[]>
+  headSeq(): Promise<number>
+  readonly capabilities: RecordStoreCapabilities
+  close(): Promise<void>
+}
+```
+
+The store contract plus the durable IndexedDB implementation (`createRecordStore` → `IdbRecordStore`, with schema versioning and a newer-schema guard) and the in-memory test double. Collections: `note`, `note_original`, `note_revised_current`, `note_tag`, `link`, `collection`, `collection_note`, `attachment`, `attachment_blob`. `capabilities` reports the query boundary explicitly (`boundedTextScan: true`, `fullTextSearch: false`, `vectorSearch: false`, `sqlJoins: false`).
+
+#### `CanonicalNotesRepository` / `CanonicalAttachmentsRepository`
+
+DB-free note workflows (CRUD, soft-delete/restore, tags, links, collections, recent/by-tag queries, bounded text scan) and attachment workflows (bytes-first attach through the Bytecask `BlobStore`, dedupe, reference-only reads, manifest-derived `reconcileBlobs`/`gcBlobs`).
+
+#### `createRecordBackend(store, options?)`
+
+```typescript
+function createRecordBackend(store: RecordStore, options?: { id?: string }): DataBackend
+```
+
+Wraps a canonical `RecordStore` as a writable `DataBackend` for `selectBackend`. Advertises `read`, `write`, `merge`, `semantic: 'none'`, and `startupCost: 'instant'`; `manageNote` accepts the same Zod-validated input as the PGlite tool (update / delete / restore / archive / unarchive / star / unstar). Search is a bounded unranked scan, and `conceptsOf`/`provenanceOf` are absent (feature-detect via the optional methods) because the canonical tier does not persist SKOS or provenance records.
+
+#### `exportShardFromRecords(store, options?)` / `importShardToRecords(store, data, options?)`
+
+```typescript
+function exportShardFromRecords(store: RecordStore, options?: ExportOptions): Promise<Uint8Array>
+function importShardToRecords(store: RecordStore, data: Uint8Array | ArrayBuffer, options?: ImportOptions): Promise<ImportResult>
+```
+
+Knowledge Shard round-trip with zero PGlite, format-parity with `exportShard`/`importShard`. Export honors `collectionId`/`tag` filters, `clusterNotesSize`, and the `includeBlobs` + `blobStore` byte sidecar. Import runs the same ADR-014 signature policy before any write, validates checksums, hydrates sidecar bytes through the supplied `blobStore`, pre-scans `error`-strategy conflicts (a conflicting archive writes nothing), and skips components the canonical tier cannot persist with explicit warnings.
+
+#### `projectNotes(db, store)` / `projectRecords(db, store)` / `dropNoteProjection(db)`
+
+```typescript
+function projectNotes(db: DatabaseClient, store: RecordStore): Promise<NoteProjectionResult>
+function projectRecords(db: DatabaseClient, store: RecordStore): Promise<RecordProjectionResult>
+function dropNoteProjection(db: DatabaseClient): Promise<void>
+```
+
+Project canonical state into the optional PGlite tables. `projectNotes` covers the note tier (notes, originals, current revisions, tags, links, collections, memberships); `projectRecords` composes it with `projectAttachments` (migration 0017) for a full rebuild. Idempotent upserts, reconciliation of canonically hard-removed rows, and drop + rebuild with row-for-row parity — canonical records and Bytecask bytes are never modified. `projectAttachments` / `dropAttachmentProjection` are exported alongside.
+
+---
+
 ### Knowledge Shards
 
 A Knowledge Shard is a gzip-compressed tar archive with 100% format compatibility with the Rust/PostgreSQL Fortemi server. All shard APIs are exported from the `@fortemi/core` root.
@@ -1554,6 +1611,7 @@ function clearPrefetchedShard(url?: string): void  // omit url to clear all
 | `getKnowledgeShardSchema()` | The parsed JSON Schema object |
 | `packTarGz` / `unpackTarGz` | Tar + gzip primitives used by the pipelines |
 | `sha256Hex` / `validateChecksums` | Component checksum helpers |
+| `enforceSignaturePolicy` | The ADR-014 verify-before-persist gate shared by `importShard` and `importShardToRecords` |
 | `noteToShard`, `noteFromShard`, `linkToShard`, `collectionToShard`, … | Per-entity field mappers between browser rows and server-parity shard JSON (one `xToShard`/`xFromShard` pair per component; see `shard/field-mapper.ts`) |
 | `CURRENT_SHARD_VERSION` / `SHARD_FORMAT` | Format constants |
 

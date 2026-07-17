@@ -47,11 +47,12 @@ fortemi-react reads your notes through **one shared contract**, no matter where 
 
 | Source | What it is | Best for |
 |--------|-----------|----------|
-| **In-browser database** | A full PGlite database with pgvector | Read/write archives; the default |
+| **In-browser database** | A full PGlite database with pgvector | Ranked search and vectors on read/write archives |
+| **Canonical records** | A lightweight writable record store — no database | Read/write note-taking with instant startup |
 | **Plain files** | A knowledge pack read in place as static files — no database | Read-only reference sets on any static host |
 | **Snapshot** | A database with its search index *already built in* | Fast startup on large sets |
 
-Same code, your choice, no rewrite. Small sets can run with no database at all; big sets can use the full database.
+Same code, your choice, no rewrite. Small sets can read *and write* with no database at all; the full database layers in ranked full-text and semantic search when you need it — and it can be rebuilt from the canonical records at any time.
 
 ## How it differs from typical browser storage
 
