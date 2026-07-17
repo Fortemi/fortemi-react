@@ -34,7 +34,9 @@ test('semantic upgrade succeeds against the bundled corpus shards', async ({ pag
   // 1. Open the featured demo from the built gallery.
   await page.goto('/knowledge-workspace/')
 
-  // The no-DB reader opens on the Search tab once the notes shard is parsed.
+  // The no-DB reader opens on the Graph tab (the citation graph is the default
+  // view); switch to Search once the notes shard is parsed and tabs render.
+  await page.getByRole('button', { name: 'Search', exact: true }).click({ timeout: 60_000 })
   const readerSearch = page.getByPlaceholder('search the corpus…')
   await expect(readerSearch).toBeVisible({ timeout: 60_000 })
 
