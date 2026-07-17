@@ -841,8 +841,8 @@ importers:
   packages/core:
     dependencies:
       '@bytecask/core':
-        specifier: ^2026.7.1
-        version: 2026.7.1
+        specifier: ^2026.7.5
+        version: 2026.7.5
       '@noble/hashes':
         specifier: ^1.7.2
         version: 1.8.0
@@ -1035,10 +1035,10 @@ packages:
     resolution: {integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==}
     engines: {node: '>=18'}
 
-  '@bytecask/core@2026.7.1':
-    resolution: {integrity: sha512-RFEDKweiYoa/prVwQa9162URpokj1cwLAuLDIUKAqIepk+LokeN4dDioOjEmpT6ZB5k418JcsONK7LTeB8Mkdw==, tarball: https://git.integrolabs.net/api/packages/roctinam/npm/%40bytecask%2Fcore/-/2026.7.1/core-2026.7.1.tgz}
+  '@bytecask/core@2026.7.5':
+    resolution: {integrity: sha512-CsLJqmw8lNuBxRLGdRzoDdZ4/2iQlluueaiiYOR+l39NOdoG5cfDel/g71QDopRpVEHJOw7hQ3QngmWmi5IjBw==}
     peerDependencies:
-      '@bytecask/worker': 2026.7.1
+      '@bytecask/worker': 2026.7.5
     peerDependenciesMeta:
       '@bytecask/worker':
         optional: true
@@ -3261,7 +3261,7 @@ snapshots:
 
   '@bcoe/v8-coverage@1.0.2': {}
 
-  '@bytecask/core@2026.7.1':
+  '@bytecask/core@2026.7.5':
     dependencies:
       '@noble/hashes': 1.8.0
 
