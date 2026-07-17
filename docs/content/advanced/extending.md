@@ -461,7 +461,12 @@ events.on('rating.*', (payload) => {
 
 ## 7. Format Parity Testing
 
-Format parity tests verify that your new tables and fields have the same column names and JavaScript types as the server-side Rust implementation. They use the `matchServerShape` helper and a JSON fixture file extracted from the server.
+Storage-shape parity tests verify that your new tables and fields have the same
+column names and JavaScript types as the corresponding server-side fixture.
+They use the `matchServerShape` helper and a JSON fixture extracted from the
+server. These tests do not establish Knowledge Shard portability; shard changes
+also require the named-profile schema and cross-repository import/re-export
+gates in ADR-011.
 
 **Test pattern:** create a fixture file, insert a representative row, read it back, and compare the shape.
 

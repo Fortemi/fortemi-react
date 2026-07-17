@@ -4,7 +4,11 @@
 
 **The browser edition of the Fortémi intelligent-database stack — the same normalized data model, client-side, local-first, private by default.**
 
-Run the Fortémi schema entirely in the browser: real PostgreSQL (PGlite + pgvector) with 100% JSON format parity with the Fortémi server, typed React 19 hooks, and portable Knowledge Shard archives. Build notebooks, research tools, and AI-powered knowledge apps where the data lives on the user's device, search runs locally, and any cloud or AI provider is opt-in and yours to choose — no backend, no account, no lock-in.
+Run the Fortémi schema entirely in the browser: real PostgreSQL (PGlite +
+pgvector), typed React 19 hooks, and profile-scoped Knowledge Shard archives.
+Build notebooks, research tools, and AI-powered knowledge apps where the data
+lives on the user's device, search runs locally, and any cloud or AI provider is
+opt-in and yours to choose — no backend, no account, no lock-in.
 
 ```bash
 pnpm add @fortemi/core @fortemi/react
@@ -29,7 +33,13 @@ pnpm dev
 
 Fortémi is an intelligent database for AI-ready applications: a normalized data schema plus data-science and processing tooling that turns messy organizational data into searchable, linkable, provenance-aware structures. The same schema runs across the server, browser edition, and HotM sidecar, giving teams a common substrate for complex, data-rich, compute-heavy applications while keeping deployment affordable on local, edge, or hosted infrastructure.
 
-**fortemi-react is the browser edition of that stack.** It runs the same normalized schema in PGlite/pgvector with 100% JSON format parity — the full read/write/search core plus an opt-in, sandbox-limited slice of on-device inference. Knowledge management is one use case built on the substrate, not the whole product. What the browser edition uniquely adds: the data never has to leave the device. Local-first and private-by-default stay the headline differentiators.
+**fortemi-react is the browser edition of that stack.** It runs the normalized
+schema in PGlite/pgvector with profile-scoped interchange — the browser
+read/write/search core plus an opt-in, sandbox-limited slice of on-device
+inference. Knowledge management is one use case built on the substrate, not the
+whole product. What the browser edition uniquely adds: the data never has to
+leave the device. Local-first and private-by-default stay the headline
+differentiators.
 
 ### Fortémi (product) vs `@fortemi/core` (embeddable library)
 
@@ -42,7 +52,10 @@ Most in-browser data stacks make you choose: capable but cloud-bound, or private
 - **Private by default.** Notes live in the browser on the user's device — no server, no sync service, no cloud backup, no account. The only thing that ever leaves the device is a cloud AI call you explicitly opt into.
 - **Capable, not toy-grade.** Real PostgreSQL with `tsvector` full-text, pgvector HNSW semantic search, and BM25 reciprocal-rank fusion — production-grade retrieval that stays fast as an archive grows, entirely client-side.
 - **AI on your terms.** Embeddings and LLMs are opt-in and bring-your-own: run locally (WebGPU, Ollama, LM Studio, llama.cpp, vLLM, Jan) or route to a provider you control. Nothing is wired to a vendor you can't swap out.
-- **Yours to keep.** Knowledge Shard archives (tar.gz, with checksums and JSON format parity) export the whole graph on demand, and the AGPL-3.0 license keeps the stack open. No lock-in by design.
+- **Yours to keep.** Knowledge Shard archives (tar.gz, with checksums and a
+  declared portability profile) export the components supported by that
+  profile on demand, and the AGPL-3.0 license keeps the stack open. No lock-in
+  by design.
 
 Use it when you need local-first note storage, semantic retrieval, agent-readable tool functions, or portable archives inside a web application — whether that's a personal notebook, a research workspace, or a product that must keep user data on the user's device.
 

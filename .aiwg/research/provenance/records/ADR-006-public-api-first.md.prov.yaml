@@ -1,0 +1,51 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-17T19:16:22Z"
+  description: "Provenance for integration-contract documentation update"
+entity:
+  id: "urn:aiwg:artifact:.aiwg/adrs/ADR-006-public-api-first.md"
+  type: document
+  created_at: "2026-07-17T19:16:22Z"
+  checksum: "sha256:5aea20540deda78f94a5f7c70cb7e548510ee13e16c841558c04f6be86983bdf"
+  size_bytes: 8373
+  attributes:
+    change_scope: "suite-integration-contract"
+    base_revision: "274d84220804ca75658e128da3cf33830fc6a508"
+activity:
+  id: "urn:aiwg:activity:modification:aiwg-adrs-ADR-006-public-api-first-md:001"
+  type: modification
+  started_at: "2026-07-17T19:16:22Z"
+  ended_at: "2026-07-17T19:16:22Z"
+  description: "Align integration architecture, requirements, tests, and current-state claims"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: ai_assistant
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+  attributes:
+    delegated_roles:
+      - "architecture-documenter"
+      - "requirements-analyst"
+      - "test-architect"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-006-public-api-first.md"
+    activity: "urn:aiwg:activity:modification:aiwg-adrs-ADR-006-public-api-first-md:001"
+    time: "2026-07-17T19:16:22Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:aiwg-adrs-ADR-006-public-api-first-md:001"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:274d84220804ca75658e128da3cf33830fc6a508:.aiwg/adrs/ADR-006-public-api-first.md"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-006-public-api-first.md"
+      source: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:274d84220804ca75658e128da3cf33830fc6a508:.aiwg/adrs/ADR-006-public-api-first.md"
+      derivation_type: "modifies"
+      activity: "urn:aiwg:activity:modification:aiwg-adrs-ADR-006-public-api-first-md:001"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:aiwg-adrs-ADR-006-public-api-first-md:001"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-006-public-api-first.md"
+    agent: "urn:aiwg:agent:codex-gpt-5"

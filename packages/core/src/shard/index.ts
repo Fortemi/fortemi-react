@@ -2,7 +2,8 @@
  * Shard module — Knowledge Shard (.shard) import/export for fortemi-react.
  *
  * A shard is a gzip-compressed tar archive containing serialized knowledge
- * data with 100% format compatibility with the Rust/PostgreSQL fortemi server.
+ * data governed by a named portability profile. Server compatibility is
+ * limited to profiles proven by cross-repository conformance tests.
  */
 
 // Types

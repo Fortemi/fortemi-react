@@ -3,6 +3,7 @@
 - **Status**: Accepted
 - **Date**: 2026-07-05
 - **Accepted**: 2026-07-09
+- **Amended**: 2026-07-17
 - **Issue**: #235 (audit epic)
 - **Relates**: ADR-010 (source-of-truth principle), server ADR-028 (shard archive migration system), server issue `Fortemi/fortemi#1013`
 
@@ -18,19 +19,73 @@ The Knowledge Shard (`shard/*`) is fortemi-react's interchange format with the R
 
 ## Decision
 
-**1. Align the shard entity contract to the server, field-for-field.** Concretely: rename `binary_sources`→`attachments`; serialize `note.collection_id` and `link.to_url`; implement `template` and `embedding_config` export/import; align `embedding_set`/`embedding_set_member`/`embedding` to the server field sets; and make import actually persist attachment rows. React-only components (SKOS/provenance/graph) remain as a **documented, optional superset** clearly namespaced so a spec-conformant server can ignore them without error — they are not part of the parity contract.
+**1. Align the shard entity contract to a named, server-owned profile.**
+Concretely: rename `binary_sources` -> `attachments`; serialize
+`note.collection_id` and `link.to_url`; implement `template` and
+`embedding_config` export/import; align
+`embedding_set`/`embedding_set_member`/`embedding` to the server field sets;
+and make import actually persist attachment rows. React-only components
+(SKOS/provenance/graph) are not an implicitly ignorable superset. They are
+portable only when a server-owned profile declares them optional or required;
+otherwise an exporter must omit them or the importer must reject the profile
+before writing.
 
-**2. Adopt a committed shard schema + server-produced golden fixtures as the conformance authority** (per ADR-010). A round-trip conformance suite MUST: (a) import a real server-exported `.shard` and assert every entity/field survives; (b) export a react `.shard` and assert it validates against the server shard schema; (c) run in CI. This replaces the mis-scoped DB-table parity guard for the shard surface.
+**2. Adopt a committed shard schema receipt + server-produced golden fixtures
+as the conformance authority** (per ADR-010). The receipt MUST record the
+upstream Fortemi revision and schema digest. A round-trip conformance suite
+MUST: (a) import a real server-exported `.shard` and assert every profile
+entity/field survives; (b) export a React `.shard`, validate it against the
+same schema, and import it into the real server; (c) re-export and compare
+stable identities, relationships, null/tombstone/timestamp semantics, counts,
+and attachment sidecars; and (d) run in CI. This replaces the mis-scoped
+DB-table parity guard for the shard surface.
 
 **3. Implement real version negotiation.** Replace lexicographic version comparison with semantic-version comparison at both sites. Honor `min_reader_version` correctly; on an unsupported major, refuse import with a clear, actionable error rather than silently proceeding. Populate `migration_history`/`migrated_from` on export. Track the server's forthcoming shard changes (ADR-028 fixtures) so a v1.1/v2.0 server shard is handled deliberately.
 
 **4. Converge the binary/attachment contract with the server.** react #227 (shipped, byte-free) and server #1013 (open) must share one specification: attachments are attached as a data source with extracted text; **raw bytes are never inlined into search/index/export/embedding-set projections**. Coordinate the fortemi-react attachment naming/serialization fix with the server #1013 canonicalization so both land against the same spec.
 
+**5. Use explicit portability profiles.**
+
+| Profile | Obligation |
+|---|---|
+| `full-v1` | PGlite and server export/import every component declared by the profile without silent loss, including attachment references and byte sidecars. |
+| `core-v1` | PGlite, server, and converter preserve the declared reduced component set. Missing required components and undeclared required files are errors, not warnings. |
+| `record-v1` | RecordStore round-trips only its declared canonical-record subset and reports every unsupported or lossy projection. It cannot satisfy a full-parity claim. |
+
+The manifest profile is normative. Producers MUST NOT infer compatibility from
+the presence of familiar filenames, and consumers MUST NOT silently skip an
+unknown required component.
+
+**6. Validate before mutation and make import atomic.** Importers unpack into
+staging and validate archive structure, schema, semantic versions, profile,
+checksums, record shapes, component/file/count coherence, and required
+attachment sidecars before the first PGlite or RecordStore write. Unsupported
+profiles and validation failures leave the destination unchanged. The
+application transaction covers all logical record writes; blob promotion uses
+a staged commit/rollback protocol.
+
+**7. Gate releases across repositories.** A portability release is blocked
+until all applicable cells in this matrix pass against pinned revisions:
+
+| Producer | Consumer | Required gate |
+|---|---|---|
+| Fortemi server | PGlite and RecordStore | Server golden shard validates, imports, and re-exports under the declared profile |
+| PGlite | Fortemi server | React export validates and real server import/re-export preserves the declared profile |
+| RecordStore | PGlite and server | `record-v1` loss report is empty for declared fields and explicit for every out-of-profile field |
+| AIWG v2 converter | PGlite and Fortemi server | AIWG source test, published `@fortemi/core` package smoke test, and real destination import all pass |
+
+Local source tests, self-round trips, and schema validation alone are
+insufficient release evidence.
+
 ## Consequences
 
 **Positive:** the parity non-negotiable becomes real and CI-enforced; server↔react shard exchange actually round-trips; version skew fails safe; the attachment contract stops diverging.
 
-**Negative / cost:** implementing `template`/`embedding_config` and the missing fields is real work; a golden-fixture refresh path requires either a checked-in server export or a fixture-generation step tied to a server version; the superset components need a documented ignore/namespacing convention to avoid rejecting react shards at the server.
+**Negative / cost:** implementing `template`/`embedding_config` and the missing
+fields is real work; a golden-fixture refresh path requires either a checked-in
+server export or a fixture-generation step tied to a server version; React
+extension components require an explicit server-owned profile decision rather
+than relying on implicit ignore behavior.
 
 **Risk if deferred:** every day the claim ships unqualified, users lose attachments (E1), collection membership (S2), URL links (S5), templates/configs (S3/S4), and embedding interpretability (S8) on any cross-boundary shard exchange — silently.
 

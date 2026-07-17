@@ -1,6 +1,6 @@
 ---
 title: Welcome
-summary: The browser edition of the Fortémi intelligent-database stack — the same normalized data schema in a PGlite data layer with 100% JSON format parity, hybrid semantic search, SKOS tagging, and graph tooling. Local-first and private-by-default.
+summary: The browser edition of the Fortémi intelligent-database stack — a normalized PGlite data layer with profile-scoped Knowledge Shard portability, hybrid semantic search, SKOS tagging, and graph tooling. Local-first and private-by-default.
 hero:
   eyebrow: Fortémi React
   title: The Fortémi Intelligent Database, in the Browser
@@ -27,7 +27,7 @@ Fortémi is an intelligent database for AI-ready applications: a normalized data
 
 fortemi-react is the **browser edition of that stack**. It runs the same normalized schema with **no separate server** — the data lives in the browser on the user's device, search runs locally, and any cloud or AI provider is strictly opt-in. Keeping notes for an AI agent and searching them by *meaning*, not just exact words, is a use case built on that substrate — not the whole product.
 
-It is the stack *in the browser*. (HotM, a separate project, is a desktop client that bundles the Rust server; fortemi-react is the stack itself, ported to run in-page.) Its JSON output matches the Fortémi Rust server exactly, so archives are portable between the two.
+It is the stack *in the browser*. (HotM, a separate project, is a desktop client that bundles the Rust server; fortemi-react is the stack itself, ported to run in-page.) Knowledge Shard exchange is governed by named compatibility profiles and cross-repository conformance tests; repository and API shapes outside a selected profile are not implied to be identical.
 
 ## Fortémi (product) vs `@fortemi/core` (embeddable library)
 
@@ -39,7 +39,7 @@ It is the stack *in the browser*. (HotM, a separate project, is a desktop client
 - **Hybrid search** — full-text and semantic (meaning-based) retrieval, fused with rank fusion, running off the main thread so the page never freezes.
 - **Three ways to load notes** — an in-browser database, plain files with no database, or a ready-made snapshot that starts fast. One shared design picks the best source for what you asked.
 - **Local-first, private-by-default** — your notes stay on the device; nothing leaves it unless you choose a remote or cloud provider.
-- **Format parity** — 100% JSON parity with the Fortémi Rust server, so Knowledge Shards move cleanly between browser and server.
+- **Profile-scoped portability** — Knowledge Shards validate before import and move between supported consumers only for their declared, conformance-tested profile.
 
 ## Three ways to load your notes
 
@@ -62,7 +62,7 @@ Same code, your choice, no rewrite. Small sets can read *and write* with no data
 | **Search** | Substring match | Hybrid full-text + semantic, fused with RRF |
 | **Server** | Needed for real search | None — everything runs in the page |
 | **AI / cloud** | Baked in | Opt-in, private-by-default |
-| **Portability** | App-specific | Knowledge Shards, JSON parity with the Fortémi server |
+| **Portability** | App-specific | Knowledge Shards with named, conformance-tested profiles |
 | **Load modes** | One | Three — database, plain files, or snapshot |
 
 ## The packages

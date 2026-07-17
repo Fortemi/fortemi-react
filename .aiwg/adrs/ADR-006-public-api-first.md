@@ -43,7 +43,12 @@ interface FortemiCore {
 }
 ```
 
-Each repository exposes typed async methods (e.g., `notes.create()`, `notes.findById()`, `search.fullText()`). All return plain objects matching the existing JSON contract — 100% round-trip parity with the server API (UUIDv7 IDs, ISO 8601 timestamps, soft-delete semantics).
+Each repository exposes typed async methods (e.g., `notes.create()`,
+`notes.findById()`, `search.fullText()`). They return plain objects governed by
+the typed public API. Shared identifiers, timestamps, and soft-delete semantics
+must follow their explicit contract, but this does not imply blanket
+round-trip parity with every server API response or Knowledge Shard component.
+Portable exchange is profile-scoped by ADR-010/011.
 
 ### Tool Handlers (agent/capability consumers)
 
