@@ -34,6 +34,13 @@ command-line arguments or printed:
 - `RELEASE_SIGNING_PASSPHRASE_VAULT_PATH` and
   `RELEASE_SIGNING_PASSPHRASE_VAULT_FIELD`
 
+For the current `rca-g2.s9.internal` endpoint, set `VAULT_CACERT` to
+`ci/trust/integro-labs-root-ca-g2.crt`. This public root is copied from the
+authoritative `roctinam/itops` artifact `configs/ca/root-g2.crt`, introduced by
+commit `c993a8ddc3254cf7791adfbbbd0c85771698bfc2`. Its SHA-256 certificate
+fingerprint is
+`83:C5:9E:E3:54:02:4B:33:4A:CB:9A:FF:99:BB:E0:21:12:8D:16:5C:19:CD:FC:47:ED:92:9D:05:90:A1:7C:11`.
+
 Run `tools/release/cut-tag.sh <version> --dry-run` before the release ceremony
 to fetch the authority, verify its fingerprint and committed public key, and
 complete a signing probe without creating a tag.
