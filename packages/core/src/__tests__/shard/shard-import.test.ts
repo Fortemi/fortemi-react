@@ -123,6 +123,26 @@ describe('importShard', { timeout: 30_000 }, () => {
     expect(after.rows[0].count).toBe(before.rows[0].count)
   })
 
+  it('rejects an invalid 1.1.0 tombstone before any PGlite mutation', async () => {
+    const files = canonicalCoreV1Files()
+    const note = JSON.parse(decoder.decode(files.get('notes.jsonl'))) as Record<string, unknown>
+    note.deleted_at = 'not-a-timestamp'
+    const noteData = encoder.encode(JSON.stringify(note))
+    files.set('notes.jsonl', noteData)
+    const manifest = JSON.parse(decoder.decode(files.get('manifest.json'))) as ShardManifest
+    manifest.checksums['notes.jsonl'] = await sha256Hex(noteData)
+    files.set('manifest.json', encoder.encode(JSON.stringify(manifest)))
+
+    const before = await db.query<{ count: number }>('SELECT COUNT(*)::int AS count FROM note')
+    const result = await importShard(db, packTarGz(files))
+    const after = await db.query<{ count: number }>('SELECT COUNT(*)::int AS count FROM note')
+
+    expect(result.success).toBe(false)
+    expect(result.errors.join('\n')).toContain('Canonical core-v1 validation failed')
+    expect(result.errors.join('\n')).toContain('must match format "date-time"')
+    expect(after.rows[0].count).toBe(before.rows[0].count)
+  })
+
   it('reports import progress phases without changing existing result shape', async () => {
     const { archive, sourceDb } = await createTestShard()
     const progress: ImportProgress[] = []

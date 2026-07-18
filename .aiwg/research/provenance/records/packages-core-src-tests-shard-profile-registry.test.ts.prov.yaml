@@ -1,34 +1,37 @@
 metadata:
   schema_version: "1.0.0"
-  created_at: "2026-07-17T23:10:58Z"
-  description: "Provenance for named-profile producer and importer tests"
+  created_at: "2026-07-18T05:31:02Z"
+  description: "Provenance for verify schema 1.1 profile authority and tombstone roundtrip"
 entity:
   id: "urn:aiwg:artifact:packages/core/src/__tests__/shard/profile-registry.test.ts"
-  type: test
-  created_at: "2026-07-17T23:10:58Z"
-  checksum: "sha256:deca05597dcc9f609e9d5166f2bf16ee147d18dc7f42b50a0594a84fa917b1c1"
-  size_bytes: 10012
+  type: "test"
+  created_at: "2026-07-18T05:31:02Z"
+  checksum: "sha256:660c76385f1acfb388e76576d7f7e384169de399cf66aae48d2d7d440867b1c3"
+  size_bytes: 11177
   attributes:
-    change_scope: "named-portability-profiles"
-    base_revision: "2f30626922a7dfad4dec1f4673ec76349335bba9"
+    change_scope: "knowledge-shard-schema-1.1-tombstones"
+    base_revision: "6228db6c4132a2391ff492a7219403080af495cb"
 activity:
-  id: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:001"
-  type: generation
-  started_at: "2026-07-17T23:10:58Z"
-  ended_at: "2026-07-17T23:10:58Z"
-  description: "Verify profile advertisements, canonical output, round trip, and fail-closed behavior"
+  id: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:355"
+  type: "testing"
+  started_at: "2026-07-18T05:31:01Z"
+  ended_at: "2026-07-18T05:31:02Z"
+  description: "Verify schema 1.1 profile authority and tombstone roundtrip"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
-  type: ai_assistant
+  type: "ai_assistant"
   name: "Codex"
   version: "gpt-5"
   tool: "codex"
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/profile-registry.test.ts"
-    activity: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:001"
-    time: "2026-07-17T23:10:58Z"
+    activity: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:355"
+    time: "2026-07-18T05:31:02Z"
   used:
+    - activity: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:355"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:6228db6c4132a2391ff492a7219403080af495cb:packages/core/src/__tests__/shard/profile-registry.test.ts"
+      role: "previous_revision"
     - activity: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:001"
       entity: "urn:aiwg:artifact:packages/core/src/shard/profile-registry.ts"
       role: "system_under_test"
@@ -39,9 +42,13 @@ relationships:
     - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/profile-registry.test.ts"
       source: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
       derivation_type: "tests"
-      activity: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:001"
+      activity: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:355"
+    - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/profile-registry.test.ts"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:355"
+      derivation_type: "tests"
+      activity: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:355"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:001"
+    activity: "urn:aiwg:activity:generation:packages-core-src-tests-shard-profile-registry-test-ts:355"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:

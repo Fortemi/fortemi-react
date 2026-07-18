@@ -157,6 +157,8 @@ export function createShardCapabilityReport(
       repository: authorityReceipt.source.repository,
       commit: authorityReceipt.source.commit,
       contract_sha256: authorityReceipt.source.contractSha256,
+      contract_revision: upstreamContract.contractRevision,
+      schema_version: authorityReceipt.knowledgeShard.schemaVersion,
       schema_bundle_sha256: authorityReceipt.schemaBundle.sha256,
     },
     advertised_profiles: advertisedProfiles,

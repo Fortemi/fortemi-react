@@ -82,6 +82,11 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       backend_supported: true,
       portable: true,
       advertised_profiles: ['core-v1'],
+      authority: {
+        commit: 'f39b01c995f10f8da4cad662ff8e86c6130ba2b0',
+        contract_revision: '2',
+        schema_version: '1.1.0',
+      },
     })
     expect(createShardCapabilityReport({
       backend: 'record-store',
@@ -98,7 +103,21 @@ describe('Knowledge Shard portability profiles (#355)', () => {
   it('emits a self-validating core-v1 archive and reports omitted extension data', async () => {
     db = await createTestDb()
     const notes = new NotesRepository(db)
-    await notes.create({ content: 'Profiled note', title: 'Core export', tags: ['note-tag'] })
+    const activeNote = await notes.create({
+      content: 'Profiled note',
+      title: 'Core export',
+      tags: ['note-tag'],
+    })
+    const deletedNote = await notes.create({
+      content: 'Deleted profile note',
+      title: 'Core tombstone',
+      tags: [],
+    })
+    await notes.delete(deletedNote.id)
+    const sourceTombstone = await db.query<{ deleted_at: Date }>(
+      'SELECT deleted_at FROM note WHERE id = $1',
+      [deletedNote.id],
+    )
     await db.query(
       `INSERT INTO template (
          id, name, description, content, format, default_tags, collection_id, created_at, updated_at
@@ -141,6 +160,9 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       count: 1,
       message: '1 skos_schemes record(s) are outside core-v1 and were omitted.',
     })
+    expect(result.capability_report.losses).not.toContainEqual(
+      expect.objectContaining({ code: 'tombstones-outside-profile' }),
+    )
 
     const files = unpackTarGz(result.archive!)
     expect([...files.keys()].sort()).toEqual([
@@ -158,12 +180,12 @@ describe('Knowledge Shard portability profiles (#355)', () => {
 
     const manifest = JSON.parse(decoder.decode(files.get('manifest.json'))) as ShardManifest
     expect(manifest).toMatchObject({
-      version: '1.0.0',
+      version: '1.1.0',
       profile: 'core-v1',
       producer: { name: 'fortemi-react' },
       components: ['notes', 'collections', 'tags', 'templates', 'links'],
       counts: {
-        notes: 1,
+        notes: 2,
         collections: 0,
         tags: 2,
         templates: 1,
@@ -177,12 +199,16 @@ describe('Knowledge Shard portability profiles (#355)', () => {
     expect(manifest).not.toHaveProperty('layout')
     expect(manifest).not.toHaveProperty('migrated_from')
 
-    const note = JSON.parse(decoder.decode(files.get('notes.jsonl'))) as ShardNote
-    expect(note).toMatchObject({
+    const exportedNotes = decoder.decode(files.get('notes.jsonl'))
+      .split('\n')
+      .map((line) => JSON.parse(line) as ShardNote)
+    expect(exportedNotes.find((note) => note.id === activeNote.id)).toMatchObject({
       metadata: null,
       attachments: [],
+      deleted_at: null,
     })
-    expect(note).not.toHaveProperty('deleted_at')
+    expect(exportedNotes.find((note) => note.id === deletedNote.id)?.deleted_at)
+      .toBe(sourceTombstone.rows[0].deleted_at.toISOString())
     expect(JSON.parse(decoder.decode(files.get('tags.json')))).toEqual([
       expect.objectContaining({ name: 'note-tag' }),
       expect.objectContaining({ name: 'template-tag' }),
@@ -201,6 +227,12 @@ describe('Knowledge Shard portability profiles (#355)', () => {
         losses: [],
       },
     })
+    const restoredTombstone = await db.query<{ deleted_at: Date | null }>(
+      'SELECT deleted_at FROM note WHERE id = $1',
+      [deletedNote.id],
+    )
+    expect(restoredTombstone.rows[0].deleted_at?.toISOString())
+      .toBe(sourceTombstone.rows[0].deleted_at.toISOString())
 
     const records = new MemoryRecordStore()
     const recordResult = await importShardToRecords(records, result.archive!)

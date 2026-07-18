@@ -1,44 +1,44 @@
 metadata:
   schema_version: "1.0.0"
-  created_at: "2026-07-18T00:07:21Z"
-  description: "Provenance for implement legacy shard convergence and atomic record/blob rollback semantics"
+  created_at: "2026-07-18T05:31:02Z"
+  description: "Provenance for advance the shard contract version and capability authority metadata"
 entity:
   id: "urn:aiwg:artifact:packages/core/src/shard/types.ts"
-  type: code
-  created_at: "2026-07-18T00:07:21Z"
-  checksum: "sha256:8031e1b02b219632dbbdcd89cdc2e8914a76fa6cc36e35e73dc11f1717b5b360"
-  size_bytes: 17867
+  type: "code"
+  created_at: "2026-07-18T05:31:02Z"
+  checksum: "sha256:2f17a8463c168bf98640018a684dafac5c3187ebdf47a2308a9af898084603b7"
+  size_bytes: 17928
   attributes:
-    change_scope: "legacy-shard-convergence"
-    base_revision: "e18bc50c2419ca4a0f5e53a1527b55589e513695"
+    change_scope: "knowledge-shard-schema-1.1-tombstones"
+    base_revision: "6228db6c4132a2391ff492a7219403080af495cb"
 activity:
-  id: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:356"
-  type: modification
-  started_at: "2026-07-18T00:12:13Z"
-  ended_at: "2026-07-18T00:12:13Z"
-  description: "Implement legacy shard convergence and atomic record/blob rollback semantics"
+  id: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:355"
+  type: "modification"
+  started_at: "2026-07-18T05:31:01Z"
+  ended_at: "2026-07-18T05:31:02Z"
+  description: "Advance the shard contract version and capability authority metadata"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
-  type: ai_assistant
+  type: "ai_assistant"
   name: "Codex"
   version: "gpt-5"
   tool: "codex"
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:packages/core/src/shard/types.ts"
-    activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:356"
-    time: "2026-07-18T00:12:13Z"
+    activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:355"
+    time: "2026-07-18T05:31:02Z"
   used:
-    - activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:356"
-      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e18bc50c2419ca4a0f5e53a1527b55589e513695:packages/core/src/shard/types.ts"
+    - activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:355"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:6228db6c4132a2391ff492a7219403080af495cb:packages/core/src/shard/types.ts"
       role: "previous_revision"
   wasDerivedFrom:
     - entity: "urn:aiwg:artifact:packages/core/src/shard/types.ts"
-      source: "urn:gitea:Fortemi/fortemi-react:issue:356"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:355"
       derivation_type: "implements"
-      activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:356"
+      activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:355"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:356"
+    activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:355"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:

@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Date**: 2026-07-05
 - **Accepted**: 2026-07-09
-- **Amended**: 2026-07-17
+- **Amended**: 2026-07-18
 - **Issue**: #235 (audit epic)
 - **Relates**: ADR-010 (source-of-truth principle), server ADR-028 (shard archive migration system), server issue `Fortemi/fortemi#1013`
 
@@ -11,7 +11,7 @@
 
 The Knowledge Shard (`shard/*`) is fortemi-react's interchange format with the Rust server, and the SAD lists "100% JSON format parity with the server" as a non-negotiable. The 2026-07-05 audit found this claim **false in both directions** and **untested**:
 
-- The server owns `matric-shard` v1.0.0 authoritatively (`format:"matric-shard"`, bare-hex per-file SHA-256, `created_at_utc`→`created_at` rename). fortemi-react matches the envelope (`.shard`, tar.gz, filenames, format/version strings, checksum format — all verified correct).
+- The server owns `matric-shard` authoritatively through versioned schemas. Current schema `1.1.0` retains the envelope (`format:"matric-shard"`, bare-hex per-file SHA-256, `created_at_utc`→`created_at` rename) and adds the optional note tombstone field; immutable schema `1.0.0` remains readable through its registered transition.
 - But entity field names and coverage diverge: attachments emitted as `binary_sources` not `attachments` (S1); `note.collection_id` and `link.to_url` never serialized (S2/S5); `template` and `embedding_config` entities unimplemented (S3/S4); `embedding_set`/`embedding_set_member`/`embedding` field sets diverge (S6–S8); import never persists attachment rows at all (E1). fortemi-react also emits 9 SKOS/provenance/graph components the server excludes (S9).
 - `min_reader_version` is compared with a lexicographic string `>` rather than semver (S12/E5) — it will accept an incompatible future shard once any version segment reaches double digits.
 - The suite now named `db-table-parity` validates DB table shapes, not the shard contract; shard conformance coverage must live in the portable-contract gate.
@@ -87,6 +87,8 @@ insufficient release evidence.
 - @packages/core/src/shard/shard-export.ts emits and self-validates explicit PGlite `core-v1` archives with machine-readable capability/loss reports.
 - @packages/core/src/__tests__/shard/profile-registry.test.ts verifies supported/reserved status, strict producer output, PGlite import, and RecordStore fail-closed behavior.
 - On 2026-07-17, a React-produced archive (`sha256:5444ca75a9a4d76dfff118e1a5afc05f0e33cbc66b6900d63513311608d6849c`) passed both dry-run and mutating multipart import through Fortemi commit `6f13e7ad86243f39666f8bbb0bb680b3cebab9e9`; Fortemi then re-exported the clean database (`sha256:ce42b96733fdbac18ca98a1d70afc97c6fdab92b04e87f77d56486fb2ce9df47`), and a clean PGlite import restored the note and tags. This is evidence for `core-v1` only.
+- @packages/core/src/shard/schema-validator.ts selects the immutable `1.0.0` or current `1.1.0` canonical bundle from the manifest version. Named PGlite exports use `1.1.0`, include active and soft-deleted notes, emit exact `deleted_at` state, and restore that state inside the existing import transaction.
+- On 2026-07-18, a schema `1.1.0` React archive containing an active note and a soft-deleted note (`sha256:c3605945c69893ba2e56091a4b1149b7ab598087d3fa2ee5c288acb506969f94`) passed isolated dry-run and repeated mutating imports through Fortemi commit `f39b01c995f10f8da4cad662ff8e86c6130ba2b0`. Dry-run left the clean destination at zero notes and zero tag rows. Fortemi re-exported the populated destination (`sha256:cac731d33f1183d73c5db958c454f22e9dfac09846e7e01c4c7486805c7b631a`); the React validator accepted that archive and a clean PGlite import restored both bodies, all three note-tag associations, active `deleted_at:null`, and tombstone instant `2026-07-18T04:30:00.000Z`. This receipt proves only the declared, byte-free `core-v1` surface.
 - @packages/core/src/records/types.ts, @packages/core/src/records/idb-record-store.ts, and @packages/core/src/records/memory-record-store.ts provide a multi-collection atomic batch with journal atomicity for RecordStore import.
 - @packages/core/src/shard/blob-staging.ts promotes verified sidecars before the logical transaction and removes only newly introduced hashes on synchronous failure.
 - @packages/core/src/shard/shard-import.ts and @packages/core/src/records/record-shard.ts preserve representable null, tombstone, and timestamp state and reconcile imported-note relationships for legacy unprofiled replace imports. Failure-injection and repeat-import tests cover PGlite and RecordStore. This does not add named-profile support; `full-v1` and `record-v1` remain reserved by the pinned authority.

@@ -1,44 +1,48 @@
 metadata:
   schema_version: "1.0.0"
-  created_at: "2026-07-17T23:10:58Z"
-  description: "Provenance for current named-profile architecture status"
+  created_at: "2026-07-18T05:31:02Z"
+  description: "Provenance for pin the current schema 1.1 profile authority and tombstone boundary"
 entity:
   id: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
-  type: document
-  created_at: "2026-07-17T23:10:58Z"
-  checksum: "sha256:eb7b773c7f1eb99c8dd8b4f9cdf70fa037c4e86107ee775f75c851e298977113"
-  size_bytes: 26303
+  type: "document"
+  created_at: "2026-07-18T05:31:02Z"
+  checksum: "sha256:609a3618efa90f16404073737a382290df65e19c5b0a6ce0b4bb18573036a3b3"
+  size_bytes: 26376
   attributes:
-    change_scope: "named-portability-profiles"
-    base_revision: "2f30626922a7dfad4dec1f4673ec76349335bba9"
+    change_scope: "knowledge-shard-schema-1.1-tombstones"
+    base_revision: "6228db6c4132a2391ff492a7219403080af495cb"
 activity:
-  id: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:002"
-  type: modification
-  started_at: "2026-07-17T23:10:58Z"
-  ended_at: "2026-07-17T23:10:58Z"
-  description: "Constrain backend profile advertisements to pinned authority status"
+  id: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:355"
+  type: "modification"
+  started_at: "2026-07-18T05:31:01Z"
+  ended_at: "2026-07-18T05:31:02Z"
+  description: "Pin the current schema 1.1 profile authority and tombstone boundary"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
-  type: ai_assistant
+  type: "ai_assistant"
   name: "Codex"
   version: "gpt-5"
   tool: "codex"
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
-    activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:002"
-    time: "2026-07-17T23:10:58Z"
+    activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:355"
+    time: "2026-07-18T05:31:02Z"
   used:
-    - activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:002"
-      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:2f30626922a7dfad4dec1f4673ec76349335bba9:.aiwg/architecture/SAD.md"
+    - activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:355"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:6228db6c4132a2391ff492a7219403080af495cb:.aiwg/architecture/SAD.md"
       role: "previous_revision"
   wasDerivedFrom:
     - entity: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
       source: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
       derivation_type: "derives_from"
-      activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:002"
+      activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:355"
+    - entity: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:355"
+      derivation_type: "documents"
+      activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:355"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:002"
+    activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:355"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:

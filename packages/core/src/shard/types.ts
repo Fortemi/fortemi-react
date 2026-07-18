@@ -13,7 +13,7 @@
 import type { BlobStore } from '../blob-store.js'
 import type { ShardTrustStore } from './shard-signature.js'
 
-export const CURRENT_SHARD_VERSION = '1.0.0'
+export const CURRENT_SHARD_VERSION = '1.1.0'
 export const SHARD_FORMAT = 'matric-shard'
 
 function parseVersion(value: string): number[] {
@@ -86,6 +86,8 @@ export interface ShardCapabilityReport {
     repository: string
     commit: string
     contract_sha256: string
+    contract_revision: string
+    schema_version: string
     schema_bundle_sha256: string
   }
   advertised_profiles: KnowledgeShardProfile[]
@@ -337,7 +339,7 @@ export interface ShardNote {
   tags: string[]
   created_at: string
   updated_at: string
-  /** Legacy unprofiled tombstone field; core-v1 exports only live notes. */
+  /** Schema 1.1 core-v1 tombstone; legacy unprofiled archives also carry it. */
   deleted_at?: string | null
 }
 

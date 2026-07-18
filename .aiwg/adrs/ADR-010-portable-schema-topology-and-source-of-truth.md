@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Date**: 2026-07-05
 - **Accepted**: 2026-07-09
-- **Amended**: 2026-07-17
+- **Amended**: 2026-07-18
 - **Issue**: #235 (audit epic)
 - **Relates**: ADR-006 (public-API-first), ADR-009 (pluggable storage), `adr-backend-seam.md`; supersedes the R-002 mitigation in `SAD.md:450`
 
@@ -12,7 +12,7 @@
 fortemi-react added two "portable schema" surfaces that were described and marketed as a single pipeline ("AIWG -> React -> server"). The 2026-07-05 audit (`.aiwg/reports/aiwg-portable-schema-audit-2026-07-05.md`) established that they were **two independent contracts on two different hops**, each with a **different owner** and **no shared source of truth**:
 
 1. **AIWG → React** — the AIWG Fortemi *index* (`aiwg.fortemi.index.export.v1/v2`). AIWG owns the generator (`aiwg/src/artifacts/browser-export.ts`) **and** a canonical JSON Schema (`aiwg/schemas/aiwg-fortemi-index-export.json`, `$id: https://aiwg.io/…`). Critically, **AIWG re-imports `@fortemi/core`'s `validateAiwgFortemiIndexExport` to validate its own output** — so fortemi-react's validator is the de-facto enforcement point for AIWG's generator.
-2. **React <-> Server** — the Knowledge *Shard* (`matric-shard` v1.0.0). The Rust server owns this authoritatively as hand-rolled `serde_json::json!` literals in `main.rs` (not derived from its own models). The server has no native AIWG-index reader.
+2. **React <-> Server** — the Knowledge *Shard* (`matric-shard`, currently schema `1.1.0`). The Rust server owns this authoritatively through versioned schemas plus its runtime exporter/importer. The server has no native AIWG-index reader.
 
 The 2026-07-17 amendment records a material topology change: AIWG now has a
 source implementation that converts its v2 static index through

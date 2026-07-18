@@ -11,14 +11,21 @@ import Ajv2020 from 'ajv/dist/2020.js'
 import type { ErrorObject, ValidateFunction } from 'ajv'
 import legacySchema from '../../schemas/knowledge-shard.schema.json' with { type: 'json' }
 import authorityReceipt from '../../schemas/knowledge-shard.schema.receipt.json' with { type: 'json' }
-import manifestSchema from '../../schemas/knowledge-shard/1.0.0/core-v1/manifest.schema.json' with { type: 'json' }
-import noteSchema from '../../schemas/knowledge-shard/1.0.0/core-v1/note.schema.json' with { type: 'json' }
-import collectionSchema from '../../schemas/knowledge-shard/1.0.0/core-v1/collection.schema.json' with { type: 'json' }
-import tagSchema from '../../schemas/knowledge-shard/1.0.0/core-v1/tag.schema.json' with { type: 'json' }
-import templateSchema from '../../schemas/knowledge-shard/1.0.0/core-v1/template.schema.json' with { type: 'json' }
-import linkSchema from '../../schemas/knowledge-shard/1.0.0/core-v1/link.schema.json' with { type: 'json' }
+import legacyManifestSchema from '../../schemas/knowledge-shard/1.0.0/core-v1/manifest.schema.json' with { type: 'json' }
+import legacyNoteSchema from '../../schemas/knowledge-shard/1.0.0/core-v1/note.schema.json' with { type: 'json' }
+import legacyCollectionSchema from '../../schemas/knowledge-shard/1.0.0/core-v1/collection.schema.json' with { type: 'json' }
+import legacyTagSchema from '../../schemas/knowledge-shard/1.0.0/core-v1/tag.schema.json' with { type: 'json' }
+import legacyTemplateSchema from '../../schemas/knowledge-shard/1.0.0/core-v1/template.schema.json' with { type: 'json' }
+import legacyLinkSchema from '../../schemas/knowledge-shard/1.0.0/core-v1/link.schema.json' with { type: 'json' }
+import manifestSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/manifest.schema.json' with { type: 'json' }
+import noteSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/note.schema.json' with { type: 'json' }
+import collectionSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/collection.schema.json' with { type: 'json' }
+import tagSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/tag.schema.json' with { type: 'json' }
+import templateSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/template.schema.json' with { type: 'json' }
+import linkSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/link.schema.json' with { type: 'json' }
 import { validateChecksums } from './checksum.js'
 import { unpackTarGz } from './shard-tar.js'
+import { CURRENT_SHARD_VERSION } from './types.js'
 import type { ShardComponent, ShardManifest } from './types.js'
 
 export interface ShardSchemaValidationResult {
@@ -28,6 +35,7 @@ export interface ShardSchemaValidationResult {
 
 type ShardFiles = Map<string, Uint8Array>
 type CoreV1Component = 'notes' | 'collections' | 'tags' | 'templates' | 'links'
+export type CoreV1SchemaVersion = '1.0.0' | '1.1.0'
 type RecordEncoding = 'json-array' | 'jsonl'
 type IdentifiedSchema = object & { $id: string }
 
@@ -109,18 +117,32 @@ const CORE_V1_COMPONENT_FILES: Record<
   links: { file: 'links.jsonl', encoding: 'jsonl' },
 }
 
-const CORE_V1_SCHEMAS: Record<CoreV1Component, IdentifiedSchema> = {
-  notes: noteSchema,
-  collections: collectionSchema,
-  tags: tagSchema,
-  templates: templateSchema,
-  links: linkSchema,
+const CORE_V1_SCHEMAS: Record<
+  CoreV1SchemaVersion,
+  Record<CoreV1Component | 'manifest', IdentifiedSchema>
+> = {
+  '1.0.0': {
+    manifest: legacyManifestSchema,
+    notes: legacyNoteSchema,
+    collections: legacyCollectionSchema,
+    tags: legacyTagSchema,
+    templates: legacyTemplateSchema,
+    links: legacyLinkSchema,
+  },
+  '1.1.0': {
+    manifest: manifestSchema,
+    notes: noteSchema,
+    collections: collectionSchema,
+    tags: tagSchema,
+    templates: templateSchema,
+    links: linkSchema,
+  },
 }
 
 let legacyAjvInstance: Ajv2020 | undefined
 let coreAjvInstance: Ajv2020 | undefined
 const legacyValidators = new Map<LegacySchemaDefName, ValidateFunction>()
-const coreValidators = new Map<CoreV1Component | 'manifest', ValidateFunction>()
+const coreValidators = new Map<string, ValidateFunction>()
 
 export function getKnowledgeShardSchema(): unknown {
   return {
@@ -177,15 +199,10 @@ function getCoreAjv(): Ajv2020 {
       validateFormats: true,
     })
     addCanonicalFormats(coreAjvInstance)
-    for (const schema of [
-      manifestSchema,
-      noteSchema,
-      collectionSchema,
-      tagSchema,
-      templateSchema,
-      linkSchema,
-    ]) {
-      coreAjvInstance.addSchema(schema)
+    for (const bundle of Object.values(CORE_V1_SCHEMAS)) {
+      for (const schema of Object.values(bundle)) {
+        coreAjvInstance.addSchema(schema)
+      }
     }
   }
   return coreAjvInstance
@@ -200,14 +217,20 @@ function legacyValidatorFor(defName: LegacySchemaDefName): ValidateFunction {
   return validator
 }
 
-function coreValidatorFor(name: CoreV1Component | 'manifest'): ValidateFunction {
-  const cached = coreValidators.get(name)
+function coreSchemaVersion(value: string): CoreV1SchemaVersion | undefined {
+  return value === '1.0.0' || value === '1.1.0' ? value : undefined
+}
+
+function coreValidatorFor(
+  name: CoreV1Component | 'manifest',
+  version: CoreV1SchemaVersion = CURRENT_SHARD_VERSION,
+): ValidateFunction {
+  const key = `${version}:${name}`
+  const cached = coreValidators.get(key)
   if (cached) return cached
-  const schema = (
-    name === 'manifest' ? manifestSchema : CORE_V1_SCHEMAS[name]
-  ) as IdentifiedSchema
+  const schema = CORE_V1_SCHEMAS[version][name]
   const validator = getCoreAjv().getSchema(schema.$id) ?? getCoreAjv().compile(schema)
-  coreValidators.set(name, validator)
+  coreValidators.set(key, validator)
   return validator
 }
 
@@ -225,9 +248,21 @@ function profileOf(value: unknown): string | undefined {
 }
 
 export function validateShardManifest(value: unknown): ShardSchemaValidationResult {
-  const validate = profileOf(value) === 'core-v1'
-    ? coreValidatorFor('manifest')
-    : legacyValidatorFor('manifest')
+  let validate: ValidateFunction
+  if (profileOf(value) === 'core-v1') {
+    const version = value && typeof value === 'object' && !Array.isArray(value)
+      ? coreSchemaVersion(String((value as Record<string, unknown>).version ?? ''))
+      : undefined
+    if (!version) {
+      return {
+        valid: false,
+        errors: ['(root) uses an unsupported canonical core-v1 schema version'],
+      }
+    }
+    validate = coreValidatorFor('manifest', version)
+  } else {
+    validate = legacyValidatorFor('manifest')
+  }
   const valid = validate(value)
   return { valid, errors: formatErrors(validate.errors) }
 }
@@ -374,7 +409,11 @@ function coreReferenceErrors(records: Map<CoreV1Component, unknown[]>): string[]
 
 function validateCoreV1Structure(files: ShardFiles, manifest: ShardManifest): string[] {
   const errors: string[] = []
-  const manifestValidator = coreValidatorFor('manifest')
+  const schemaVersion = coreSchemaVersion(manifest.version)
+  if (!schemaVersion) {
+    return ['manifest.json uses an unsupported canonical core-v1 schema version']
+  }
+  const manifestValidator = coreValidatorFor('manifest', schemaVersion)
   if (!manifestValidator(manifest)) {
     return formatErrors(manifestValidator.errors).map((error) => `manifest.json ${error}`)
   }
@@ -401,7 +440,7 @@ function validateCoreV1Structure(files: ShardFiles, manifest: ShardManifest): st
     const spec = CORE_V1_COMPONENT_FILES[component]
     const parsed = parseRecords(files.get(spec.file), spec.file, spec.encoding)
     errors.push(...parsed.errors)
-    const validator = coreValidatorFor(component)
+    const validator = coreValidatorFor(component, schemaVersion)
     for (const [index, record] of parsed.records.entries()) {
       if (!validator(record)) {
         errors.push(
@@ -484,10 +523,11 @@ export function validateShardComponentRecord(
   component: ShardComponent | 'templates',
   value: unknown,
   profile?: 'core-v1',
+  version: CoreV1SchemaVersion = CURRENT_SHARD_VERSION,
 ): ShardSchemaValidationResult {
   let validate: ValidateFunction
   if (profile === 'core-v1' && component in CORE_V1_COMPONENT_FILES) {
-    validate = coreValidatorFor(component as CoreV1Component)
+    validate = coreValidatorFor(component as CoreV1Component, version)
   } else {
     validate = legacyValidatorFor(LEGACY_COMPONENT_SCHEMA_DEFS[component])
   }
@@ -499,8 +539,9 @@ export function assertShardComponentRecord(
   component: ShardComponent | 'templates',
   value: unknown,
   profile?: 'core-v1',
+  version: CoreV1SchemaVersion = CURRENT_SHARD_VERSION,
 ): void {
-  const result = validateShardComponentRecord(component, value, profile)
+  const result = validateShardComponentRecord(component, value, profile, version)
   if (!result.valid) {
     throw new Error(`Invalid shard ${component} record:\n${result.errors.join('\n')}`)
   }

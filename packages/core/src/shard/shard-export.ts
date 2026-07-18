@@ -106,12 +106,11 @@ function coreV1OptionErrors(options: ExportOptions): string[] {
 }
 
 function toCoreV1Note(note: ShardNote): ShardNote {
-  const liveNote = { ...note }
-  delete liveNote.deleted_at
   return {
-    ...liveNote,
+    ...note,
     revised_content: note.revised_content ?? note.original_content,
     metadata: note.metadata ?? null,
+    deleted_at: note.deleted_at ?? null,
     attachments: (note.attachments ?? []).map((projection) => ({
       extracted_text: projection.extracted_text,
       extraction_status: projection.extracted_text === null ? 'deferred' : 'extracted',
@@ -178,25 +177,12 @@ async function collectCoreV1Losses(
     }
   }
 
-  const deletedNotes = await rowCount(
-    db,
-    'SELECT COUNT(*) AS count FROM note WHERE deleted_at IS NOT NULL',
-  )
-  if (deletedNotes > 0) {
-    losses.push({
-      code: 'tombstones-outside-profile',
-      component: 'notes',
-      count: deletedNotes,
-      message: `${deletedNotes} deleted note tombstone(s) are outside core-v1 and were omitted.`,
-    })
-  }
-
   const nullRevisions = await rowCount(
     db,
     `SELECT COUNT(*) AS count
        FROM note n
        LEFT JOIN note_revised_current r ON r.note_id = n.id
-       WHERE n.deleted_at IS NULL AND r.content IS NULL`,
+       WHERE r.content IS NULL`,
   )
   if (nullRevisions > 0) {
     losses.push({
@@ -324,7 +310,8 @@ async function exportShardBytes(
        LEFT JOIN note_original o ON o.note_id = n.id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
        JOIN collection_note cn ON cn.note_id = n.id
-       WHERE ${coreV1 ? 'n.deleted_at IS NULL AND ' : ''}cn.collection_id = $1
+       ${coreV1 ? 'JOIN collection selected_collection ON selected_collection.id = cn.collection_id AND selected_collection.deleted_at IS NULL' : ''}
+       WHERE cn.collection_id = $1
        ORDER BY n.created_at`
     noteParams = [options.collectionId]
   } else if (options?.tag) {
@@ -336,6 +323,7 @@ async function exportShardBytes(
               (
                 SELECT cn.collection_id
                 FROM collection_note cn
+                ${coreV1 ? 'JOIN collection c ON c.id = cn.collection_id AND c.deleted_at IS NULL' : ''}
                 WHERE cn.note_id = n.id
                 ORDER BY cn.position, cn.added_at
                 LIMIT 1
@@ -344,7 +332,6 @@ async function exportShardBytes(
        LEFT JOIN note_original o ON o.note_id = n.id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
        JOIN note_tag nt ON nt.note_id = n.id AND nt.tag = $1
-       ${coreV1 ? 'WHERE n.deleted_at IS NULL' : ''}
        ORDER BY n.created_at`
     noteParams = [options.tag]
   } else {
@@ -356,6 +343,7 @@ async function exportShardBytes(
               (
                 SELECT cn.collection_id
                 FROM collection_note cn
+                ${coreV1 ? 'JOIN collection c ON c.id = cn.collection_id AND c.deleted_at IS NULL' : ''}
                 WHERE cn.note_id = n.id
                 ORDER BY cn.position, cn.added_at
                 LIMIT 1
@@ -363,7 +351,6 @@ async function exportShardBytes(
        FROM note n
        LEFT JOIN note_original o ON o.note_id = n.id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
-       ${coreV1 ? 'WHERE n.deleted_at IS NULL' : ''}
        ORDER BY n.created_at`
     noteParams = []
   }
@@ -1016,7 +1003,7 @@ async function exportShardBytes(
 
   // ── Build manifest ──────────────────────────────────────────────────
   const manifest: ShardManifest = {
-    version: CURRENT_SHARD_VERSION,
+    version: coreV1 ? CURRENT_SHARD_VERSION : '1.0.0',
     ...(coreV1
       ? {
           profile: 'core-v1',
@@ -1031,7 +1018,7 @@ async function exportShardBytes(
     components,
     counts,
     checksums,
-    min_reader_version: '1.0.0',
+    min_reader_version: coreV1 ? CURRENT_SHARD_VERSION : '1.0.0',
     migration_history: [],
     ...(!coreV1 ? { migrated_from: null } : {}),
     ...(!coreV1 && layout ? { layout } : {}),

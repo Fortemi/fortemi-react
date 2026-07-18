@@ -35,6 +35,10 @@ const goldenFixturePath = resolve(
 )
 const goldenReceiptPath = `${goldenFixturePath}.receipt.json`
 const canonicalFixtureRoot = resolve(testDir, 'fixtures/canonical-core-v1')
+const historicalCanonicalFixtureRoot = resolve(
+  testDir,
+  'fixtures/canonical-core-v1-v1.0',
+)
 const canonicalFixtureNames = [
   'manifest.json',
   'notes.jsonl',
@@ -47,6 +51,15 @@ const canonicalFixtureNames = [
 function canonicalCoreV1Files(): Map<string, Uint8Array> {
   return new Map(
     canonicalFixtureNames.map((name) => [name, readFileSync(resolve(canonicalFixtureRoot, name))]),
+  )
+}
+
+function historicalCanonicalCoreV1Files(): Map<string, Uint8Array> {
+  return new Map(
+    canonicalFixtureNames.map((name) => [
+      name,
+      readFileSync(resolve(historicalCanonicalFixtureRoot, name)),
+    ]),
   )
 }
 
@@ -65,23 +78,39 @@ async function createTestDb(): Promise<PGlite> {
 }
 
 describe('knowledge shard AJV schema validator (#255)', () => {
-  it('pins the exact corrected Fortemi core-v1 authority receipt', () => {
+  it('pins the exact Fortemi 1.1.0 core-v1 authority and historical receipt', () => {
     const receipt = getKnowledgeShardContractReceipt() as {
       source: { repository: string; commit: string; contractPath: string; contractSha256: string }
       schemaBundle: { sha256: string }
       goldenCorpus: { sha256: string }
+      historicalReleases: {
+        '1.0.0/core-v1': {
+          migrationTo: string
+          schemaBundle: { sha256: string }
+          goldenCorpus: { sha256: string }
+        }
+      }
     }
 
     expect(receipt.source).toEqual({
       repository: 'https://git.integrolabs.net/Fortemi/fortemi',
-      commit: '6f13e7ad86243f39666f8bbb0bb680b3cebab9e9',
+      commit: 'f39b01c995f10f8da4cad662ff8e86c6130ba2b0',
       contractPath: 'contracts/knowledge-shard/contract.json',
-      contractSha256: 'c6a64ce71bb5368b4fafbe4ec405e95760c3acb0f75d87a7203a9dd5c9642de7',
+      contractSha256: '71361756949732e51b512c1078c93003a88544d67a4f90448ade36399bc80471',
     })
     expect(receipt.schemaBundle.sha256).toBe(
-      '2520ba0b3a8a020f5c540e88fd31233c7ddbe0d343d1e6a884ed689c8e1d3710',
+      '272df54aac6abf90d3d2005c2cf7cf938e3e6e140d4d15d67f2732d9b5108230',
     )
     expect(receipt.goldenCorpus.sha256).toBe(
+      '7b19ec48e1d5dbf73e7664d7853fafa86227fc042f85c02ada6bbf75941de164',
+    )
+    expect(receipt.historicalReleases['1.0.0/core-v1']).toMatchObject({
+      migrationTo: '1.1.0',
+    })
+    expect(receipt.historicalReleases['1.0.0/core-v1'].schemaBundle.sha256).toBe(
+      '2520ba0b3a8a020f5c540e88fd31233c7ddbe0d343d1e6a884ed689c8e1d3710',
+    )
+    expect(receipt.historicalReleases['1.0.0/core-v1'].goldenCorpus.sha256).toBe(
       '7e8c529b7f5ac404d27302499c74470e137b03d27fce54111acf8989b1147ae1',
     )
   })
@@ -96,16 +125,34 @@ describe('knowledge shard AJV schema validator (#255)', () => {
     })
   })
 
+  it('retains exact validation for the immutable Fortemi 1.0.0 corpus', async () => {
+    const files = historicalCanonicalCoreV1Files()
+
+    expect(validateShardArchive(files)).toEqual({ valid: true, errors: [] })
+    await expect(validateCoreV1ShardArchive(files)).resolves.toEqual({
+      valid: true,
+      errors: [],
+    })
+  })
+
   it('enforces canonical UUID, timestamp, attachment digest, and URI formats', () => {
     const valid = canonicalNote()
     for (const [path, value] of [
       ['id', 'not-a-uuid'],
       ['created_at', 'not-a-timestamp'],
+      ['deleted_at', 'not-a-timestamp'],
     ] as const) {
       const invalid = structuredClone(valid)
       invalid[path] = value
       expect(validateShardComponentRecord('notes', invalid, 'core-v1').valid, path).toBe(false)
     }
+
+    const tombstone = structuredClone(valid)
+    tombstone.deleted_at = '2026-07-18T00:00:00Z'
+    expect(validateShardComponentRecord('notes', tombstone, 'core-v1')).toEqual({
+      valid: true,
+      errors: [],
+    })
 
     const invalidDigest = structuredClone(valid)
     const attachments = invalidDigest.attachments as Array<{

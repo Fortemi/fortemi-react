@@ -1,34 +1,37 @@
 metadata:
   schema_version: "1.0.0"
-  created_at: "2026-07-17T23:10:58Z"
-  description: "Provenance for the pinned Knowledge Shard profile registry"
+  created_at: "2026-07-18T05:31:02Z"
+  description: "Provenance for expose contract revision and schema version from the pinned authority"
 entity:
   id: "urn:aiwg:artifact:packages/core/src/shard/profile-registry.ts"
-  type: code
-  created_at: "2026-07-17T23:10:58Z"
-  checksum: "sha256:56b231e1556eac610e77c02673d5f2d22a7890f65723c23d9c718c2f52ad7ccf"
-  size_bytes: 5508
+  type: "code"
+  created_at: "2026-07-18T05:31:02Z"
+  checksum: "sha256:62cb81dca1a386347d9baaa86a29b2a72002fd7abedec2a4ca9ca34d75732c9e"
+  size_bytes: 5637
   attributes:
-    change_scope: "named-portability-profiles"
-    base_revision: "2f30626922a7dfad4dec1f4673ec76349335bba9"
+    change_scope: "knowledge-shard-schema-1.1-tombstones"
+    base_revision: "6228db6c4132a2391ff492a7219403080af495cb"
 activity:
-  id: "urn:aiwg:activity:generation:packages-core-src-shard-profile-registry-ts:001"
-  type: generation
-  started_at: "2026-07-17T23:10:58Z"
-  ended_at: "2026-07-17T23:10:58Z"
-  description: "Derive profile availability and backend advertisements from pinned authority data"
+  id: "urn:aiwg:activity:generation:packages-core-src-shard-profile-registry-ts:355"
+  type: "modification"
+  started_at: "2026-07-18T05:31:01Z"
+  ended_at: "2026-07-18T05:31:02Z"
+  description: "Expose contract revision and schema version from the pinned authority"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
-  type: ai_assistant
+  type: "ai_assistant"
   name: "Codex"
   version: "gpt-5"
   tool: "codex"
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:packages/core/src/shard/profile-registry.ts"
-    activity: "urn:aiwg:activity:generation:packages-core-src-shard-profile-registry-ts:001"
-    time: "2026-07-17T23:10:58Z"
+    activity: "urn:aiwg:activity:generation:packages-core-src-shard-profile-registry-ts:355"
+    time: "2026-07-18T05:31:02Z"
   used:
+    - activity: "urn:aiwg:activity:generation:packages-core-src-shard-profile-registry-ts:355"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:6228db6c4132a2391ff492a7219403080af495cb:packages/core/src/shard/profile-registry.ts"
+      role: "previous_revision"
     - activity: "urn:aiwg:activity:generation:packages-core-src-shard-profile-registry-ts:001"
       entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard/upstream-contract.json"
       role: "authority_contract"
@@ -39,9 +42,13 @@ relationships:
     - entity: "urn:aiwg:artifact:packages/core/src/shard/profile-registry.ts"
       source: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
       derivation_type: "implements"
-      activity: "urn:aiwg:activity:generation:packages-core-src-shard-profile-registry-ts:001"
+      activity: "urn:aiwg:activity:generation:packages-core-src-shard-profile-registry-ts:355"
+    - entity: "urn:aiwg:artifact:packages/core/src/shard/profile-registry.ts"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:355"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:generation:packages-core-src-shard-profile-registry-ts:355"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:generation:packages-core-src-shard-profile-registry-ts:001"
+    activity: "urn:aiwg:activity:generation:packages-core-src-shard-profile-registry-ts:355"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:

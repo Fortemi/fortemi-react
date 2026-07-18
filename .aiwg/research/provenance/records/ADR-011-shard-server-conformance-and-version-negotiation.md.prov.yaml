@@ -1,44 +1,44 @@
 metadata:
   schema_version: "1.0.0"
-  created_at: "2026-07-18T00:07:21Z"
-  description: "Provenance for document legacy shard convergence and the named-profile authority boundary"
+  created_at: "2026-07-18T05:31:02Z"
+  description: "Provenance for document schema 1.1 tombstone interoperability and live roundtrip evidence"
 entity:
   id: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
-  type: document
-  created_at: "2026-07-18T00:07:21Z"
-  checksum: "sha256:083667d8f752f5d545fd3b787dd3515d9b6fe33a1caa00138d3d5bf618b6dac4"
-  size_bytes: 10091
+  type: "document"
+  created_at: "2026-07-18T05:31:02Z"
+  checksum: "sha256:f444b5314ac010fb286ad06f9c2014ce36228033c4bd45115ea74b90348e82ef"
+  size_bytes: 11203
   attributes:
-    change_scope: "legacy-shard-convergence"
-    base_revision: "e18bc50c2419ca4a0f5e53a1527b55589e513695"
+    change_scope: "knowledge-shard-schema-1.1-tombstones"
+    base_revision: "6228db6c4132a2391ff492a7219403080af495cb"
 activity:
-  id: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:356"
-  type: modification
-  started_at: "2026-07-18T00:07:21Z"
-  ended_at: "2026-07-18T00:07:21Z"
-  description: "Document legacy shard convergence and the named-profile authority boundary"
+  id: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:355"
+  type: "modification"
+  started_at: "2026-07-18T05:31:01Z"
+  ended_at: "2026-07-18T05:31:02Z"
+  description: "Document schema 1.1 tombstone interoperability and live roundtrip evidence"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
-  type: ai_assistant
+  type: "ai_assistant"
   name: "Codex"
   version: "gpt-5"
   tool: "codex"
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
-    activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:356"
-    time: "2026-07-18T00:07:21Z"
+    activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:355"
+    time: "2026-07-18T05:31:02Z"
   used:
-    - activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:356"
-      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e18bc50c2419ca4a0f5e53a1527b55589e513695:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+    - activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:355"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:6228db6c4132a2391ff492a7219403080af495cb:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
       role: "previous_revision"
   wasDerivedFrom:
     - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
-      source: "urn:gitea:Fortemi/fortemi-react:issue:356"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:355"
       derivation_type: "documents"
-      activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:356"
+      activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:355"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:356"
+    activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:355"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:

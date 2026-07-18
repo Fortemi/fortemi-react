@@ -1,6 +1,6 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-07-18T00:15:28Z"
+  updated_at: "2026-07-18T05:31:02Z"
   record_count: 29
 records:
   - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-006-public-api-first.md"
