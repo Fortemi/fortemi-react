@@ -584,9 +584,12 @@ All packages in the monorepo are versioned together. When cutting a release, upd
 2. Add a top-level `CHANGELOG.md` entry and a matching `docs/releases/v<version>.md` release note.
 3. Run `pnpm typecheck`, `pnpm lint`, `pnpm test:core`, `pnpm test:e2e`, and `pnpm build`.
 4. Commit the release-prep changes and wait for Gitea CI on `main` to pass.
-5. Cut the signed tag with the release key: `tools/release/cut-tag.sh <version> -m "v<version>"`.
-6. Push `main` and the signed tag to both remotes: `git push origin main --tags` and `git push github main --tags`.
-7. Confirm Gitea publishes the internal registry packages and the GitHub mirror publishes npmjs.org packages with provenance using `NPMJS_TOKEN`.
+5. Export the `ci-fortemi-react` OpenBao reader AppRole credentials and routing
+   variables, then run `tools/release/cut-tag.sh <version> --dry-run`.
+6. Cut the signed tag from the same OpenBao authority:
+   `tools/release/cut-tag.sh <version> -m "v<version>"`.
+7. Push `main` and the signed tag to both remotes: `git push origin main --tags` and `git push github main --tags`.
+8. Confirm Gitea publishes the internal registry packages and the GitHub mirror publishes npmjs.org packages with provenance.
 
 ---
 

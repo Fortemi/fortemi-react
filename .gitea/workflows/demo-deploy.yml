@@ -110,6 +110,7 @@ jobs:
       - name: Fetch deploy key from vault
         env:
           VAULT_ADDR: ${{ vars.VAULT_ADDR }}
+          VAULT_CACERT: ${{ vars.VAULT_CACERT }}
           VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
           VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
           DEPLOY_SSH_KEY_VAULT_PATH: ${{ vars.DEPLOY_SSH_KEY_VAULT_PATH }}

@@ -56,6 +56,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - run: pnpm install --frozen-lockfile
+      - name: OpenBao release-signing wrapper tests
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends jq
+          tools/release/cut-tag.test.sh
       - name: Shard + AIWG index conformance gate
         run: pnpm test:portable-contract
 

@@ -6,7 +6,7 @@ Fortemi follows the AIWG security-engineering supply-chain baseline for npm publ
 
 - Release publishes run only from `v*` tags or an explicit operator dispatch that resolves to a `v*` tag.
 - Release tags must verify against the release-key public bundle committed under `.gitea/keys/maintainers.asc` or an equivalent `.gitea/allowed_signers` file.
-- Fortemi follows AIWG's two-key model: personal maintainer keys sign commits; the release-only key signs `v*` tags. Use `tools/release/cut-tag.sh` so `git tag` cannot accidentally use the personal commit-signing key from global git config.
+- Fortemi follows AIWG's two-key model: personal maintainer keys sign commits; the release-only key signs `v*` tags. `tools/release/cut-tag.sh` fetches the release key and machine passphrase from OpenBao into an isolated temporary keyring, verifies the expected fingerprint, signs and verifies the tag, and removes the keyring on exit. It has no host-keyring fallback.
 - Release-sensitive workflow actions and containers are pinned by immutable SHA or digest and recorded in `ci/digests.txt`.
 - The pnpm workspace enforces `minimumReleaseAge: 10080` and `blockExoticSubdeps: true`.
 - The publish workflow verifies package versions against the release tag before publishing.
@@ -19,6 +19,28 @@ Fortemi follows the AIWG security-engineering supply-chain baseline for npm publ
 ## Release Tag Recovery
 
 If a pushed release tag fails the signed-tag gate because it was signed by a personal commit key, treat it like AIWG's wrong-key recovery path: no publish artifacts have passed the gate, so delete the bad tag on every remote and re-cut it with `tools/release/cut-tag.sh <version>`. Do not add the personal key to `.gitea/keys/maintainers.asc` just to make the failed tag pass.
+
+## OpenBao Signing Inputs
+
+The release operator supplies only the `ci-fortemi-react` reader AppRole
+credentials and the OpenBao endpoint. Secret values are never accepted through
+command-line arguments or printed:
+
+- `VAULT_ADDR`
+- `VAULT_CACERT` when the OpenBao issuer is not in the system trust store
+- `VAULT_CI_ROLE_ID`
+- `VAULT_CI_SECRET_ID`
+- `RELEASE_SIGNING_KEY_VAULT_PATH` and `RELEASE_SIGNING_KEY_VAULT_FIELD`
+- `RELEASE_SIGNING_PASSPHRASE_VAULT_PATH` and
+  `RELEASE_SIGNING_PASSPHRASE_VAULT_FIELD`
+
+Run `tools/release/cut-tag.sh <version> --dry-run` before the release ceremony
+to fetch the authority, verify its fingerprint and committed public key, and
+complete a signing probe without creating a tag.
+
+The helper verifies TLS for AppRole login, KV reads, and token revocation. It
+does not expose an insecure transport flag; a configured `VAULT_CACERT` must
+name a readable reviewed PEM bundle.
 
 ## Active Publish Split
 

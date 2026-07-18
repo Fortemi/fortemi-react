@@ -171,6 +171,7 @@ jobs:
       - name: Fetch publish token from vault
         env:
           VAULT_ADDR: ${{ vars.VAULT_ADDR }}
+          VAULT_CACERT: ${{ vars.VAULT_CACERT }}
           VAULT_CI_ROLE_ID: ${{ secrets.VAULT_CI_ROLE_ID }}
           VAULT_CI_SECRET_ID: ${{ secrets.VAULT_CI_SECRET_ID }}
           GT_PUBLISH_TOKEN_VAULT_PATH: ${{ vars.GT_PUBLISH_TOKEN_VAULT_PATH }}
