@@ -70,7 +70,11 @@ describe('Knowledge Shard portability profiles (#355)', () => {
         components: ['notes', 'collections', 'tags', 'templates', 'links'],
       },
       { profile: 'full-v1', authority_status: 'reserved', components: [] },
-      { profile: 'record-v1', authority_status: 'reserved', components: [] },
+      {
+        profile: 'record-v1',
+        authority_status: 'candidate',
+        components: ['notes', 'collections', 'tags', 'links'],
+      },
     ])
 
     expect(createShardCapabilityReport({
@@ -83,8 +87,8 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       portable: true,
       advertised_profiles: ['core-v1'],
       authority: {
-        commit: 'f39b01c995f10f8da4cad662ff8e86c6130ba2b0',
-        contract_revision: '2',
+        commit: 'a49603aed802b392ab4688ac8dfc67bf83c046c2',
+        contract_revision: '3',
         schema_version: '1.1.0',
       },
     })
@@ -93,10 +97,11 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       operation: 'export',
       requestedProfile: 'record-v1',
     })).toMatchObject({
-      authority_status: 'reserved',
+      authority_status: 'candidate',
       backend_supported: false,
       portable: false,
       advertised_profiles: [],
+      supported_components: ['notes', 'collections', 'tags', 'links'],
     })
   })
 
@@ -296,12 +301,12 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       },
     })
 
-    const reserved = await exportShardWithReport(noQueryDb, { profile: 'record-v1' })
-    expect(reserved).toMatchObject({
+    const candidate = await exportShardWithReport(noQueryDb, { profile: 'record-v1' })
+    expect(candidate).toMatchObject({
       success: false,
       archive: null,
       capability_report: {
-        authority_status: 'reserved',
+        authority_status: 'candidate',
         backend_supported: false,
       },
     })
@@ -328,7 +333,7 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       success: false,
       archive: null,
       capability_report: {
-        authority_status: 'reserved',
+        authority_status: 'candidate',
         backend_supported: false,
         advertised_profiles: [],
       },

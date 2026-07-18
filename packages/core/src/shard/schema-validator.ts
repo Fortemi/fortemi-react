@@ -23,6 +23,11 @@ import collectionSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/collec
 import tagSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/tag.schema.json' with { type: 'json' }
 import templateSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/template.schema.json' with { type: 'json' }
 import linkSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/link.schema.json' with { type: 'json' }
+import recordManifestSchema from '../../schemas/knowledge-shard/1.1.0/record-v1/manifest.schema.json' with { type: 'json' }
+import recordNoteSchema from '../../schemas/knowledge-shard/1.1.0/record-v1/note.schema.json' with { type: 'json' }
+import recordCollectionSchema from '../../schemas/knowledge-shard/1.1.0/record-v1/collection.schema.json' with { type: 'json' }
+import recordTagSchema from '../../schemas/knowledge-shard/1.1.0/record-v1/tag.schema.json' with { type: 'json' }
+import recordLinkSchema from '../../schemas/knowledge-shard/1.1.0/record-v1/link.schema.json' with { type: 'json' }
 import { validateChecksums } from './checksum.js'
 import { unpackTarGz } from './shard-tar.js'
 import { CURRENT_SHARD_VERSION } from './types.js'
@@ -35,6 +40,7 @@ export interface ShardSchemaValidationResult {
 
 type ShardFiles = Map<string, Uint8Array>
 type CoreV1Component = 'notes' | 'collections' | 'tags' | 'templates' | 'links'
+type RecordV1Component = 'notes' | 'collections' | 'tags' | 'links'
 export type CoreV1SchemaVersion = '1.0.0' | '1.1.0'
 type RecordEncoding = 'json-array' | 'jsonl'
 type IdentifiedSchema = object & { $id: string }
@@ -117,6 +123,16 @@ const CORE_V1_COMPONENT_FILES: Record<
   links: { file: 'links.jsonl', encoding: 'jsonl' },
 }
 
+const RECORD_V1_COMPONENT_FILES: Record<
+  RecordV1Component,
+  { file: string; encoding: RecordEncoding }
+> = {
+  notes: { file: 'notes.jsonl', encoding: 'jsonl' },
+  collections: { file: 'collections.json', encoding: 'json-array' },
+  tags: { file: 'tags.json', encoding: 'json-array' },
+  links: { file: 'links.jsonl', encoding: 'jsonl' },
+}
+
 const CORE_V1_SCHEMAS: Record<
   CoreV1SchemaVersion,
   Record<CoreV1Component | 'manifest', IdentifiedSchema>
@@ -139,10 +155,20 @@ const CORE_V1_SCHEMAS: Record<
   },
 }
 
+const RECORD_V1_SCHEMAS: Record<RecordV1Component | 'manifest', IdentifiedSchema> = {
+  manifest: recordManifestSchema,
+  notes: recordNoteSchema,
+  collections: recordCollectionSchema,
+  tags: recordTagSchema,
+  links: recordLinkSchema,
+}
+
 let legacyAjvInstance: Ajv2020 | undefined
 let coreAjvInstance: Ajv2020 | undefined
+let recordAjvInstance: Ajv2020 | undefined
 const legacyValidators = new Map<LegacySchemaDefName, ValidateFunction>()
 const coreValidators = new Map<string, ValidateFunction>()
+const recordValidators = new Map<RecordV1Component | 'manifest', ValidateFunction>()
 
 export function getKnowledgeShardSchema(): unknown {
   return {
@@ -152,6 +178,13 @@ export function getKnowledgeShardSchema(): unknown {
     tags: tagSchema,
     templates: templateSchema,
     links: linkSchema,
+    recordV1: {
+      manifest: recordManifestSchema,
+      notes: recordNoteSchema,
+      collections: recordCollectionSchema,
+      tags: recordTagSchema,
+      links: recordLinkSchema,
+    },
   }
 }
 
@@ -208,6 +241,21 @@ function getCoreAjv(): Ajv2020 {
   return coreAjvInstance
 }
 
+function getRecordAjv(): Ajv2020 {
+  if (!recordAjvInstance) {
+    recordAjvInstance = new Ajv2020({
+      allErrors: true,
+      strict: true,
+      validateFormats: true,
+    })
+    addCanonicalFormats(recordAjvInstance)
+    for (const schema of Object.values(RECORD_V1_SCHEMAS)) {
+      recordAjvInstance.addSchema(schema)
+    }
+  }
+  return recordAjvInstance
+}
+
 function legacyValidatorFor(defName: LegacySchemaDefName): ValidateFunction {
   const cached = legacyValidators.get(defName)
   if (cached) return cached
@@ -234,6 +282,15 @@ function coreValidatorFor(
   return validator
 }
 
+function recordValidatorFor(name: RecordV1Component | 'manifest'): ValidateFunction {
+  const cached = recordValidators.get(name)
+  if (cached) return cached
+  const schema = RECORD_V1_SCHEMAS[name]
+  const validator = getRecordAjv().getSchema(schema.$id) ?? getRecordAjv().compile(schema)
+  recordValidators.set(name, validator)
+  return validator
+}
+
 function formatErrors(errors: ErrorObject[] | null | undefined): string[] {
   return (errors ?? []).map((error) => {
     const path = error.instancePath || '(root)'
@@ -249,7 +306,8 @@ function profileOf(value: unknown): string | undefined {
 
 export function validateShardManifest(value: unknown): ShardSchemaValidationResult {
   let validate: ValidateFunction
-  if (profileOf(value) === 'core-v1') {
+  const profile = profileOf(value)
+  if (profile === 'core-v1') {
     const version = value && typeof value === 'object' && !Array.isArray(value)
       ? coreSchemaVersion(String((value as Record<string, unknown>).version ?? ''))
       : undefined
@@ -260,6 +318,8 @@ export function validateShardManifest(value: unknown): ShardSchemaValidationResu
       }
     }
     validate = coreValidatorFor('manifest', version)
+  } else if (profile === 'record-v1') {
+    validate = recordValidatorFor('manifest')
   } else {
     validate = legacyValidatorFor('manifest')
   }
@@ -464,6 +524,61 @@ function validateCoreV1Structure(files: ShardFiles, manifest: ShardManifest): st
   return errors
 }
 
+function validateRecordV1Structure(files: ShardFiles, manifest: ShardManifest): string[] {
+  const errors: string[] = []
+  const manifestValidator = recordValidatorFor('manifest')
+  if (!manifestValidator(manifest)) {
+    return formatErrors(manifestValidator.errors).map((error) => `manifest.json ${error}`)
+  }
+
+  const components = manifest.components as RecordV1Component[]
+  const expectedFiles = new Set(
+    components.map((component) => RECORD_V1_COMPONENT_FILES[component].file),
+  )
+  for (const filename of expectedFiles) {
+    if (!files.has(filename)) errors.push(`${filename} is declared but missing`)
+    if (!(filename in manifest.checksums)) errors.push(`${filename} is missing its declared checksum`)
+  }
+  for (const filename of Object.keys(manifest.checksums)) {
+    if (!expectedFiles.has(filename)) {
+      errors.push(`manifest checksum references undeclared file ${filename}`)
+    }
+  }
+  for (const filename of files.keys()) {
+    if (filename !== 'manifest.json' && !expectedFiles.has(filename)) {
+      errors.push(`archive contains undeclared file ${filename}`)
+    }
+  }
+
+  const records = new Map<CoreV1Component, unknown[]>()
+  for (const component of components) {
+    const spec = RECORD_V1_COMPONENT_FILES[component]
+    const parsed = parseRecords(files.get(spec.file), spec.file, spec.encoding)
+    errors.push(...parsed.errors)
+    const validator = recordValidatorFor(component)
+    for (const [index, record] of parsed.records.entries()) {
+      if (!validator(record)) {
+        errors.push(
+          ...formatErrors(validator.errors).map((error) => `${spec.file}[${index}] ${error}`),
+        )
+      }
+    }
+    const expectedCount = manifest.counts[component]
+    if (expectedCount !== parsed.records.length) {
+      errors.push(
+        `${spec.file} count mismatch: manifest=${String(expectedCount)} actual=${parsed.records.length}`,
+      )
+    }
+    records.set(component, parsed.records)
+  }
+  for (const component of Object.keys(CORE_V1_COMPONENT_FILES) as CoreV1Component[]) {
+    if (!records.has(component)) records.set(component, [])
+  }
+
+  if (errors.length === 0) errors.push(...coreReferenceErrors(records))
+  return errors
+}
+
 export function validateShardArchive(
   input: Uint8Array | ArrayBuffer | ShardFiles,
 ): ShardSchemaValidationResult {
@@ -484,9 +599,12 @@ export function validateShardArchive(
     return { valid: false, errors: ['manifest.json failed to parse as JSON'] }
   }
 
-  const errors = profileOf(manifest) === 'core-v1'
+  const profile = profileOf(manifest)
+  const errors = profile === 'core-v1'
     ? validateCoreV1Structure(files, manifest)
-    : validateLegacyArchive(files, manifest)
+    : profile === 'record-v1'
+      ? validateRecordV1Structure(files, manifest)
+      : validateLegacyArchive(files, manifest)
   return { valid: errors.length === 0, errors }
 }
 
@@ -519,15 +637,46 @@ export async function validateCoreV1ShardArchive(
   return { valid: errors.length === 0, errors }
 }
 
+export async function validateRecordV1ShardArchive(
+  input: Uint8Array | ArrayBuffer | ShardFiles,
+): Promise<ShardSchemaValidationResult> {
+  let files: ShardFiles
+  try {
+    files = unpackShardFiles(input)
+  } catch {
+    return { valid: false, errors: ['archive failed to unpack'] }
+  }
+  const manifestBytes = files.get('manifest.json')
+  if (!manifestBytes) return { valid: false, errors: ['manifest.json is missing'] }
+
+  let manifest: ShardManifest
+  try {
+    manifest = JSON.parse(decoder.decode(manifestBytes)) as ShardManifest
+  } catch {
+    return { valid: false, errors: ['manifest.json failed to parse as JSON'] }
+  }
+
+  const errors = validateRecordV1Structure(files, manifest)
+  if (errors.length > 0) return { valid: false, errors }
+
+  const checksumResult = await validateChecksums(manifest.checksums, files)
+  if (!checksumResult.valid) {
+    errors.push(...checksumResult.failures.map((filename) => `${filename} checksum mismatch`))
+  }
+  return { valid: errors.length === 0, errors }
+}
+
 export function validateShardComponentRecord(
   component: ShardComponent | 'templates',
   value: unknown,
-  profile?: 'core-v1',
+  profile?: 'core-v1' | 'record-v1',
   version: CoreV1SchemaVersion = CURRENT_SHARD_VERSION,
 ): ShardSchemaValidationResult {
   let validate: ValidateFunction
   if (profile === 'core-v1' && component in CORE_V1_COMPONENT_FILES) {
     validate = coreValidatorFor(component as CoreV1Component, version)
+  } else if (profile === 'record-v1' && component in RECORD_V1_COMPONENT_FILES) {
+    validate = recordValidatorFor(component as RecordV1Component)
   } else {
     validate = legacyValidatorFor(LEGACY_COMPONENT_SCHEMA_DEFS[component])
   }
@@ -538,7 +687,7 @@ export function validateShardComponentRecord(
 export function assertShardComponentRecord(
   component: ShardComponent | 'templates',
   value: unknown,
-  profile?: 'core-v1',
+  profile?: 'core-v1' | 'record-v1',
   version: CoreV1SchemaVersion = CURRENT_SHARD_VERSION,
 ): void {
   const result = validateShardComponentRecord(component, value, profile, version)

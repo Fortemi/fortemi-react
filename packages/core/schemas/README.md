@@ -15,11 +15,12 @@ pnpm --filter @fortemi/core exec vitest run src/__tests__/aiwg-index-schema.test
 Do not fetch or execute upstream content during builds. Schema updates are
 reviewed source changes committed through the normal pull-request workflow.
 
-## Knowledge Shard `1.1.0` / `core-v1` (vendored)
+## Knowledge Shard `1.1.0` / `core-v1` and `record-v1` (vendored)
 
 The exact Fortemi-owned schemas live under
-`knowledge-shard/1.1.0/core-v1/`. The immutable `1.0.0` authority remains
-vendored beside it. The upstream contract and consumer receipt record the
+`knowledge-shard/1.1.0/core-v1/` and
+`knowledge-shard/1.1.0/record-v1/`. The immutable `1.0.0` authority remains
+vendored beside them. The upstream contract and consumer receipt record the
 immutable Fortemi commit, current and historical source paths, individual file
 digests, bundle digests, golden corpora, and the registered migration target.
 
@@ -38,8 +39,8 @@ the canonical profile.
 ### Profile-aware APIs
 
 `getKnowledgeShardProfileRegistry()` exposes the pinned authority status.
-At the current receipt, `core-v1` is supported while `full-v1` and `record-v1`
-are reserved.
+At candidate contract revision 3, `core-v1` is supported, `record-v1` is a
+schema-complete candidate, and `full-v1` remains reserved.
 
 Use `exportShardWithReport(db, { profile: 'core-v1' })` for a named PGlite
 export. It returns the archive with a versioned capability/loss report and
@@ -51,5 +52,7 @@ as the documented active-state default. The legacy `exportShard()`
 byte-returning API remains unprofiled and is not advertised as portable.
 
 RecordStore currently advertises no named profile. Its report-returning export
-API fails closed until the Fortemi authority defines `record-v1`. Both importers
-reject unknown, reserved, or backend-unsupported profiles before mutation.
+and import paths include the candidate `record-v1` implementation and exact
+validator, but both remain authority-gated and fail closed while the pinned
+contract says `supported: false`. Unknown, reserved, candidate, and
+backend-unsupported profiles fail before mutation.

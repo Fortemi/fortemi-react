@@ -401,6 +401,7 @@ export {
   profileSupportError,
   getKnowledgeShardSchema,
   validateCoreV1ShardArchive,
+  validateRecordV1ShardArchive,
   validateShardArchive,
   validateShardManifest,
   validateShardComponentRecord,

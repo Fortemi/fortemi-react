@@ -59,11 +59,16 @@ export type ShardComponent =
 export type KnowledgeShardProfile = 'core-v1' | 'full-v1' | 'record-v1'
 export type ShardBackend = 'pglite' | 'record-store'
 export type ShardOperation = 'export' | 'import'
-export type ShardAuthorityStatus = 'supported' | 'reserved' | 'unknown' | 'unprofiled'
+export type ShardAuthorityStatus =
+  | 'supported'
+  | 'candidate'
+  | 'reserved'
+  | 'unknown'
+  | 'unprofiled'
 
 export interface ShardProfileRegistryEntry {
   profile: KnowledgeShardProfile
-  authority_status: 'supported' | 'reserved'
+  authority_status: 'supported' | 'candidate' | 'reserved'
   components: ShardComponent[]
 }
 

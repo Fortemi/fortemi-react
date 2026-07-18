@@ -128,6 +128,7 @@ export {
   getKnowledgeShardContractReceipt,
   getKnowledgeShardSchema,
   validateCoreV1ShardArchive,
+  validateRecordV1ShardArchive,
   validateShardArchive,
   validateShardManifest,
   validateShardComponentRecord,

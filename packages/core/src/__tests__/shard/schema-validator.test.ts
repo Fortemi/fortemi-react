@@ -22,6 +22,7 @@ import {
   getKnowledgeShardContractReceipt,
   getKnowledgeShardSchema,
   validateCoreV1ShardArchive,
+  validateRecordV1ShardArchive,
   validateShardArchive,
   validateShardComponentRecord,
   validateShardManifest,
@@ -39,12 +40,20 @@ const historicalCanonicalFixtureRoot = resolve(
   testDir,
   'fixtures/canonical-core-v1-v1.0',
 )
+const recordCanonicalFixtureRoot = resolve(testDir, 'fixtures/canonical-record-v1')
 const canonicalFixtureNames = [
   'manifest.json',
   'notes.jsonl',
   'collections.json',
   'tags.json',
   'templates.json',
+  'links.jsonl',
+] as const
+const recordCanonicalFixtureNames = [
+  'manifest.json',
+  'notes.jsonl',
+  'collections.json',
+  'tags.json',
   'links.jsonl',
 ] as const
 
@@ -59,6 +68,15 @@ function historicalCanonicalCoreV1Files(): Map<string, Uint8Array> {
     canonicalFixtureNames.map((name) => [
       name,
       readFileSync(resolve(historicalCanonicalFixtureRoot, name)),
+    ]),
+  )
+}
+
+function canonicalRecordV1Files(): Map<string, Uint8Array> {
+  return new Map(
+    recordCanonicalFixtureNames.map((name) => [
+      name,
+      readFileSync(resolve(recordCanonicalFixtureRoot, name)),
     ]),
   )
 }
@@ -83,6 +101,7 @@ describe('knowledge shard AJV schema validator (#255)', () => {
       source: { repository: string; commit: string; contractPath: string; contractSha256: string }
       schemaBundle: { sha256: string }
       goldenCorpus: { sha256: string }
+      recordV1GoldenCorpus: { sha256: string }
       historicalReleases: {
         '1.0.0/core-v1': {
           migrationTo: string
@@ -94,15 +113,18 @@ describe('knowledge shard AJV schema validator (#255)', () => {
 
     expect(receipt.source).toEqual({
       repository: 'https://git.integrolabs.net/Fortemi/fortemi',
-      commit: 'f39b01c995f10f8da4cad662ff8e86c6130ba2b0',
+      commit: 'a49603aed802b392ab4688ac8dfc67bf83c046c2',
       contractPath: 'contracts/knowledge-shard/contract.json',
-      contractSha256: '71361756949732e51b512c1078c93003a88544d67a4f90448ade36399bc80471',
+      contractSha256: 'ee91b6d7ea1e248a11f233727cf51a1efa25c37fec8de955f86a38abe63f8523',
     })
     expect(receipt.schemaBundle.sha256).toBe(
-      '272df54aac6abf90d3d2005c2cf7cf938e3e6e140d4d15d67f2732d9b5108230',
+      '2963063ea7b332c0fdc7d00463f2775f05886d822a89b6422992206e8c111362',
     )
     expect(receipt.goldenCorpus.sha256).toBe(
       '7b19ec48e1d5dbf73e7664d7853fafa86227fc042f85c02ada6bbf75941de164',
+    )
+    expect(receipt.recordV1GoldenCorpus.sha256).toBe(
+      '76ad7cdeba3c5935ca39a32044609b0cc826862145910f8450b0d2b5fc128a19',
     )
     expect(receipt.historicalReleases['1.0.0/core-v1']).toMatchObject({
       migrationTo: '1.1.0',
@@ -130,6 +152,16 @@ describe('knowledge shard AJV schema validator (#255)', () => {
 
     expect(validateShardArchive(files)).toEqual({ valid: true, errors: [] })
     await expect(validateCoreV1ShardArchive(files)).resolves.toEqual({
+      valid: true,
+      errors: [],
+    })
+  })
+
+  it('validates the exact Fortemi record-v1 candidate corpus and checksums', async () => {
+    const files = canonicalRecordV1Files()
+
+    expect(validateShardArchive(files)).toEqual({ valid: true, errors: [] })
+    await expect(validateRecordV1ShardArchive(files)).resolves.toEqual({
       valid: true,
       errors: [],
     })
@@ -205,6 +237,34 @@ describe('knowledge shard AJV schema validator (#255)', () => {
     checksumDrift.set('notes.jsonl', padded)
     expect((await validateCoreV1ShardArchive(checksumDrift)).errors.join('\n')).toContain(
       'notes.jsonl checksum mismatch',
+    )
+  })
+
+  it('rejects record-v1 schema, reference, and checksum drift', async () => {
+    const nullScore = canonicalRecordV1Files()
+    const link = JSON.parse(
+      new TextDecoder().decode(nullScore.get('links.jsonl')),
+    ) as Record<string, unknown>
+    link.score = null
+    nullScore.set('links.jsonl', new TextEncoder().encode(JSON.stringify(link)))
+    expect(validateShardArchive(nullScore).errors.join('\n')).toContain(
+      'links.jsonl[0] /score must be number',
+    )
+
+    const missingTarget = canonicalRecordV1Files()
+    const brokenLink = JSON.parse(
+      new TextDecoder().decode(missingTarget.get('links.jsonl')),
+    ) as Record<string, unknown>
+    brokenLink.to_note_id = '018f2d2d-bc00-7cc8-8ad2-f147d6a2e700'
+    missingTarget.set('links.jsonl', new TextEncoder().encode(JSON.stringify(brokenLink)))
+    expect(validateShardArchive(missingTarget).errors.join('\n')).toContain(
+      'to_note_id does not reference a declared note',
+    )
+
+    const checksumDrift = canonicalRecordV1Files()
+    checksumDrift.set('tags.json', new TextEncoder().encode('[]'))
+    expect((await validateRecordV1ShardArchive(checksumDrift)).errors.join('\n')).toContain(
+      'tags.json count mismatch',
     )
   })
 

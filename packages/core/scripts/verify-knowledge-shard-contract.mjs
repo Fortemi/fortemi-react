@@ -40,6 +40,7 @@ if (upstreamContractSha !== receipt.source.contractSha256) {
 
 verifyBundle(receipt.schemaBundle, 'schema bundle')
 verifyBundle(receipt.goldenCorpus, 'golden corpus')
+verifyBundle(receipt.recordV1GoldenCorpus, 'record-v1 golden corpus')
 for (const [release, historical] of Object.entries(receipt.historicalReleases ?? {})) {
   verifyBundle(historical.schemaBundle, `${release} historical schema bundle`)
   verifyBundle(historical.goldenCorpus, `${release} historical golden corpus`)

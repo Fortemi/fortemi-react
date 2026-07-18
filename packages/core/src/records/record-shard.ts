@@ -60,9 +60,13 @@ import type {
   ShardAttachmentProjection,
   ShardCapabilityReport,
   ShardExportResult,
+  ShardLossEntry,
 } from '../shard/types.js'
 import { parseJsonArrayBytes, parseJsonlBytes } from '../shard/parse.js'
-import { validateCoreV1ShardArchive } from '../shard/schema-validator.js'
+import {
+  validateCoreV1ShardArchive,
+  validateRecordV1ShardArchive,
+} from '../shard/schema-validator.js'
 import { promoteBlobs } from '../shard/blob-staging.js'
 import { shouldApplyReplacement } from '../shard/convergence.js'
 import {
@@ -100,21 +104,84 @@ function emptyCounts(): ImportCounts {
 // ── Export ───────────────────────────────────────────────────────────────────
 
 export async function exportShardFromRecordsWithReport(
-  _store: RecordStore,
+  store: RecordStore,
   options: ExportOptions & { profile: string },
 ): Promise<ShardExportResult> {
-  const capabilityReport = createShardCapabilityReport({
+  let capabilityReport = createShardCapabilityReport({
     backend: 'record-store',
     operation: 'export',
     requestedProfile: options.profile,
   })
   const error = profileSupportError(capabilityReport)
-    ?? `Knowledge Shard profile '${options.profile}' is not supported by the record-store export path`
-  return {
-    success: false,
-    archive: null,
-    errors: [error],
-    capability_report: capabilityReport,
+  if (error) {
+    return {
+      success: false,
+      archive: null,
+      errors: [error],
+      capability_report: capabilityReport,
+    }
+  }
+  if (options.profile !== 'record-v1') {
+    return {
+      success: false,
+      archive: null,
+      errors: [
+        `Knowledge Shard profile '${options.profile}' is not supported by the record-store export path`,
+      ],
+      capability_report: capabilityReport,
+    }
+  }
+
+  const optionErrors = [
+    ...(options.clusterNotesSize
+      ? ['record-v1 does not declare clustered note files']
+      : []),
+    ...(options.includeBlobs
+      ? ['record-v1 declares attachment references but not blob sidecar files']
+      : []),
+  ]
+  if (optionErrors.length > 0) {
+    return {
+      success: false,
+      archive: null,
+      errors: optionErrors,
+      capability_report: capabilityReport,
+    }
+  }
+
+  try {
+    const result = await buildRecordShardArchive(store, options, 'record-v1')
+    capabilityReport = createShardCapabilityReport({
+      backend: 'record-store',
+      operation: 'export',
+      requestedProfile: options.profile,
+      declaredComponents: ['notes', 'collections', 'tags', 'links'],
+      losses: result.losses,
+    })
+    const validation = await validateRecordV1ShardArchive(result.archive)
+    if (!validation.valid) {
+      return {
+        success: false,
+        archive: null,
+        errors: [
+          `Generated record-v1 archive failed self-validation: ${validation.errors.join('; ')}`,
+        ],
+        capability_report: capabilityReport,
+      }
+    }
+    return {
+      success: true,
+      archive: result.archive,
+      errors: [],
+      capability_report: capabilityReport,
+    }
+  } catch (cause) {
+    return {
+      success: false,
+      archive: null,
+      errors: [cause instanceof Error ? cause.message : String(cause)],
+      capability_report: capabilityReport,
+    }
   }
 }
 
@@ -134,9 +201,24 @@ export async function exportShardFromRecords(
       'Named portability profiles require exportShardFromRecordsWithReport so capability and loss data cannot be discarded',
     )
   }
+  return (await buildRecordShardArchive(store, options, null)).archive
+}
+
+interface RecordShardBuildResult {
+  archive: Uint8Array
+  losses: ShardLossEntry[]
+}
+
+async function buildRecordShardArchive(
+  store: RecordStore,
+  options: ExportOptions | undefined,
+  profile: 'record-v1' | null,
+): Promise<RecordShardBuildResult> {
   const files = new Map<string, Uint8Array>()
   const components: ShardComponent[] = []
   const counts: ShardManifest['counts'] = {}
+  const losses: ShardLossEntry[] = []
+  const isRecordV1 = profile === 'record-v1'
 
   const [allNotes, originals, revisedRows, tagRows, collections, memberships, attachments, blobs] =
     await Promise.all([
@@ -192,20 +274,28 @@ export async function exportShardFromRecords(
   for (const att of orderedAttachments) {
     const blob = blobById.get(att.blob_id)
     if (!blob) continue // manifest without a blob record cannot be projected
-    const projection: ShardAttachmentProjection = {
-      extracted_text: att.extracted_text,
-      created_at: att.created_at,
-      deleted_at: att.deleted_at,
-      attachment: {
-        // `path` is the display filename per the binary-attachment projection
-        // contract — never a physical storage key.
-        id: att.id,
-        path: att.filename,
-        mime: att.mime_type,
-        checksum: blob.content_hash,
-        bytes: blob.size_bytes,
-      },
+    const attachment = {
+      // `path` is the display filename per the binary-attachment projection
+      // contract — never a physical storage key.
+      id: att.id,
+      path: att.filename,
+      mime: att.mime_type,
+      checksum: blob.content_hash,
+      bytes: blob.size_bytes,
     }
+    const projection: ShardAttachmentProjection = isRecordV1
+      ? {
+          extracted_text: att.extracted_text,
+          extraction_status: att.extracted_text === null ? 'deferred' : 'extracted',
+          reason: att.extracted_text === null ? 'no_extracted_text' : null,
+          attachment,
+        }
+      : {
+          extracted_text: att.extracted_text,
+          created_at: att.created_at,
+          deleted_at: att.deleted_at,
+          attachment,
+        }
     const list = attachmentsByNote.get(att.note_id) ?? []
     list.push(projection)
     attachmentsByNote.set(att.note_id, list)
@@ -234,7 +324,23 @@ export async function exportShardFromRecords(
   })
 
   const exportedNoteIds = new Set(browserNotes.map((n) => n.id))
-  const shardNotes = browserNotes.map((n) => noteToShard(n))
+  const exportedAttachmentRows = orderedAttachments.filter((attachment) =>
+    exportedNoteIds.has(attachment.note_id),
+  )
+  const projectedAttachmentCount = browserNotes.reduce(
+    (count, note) => count + (note.attachments?.length ?? 0),
+    0,
+  )
+  const shardNotes = browserNotes.map((note) => {
+    const mapped = noteToShard(note)
+    if (!isRecordV1) return mapped
+    return {
+      ...mapped,
+      revised_content: mapped.revised_content ?? '',
+      metadata: mapped.metadata ?? null,
+      attachments: mapped.attachments ?? [],
+    }
+  })
 
   let layout: ShardLayout | undefined
   const clusterSize = options?.clusterNotesSize
@@ -255,8 +361,8 @@ export async function exportShardFromRecords(
 
   const orderedCollections = collections
     .sort((a, b) => a.name.localeCompare(b.name))
-  const shardCollections = orderedCollections.map((c) =>
-    collectionToShard(
+  const shardCollections = orderedCollections.map((c) => {
+    const mapped = collectionToShard(
       // Canonical collections are flat (no parent hierarchy yet).
       {
         id: c.id,
@@ -268,8 +374,17 @@ export async function exportShardFromRecords(
         deleted_at: c.deleted_at,
       },
       membershipNoteIds.get(c.id)?.size ?? 0,
-    ),
-  )
+    )
+    if (!isRecordV1) return mapped
+    return {
+      id: mapped.id,
+      name: mapped.name,
+      description: mapped.description,
+      parent_id: mapped.parent_id,
+      created_at: mapped.created_at,
+      note_count: mapped.note_count ?? 0,
+    }
+  })
   files.set('collections.json', encoder.encode(JSON.stringify(shardCollections)))
   components.push('collections')
   counts.collections = shardCollections.length
@@ -304,8 +419,9 @@ export async function exportShardFromRecords(
       source_note_id: l.source_note_id,
       target_note_id: l.target_note_id,
       link_type: l.link_type,
-      // Canonical links carry no confidence score (PGlite-tier column).
-      confidence: null,
+      // record-v1 requires a numeric score; canonical links carry no
+      // confidence column, so the profile's documented neutral default is 0.
+      confidence: isRecordV1 ? 0 : null,
       created_at: l.created_at,
       deleted_at: l.deleted_at,
     }))
@@ -318,19 +434,94 @@ export async function exportShardFromRecords(
     checksums[filename] = await sha256Hex(data)
   }
 
-  const manifest: ShardManifest = {
-    version: CURRENT_SHARD_VERSION,
-    matric_version: VERSION,
-    format: SHARD_FORMAT,
-    created_at: new Date().toISOString(),
-    components,
-    counts,
-    checksums,
-    min_reader_version: '1.0.0',
-    migrated_from: null,
-    migration_history: [],
-    ...(layout ? { layout } : {}),
+  if (isRecordV1) {
+    const nullRevisions = browserNotes.filter((note) => note.revised_content === null).length
+    if (nullRevisions > 0) {
+      losses.push({
+        code: 'null-revised-content-normalized',
+        component: 'notes',
+        count: nullRevisions,
+        message: `${nullRevisions} note(s) with null revised content were normalized to an empty string.`,
+      })
+    }
+    if (projectedAttachmentCount > 0) {
+      losses.push({
+        code: 'attachment-lifecycle-outside-profile',
+        component: 'notes',
+        count: projectedAttachmentCount,
+        message: `${projectedAttachmentCount} attachment projection(s) omit RecordStore lifecycle timestamps and byte sidecars.`,
+      })
+    }
+    const omittedAttachments = exportedAttachmentRows.length - projectedAttachmentCount
+    if (omittedAttachments > 0) {
+      losses.push({
+        code: 'attachment-blob-record-missing',
+        component: 'notes',
+        count: omittedAttachments,
+        message: `${omittedAttachments} attachment record(s) without a matching blob record were omitted.`,
+      })
+    }
+    if (shardLinks.length > 0) {
+      losses.push({
+        code: 'link-confidence-defaulted',
+        component: 'links',
+        count: shardLinks.length,
+        message: `${shardLinks.length} link score(s) were set to 0 because RecordStore has no confidence field.`,
+      })
+    }
+    const collectionStateLosses = orderedCollections.filter(
+      (collection) =>
+        collection.deleted_at !== null
+        || collection.updated_at !== collection.created_at,
+    ).length
+    if (collectionStateLosses > 0) {
+      losses.push({
+        code: 'collection-lifecycle-outside-profile',
+        component: 'collections',
+        count: collectionStateLosses,
+        message: `${collectionStateLosses} collection lifecycle state(s) are outside record-v1 and were omitted.`,
+      })
+    }
   }
+
+  const manifest: ShardManifest = isRecordV1
+    ? {
+        version: CURRENT_SHARD_VERSION,
+        profile: 'record-v1',
+        producer: {
+          name: 'fortemi-react-record-store',
+          version: VERSION,
+        },
+        format: SHARD_FORMAT,
+        created_at: new Date().toISOString(),
+        components,
+        counts: {
+          notes: counts.notes ?? 0,
+          collections: counts.collections ?? 0,
+          tags: counts.tags ?? 0,
+          templates: 0,
+          links: counts.links ?? 0,
+          embedding_sets: 0,
+          embedding_set_members: 0,
+          embeddings: 0,
+          embedding_configs: 0,
+        },
+        checksums,
+        min_reader_version: CURRENT_SHARD_VERSION,
+      }
+    : {
+        version: CURRENT_SHARD_VERSION,
+        matric_version: VERSION,
+        format: SHARD_FORMAT,
+        created_at: new Date().toISOString(),
+        components,
+        counts,
+        checksums,
+        min_reader_version: '1.0.0',
+        migrated_from: null,
+        migration_history: [],
+        ...(layout ? { layout } : {}),
+      }
   files.set('manifest.json', encoder.encode(JSON.stringify(manifest, null, 2)))
 
   // Portable byte sidecar — self-verifying `blobs/<hex>` entries, one per
@@ -346,7 +537,10 @@ export async function exportShardFromRecords(
     }
   }
 
-  return packTarGz(files)
+  return {
+    archive: packTarGz(files),
+    losses,
+  }
 }
 
 // ── Import ───────────────────────────────────────────────────────────────────
@@ -479,6 +673,18 @@ export async function importShardToRecords(
         skipped,
         warnings,
         `Canonical core-v1 validation failed: ${validation.errors.join('; ')}`,
+        start,
+        capabilityReport,
+      )
+    }
+  } else if (manifest.profile === 'record-v1') {
+    const validation = await validateRecordV1ShardArchive(files)
+    if (!validation.valid) {
+      return failure(
+        counts,
+        skipped,
+        warnings,
+        `Canonical record-v1 validation failed: ${validation.errors.join('; ')}`,
         start,
         capabilityReport,
       )

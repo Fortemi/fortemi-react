@@ -66,8 +66,8 @@ const BACKEND_PROFILES: Record<
     import: ['core-v1'],
   },
   'record-store': {
-    export: [],
-    import: [],
+    export: upstreamContract.profiles['record-v1'].supported ? ['record-v1'] : [],
+    import: upstreamContract.profiles['record-v1'].supported ? ['record-v1'] : [],
   },
 }
 
@@ -95,7 +95,18 @@ function registryEntry(profile: KnowledgeShardProfile): ShardProfileRegistryEntr
     return {
       profile,
       authority_status: 'supported',
-      components: [...CORE_V1_COMPONENTS],
+      components: 'components' in source
+        ? [...source.components] as ShardComponent[]
+        : [],
+    }
+  }
+  if ('status' in source && source.status === 'candidate') {
+    return {
+      profile,
+      authority_status: 'candidate',
+      components: 'components' in source
+        ? [...source.components] as ShardComponent[]
+        : [],
     }
   }
   return {
@@ -175,6 +186,9 @@ export function profileSupportError(report: ShardCapabilityReport): string | nul
   if (report.backend_supported) return null
   if (report.authority_status === 'reserved') {
     return `Knowledge Shard profile '${report.requested_profile}' is reserved by the pinned Fortemi authority and is not supported`
+  }
+  if (report.authority_status === 'candidate') {
+    return `Knowledge Shard profile '${report.requested_profile}' is a candidate in the pinned Fortemi authority and is not yet supported`
   }
   if (report.authority_status === 'unknown') {
     return `Unknown Knowledge Shard profile '${report.requested_profile}'`

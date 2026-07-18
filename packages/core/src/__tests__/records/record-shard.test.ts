@@ -21,12 +21,17 @@ import { allMigrations } from '../../migrations/index.js'
 import { MemoryRecordStore } from '../../records/memory-record-store.js'
 import { CanonicalNotesRepository } from '../../records/canonical-notes-repository.js'
 import { CanonicalAttachmentsRepository } from '../../records/canonical-attachments-repository.js'
-import { exportShardFromRecords, importShardToRecords } from '../../records/record-shard.js'
+import {
+  exportShardFromRecords,
+  exportShardFromRecordsWithReport,
+  importShardToRecords,
+} from '../../records/record-shard.js'
 import { importShard } from '../../shard/shard-import.js'
 import { exportShard } from '../../shard/shard-export.js'
 import { packTarGz, unpackTarGz } from '../../shard/shard-tar.js'
 import { AllowlistTrustStore } from '../../shard/shard-signature.js'
 import { MemoryBlobStore } from '../../blob-store.js'
+import { validateRecordV1ShardArchive } from '../../shard/schema-validator.js'
 import type { DatabaseClient } from '../../storage-backend.js'
 import type { JournalEntry } from '../../records/types.js'
 
@@ -74,6 +79,117 @@ async function seededStore() {
 }
 
 describe('record-shard (DB-free)', () => {
+  it('keeps record-v1 fail-closed until authority support, then converges profiled bytes', async () => {
+    const src = await seededStore()
+    await src.store.put('note_revised_current', {
+      ...(await src.store.get('note_revised_current', src.b.note.id))!,
+      content: null,
+    })
+    await src.notes.softDelete(src.b.note.id)
+
+    const exported = await exportShardFromRecordsWithReport(src.store, {
+      profile: 'record-v1',
+    })
+    if (exported.capability_report.authority_status === 'candidate') {
+      expect(exported).toMatchObject({
+        success: false,
+        archive: null,
+        capability_report: {
+          backend_supported: false,
+          portable: false,
+          advertised_profiles: [],
+        },
+      })
+      expect(exported.errors.join('\n')).toContain('not yet supported')
+      return
+    }
+
+    expect(exported).toMatchObject({
+      success: true,
+      errors: [],
+      capability_report: {
+        requested_profile: 'record-v1',
+        authority_status: 'supported',
+        backend_supported: true,
+        portable: true,
+        advertised_profiles: ['record-v1'],
+        declared_components: ['notes', 'collections', 'tags', 'links'],
+      },
+    })
+    expect(exported.capability_report.losses).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'null-revised-content-normalized', count: 1 }),
+      expect.objectContaining({ code: 'attachment-lifecycle-outside-profile', count: 1 }),
+      expect.objectContaining({ code: 'link-confidence-defaulted', count: 1 }),
+    ]))
+    await expect(validateRecordV1ShardArchive(exported.archive!)).resolves.toEqual({
+      valid: true,
+      errors: [],
+    })
+
+    const files = unpackTarGz(exported.archive!)
+    expect([...files.keys()].sort()).toEqual([
+      'collections.json',
+      'links.jsonl',
+      'manifest.json',
+      'notes.jsonl',
+      'tags.json',
+    ])
+    const manifest = JSON.parse(new TextDecoder().decode(files.get('manifest.json'))) as {
+      version: string
+      profile: string
+      producer: { name: string }
+      components: string[]
+      counts: Record<string, number>
+      min_reader_version: string
+    }
+    expect(manifest).toMatchObject({
+      version: '1.1.0',
+      profile: 'record-v1',
+      producer: { name: 'fortemi-react-record-store' },
+      components: ['notes', 'collections', 'tags', 'links'],
+      counts: {
+        notes: 2,
+        collections: 1,
+        tags: 2,
+        templates: 0,
+        links: 1,
+        embedding_sets: 0,
+        embedding_set_members: 0,
+        embeddings: 0,
+        embedding_configs: 0,
+      },
+      min_reader_version: '1.1.0',
+    })
+
+    const dst = new MemoryRecordStore()
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const imported = await importShardToRecords(dst, exported.archive!, {
+        conflictStrategy: 'replace',
+      })
+      expect(imported).toMatchObject({
+        success: true,
+        capability_report: {
+          requested_profile: 'record-v1',
+          authority_status: 'supported',
+          backend_supported: true,
+          portable: true,
+        },
+      })
+    }
+    expect((await dst.get('note', src.b.note.id))?.deleted_at).not.toBeNull()
+    expect((await dst.get('note_revised_current', src.b.note.id))?.content).toBe('')
+
+    const reexported = await exportShardFromRecordsWithReport(dst, {
+      profile: 'record-v1',
+    })
+    expect(reexported.success).toBe(true)
+    const reexportedFiles = unpackTarGz(reexported.archive!)
+    for (const component of ['notes.jsonl', 'collections.json', 'tags.json', 'links.jsonl']) {
+      expect(new TextDecoder().decode(reexportedFiles.get(component)))
+        .toBe(new TextDecoder().decode(files.get(component)))
+    }
+  })
+
   it('round-trips records and sidecar bytes into a fresh store with zero PGlite', async () => {
     const src = await seededStore()
     const archive = await exportShardFromRecords(src.store, {
