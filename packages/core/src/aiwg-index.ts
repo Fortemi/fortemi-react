@@ -2747,7 +2747,7 @@ export async function aiwgFortemiIndexToKnowledgeShard(
         to_note_id: targetNoteId,
         to_url: targetNoteId ? null : `aiwg://record/${encodeURIComponent(relationship.target_id)}`,
         kind: relationship.type,
-        score: relationship.confidence ?? null,
+        score: relationship.confidence ?? 1,
         created_at: aiwgShardTimestamp(record.updated_at, createdAt),
         metadata: {
           aiwg_fortemi_index: {

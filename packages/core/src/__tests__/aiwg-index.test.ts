@@ -168,7 +168,6 @@ describe('AIWG Fortemi index adapter', () => {
           relationships: [{
             type: 'uses',
             target_id: 'aiwg:skill:design-review',
-            confidence: 0.9,
             privacy: 'sanitized',
             metadata: { source: 'frontmatter' },
           }],
@@ -212,7 +211,11 @@ describe('AIWG Fortemi index adapter', () => {
       .map((line) => JSON.parse(line) as { id: string; metadata: Record<string, unknown> })
     const links = new TextDecoder().decode(files.get('links.jsonl'))
       .split('\n')
-      .map((line) => JSON.parse(line) as { from_note_id: string; to_note_id: string })
+      .map((line) => JSON.parse(line) as {
+        from_note_id: string
+        to_note_id: string
+        score: number
+      })
 
     expect(restored).toEqual(portableIndex)
     expect(await validateCoreV1ShardArchive(files)).toEqual({ valid: true, errors: [] })
@@ -245,6 +248,7 @@ describe('AIWG Fortemi index adapter', () => {
     expect(links[0]).toMatchObject({
       from_note_id: notes[0].id,
       to_note_id: notes[1].id,
+      score: 1,
     })
   })
 
