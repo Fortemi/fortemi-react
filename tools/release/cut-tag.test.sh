@@ -31,6 +31,7 @@ cat >"$FAKE_BIN/curl" <<'EOF'
 printf '%s\n' "$*" >>"$FAKE_LOG"
 case "$*" in
   *auth/approle/login*)
+    cat >/dev/null
     printf '{"auth":{"client_token":"test-token"}}\n'
     ;;
   *auth/token/revoke-self*)
