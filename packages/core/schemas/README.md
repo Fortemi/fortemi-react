@@ -39,8 +39,8 @@ the canonical profile.
 ### Profile-aware APIs
 
 `getKnowledgeShardProfileRegistry()` exposes the pinned authority status.
-At candidate contract revision 3, `core-v1` is supported, `record-v1` is a
-schema-complete candidate, and `full-v1` remains reserved.
+At contract revision 4, `core-v1` and `record-v1` are supported, and `full-v1`
+remains reserved.
 
 Use `exportShardWithReport(db, { profile: 'core-v1' })` for a named PGlite
 export. It returns the archive with a versioned capability/loss report and
@@ -51,8 +51,7 @@ readable under their immutable validators, with missing tombstones interpreted
 as the documented active-state default. The legacy `exportShard()`
 byte-returning API remains unprofiled and is not advertised as portable.
 
-RecordStore currently advertises no named profile. Its report-returning export
-and import paths include the candidate `record-v1` implementation and exact
-validator, but both remain authority-gated and fail closed while the pinned
-contract says `supported: false`. Unknown, reserved, candidate, and
+RecordStore advertises `record-v1` for named export and import. Its
+report-returning paths emit the mandatory loss report and validate the exact
+profile before returning bytes or mutating records. Unknown, reserved, and
 backend-unsupported profiles fail before mutation.

@@ -72,7 +72,7 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       { profile: 'full-v1', authority_status: 'reserved', components: [] },
       {
         profile: 'record-v1',
-        authority_status: 'candidate',
+        authority_status: 'supported',
         components: ['notes', 'collections', 'tags', 'links'],
       },
     ])
@@ -87,8 +87,8 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       portable: true,
       advertised_profiles: ['core-v1'],
       authority: {
-        commit: 'a49603aed802b392ab4688ac8dfc67bf83c046c2',
-        contract_revision: '3',
+        commit: 'b5faad1dafac8346a0b6c06316c83776f5ebb47f',
+        contract_revision: '4',
         schema_version: '1.1.0',
       },
     })
@@ -97,10 +97,10 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       operation: 'export',
       requestedProfile: 'record-v1',
     })).toMatchObject({
-      authority_status: 'candidate',
-      backend_supported: false,
-      portable: false,
-      advertised_profiles: [],
+      authority_status: 'supported',
+      backend_supported: true,
+      portable: true,
+      advertised_profiles: ['record-v1'],
       supported_components: ['notes', 'collections', 'tags', 'links'],
     })
   })
@@ -301,12 +301,12 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       },
     })
 
-    const candidate = await exportShardWithReport(noQueryDb, { profile: 'record-v1' })
-    expect(candidate).toMatchObject({
+    const backendIncompatible = await exportShardWithReport(noQueryDb, { profile: 'record-v1' })
+    expect(backendIncompatible).toMatchObject({
       success: false,
       archive: null,
       capability_report: {
-        authority_status: 'candidate',
+        authority_status: 'supported',
         backend_supported: false,
       },
     })
@@ -327,17 +327,19 @@ describe('Knowledge Shard portability profiles (#355)', () => {
     )
 
     const records = new MemoryRecordStore()
-    await expect(exportShardFromRecordsWithReport(records, {
+    const supported = await exportShardFromRecordsWithReport(records, {
       profile: 'record-v1',
-    })).resolves.toMatchObject({
-      success: false,
-      archive: null,
+    })
+    expect(supported).toMatchObject({
+      success: true,
+      errors: [],
       capability_report: {
-        authority_status: 'candidate',
-        backend_supported: false,
-        advertised_profiles: [],
+        authority_status: 'supported',
+        backend_supported: true,
+        advertised_profiles: ['record-v1'],
       },
     })
+    expect(supported.archive).toBeInstanceOf(Uint8Array)
     expect(await records.headSeq()).toBe(0)
   })
 })

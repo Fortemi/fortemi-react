@@ -113,9 +113,9 @@ describe('knowledge shard AJV schema validator (#255)', () => {
 
     expect(receipt.source).toEqual({
       repository: 'https://git.integrolabs.net/Fortemi/fortemi',
-      commit: 'a49603aed802b392ab4688ac8dfc67bf83c046c2',
+      commit: 'b5faad1dafac8346a0b6c06316c83776f5ebb47f',
       contractPath: 'contracts/knowledge-shard/contract.json',
-      contractSha256: 'ee91b6d7ea1e248a11f233727cf51a1efa25c37fec8de955f86a38abe63f8523',
+      contractSha256: '702ace1961cbbbdb88b01ba7137227dbfa81a7fd4f7bc9392d295c602469ef00',
     })
     expect(receipt.schemaBundle.sha256).toBe(
       '2963063ea7b332c0fdc7d00463f2775f05886d822a89b6422992206e8c111362',
@@ -157,7 +157,7 @@ describe('knowledge shard AJV schema validator (#255)', () => {
     })
   })
 
-  it('validates the exact Fortemi record-v1 candidate corpus and checksums', async () => {
+  it('validates the exact supported Fortemi record-v1 corpus and checksums', async () => {
     const files = canonicalRecordV1Files()
 
     expect(validateShardArchive(files)).toEqual({ valid: true, errors: [] })

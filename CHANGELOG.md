@@ -4,6 +4,13 @@ All notable changes to fortemi-react are documented here.
 
 ## v2026.7.8 - 2026-07-17
 
+### `@fortemi/core` - Knowledge Shard `record-v1` conformance (#355)
+
+- RecordStore named Knowledge Shard export/import now advertises the supported
+  `record-v1` profile pinned to Fortemi contract revision 4. Generated archives
+  self-validate and report every lossy or omitted source concept; `full-v1`
+  remains reserved.
+
 ### `@fortemi/core` - Writable record tier without PGlite (#323, #322)
 
 - New `createRecordBackend` wraps the canonical RecordStore as a writable

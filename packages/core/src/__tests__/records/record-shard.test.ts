@@ -79,7 +79,7 @@ async function seededStore() {
 }
 
 describe('record-shard (DB-free)', () => {
-  it('keeps record-v1 fail-closed until authority support, then converges profiled bytes', async () => {
+  it('exports, imports, and converges supported record-v1 bytes', async () => {
     const src = await seededStore()
     await src.store.put('note_revised_current', {
       ...(await src.store.get('note_revised_current', src.b.note.id))!,
@@ -90,20 +90,6 @@ describe('record-shard (DB-free)', () => {
     const exported = await exportShardFromRecordsWithReport(src.store, {
       profile: 'record-v1',
     })
-    if (exported.capability_report.authority_status === 'candidate') {
-      expect(exported).toMatchObject({
-        success: false,
-        archive: null,
-        capability_report: {
-          backend_supported: false,
-          portable: false,
-          advertised_profiles: [],
-        },
-      })
-      expect(exported.errors.join('\n')).toContain('not yet supported')
-      return
-    }
-
     expect(exported).toMatchObject({
       success: true,
       errors: [],

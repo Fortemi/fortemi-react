@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "source": {
     "repository": "https://git.integrolabs.net/Fortemi/fortemi",
-    "commit": "a49603aed802b392ab4688ac8dfc67bf83c046c2",
+    "commit": "b5faad1dafac8346a0b6c06316c83776f5ebb47f",
     "contractPath": "contracts/knowledge-shard/contract.json",
-    "contractSha256": "ee91b6d7ea1e248a11f233727cf51a1efa25c37fec8de955f86a38abe63f8523"
+    "contractSha256": "702ace1961cbbbdb88b01ba7137227dbfa81a7fd4f7bc9392d295c602469ef00"
   },
   "knowledgeShard": {
     "schemaVersion": "1.1.0",
@@ -91,8 +91,8 @@
     }
   },
   "limitations": [
-    "This receipt proves exact vendored core-v1 and record-v1 candidate bytes and local validation only.",
-    "The pinned authority still marks record-v1 as a candidate with supported=false; public producer and consumer advertisements remain disabled.",
+    "This receipt proves exact vendored core-v1 and record-v1 bytes; the authority's adjacent cross-repository receipt records the producer/server/return-consumer execution.",
+    "The pinned authority marks record-v1 as supported; RecordStore producer and consumer advertisements are enabled.",
     "Schema 1.0.0 note records map missing deleted_at to the documented null active state.",
     "Complete absent-versus-null preservation, full-v1, and attachment-byte portability are not established."
   ]
