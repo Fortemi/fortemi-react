@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "source": {
     "repository": "https://git.integrolabs.net/Fortemi/fortemi",
-    "commit": "b5faad1dafac8346a0b6c06316c83776f5ebb47f",
+    "commit": "e62ee6bb7eb30f2ef68c0be0a1207ee687222c56",
     "contractPath": "contracts/knowledge-shard/contract.json",
-    "contractSha256": "702ace1961cbbbdb88b01ba7137227dbfa81a7fd4f7bc9392d295c602469ef00"
+    "contractSha256": "dbe9ce4999835b40af540c17fd543b18aafea1d5e73ec436d969d02343d2e4bd"
   },
   "knowledgeShard": {
     "schemaVersion": "1.1.0",
@@ -15,7 +15,7 @@
     "sourceRoot": "contracts/knowledge-shard/1.1.0",
     "vendoredRoot": "schemas/knowledge-shard/1.1.0",
     "aggregateAlgorithm": "sha256(raw file bytes concatenated in lexicographic path order)",
-    "sha256": "2963063ea7b332c0fdc7d00463f2775f05886d822a89b6422992206e8c111362",
+    "sha256": "7d3ebc4d1e1789ad0dc0e27ea3de58a16c3ffd0d8e19b92cbe23eb4f8b58dacb",
     "files": {
       "core-v1/collection.schema.json": "4708374341b2ca1c9f51290c140281deaefd33aaad0cf5051d17b53eb23f3cf6",
       "core-v1/link.schema.json": "c907ca29ab9233af2e8f45d0a39beeeb3c1bdf2219f947ac353689af6c1c848f",
@@ -23,6 +23,36 @@
       "core-v1/note.schema.json": "1494dda5ab3184ff0c302d91d103b10dfba4872c48dec7e2eaaf83d18f62d487",
       "core-v1/tag.schema.json": "79f4a6a7a996600a0ddb44a6194e2744196c47af8d72c04b8d78a2f42899b92a",
       "core-v1/template.schema.json": "fdd4f9a6d2c9e34652e67652424bd81d479bdd16772a0375dbf12bc4b181db17",
+      "full-v1/community-assignment.schema.json": "e589ca5cfb9a7498bb238449bc35e52a39f202e66f1f98b2ae662a3bfbd3e575",
+      "full-v1/community-set.schema.json": "0f28ab050919b5f6cff5c7065fe52a8f6ebcec58567f525772bf9e39939b1ebb",
+      "full-v1/embedding-config.schema.json": "40ea1250ea8ecf9850f6dd22891ed519c20182f0f2956ae87f3c51ed2962a770",
+      "full-v1/embedding-set-member.schema.json": "011ca0653b89b3075a251b3c4d7ac92888d414cb00763381eebcfe9018a101aa",
+      "full-v1/embedding-set.schema.json": "7d8dc0d4caf3c45835181c336d5111e10c1a07086e2e21252122fde2024586b8",
+      "full-v1/embedding.schema.json": "531be536f38d9af2bf13c5ddf1c077e1dfa969b7abf24fc5595ea98c530370d2",
+      "full-v1/graph-edge.schema.json": "7df521c217de27f114254737e3745bd4daf693ff432cab84d7faded47f79f1a6",
+      "full-v1/graph-source.schema.json": "bbe45c85518783028932b416495d4beb0b4316e38a9d085d494a438aeb51668c",
+      "full-v1/manifest.schema.json": "3bc34056745a710e959676fc498f16f385a36a98bb1e3d9c59f3e5f9dd95e423",
+      "full-v1/named-location.schema.json": "f86ec38aa92432765ee1424f57a58abb8cef85d14f2396a40ca237848f4bb118",
+      "full-v1/note-original-history.schema.json": "d8c4f0724748b38cde81dae727a305e2ac515965df22e0de5d86806bfd6f8ce4",
+      "full-v1/note-original.schema.json": "bc525530162860fcdd2b6583352a23dd75029eb3e0c7e318e27900650425b3e7",
+      "full-v1/note-revised-current.schema.json": "2f128e9a0cb18618e0141d16f76b6f66635aeddb523691e592b1c13604f5f950",
+      "full-v1/note-revision.schema.json": "a86bbec5d992d1d7d91530ea6efc698ac5b6c3070f5b44a80cb9449002b7d31e",
+      "full-v1/note-skos-tag.schema.json": "c161aee0a71a0733f57676f013d62e14c88c635780ead967b7f3cc5e6f0ba9b4",
+      "full-v1/provenance-activity.schema.json": "01250dafd0604bb233f67c2d8aca334e890237ffc9022bc622ee1a66cc2f9977",
+      "full-v1/provenance-device.schema.json": "8037afafe7b83b6c61df7da424bdea7afd74ca6a89249ffc6c27dcb9e4d62772",
+      "full-v1/provenance-edge.schema.json": "80c84d675873c82687b629fc2f59392a03621531255c5a1d720571ed853cd3c1",
+      "full-v1/provenance-location.schema.json": "48a2cc223a8d1ee453889375392bc968358baf027509ba701853d840d30b8a14",
+      "full-v1/provenance-record.schema.json": "44c5ee7fdd7a59c368069d8b93cf17d6e1fe6824728febac9e9517fdb6da9b63",
+      "full-v1/signature.schema.json": "31f3034d789df165914284344b61e3415d5366c095bfd30ef5ac85e3d2b89532",
+      "full-v1/skos-collection-member.schema.json": "0a437fbd7176871c992c310b0a10619ff259becd39e6f69822ca5886a65ae906",
+      "full-v1/skos-collection.schema.json": "03243f57d063106f079985c75c38a8e07885d3714927e8864599f003fce33aa1",
+      "full-v1/skos-concept.schema.json": "537e7f043012e6d2564ad7c81a6a81fa44d350a5198677137dd3b1a239b67d3c",
+      "full-v1/skos-label.schema.json": "bd867f722b66fe3cb8106a7a2a4119cc8188b34468fd5069d483ae1f08d8ba99",
+      "full-v1/skos-mapping-relation.schema.json": "d562c44c4c3f0a27256d45e976cb40f7f1a1de2d24b1701a3d707637619c2532",
+      "full-v1/skos-note.schema.json": "d97bf9ea27d3868bc1c881e311710957d9bc72a7f4a58b4a6d7e09783c7f8830",
+      "full-v1/skos-relation.schema.json": "c476c082da6be5550afd9f7277a2bb68b9b20a51a4cd97e4d10b246aa0b08f71",
+      "full-v1/skos-scheme-membership.schema.json": "68b8b69cd7d92bc08b58c9597c21831ea2b01ce15731928865337346b34c1c69",
+      "full-v1/skos-scheme.schema.json": "61fd27dd2eed109a63a69cf5a1ef98475ec6af03d6afd52d2ac54a94fe45a9de",
       "record-v1/collection.schema.json": "61bc4d717b097b3e6c77b716a9adaa71acbca9228b66f0d4b7d83a060476680d",
       "record-v1/link.schema.json": "3fe3b6632412c23319f8a4385c937066fbf2ba90af7f8170eaa57a951f4d65c5",
       "record-v1/manifest.schema.json": "42cd8b8c3d30014b819076fa4ab4e462d18171511985f428d8fa99947466ee03",
@@ -56,6 +86,14 @@
       "notes.jsonl": "6e8f61e439111df04261a029605044b7d91f9d02f53f375a01ca8b6b69e8cbca",
       "tags.json": "efdb1a3a8d2af487e999e41b9130b4a527a67bb7947e7f2c8a65f85bde88a112"
     }
+  },
+  "fullV1IntegratedFixture": {
+    "sourceArchive": "tests/fixtures/shards/full-v1-integrated-candidate.shard",
+    "vendoredArchive": "src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-18.shard",
+    "archiveSha256": "b6110221bc6c5a5ad5596f565c49141eaa3b58a17111c4f525d2310ed3fcd7ae",
+    "sourceReceipt": "tests/fixtures/shards/full-v1-integrated-candidate.shard.receipt.json",
+    "vendoredReceipt": "src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-18.shard.receipt.json",
+    "receiptSha256": "bc0c068a0c6470b20e485eec1fe1d8f172c4a5eaeabdfd1c324b1534977d8375"
   },
   "historicalReleases": {
     "1.0.0/core-v1": {
@@ -91,9 +129,10 @@
     }
   },
   "limitations": [
-    "This receipt proves exact vendored core-v1 and record-v1 bytes; the authority's adjacent cross-repository receipt records the producer/server/return-consumer execution.",
+    "This receipt proves exact vendored core-v1, record-v1, and full-v1 authority bytes plus the server's signed integrated full-v1 fixture.",
     "The pinned authority marks record-v1 as supported; RecordStore producer and consumer advertisements are enabled.",
+    "The pinned authority marks full-v1 as supported, but React backends do not advertise it until their complete producer and persistence paths are implemented.",
     "Schema 1.0.0 note records map missing deleted_at to the documented null active state.",
-    "Complete absent-versus-null preservation, full-v1, and attachment-byte portability are not established."
+    "The full-v1 validator enforces the complete component inventory and mandatory attachment bytes; it does not by itself establish a React producer or destination receipt."
   ]
 }

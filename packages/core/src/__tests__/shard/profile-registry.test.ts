@@ -63,19 +63,29 @@ describe('Knowledge Shard portability profiles (#355)', () => {
   })
 
   it('derives authority status and backend advertisements from the pinned registry', () => {
-    expect(getKnowledgeShardProfileRegistry()).toEqual([
-      {
-        profile: 'core-v1',
-        authority_status: 'supported',
-        components: ['notes', 'collections', 'tags', 'templates', 'links'],
-      },
-      { profile: 'full-v1', authority_status: 'reserved', components: [] },
-      {
-        profile: 'record-v1',
-        authority_status: 'supported',
-        components: ['notes', 'collections', 'tags', 'links'],
-      },
-    ])
+    const registry = getKnowledgeShardProfileRegistry()
+    expect(registry[0]).toEqual({
+      profile: 'core-v1',
+      authority_status: 'supported',
+      components: ['notes', 'collections', 'tags', 'templates', 'links'],
+    })
+    expect(registry[1]).toMatchObject({
+      profile: 'full-v1',
+      authority_status: 'supported',
+      components: expect.arrayContaining([
+        'notes',
+        'note_revisions',
+        'provenance_records',
+        'skos_collection_members',
+        'community_assignments',
+      ]),
+    })
+    expect(registry[1].components).toHaveLength(33)
+    expect(registry[2]).toEqual({
+      profile: 'record-v1',
+      authority_status: 'supported',
+      components: ['notes', 'collections', 'tags', 'links'],
+    })
 
     expect(createShardCapabilityReport({
       backend: 'pglite',
@@ -87,8 +97,8 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       portable: true,
       advertised_profiles: ['core-v1'],
       authority: {
-        commit: 'b5faad1dafac8346a0b6c06316c83776f5ebb47f',
-        contract_revision: '4',
+        commit: 'e62ee6bb7eb30f2ef68c0be0a1207ee687222c56',
+        contract_revision: '18',
         schema_version: '1.1.0',
       },
     })
@@ -254,7 +264,7 @@ describe('Knowledge Shard portability profiles (#355)', () => {
     expect(await records.headSeq()).toBe(0)
   }, 30_000)
 
-  it('rejects reserved profiles before either importer can query or mutate', async () => {
+  it('rejects authority-supported but unimplemented profiles before querying or mutating', async () => {
     const archive = reservedProfileArchive('full-v1')
     const noQueryDb = {
       query: () => {
@@ -270,11 +280,13 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       success: false,
       capability_report: {
         requested_profile: 'full-v1',
-        authority_status: 'reserved',
+        authority_status: 'supported',
         backend_supported: false,
       },
     })
-    expect(pglite.errors.join('\n')).toContain('reserved by the pinned Fortemi authority')
+    expect(pglite.errors.join('\n')).toContain(
+      'not supported by the pglite import path',
+    )
 
     const records = new MemoryRecordStore()
     const recordResult = await importShardToRecords(records, archive)
@@ -282,7 +294,7 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       success: false,
       capability_report: {
         requested_profile: 'full-v1',
-        authority_status: 'reserved',
+        authority_status: 'supported',
         backend_supported: false,
       },
     })

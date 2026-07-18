@@ -17,11 +17,13 @@ import { allMigrations } from '../../migrations/index.js'
 import { NotesRepository } from '../../repositories/notes-repository.js'
 import { LinksRepository } from '../../repositories/links-repository.js'
 import { exportShard } from '../../shard/shard-export.js'
+import { unpackTarGz } from '../../shard/shard-tar.js'
 import {
   assertShardComponentRecord,
   getKnowledgeShardContractReceipt,
   getKnowledgeShardSchema,
   validateCoreV1ShardArchive,
+  validateFullV1ShardArchive,
   validateRecordV1ShardArchive,
   validateShardArchive,
   validateShardComponentRecord,
@@ -41,6 +43,10 @@ const historicalCanonicalFixtureRoot = resolve(
   'fixtures/canonical-core-v1-v1.0',
 )
 const recordCanonicalFixtureRoot = resolve(testDir, 'fixtures/canonical-record-v1')
+const fullV1FixturePath = resolve(
+  testDir,
+  'fixtures/full-v1/server-full-v1-revision-18.shard',
+)
 const canonicalFixtureNames = [
   'manifest.json',
   'notes.jsonl',
@@ -102,6 +108,10 @@ describe('knowledge shard AJV schema validator (#255)', () => {
       schemaBundle: { sha256: string }
       goldenCorpus: { sha256: string }
       recordV1GoldenCorpus: { sha256: string }
+      fullV1IntegratedFixture: {
+        archiveSha256: string
+        receiptSha256: string
+      }
       historicalReleases: {
         '1.0.0/core-v1': {
           migrationTo: string
@@ -113,12 +123,12 @@ describe('knowledge shard AJV schema validator (#255)', () => {
 
     expect(receipt.source).toEqual({
       repository: 'https://git.integrolabs.net/Fortemi/fortemi',
-      commit: 'b5faad1dafac8346a0b6c06316c83776f5ebb47f',
+      commit: 'e62ee6bb7eb30f2ef68c0be0a1207ee687222c56',
       contractPath: 'contracts/knowledge-shard/contract.json',
-      contractSha256: '702ace1961cbbbdb88b01ba7137227dbfa81a7fd4f7bc9392d295c602469ef00',
+      contractSha256: 'dbe9ce4999835b40af540c17fd543b18aafea1d5e73ec436d969d02343d2e4bd',
     })
     expect(receipt.schemaBundle.sha256).toBe(
-      '2963063ea7b332c0fdc7d00463f2775f05886d822a89b6422992206e8c111362',
+      '7d3ebc4d1e1789ad0dc0e27ea3de58a16c3ffd0d8e19b92cbe23eb4f8b58dacb',
     )
     expect(receipt.goldenCorpus.sha256).toBe(
       '7b19ec48e1d5dbf73e7664d7853fafa86227fc042f85c02ada6bbf75941de164',
@@ -126,6 +136,15 @@ describe('knowledge shard AJV schema validator (#255)', () => {
     expect(receipt.recordV1GoldenCorpus.sha256).toBe(
       '76ad7cdeba3c5935ca39a32044609b0cc826862145910f8450b0d2b5fc128a19',
     )
+    expect(receipt.fullV1IntegratedFixture).toEqual({
+      sourceArchive: 'tests/fixtures/shards/full-v1-integrated-candidate.shard',
+      vendoredArchive: 'src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-18.shard',
+      archiveSha256: 'b6110221bc6c5a5ad5596f565c49141eaa3b58a17111c4f525d2310ed3fcd7ae',
+      sourceReceipt: 'tests/fixtures/shards/full-v1-integrated-candidate.shard.receipt.json',
+      vendoredReceipt:
+        'src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-18.shard.receipt.json',
+      receiptSha256: 'bc0c068a0c6470b20e485eec1fe1d8f172c4a5eaeabdfd1c324b1534977d8375',
+    })
     expect(receipt.historicalReleases['1.0.0/core-v1']).toMatchObject({
       migrationTo: '1.1.0',
     })
@@ -164,6 +183,66 @@ describe('knowledge shard AJV schema validator (#255)', () => {
     await expect(validateRecordV1ShardArchive(files)).resolves.toEqual({
       valid: true,
       errors: [],
+    })
+  })
+
+  it('validates the exact Fortemi revision-18 full-v1 integrated archive', async () => {
+    const archive = readFileSync(fullV1FixturePath)
+
+    expect(validateShardArchive(archive)).toEqual({ valid: true, errors: [] })
+    await expect(validateFullV1ShardArchive(archive)).resolves.toEqual({
+      valid: true,
+      errors: [],
+    })
+  })
+
+  it('rejects full-v1 component, count, and mandatory-byte drift', async () => {
+    const archive = readFileSync(fullV1FixturePath)
+    const files = unpackTarGz(archive)
+    const missingComponent = new Map(files)
+    missingComponent.delete('skos_labels.jsonl')
+    await expect(validateFullV1ShardArchive(missingComponent)).resolves.toMatchObject({
+      valid: false,
+      errors: expect.arrayContaining(['skos_labels.jsonl is declared but missing']),
+    })
+
+    const missingBlob = new Map(files)
+    missingBlob.delete(
+      'blobs/1098b345e8aacd29e640d3bf724368680c1bfd401b5a9105cb2dc924740c27ad',
+    )
+    await expect(validateFullV1ShardArchive(missingBlob)).resolves.toMatchObject({
+      valid: false,
+      errors: expect.arrayContaining([
+        expect.stringContaining('is missing mandatory sidecar'),
+      ]),
+    })
+
+    const countDrift = new Map(files)
+    const manifest = JSON.parse(
+      new TextDecoder().decode(countDrift.get('manifest.json')),
+    ) as { counts: Record<string, number> }
+    manifest.counts.skos_labels = 99
+    countDrift.set(
+      'manifest.json',
+      new TextEncoder().encode(JSON.stringify(manifest)),
+    )
+    await expect(validateFullV1ShardArchive(countDrift)).resolves.toMatchObject({
+      valid: false,
+      errors: expect.arrayContaining([
+        'skos_labels.jsonl count mismatch: manifest=99 actual=2',
+      ]),
+    })
+
+    const corruptBlob = new Map(files)
+    corruptBlob.set(
+      'blobs/1098b345e8aacd29e640d3bf724368680c1bfd401b5a9105cb2dc924740c27ad',
+      new TextEncoder().encode('corrupt fixture bytes'),
+    )
+    await expect(validateFullV1ShardArchive(corruptBlob)).resolves.toMatchObject({
+      valid: false,
+      errors: expect.arrayContaining([
+        expect.stringContaining('sidecar checksum mismatch'),
+      ]),
     })
   })
 

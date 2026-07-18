@@ -79,19 +79,19 @@ insufficient release evidence.
 
 ## Implementation
 
-- @packages/core/src/shard/schema-validator.ts enforces the pinned `core-v1` manifest and record schemas, archive topology, counts, references, and checksums.
+- @packages/core/src/shard/schema-validator.ts enforces the pinned `core-v1`, `record-v1`, and validation-only `full-v1` manifest and record schemas, archive topology, counts, references, checksums, and mandatory `full-v1` blob sidecars.
 - @packages/core/src/shard/shard-import.ts runs canonical validation before PGlite mutation.
 - @packages/core/src/records/record-shard.ts runs the same gate before RecordStore mutation.
 - @packages/core/src/__tests__/shard/shard-import.test.ts and @packages/core/src/__tests__/records/record-shard.test.ts verify validation failures leave both destinations unchanged.
 - @packages/core/src/shard/profile-registry.ts derives authority status and backend advertisements from the pinned receipt.
 - @packages/core/src/shard/shard-export.ts emits and self-validates explicit PGlite `core-v1` archives with machine-readable capability/loss reports.
-- @packages/core/src/__tests__/shard/profile-registry.test.ts verifies supported/reserved status, strict producer output, PGlite import, and RecordStore fail-closed behavior.
+- @packages/core/src/__tests__/shard/profile-registry.test.ts verifies authority status independently from backend advertisements, strict producer output, PGlite import, and RecordStore fail-closed behavior.
 - On 2026-07-17, a React-produced archive (`sha256:5444ca75a9a4d76dfff118e1a5afc05f0e33cbc66b6900d63513311608d6849c`) passed both dry-run and mutating multipart import through Fortemi commit `6f13e7ad86243f39666f8bbb0bb680b3cebab9e9`; Fortemi then re-exported the clean database (`sha256:ce42b96733fdbac18ca98a1d70afc97c6fdab92b04e87f77d56486fb2ce9df47`), and a clean PGlite import restored the note and tags. This is evidence for `core-v1` only.
 - @packages/core/src/shard/schema-validator.ts selects the immutable `1.0.0` or current `1.1.0` canonical bundle from the manifest version. Named PGlite exports use `1.1.0`, include active and soft-deleted notes, emit exact `deleted_at` state, and restore that state inside the existing import transaction.
 - On 2026-07-18, a schema `1.1.0` React archive containing an active note and a soft-deleted note (`sha256:c3605945c69893ba2e56091a4b1149b7ab598087d3fa2ee5c288acb506969f94`) passed isolated dry-run and repeated mutating imports through Fortemi commit `f39b01c995f10f8da4cad662ff8e86c6130ba2b0`. Dry-run left the clean destination at zero notes and zero tag rows. Fortemi re-exported the populated destination (`sha256:cac731d33f1183d73c5db958c454f22e9dfac09846e7e01c4c7486805c7b631a`); the React validator accepted that archive and a clean PGlite import restored both bodies, all three note-tag associations, active `deleted_at:null`, and tombstone instant `2026-07-18T04:30:00.000Z`. This receipt proves only the declared, byte-free `core-v1` surface.
 - @packages/core/src/records/types.ts, @packages/core/src/records/idb-record-store.ts, and @packages/core/src/records/memory-record-store.ts provide a multi-collection atomic batch with journal atomicity for RecordStore import.
 - @packages/core/src/shard/blob-staging.ts promotes verified sidecars before the logical transaction and removes only newly introduced hashes on synchronous failure.
-- @packages/core/src/shard/shard-import.ts and @packages/core/src/records/record-shard.ts preserve representable null, tombstone, and timestamp state and reconcile imported-note relationships for legacy unprofiled replace imports. Failure-injection and repeat-import tests cover PGlite and RecordStore. This does not add named-profile support; `full-v1` and `record-v1` remain reserved by the pinned authority.
+- @packages/core/src/shard/shard-import.ts and @packages/core/src/records/record-shard.ts preserve representable null, tombstone, and timestamp state and reconcile imported-note relationships for legacy unprofiled replace imports. Failure-injection and repeat-import tests cover PGlite and RecordStore. The pinned revision-18 authority supports all three named profiles; PGlite still advertises only `core-v1`, RecordStore advertises only `record-v1`, and neither backend advertises `full-v1` until its complete producer and persistence path exists.
 
 ## Consequences
 

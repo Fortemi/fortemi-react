@@ -35,14 +35,29 @@ const ALL_COMPONENTS: readonly ShardComponent[] = [
   'tags',
   'templates',
   'links',
+  'note_originals',
+  'note_original_history',
+  'note_revised_current',
+  'note_revisions',
   'embedding_sets',
   'embedding_configs',
   'embedding_set_members',
   'embeddings',
+  'provenance_activities',
+  'named_locations',
+  'provenance_locations',
+  'provenance_devices',
+  'provenance_records',
   'skos_schemes',
   'skos_concepts',
+  'skos_labels',
+  'skos_notes',
   'skos_relations',
+  'skos_mapping_relations',
+  'skos_scheme_memberships',
   'note_skos_tags',
+  'skos_collections',
+  'skos_collection_members',
   'provenance_edges',
   'community_assignments',
   'communities',
@@ -92,12 +107,15 @@ function isKnownProfile(profile: string): profile is KnowledgeShardProfile {
 function registryEntry(profile: KnowledgeShardProfile): ShardProfileRegistryEntry {
   const source = upstreamContract.profiles[profile]
   if ('supported' in source && source.supported) {
+    const components = 'components' in source
+      ? source.components
+      : 'candidateComponents' in source
+        ? source.candidateComponents
+        : []
     return {
       profile,
       authority_status: 'supported',
-      components: 'components' in source
-        ? [...source.components] as ShardComponent[]
-        : [],
+      components: [...components] as ShardComponent[],
     }
   }
   if ('status' in source && source.status === 'candidate') {

@@ -132,11 +132,12 @@ Compatibility claims MUST name one of these profiles and the evidence version:
 
 The pinned Fortemi receipt is normative for current availability, not this
 conceptual profile table. At receipt commit
-`f39b01c995f10f8da4cad662ff8e86c6130ba2b0`, contract revision `2`, schema
-`1.1.0`, only `core-v1` is supported; `full-v1` and `record-v1` are reserved.
-PGlite advertises `core-v1` only and preserves its note tombstones. RecordStore
-advertises no named profile until an authority-owned profile and
-producer/consumer fixture evidence exist.
+`e62ee6bb7eb30f2ef68c0be0a1207ee687222c56`, contract revision `18`, schema
+`1.1.0`, `core-v1`, `record-v1`, and `full-v1` are authority-supported. Backend
+advertisements remain narrower than authority availability: PGlite advertises
+`core-v1`, RecordStore advertises `record-v1`, and neither advertises `full-v1`
+until its complete producer and persistence path passes the required
+cross-repository receipts.
 
 An importer must unpack into staging, validate the manifest, semantic version,
 checksums, profile, component records, counts, and required sidecars, and only
