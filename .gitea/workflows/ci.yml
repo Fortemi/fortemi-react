@@ -132,6 +132,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - name: Verify clean-installed Core package
+        shell: bash
         run: |
           set -euo pipefail
           CORE_VERSION="$(node -p "require('./packages/core/package.json').version")"
