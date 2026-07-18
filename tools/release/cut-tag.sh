@@ -77,13 +77,24 @@ for required in VAULT_ADDR VAULT_CI_ROLE_ID VAULT_CI_SECRET_ID; do
   fi
 done
 
-RELEASE_TEMP_PARENT="${XDG_RUNTIME_DIR:-}"
-if [ -z "$RELEASE_TEMP_PARENT" ] || [ ! -d "$RELEASE_TEMP_PARENT" ] || [ ! -w "$RELEASE_TEMP_PARENT" ]; then
-  if [ -d /dev/shm ] && [ -w /dev/shm ]; then
-    RELEASE_TEMP_PARENT=/dev/shm
-  else
-    RELEASE_TEMP_PARENT="${TMPDIR:-/tmp}"
+is_writable_tmpfs() {
+  local path="$1"
+  [ -n "$path" ] &&
+    [ -d "$path" ] &&
+    [ -w "$path" ] &&
+    [ "$(stat -f -c %T "$path" 2>/dev/null || true)" = "tmpfs" ]
+}
+
+RELEASE_TEMP_PARENT=""
+for candidate in "${XDG_RUNTIME_DIR:-}" /dev/shm; do
+  if is_writable_tmpfs "$candidate"; then
+    RELEASE_TEMP_PARENT="$candidate"
+    break
   fi
+done
+if [ -z "$RELEASE_TEMP_PARENT" ]; then
+  echo "FAIL: Release signing requires a writable tmpfs scratch surface." >&2
+  exit 1
 fi
 RELEASE_TEMP_ROOT="$(mktemp -d "$RELEASE_TEMP_PARENT/fortemi-release-signing.XXXXXX")"
 RELEASE_GNUPGHOME="$RELEASE_TEMP_ROOT/gnupg"

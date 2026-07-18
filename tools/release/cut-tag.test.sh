@@ -3,7 +3,8 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
+RUNTIME_PARENT="$(mktemp -d /dev/shm/fortemi-release-test.XXXXXX)"
+trap 'rm -rf "$TMP" "$RUNTIME_PARENT"' EXIT
 
 VERSION="$(node -e "console.log(require('$ROOT/package.json').version)")"
 FINGERPRINT="FE9272F0BC5781E1DE77FAAA719AB63879E84CE8"
@@ -11,7 +12,7 @@ FIXTURE="$TMP/repo"
 FAKE_BIN="$TMP/bin"
 mkdir -p "$FIXTURE/tools/release" "$FIXTURE/ci" "$FIXTURE/.gitea/keys" \
   "$FIXTURE/packages/core" "$FIXTURE/packages/graph" "$FIXTURE/packages/react" \
-  "$FIXTURE/apps/standalone" "$FIXTURE/runtime" "$FAKE_BIN"
+  "$FIXTURE/apps/standalone" "$FAKE_BIN"
 cp "$ROOT/tools/release/cut-tag.sh" "$FIXTURE/tools/release/"
 cp "$ROOT/ci/vault-fetch.sh" "$FIXTURE/ci/"
 cp "$ROOT/ci/vault-fetch.release-signing.spec" "$FIXTURE/ci/"
@@ -68,6 +69,15 @@ cat >"$FAKE_BIN/gpgconf" <<'EOF'
 exit 0
 EOF
 
+cat >"$FAKE_BIN/stat" <<'EOF'
+#!/usr/bin/env bash
+if [ "${FAKE_NO_TMPFS:-0}" = "1" ]; then
+  printf 'ext2/ext3\n'
+else
+  /usr/bin/stat "$@"
+fi
+EOF
+
 cat >"$FAKE_BIN/git" <<'EOF'
 #!/usr/bin/env bash
 printf 'git %s\n' "$*" >>"$FAKE_LOG"
@@ -89,7 +99,7 @@ run_case() {
     cd "$FIXTURE"
     export PATH="$FAKE_BIN:$PATH"
     export FAKE_LOG="$TMP/$name.log"
-    export XDG_RUNTIME_DIR="$FIXTURE/runtime"
+    export XDG_RUNTIME_DIR="$RUNTIME_PARENT"
     export VAULT_ADDR="https://openbao.example.test"
     export VAULT_CI_ROLE_ID="test-role"
     export VAULT_CI_SECRET_ID="test-secret"
@@ -129,6 +139,14 @@ fi
 grep -q "VAULT_CACERT is not readable" "$TMP/missing-ca.out"
 ! grep -q "auth/approle/login" "$TMP/missing-ca.log"
 
+if run_case no-tmpfs env FAKE_NO_TMPFS=1 \
+  tools/release/cut-tag.sh "$VERSION" --dry-run >"$TMP/no-tmpfs.out" 2>&1; then
+  echo "disk-backed release scratch unexpectedly passed" >&2
+  exit 1
+fi
+grep -q "requires a writable tmpfs scratch surface" "$TMP/no-tmpfs.out"
+! grep -q "auth/approle/login" "$TMP/no-tmpfs.log"
+
 if run_case wrong-key env FAKE_GPG_FINGERPRINT=BAD \
   tools/release/cut-tag.sh "$VERSION" --dry-run >"$TMP/wrong-key.out" 2>&1; then
   echo "wrong authority unexpectedly passed" >&2
@@ -166,7 +184,7 @@ fi
 grep -q "could not complete the signing probe" "$TMP/sign-fail.out"
 ! grep -q "tag -s" "$TMP/sign-fail.log"
 
-if find "$FIXTURE/runtime" -mindepth 1 -maxdepth 1 -name 'fortemi-release-signing.*' | grep -q .; then
+if find "$RUNTIME_PARENT" -mindepth 1 -maxdepth 1 -name 'fortemi-release-signing.*' | grep -q .; then
   echo "release key material was not cleaned up" >&2
   exit 1
 fi
