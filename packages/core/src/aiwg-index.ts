@@ -6,13 +6,9 @@ import {
   type ShardLink,
   type ShardManifest,
   type ShardNote,
-  type ShardNoteSkosTag,
-  type ShardProvenanceEdge,
-  type ShardSkosConcept,
-  type ShardSkosRelation,
-  type ShardSkosScheme,
 } from './shard/types.js'
 import { sha256Hex as shardSha256Hex } from './shard/checksum.js'
+import { validateCoreV1ShardArchive } from './shard/schema-validator.js'
 import { packTarGz, unpackTarGz } from './shard/shard-tar.js'
 import { v5 as uuidv5 } from 'uuid'
 
@@ -256,9 +252,8 @@ export interface AiwgKnowledgeShardOptions {
   createdAt?: string
   matricVersion?: string
   /**
-   * Include React-native SKOS and provenance component files. The default
-   * portable profile keeps those projections in lossless note metadata so the
-   * shard remains importable by the current Fortemi server.
+   * Reserved for a future full-v1 converter. Passing true currently fails
+   * closed because a partial rich-component inventory is not a valid profile.
    */
   includeNativeRichComponents?: boolean
 }
@@ -2704,6 +2699,11 @@ export async function aiwgFortemiIndexToKnowledgeShard(
   index: AiwgFortemiIndexExport,
   options: AiwgKnowledgeShardOptions = {},
 ): Promise<Uint8Array> {
+  if (options.includeNativeRichComponents) {
+    throw new Error(
+      'Native AIWG rich components require the complete full-v1 inventory; use core-v1 metadata preservation until full-v1 conversion is available',
+    )
+  }
   const validation = validateAiwgFortemiIndexExport(index)
   if (!validation.valid) {
     throw new Error(`Invalid AIWG Fortemi index export:\n${validation.errors.join('\n')}`)
@@ -2711,24 +2711,28 @@ export async function aiwgFortemiIndexToKnowledgeShard(
   if (index.schema_version !== 'aiwg.fortemi.index.export.v2') {
     throw new Error('Knowledge Shard conversion requires aiwg.fortemi.index.export.v2')
   }
-
   const createdAt = aiwgShardTimestamp(options.createdAt ?? index.generated_at, new Date().toISOString())
   const noteIds = new Map(index.items.map((record) => [record.id, aiwgShardUuid('record', record.id)]))
-  const notes: ShardNote[] = index.items.map((record) => ({
-    id: noteIds.get(record.id)!,
-    title: aiwgRecordTitle(record),
-    original_content: aiwgRecordContent(record),
-    revised_content: null,
-    metadata: aiwgShardMetadata(index, record),
-    format: 'markdown',
-    source: 'aiwg-index',
-    starred: false,
-    archived: false,
-    tags: [...new Set(record.tags)].sort(),
-    created_at: aiwgShardTimestamp(record.source.updated_at ?? record.updated_at, createdAt),
-    updated_at: aiwgShardTimestamp(record.updated_at, createdAt),
-    deleted_at: null,
-  }))
+  const notes: ShardNote[] = index.items.map((record) => {
+    const content = aiwgRecordContent(record)
+    return {
+      id: noteIds.get(record.id)!,
+      title: aiwgRecordTitle(record),
+      original_content: content,
+      revised_content: content,
+      metadata: aiwgShardMetadata(index, record),
+      collection_id: null,
+      attachments: [],
+      format: 'markdown',
+      source: 'aiwg-index',
+      starred: false,
+      archived: false,
+      tags: [...new Set(record.tags)].sort(),
+      created_at: aiwgShardTimestamp(record.source.updated_at ?? record.updated_at, createdAt),
+      updated_at: aiwgShardTimestamp(record.updated_at, createdAt),
+      deleted_at: null,
+    }
+  })
 
   const links: ShardLink[] = []
   for (const record of index.items) {
@@ -2752,111 +2756,6 @@ export async function aiwgFortemiIndexToKnowledgeShard(
             relationship,
           },
         },
-      })
-    }
-  }
-
-  const defaultScheme = index.source.graph ?? index.source.repo
-  const concepts = new Map<string, { concept: AiwgFortemiSkosConcept; scheme: string }>()
-  for (const record of index.items) {
-    for (const conceptId of record.concepts) {
-      concepts.set(conceptId, {
-        concept: { id: conceptId, prefLabel: conceptId },
-        scheme: defaultScheme,
-      })
-    }
-    for (const concept of record.skos_concepts ?? []) {
-      concepts.set(concept.id, { concept, scheme: concept.scheme ?? defaultScheme })
-    }
-    for (const relation of record.skos_relations ?? []) {
-      if (!concepts.has(relation.source_id)) {
-        concepts.set(relation.source_id, {
-          concept: { id: relation.source_id, prefLabel: relation.source_id },
-          scheme: defaultScheme,
-        })
-      }
-      if (!concepts.has(relation.target_id)) {
-        concepts.set(relation.target_id, {
-          concept: { id: relation.target_id, prefLabel: relation.target_id },
-          scheme: defaultScheme,
-        })
-      }
-    }
-  }
-
-  const schemeNames = [...new Set([...concepts.values()].map(({ scheme }) => scheme))].sort()
-  const schemes: ShardSkosScheme[] = schemeNames.map((scheme) => ({
-    id: aiwgShardUuid('skos-scheme', scheme),
-    title: scheme,
-    description: `SKOS scheme projected from ${index.source.repo}`,
-    created_at: createdAt,
-    updated_at: createdAt,
-  }))
-  const shardConcepts: ShardSkosConcept[] = [...concepts.entries()]
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([id, { concept, scheme }]) => ({
-      id: aiwgShardUuid('skos-concept', id),
-      scheme_id: aiwgShardUuid('skos-scheme', scheme),
-      pref_label: concept.prefLabel,
-      alt_labels: concept.altLabels ?? [],
-      definition: concept.definition ?? null,
-      created_at: createdAt,
-      updated_at: createdAt,
-    }))
-
-  const noteSkosTags: ShardNoteSkosTag[] = []
-  const skosRelations: ShardSkosRelation[] = []
-  const provenanceEdges: ShardProvenanceEdge[] = []
-  for (const record of index.items) {
-    const recordConceptIds = new Set([
-      ...record.concepts,
-      ...(record.skos_concepts ?? []).map((concept) => concept.id),
-    ])
-    for (const conceptId of [...recordConceptIds].sort()) {
-      noteSkosTags.push({
-        id: aiwgShardUuid('note-skos-tag', `${record.id}\u0000${conceptId}`),
-        note_id: noteIds.get(record.id)!,
-        concept_id: aiwgShardUuid('skos-concept', conceptId),
-        created_at: createdAt,
-      })
-    }
-    for (const [position, relation] of (record.skos_relations ?? []).entries()) {
-      const relationType = relation.type === 'broader' || relation.type === 'narrower'
-        ? relation.type
-        : 'related'
-      skosRelations.push({
-        id: aiwgShardUuid(
-          'skos-relation',
-          `${record.id}\u0000${position}\u0000${relation.source_id}\u0000${relation.type}\u0000${relation.target_id}`,
-        ),
-        source_concept_id: aiwgShardUuid('skos-concept', relation.source_id),
-        target_concept_id: aiwgShardUuid('skos-concept', relation.target_id),
-        relation_type: relationType,
-        created_at: createdAt,
-      })
-    }
-    for (const [position, provenance] of record.provenance.entries()) {
-      provenanceEdges.push({
-        id: aiwgShardUuid('provenance', `${record.id}\u0000field\u0000${position}`),
-        entity_type: 'note',
-        entity_id: noteIds.get(record.id)!,
-        activity: 'source',
-        agent: provenance.source,
-        started_at: aiwgShardTimestamp(record.updated_at, createdAt),
-        ended_at: null,
-        attributes: { aiwg_fortemi_index: { provenance } },
-      })
-    }
-    for (const [position, event] of (record.provenance_events ?? []).entries()) {
-      provenanceEdges.push({
-        id: aiwgShardUuid('provenance', event.id ?? `${record.id}\u0000event\u0000${position}`),
-        entity_type: 'note',
-        entity_id: noteIds.get(record.id)!,
-        activity: event.activity,
-        agent: event.agent ?? 'aiwg-index',
-        started_at: aiwgShardTimestamp(event.started_at, createdAt),
-        ended_at: event.ended_at ? aiwgShardTimestamp(event.ended_at, createdAt) : null,
-        attributes: { aiwg_fortemi_index: { event } },
       })
     }
   }
@@ -2886,29 +2785,41 @@ export async function aiwgFortemiIndexToKnowledgeShard(
     files.set(filename, jsonLines ? encodeJsonLines(values) : shardEncoder.encode(JSON.stringify(values)))
   }
   addComponent('links', 'links.jsonl', links)
-  if (options.includeNativeRichComponents) {
-    addComponent('skos_schemes', 'skos_schemes.json', schemes, false)
-    addComponent('skos_concepts', 'skos_concepts.json', shardConcepts, false)
-    addComponent('skos_relations', 'skos_relations.jsonl', skosRelations)
-    addComponent('note_skos_tags', 'note_skos_tags.jsonl', noteSkosTags)
-    addComponent('provenance_edges', 'provenance_edges.jsonl', provenanceEdges)
-  }
 
   const checksums: Record<string, string> = {}
   for (const [filename, bytes] of files) checksums[filename] = await shardSha256Hex(bytes)
   const manifest: ShardManifest = {
     version: CURRENT_SHARD_VERSION,
-    matric_version: options.matricVersion ?? 'fortemi-core-aiwg-index',
+    profile: 'core-v1',
+    producer: {
+      name: 'fortemi-core-aiwg-index',
+      version: options.matricVersion ?? 'fortemi-core',
+    },
     format: SHARD_FORMAT,
     created_at: createdAt,
     components,
-    counts,
+    counts: {
+      notes: 0,
+      collections: 0,
+      tags: 0,
+      templates: 0,
+      links: 0,
+      embedding_sets: 0,
+      embedding_set_members: 0,
+      embeddings: 0,
+      embedding_configs: 0,
+      ...counts,
+    },
     checksums,
     min_reader_version: CURRENT_SHARD_VERSION,
-    migrated_from: null,
-    migration_history: [],
   }
   files.set('manifest.json', shardEncoder.encode(JSON.stringify(manifest, null, 2)))
+  const contractValidation = await validateCoreV1ShardArchive(files)
+  if (!contractValidation.valid) {
+    throw new Error(
+      `Generated AIWG core-v1 shard failed canonical validation: ${contractValidation.errors.join('; ')}`,
+    )
+  }
   return packTarGz(files)
 }
 

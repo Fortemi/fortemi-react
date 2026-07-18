@@ -31,6 +31,7 @@ import {
   type AiwgStaticEmbeddingSet,
 } from '../aiwg-index.js'
 import { unpackTarGz } from '../shard/shard-tar.js'
+import { validateCoreV1ShardArchive } from '../shard/schema-validator.js'
 import {
   getAiwgFortemiIndexExportSchema,
   validateAiwgFortemiIndexExportSchema,
@@ -149,7 +150,7 @@ function createChunkedFixture(partSize = 2): {
 }
 
 describe('AIWG Fortemi index adapter', () => {
-  it('converts v2 exports into reversible Knowledge Shards with native graph metadata', async () => {
+  it('converts v2 exports into reversible canonical core-v1 shards', async () => {
     const portableIndex: AiwgFortemiIndexExport = {
       schema_version: 'aiwg.fortemi.index.export.v2',
       generated_at: '2026-07-16T00:00:00.000Z',
@@ -195,11 +196,14 @@ describe('AIWG Fortemi index adapter', () => {
     }
 
     const shard = await aiwgFortemiIndexToKnowledgeShard(portableIndex, {
-      includeNativeRichComponents: true,
+      matricVersion: '2026.7.9',
     })
     const restored = aiwgFortemiIndexFromKnowledgeShard(shard)
     const files = unpackTarGz(shard)
     const manifest = JSON.parse(new TextDecoder().decode(files.get('manifest.json'))) as {
+      version: string
+      profile: string
+      producer: { name: string, version: string }
       components: string[]
       counts: Record<string, number>
     }
@@ -211,21 +215,30 @@ describe('AIWG Fortemi index adapter', () => {
       .map((line) => JSON.parse(line) as { from_note_id: string; to_note_id: string })
 
     expect(restored).toEqual(portableIndex)
-    expect(manifest.components).toEqual([
-      'notes',
-      'tags',
-      'links',
-      'skos_schemes',
-      'skos_concepts',
-      'note_skos_tags',
-      'provenance_edges',
-    ])
+    expect(await validateCoreV1ShardArchive(files)).toEqual({ valid: true, errors: [] })
+    expect(manifest).toMatchObject({
+      version: '1.1.0',
+      profile: 'core-v1',
+      producer: {
+        name: 'fortemi-core-aiwg-index',
+        version: '2026.7.9',
+      },
+      components: ['notes', 'tags', 'links'],
+      counts: {
+        notes: 2,
+        collections: 0,
+        tags: 2,
+        templates: 0,
+        links: 1,
+        embedding_sets: 0,
+        embedding_set_members: 0,
+        embeddings: 0,
+        embedding_configs: 0,
+      },
+    })
     expect(manifest.counts).toMatchObject({
       notes: 2,
       links: 1,
-      skos_concepts: 1,
-      note_skos_tags: 2,
-      provenance_edges: 3,
     })
     expect(notes[0].id).toMatch(/^[0-9a-f-]{36}$/)
     expect(notes[0].metadata).toHaveProperty('aiwg_fortemi_index')
@@ -233,6 +246,12 @@ describe('AIWG Fortemi index adapter', () => {
       from_note_id: notes[0].id,
       to_note_id: notes[1].id,
     })
+  })
+
+  it('rejects partial rich projections instead of mislabeling them as full-v1', async () => {
+    await expect(
+      aiwgFortemiIndexToKnowledgeShard(index, { includeNativeRichComponents: true }),
+    ).rejects.toThrow('require the complete full-v1 inventory')
   })
 
   it('validates the shared CRM fixture contract', () => {
