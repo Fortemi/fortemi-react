@@ -3,16 +3,16 @@ metadata:
   created_at: "2026-07-18T00:07:21Z"
   description: "Provenance for implement legacy shard convergence and atomic record/blob rollback semantics"
 entity:
-  id: "urn:aiwg:artifact:packages/core/src/shard/shard-import.ts"
+  id: "urn:aiwg:artifact:packages/core/src/migrations/index.ts"
   type: code
   created_at: "2026-07-18T00:07:21Z"
-  checksum: "sha256:69c603153073f5cd7270cea0f10f23eca3961bea462c922e4303c3223d2a5463"
-  size_bytes: 65246
+  checksum: "sha256:97eb7b3513f142ae9c6c9526ea3a0f4adbc1d85663a4374abea0054a42efada9"
+  size_bytes: 1525
   attributes:
     change_scope: "legacy-shard-convergence"
     base_revision: "e18bc50c2419ca4a0f5e53a1527b55589e513695"
 activity:
-  id: "urn:aiwg:activity:modification:packages-core-src-shard-shard-import-ts:356"
+  id: "urn:aiwg:activity:modification:packages-core-src-migrations-index-ts:356"
   type: modification
   started_at: "2026-07-18T00:07:21Z"
   ended_at: "2026-07-18T00:07:21Z"
@@ -25,22 +25,22 @@ agent:
   tool: "codex"
 relationships:
   wasGeneratedBy:
-    entity: "urn:aiwg:artifact:packages/core/src/shard/shard-import.ts"
-    activity: "urn:aiwg:activity:modification:packages-core-src-shard-shard-import-ts:356"
+    entity: "urn:aiwg:artifact:packages/core/src/migrations/index.ts"
+    activity: "urn:aiwg:activity:modification:packages-core-src-migrations-index-ts:356"
     time: "2026-07-18T00:07:21Z"
   used:
-    - activity: "urn:aiwg:activity:modification:packages-core-src-shard-shard-import-ts:356"
-      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e18bc50c2419ca4a0f5e53a1527b55589e513695:packages/core/src/shard/shard-import.ts"
+    - activity: "urn:aiwg:activity:modification:packages-core-src-migrations-index-ts:356"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e18bc50c2419ca4a0f5e53a1527b55589e513695:packages/core/src/migrations/index.ts"
       role: "previous_revision"
   wasDerivedFrom:
-    - entity: "urn:aiwg:artifact:packages/core/src/shard/shard-import.ts"
+    - entity: "urn:aiwg:artifact:packages/core/src/migrations/index.ts"
       source: "urn:gitea:Fortemi/fortemi-react:issue:356"
       derivation_type: "implements"
-      activity: "urn:aiwg:activity:modification:packages-core-src-shard-shard-import-ts:356"
+      activity: "urn:aiwg:activity:modification:packages-core-src-migrations-index-ts:356"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:packages-core-src-shard-shard-import-ts:356"
+    activity: "urn:aiwg:activity:modification:packages-core-src-migrations-index-ts:356"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:
-    entity: "urn:aiwg:artifact:packages/core/src/shard/shard-import.ts"
+    entity: "urn:aiwg:artifact:packages/core/src/migrations/index.ts"
     agent: "urn:aiwg:agent:codex-gpt-5"

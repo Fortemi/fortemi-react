@@ -56,6 +56,8 @@ import type {
   ShardExportResult,
   ShardLossEntry,
   ShardNote,
+  ShardCollection,
+  ShardLink,
 } from './types.js'
 
 const encoder = new TextEncoder()
@@ -111,11 +113,29 @@ function toCoreV1Note(note: ShardNote): ShardNote {
     revised_content: note.revised_content ?? note.original_content,
     metadata: note.metadata ?? null,
     attachments: (note.attachments ?? []).map((projection) => ({
-      ...projection,
+      extracted_text: projection.extracted_text,
       extraction_status: projection.extracted_text === null ? 'deferred' : 'extracted',
       reason: projection.extracted_text === null ? 'no_extracted_text' : null,
+      attachment: projection.attachment,
     })),
   }
+}
+
+function toCoreV1Collection(collection: ShardCollection): ShardCollection {
+  const coreCollection = { ...collection }
+  delete coreCollection.updated_at
+  delete coreCollection.deleted_at
+  return coreCollection
+}
+
+function toCoreV1Link(link: ShardLink): ShardLink {
+  const coreLink = { ...link }
+  if (coreLink.metadata?.fortemi_legacy_state) {
+    const metadata = { ...coreLink.metadata }
+    delete metadata.fortemi_legacy_state
+    coreLink.metadata = Object.keys(metadata).length > 0 ? metadata : null
+  }
+  return coreLink
 }
 
 async function rowCount(db: DatabaseClient, sql: string): Promise<number> {
@@ -304,7 +324,7 @@ async function exportShardBytes(
        LEFT JOIN note_original o ON o.note_id = n.id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
        JOIN collection_note cn ON cn.note_id = n.id
-       WHERE n.deleted_at IS NULL AND cn.collection_id = $1
+       WHERE ${coreV1 ? 'n.deleted_at IS NULL AND ' : ''}cn.collection_id = $1
        ORDER BY n.created_at`
     noteParams = [options.collectionId]
   } else if (options?.tag) {
@@ -324,7 +344,7 @@ async function exportShardBytes(
        LEFT JOIN note_original o ON o.note_id = n.id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
        JOIN note_tag nt ON nt.note_id = n.id AND nt.tag = $1
-       WHERE n.deleted_at IS NULL
+       ${coreV1 ? 'WHERE n.deleted_at IS NULL' : ''}
        ORDER BY n.created_at`
     noteParams = [options.tag]
   } else {
@@ -343,7 +363,7 @@ async function exportShardBytes(
        FROM note n
        LEFT JOIN note_original o ON o.note_id = n.id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
-       WHERE n.deleted_at IS NULL
+       ${coreV1 ? 'WHERE n.deleted_at IS NULL' : ''}
        ORDER BY n.created_at`
     noteParams = []
   }
@@ -384,6 +404,8 @@ async function exportShardBytes(
     content_hash: string
     size_bytes: number
     storage_path: string | null
+    created_at: Date
+    deleted_at: Date | null
   }>(
     `SELECT a.note_id,
             a.id,
@@ -392,16 +414,24 @@ async function exportShardBytes(
             a.extracted_text,
             b.content_hash,
             b.size_bytes,
-            b.storage_path
+            b.storage_path,
+            a.created_at,
+            a.deleted_at
        FROM attachment a
        JOIN attachment_blob b ON b.id = a.blob_id
-       WHERE a.deleted_at IS NULL
+       ${coreV1 ? 'WHERE a.deleted_at IS NULL' : ''}
        ORDER BY a.note_id, a.position, a.created_at`,
   )
   const attachmentsByNote = new Map<string, ShardAttachmentProjection[]>()
   for (const row of attachmentRows.rows) {
     const source: ShardAttachmentProjection = {
       extracted_text: row.extracted_text,
+      ...(!coreV1
+        ? {
+            created_at: iso(row.created_at),
+            deleted_at: row.deleted_at ? iso(row.deleted_at) : null,
+          }
+        : {}),
       attachment: {
         // `path` is the display filename per the binary-attachment projection
         // contract — never the physical storage key (`storage_path`).
@@ -450,7 +480,7 @@ async function exportShardBytes(
 
   // ── Query collections ───────────────────────────────────────────────
   const collectionRows = await db.query<CollectionRow>(
-    `SELECT * FROM collection WHERE deleted_at IS NULL ORDER BY position, name`,
+    `SELECT * FROM collection ${coreV1 ? 'WHERE deleted_at IS NULL' : ''} ORDER BY position, name`,
   )
   // Get note counts per collection
   const collNoteCountRows = await db.query<{ collection_id: string; cnt: string }>(
@@ -461,16 +491,17 @@ async function exportShardBytes(
     noteCountMap.set(row.collection_id, parseInt(row.cnt, 10))
   }
 
-  const shardCollections = collectionRows.rows.map((c) =>
-    collectionToShard(c, noteCountMap.get(c.id) ?? 0),
-  )
+  const shardCollections = collectionRows.rows.map((c) => {
+    const collection = collectionToShard(c, noteCountMap.get(c.id) ?? 0)
+    return coreV1 ? toCoreV1Collection(collection) : collection
+  })
   files.set('collections.json', encoder.encode(JSON.stringify(shardCollections)))
   components.push('collections')
   counts.collections = shardCollections.length
 
   // ── Query tags (unique list, scoped to exported notes) ──────────────
-  const allTagRows = await db.query<{ tag: string }>(
-    `SELECT DISTINCT tag FROM note_tag ORDER BY tag`,
+  const allTagRows = await db.query<{ tag: string; created_at: Date | string }>(
+    `SELECT tag, MIN(created_at) AS created_at FROM note_tag GROUP BY tag ORDER BY tag`,
   )
   // When filtering, only include tags that appear on exported notes
   const isFiltered = !!(options?.tag || options?.collectionId)
@@ -483,7 +514,7 @@ async function exportShardBytes(
       })
     : allTagRows.rows
   const shardTags = tagsToShard(
-    relevantTags.map((r) => ({ name: r.tag, created_at: new Date() })),
+    relevantTags.map((r) => ({ name: r.tag, created_at: r.created_at })),
   )
   files.set('tags.json', encoder.encode(JSON.stringify(shardTags)))
   components.push('tags')
@@ -510,7 +541,7 @@ async function exportShardBytes(
 
   // ── Query links (scoped to exported notes) ──────────────────────────
   const linkRows = await db.query<LinkRow>(
-    `SELECT * FROM link WHERE deleted_at IS NULL ORDER BY created_at`,
+    `SELECT * FROM link ${coreV1 ? 'WHERE deleted_at IS NULL' : ''} ORDER BY created_at`,
   )
   // When filtering, only include links where both endpoints are in the export
   const filteredLinks = (options?.tag || options?.collectionId)
@@ -524,14 +555,16 @@ async function exportShardBytes(
     confidence: number | null
     metadata_json: Record<string, unknown> | string | null
     created_at: Date
-  }>(`SELECT * FROM link_url_target WHERE deleted_at IS NULL ORDER BY created_at`)
+    updated_at: Date | null
+    deleted_at: Date | null
+  }>(`SELECT * FROM link_url_target ${coreV1 ? 'WHERE deleted_at IS NULL' : ''} ORDER BY created_at`)
   const filteredUrlLinks = (options?.tag || options?.collectionId)
     ? urlLinkRows.rows.filter((l) => exportedNoteIds.has(l.source_note_id))
     : urlLinkRows.rows
   const shardLinks = [
     ...filteredLinks.map((l) => linkToShard(l)),
     ...filteredUrlLinks.map((l) => urlLinkToShard(l)),
-  ]
+  ].map((link) => coreV1 ? toCoreV1Link(link) : link)
   const linksJsonl = shardLinks.map((l) => JSON.stringify(l)).join('\n')
   files.set('links.jsonl', encoder.encode(linksJsonl))
   components.push('links')

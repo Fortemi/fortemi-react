@@ -88,6 +88,11 @@ export interface BlobStore {
   /** True when the bytes for this checksum are physically present. */
   has(checksum: string): Promise<boolean>
   /**
+   * Physically remove one checksum. Import staging uses this only to roll back
+   * content that was absent before promotion.
+   */
+  delete?(checksum: string): Promise<boolean>
+  /**
    * Reconcile stored bytes against the authoritative live-checksum set
    * derived from canonical attachment manifests (ADR-013 D4).
    */
@@ -133,6 +138,10 @@ export class MemoryBlobStore implements BlobStore {
 
   async has(checksum: string): Promise<boolean> {
     return this.entries.has(checksum)
+  }
+
+  async delete(checksum: string): Promise<boolean> {
+    return this.entries.delete(checksum)
   }
 
   async reconcile(
@@ -241,6 +250,15 @@ class BytecaskBlobStore implements BlobStore {
     // index, which is empty right after a reload; physical presence is what
     // the seam promises.
     return this.adapter.exists(blobChecksumToHex(checksum))
+  }
+
+  async delete(checksum: string): Promise<boolean> {
+    const hash = blobChecksumToHex(checksum)
+    const existed = await this.adapter.exists(hash)
+    if (!existed) return false
+    await this.adapter.remove(hash)
+    await this.index.delete(hash)
+    return true
   }
 
   async reconcile(
@@ -414,6 +432,7 @@ export function createLazyBlobStore(
     put: async (bytes) => (await open()).put(bytes),
     read: async (checksum) => (await open()).read(checksum),
     has: async (checksum) => (await open()).has(checksum),
+    delete: async (checksum) => (await open()).delete!(checksum),
     reconcile: async (live, opts) => (await open()).reconcile(live, opts),
     gc: async (opts) => (await open()).gc(opts),
     diagnostics: async () => (await open()).diagnostics(),

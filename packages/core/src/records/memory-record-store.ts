@@ -8,6 +8,7 @@ import type {
   RecordCollectionName,
   RecordCollections,
   RecordListOptions,
+  RecordMutation,
   RecordStore,
   RecordStoreCapabilities,
 } from './types.js'
@@ -39,30 +40,66 @@ export class MemoryRecordStore implements RecordStore {
     collection: C,
     record: RecordCollections[C],
   ): Promise<JournalEntry> {
-    const entry: JournalEntry = {
-      seq: ++this.seq,
-      ts: new Date().toISOString(),
-      op: 'put',
-      collection,
-      id: record.id,
-      record: structuredClone(record),
-    }
-    this.table(collection).set(record.id, structuredClone(record))
-    this.journal.push(entry)
-    return entry
+    const mutation = { op: 'put', collection, record } as RecordMutation
+    return (await this.applyBatch([mutation]))[0]
   }
 
   async remove(collection: RecordCollectionName, id: string): Promise<JournalEntry> {
-    const entry: JournalEntry = {
-      seq: ++this.seq,
-      ts: new Date().toISOString(),
-      op: 'delete',
-      collection,
-      id,
+    return (await this.applyBatch([{ op: 'delete', collection, id }]))[0]
+  }
+
+  async applyBatch(mutations: readonly RecordMutation[]): Promise<JournalEntry[]> {
+    if (mutations.length === 0) return []
+
+    const stagedCollections = new Map<RecordCollectionName, Map<string, unknown>>()
+    for (const [collection, records] of this.collections) {
+      stagedCollections.set(
+        collection,
+        new Map([...records].map(([id, record]) => [id, structuredClone(record)])),
+      )
     }
-    this.table(collection).delete(id)
-    this.journal.push(entry)
-    return entry
+    const stagedJournal = structuredClone(this.journal)
+    let stagedSeq = this.seq
+    const entries: JournalEntry[] = []
+    const table = (collection: RecordCollectionName): Map<string, unknown> => {
+      let records = stagedCollections.get(collection)
+      if (!records) {
+        records = new Map()
+        stagedCollections.set(collection, records)
+      }
+      return records
+    }
+
+    for (const mutation of mutations) {
+      const entry: JournalEntry = mutation.op === 'put'
+        ? {
+            seq: ++stagedSeq,
+            ts: new Date().toISOString(),
+            op: 'put',
+            collection: mutation.collection,
+            id: mutation.record.id,
+            record: structuredClone(mutation.record),
+          }
+        : {
+            seq: ++stagedSeq,
+            ts: new Date().toISOString(),
+            op: 'delete',
+            collection: mutation.collection,
+            id: mutation.id,
+          }
+      if (mutation.op === 'put') {
+        table(mutation.collection).set(mutation.record.id, structuredClone(mutation.record))
+      } else {
+        table(mutation.collection).delete(mutation.id)
+      }
+      stagedJournal.push(entry)
+      entries.push(entry)
+    }
+
+    this.collections = stagedCollections
+    this.journal = stagedJournal
+    this.seq = stagedSeq
+    return entries
   }
 
   async list<C extends RecordCollectionName>(

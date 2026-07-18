@@ -142,6 +142,8 @@ describe('exportShard', () => {
     expect(shardNote.attachments).toEqual([
       {
         extracted_text: 'Optical character recognition text for search',
+        created_at: expect.any(String),
+        deleted_at: null,
         attachment: {
           id: attachment.id,
           path: 'scan.pdf',
@@ -174,6 +176,8 @@ describe('exportShard', () => {
     expect(shardNote.attachments).toEqual([
       {
         extracted_text: null,
+        created_at: expect.any(String),
+        deleted_at: null,
         attachment: {
           id: attachment.id,
           path: 'video.mp4',
@@ -291,7 +295,7 @@ describe('exportShard', () => {
     }
   })
 
-  it('excludes soft-deleted notes', async () => {
+  it('includes soft-deleted note tombstones in legacy unprofiled exports', async () => {
     await notes.create({ content: 'Active' })
     const note2 = await notes.create({ content: 'Deleted' })
     await notes.delete(note2.id)
@@ -301,7 +305,12 @@ describe('exportShard', () => {
     const manifest: ShardManifest = JSON.parse(
       new TextDecoder().decode(files.get('manifest.json')!),
     )
-    expect(manifest.counts.notes).toBe(1)
+    expect(manifest.counts.notes).toBe(2)
+    const exportedNotes = new TextDecoder()
+      .decode(files.get('notes.jsonl')!)
+      .split('\n')
+      .map((line) => JSON.parse(line) as ShardNote)
+    expect(exportedNotes.find((note) => note.id === note2.id)?.deleted_at).toEqual(expect.any(String))
   })
 
   it('does not include embeddings by default', async () => {

@@ -1,22 +1,22 @@
 metadata:
   schema_version: "1.0.0"
-  created_at: "2026-07-17T23:10:58Z"
-  description: "Provenance for RecordStore profile-aware public exports"
+  created_at: "2026-07-18T00:07:21Z"
+  description: "Provenance for implement legacy shard convergence and atomic record/blob rollback semantics"
 entity:
   id: "urn:aiwg:artifact:packages/core/src/records/index.ts"
   type: code
-  created_at: "2026-07-17T23:10:58Z"
-  checksum: "sha256:32f313e93dacec225deb03bca275697affa824216e19b7b47fd0c555f179134b"
-  size_bytes: 2027
+  created_at: "2026-07-18T00:07:21Z"
+  checksum: "sha256:216bb07b7429ea4d02a25fbed969e91789648346cc8f865e12ea448642b54b8f"
+  size_bytes: 2045
   attributes:
-    change_scope: "named-portability-profiles"
-    base_revision: "2f30626922a7dfad4dec1f4673ec76349335bba9"
+    change_scope: "legacy-shard-convergence"
+    base_revision: "e18bc50c2419ca4a0f5e53a1527b55589e513695"
 activity:
-  id: "urn:aiwg:activity:modification:packages-core-src-records-index-ts:001"
+  id: "urn:aiwg:activity:modification:packages-core-src-records-index-ts:356"
   type: modification
-  started_at: "2026-07-17T23:10:58Z"
-  ended_at: "2026-07-17T23:10:58Z"
-  description: "Expose the report-returning RecordStore exporter"
+  started_at: "2026-07-18T00:07:21Z"
+  ended_at: "2026-07-18T00:07:21Z"
+  description: "Implement legacy shard convergence and atomic record/blob rollback semantics"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
   type: ai_assistant
@@ -26,19 +26,19 @@ agent:
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:packages/core/src/records/index.ts"
-    activity: "urn:aiwg:activity:modification:packages-core-src-records-index-ts:001"
-    time: "2026-07-17T23:10:58Z"
+    activity: "urn:aiwg:activity:modification:packages-core-src-records-index-ts:356"
+    time: "2026-07-18T00:07:21Z"
   used:
-    - activity: "urn:aiwg:activity:modification:packages-core-src-records-index-ts:001"
-      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:2f30626922a7dfad4dec1f4673ec76349335bba9:packages/core/src/records/index.ts"
+    - activity: "urn:aiwg:activity:modification:packages-core-src-records-index-ts:356"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e18bc50c2419ca4a0f5e53a1527b55589e513695:packages/core/src/records/index.ts"
       role: "previous_revision"
   wasDerivedFrom:
     - entity: "urn:aiwg:artifact:packages/core/src/records/index.ts"
-      source: "urn:aiwg:artifact:packages/core/src/records/record-shard.ts"
-      derivation_type: "depends"
-      activity: "urn:aiwg:activity:modification:packages-core-src-records-index-ts:001"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:356"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:modification:packages-core-src-records-index-ts:356"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:packages-core-src-records-index-ts:001"
+    activity: "urn:aiwg:activity:modification:packages-core-src-records-index-ts:356"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:

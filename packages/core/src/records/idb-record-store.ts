@@ -21,6 +21,7 @@ import type {
   RecordCollectionName,
   RecordCollections,
   RecordListOptions,
+  RecordMutation,
   RecordStore,
   RecordStoreCapabilities,
 } from './types.js'
@@ -121,32 +122,67 @@ export class IdbRecordStore implements RecordStore {
     collection: C,
     record: RecordCollections[C],
   ): Promise<JournalEntry> {
-    const tx = this.db.transaction([collection, JOURNAL_STORE], 'readwrite')
-    tx.objectStore(collection).put(record)
-    const pending: Omit<JournalEntry, 'seq'> = {
-      ts: new Date().toISOString(),
-      op: 'put',
-      collection,
-      id: record.id,
-      record,
-    }
-    const seqReq = tx.objectStore(JOURNAL_STORE).add(pending)
-    await transactionComplete(tx)
-    return { ...pending, seq: seqReq.result as number }
+    const mutation = { op: 'put', collection, record } as RecordMutation
+    return (await this.applyBatch([mutation]))[0]
   }
 
   async remove(collection: RecordCollectionName, id: string): Promise<JournalEntry> {
-    const tx = this.db.transaction([collection, JOURNAL_STORE], 'readwrite')
-    tx.objectStore(collection).delete(id)
-    const pending: Omit<JournalEntry, 'seq'> = {
-      ts: new Date().toISOString(),
-      op: 'delete',
-      collection,
-      id,
+    return (await this.applyBatch([{ op: 'delete', collection, id }]))[0]
+  }
+
+  async applyBatch(mutations: readonly RecordMutation[]): Promise<JournalEntry[]> {
+    if (mutations.length === 0) return []
+
+    const collections = [...new Set(mutations.map((mutation) => mutation.collection))]
+    const tx = this.db.transaction([...collections, JOURNAL_STORE], 'readwrite')
+    const completed = transactionComplete(tx)
+    const pendingEntries: Array<{
+      pending: Omit<JournalEntry, 'seq'>
+      seqRequest: IDBRequest<IDBValidKey>
+    }> = []
+
+    try {
+      for (const mutation of mutations) {
+        const records = tx.objectStore(mutation.collection)
+        const pending: Omit<JournalEntry, 'seq'> = mutation.op === 'put'
+          ? {
+              ts: new Date().toISOString(),
+              op: 'put',
+              collection: mutation.collection,
+              id: mutation.record.id,
+              record: mutation.record,
+            }
+          : {
+              ts: new Date().toISOString(),
+              op: 'delete',
+              collection: mutation.collection,
+              id: mutation.id,
+            }
+        if (mutation.op === 'put') {
+          records.put(mutation.record)
+        } else {
+          records.delete(mutation.id)
+        }
+        pendingEntries.push({
+          pending,
+          seqRequest: tx.objectStore(JOURNAL_STORE).add(pending),
+        })
+      }
+    } catch (error) {
+      tx.abort()
+      try {
+        await completed
+      } catch {
+        // The original synchronous mutation error is the useful failure.
+      }
+      throw error
     }
-    const seqReq = tx.objectStore(JOURNAL_STORE).add(pending)
-    await transactionComplete(tx)
-    return { ...pending, seq: seqReq.result as number }
+
+    await completed
+    return pendingEntries.map(({ pending, seqRequest }) => ({
+      ...pending,
+      seq: seqRequest.result as number,
+    }))
   }
 
   async list<C extends RecordCollectionName>(

@@ -106,6 +106,10 @@ export interface ShardAttachmentReference {
 
 export interface ShardAttachmentProjection {
   extracted_text: string | null
+  /** Legacy unprofiled relationship timestamp; outside core-v1. */
+  created_at?: string
+  /** Legacy unprofiled attachment tombstone; outside core-v1. */
+  deleted_at?: string | null
   extraction_status?: 'extracted' | 'pending' | 'failed' | 'blocked' | 'deferred'
   reason?:
     | null
@@ -228,9 +232,10 @@ export interface ImportOptions {
   /**
    * Destination for hydrating attachment bytes from a portable `blobs/<hex>`
    * sidecar (Fortemi/fortemi#1046). When provided, sidecar entries whose bare
-   * hex matches an imported attachment's `content_hash` are written to this
-   * store after the import transaction commits, so `getBlob()` returns real
-   * bytes. Absent → attachments import as reference-only metadata (unchanged).
+   * hex matches an imported attachment's `content_hash` are promoted before
+   * the logical transaction. A transaction failure removes only bytes that
+   * were absent before promotion. Stores without the optional `delete`
+   * capability fail before promotion. Absent → reference-only metadata.
    */
   blobStore?: BlobStore
   /**
@@ -343,6 +348,9 @@ export interface ShardCollection {
   description: string | null
   parent_id: string | null
   created_at: string
+  /** Legacy unprofiled fields; outside core-v1. */
+  updated_at?: string
+  deleted_at?: string | null
   note_count?: number
 }
 

@@ -304,6 +304,219 @@ describe('importShard', { timeout: 30_000 }, () => {
     expect(exportedNote.metadata).toEqual(metadata)
   })
 
+  it('replace converges legacy nulls, tombstones, timestamps, and relationships', async () => {
+    const sourceDb = await createTestDb()
+    const sourceNotes = new NotesRepository(sourceDb)
+    const sourceCollections = new CollectionsRepository(sourceDb)
+    const sourceLinks = new LinksRepository(sourceDb)
+    const first = await sourceNotes.create({
+      content: 'original alpha',
+      title: 'Alpha',
+      tags: ['alpha', 'shared'],
+    })
+    const second = await sourceNotes.create({
+      content: 'original beta',
+      title: 'Beta',
+      tags: ['shared'],
+    })
+    const collection = await sourceCollections.create({ name: 'Canonical' })
+    await sourceCollections.assignNote(collection.id, first.id)
+    const sourceLink = await sourceLinks.create(first.id, second.id, 'related')
+    await sourceDb.query(
+      `UPDATE note_revised_current
+          SET content = NULL,
+              ai_metadata = '{"preserved":true}'::jsonb,
+              updated_at = '2026-01-02T00:00:00.000Z'
+        WHERE note_id = $1`,
+      [first.id],
+    )
+    await sourceDb.query(
+      `UPDATE note_tag SET created_at = '2026-01-03T00:00:00.000Z'
+        WHERE note_id = $1`,
+      [first.id],
+    )
+    await sourceDb.query(
+      `UPDATE note
+          SET updated_at = '2026-01-04T00:00:00.000Z',
+              deleted_at = '2026-01-04T00:00:00.000Z'
+        WHERE id = $1`,
+      [second.id],
+    )
+    await sourceLinks.delete(sourceLink.id)
+    const archive = await exportShard(sourceDb)
+    await sourceDb.close()
+
+    expect((await importShard(db, archive)).success).toBe(true)
+    await db.query(
+      `INSERT INTO note_tag (id, note_id, tag)
+       VALUES ('stale-tag-id', $1, 'stale')`,
+      [first.id],
+    )
+    await db.query(
+      `INSERT INTO collection (id, name) VALUES ('stale-collection-id', 'Stale')`,
+    )
+    await db.query(
+      `INSERT INTO collection_note (collection_id, note_id)
+       VALUES ('stale-collection-id', $1)`,
+      [first.id],
+    )
+    const destinationOnly = await new NotesRepository(db).create({
+      content: 'not present in the shard',
+      title: 'Destination only',
+    })
+    await db.query(
+      `INSERT INTO link (id, source_note_id, target_note_id, link_type)
+       VALUES ('stale-link-id', $1, $2, 'stale')`,
+      [first.id, destinationOnly.id],
+    )
+
+    const merged = await importShard(db, archive, { conflictStrategy: 'skip' })
+    expect(merged.success).toBe(true)
+    expect((await db.query<{ count: number }>(
+      `SELECT COUNT(*)::int AS count FROM link WHERE id = 'stale-link-id'`,
+    )).rows[0].count).toBe(1)
+
+    const replaced = await importShard(db, archive, { conflictStrategy: 'replace' })
+    expect(replaced.success).toBe(true)
+    const revised = await db.query<{ content: string | null; metadata: string }>(
+      `SELECT content, ai_metadata::text AS metadata
+         FROM note_revised_current
+        WHERE note_id = $1`,
+      [first.id],
+    )
+    expect(revised.rows[0].content).toBeNull()
+    expect(JSON.parse(revised.rows[0].metadata)).toEqual({ preserved: true })
+    expect((await db.query<{ count: number }>(
+      `SELECT COUNT(*)::int AS count FROM note_tag WHERE id = 'stale-tag-id'`,
+    )).rows[0].count).toBe(0)
+    expect((await db.query<{ count: number }>(
+      `SELECT COUNT(*)::int AS count FROM collection_note
+        WHERE note_id = $1 AND collection_id = 'stale-collection-id'`,
+      [first.id],
+    )).rows[0].count).toBe(0)
+    expect((await db.query<{ count: number }>(
+      `SELECT COUNT(*)::int AS count FROM link WHERE id = 'stale-link-id'`,
+    )).rows[0].count).toBe(0)
+    expect((await db.query<{ deleted_at: Date | null }>(
+      `SELECT deleted_at FROM note WHERE id = $1`,
+      [second.id],
+    )).rows[0].deleted_at).not.toBeNull()
+
+    const sourceFiles = unpackTarGz(archive)
+    const convergedFiles = unpackTarGz(await exportShard(db))
+    const sourceNoteIds = new Set([first.id, second.id])
+    const sourceNoteJsonl = decoder.decode(sourceFiles.get('notes.jsonl'))
+    const convergedNoteJsonl = decoder.decode(convergedFiles.get('notes.jsonl'))
+      .split('\n')
+      .filter((line) => sourceNoteIds.has((JSON.parse(line) as { id: string }).id))
+      .join('\n')
+    expect(convergedNoteJsonl).toBe(sourceNoteJsonl)
+    for (const component of ['tags.json', 'links.jsonl']) {
+      expect(decoder.decode(convergedFiles.get(component)))
+        .toBe(decoder.decode(sourceFiles.get(component)))
+    }
+    expect((await db.query<{ count: number }>(
+      `SELECT COUNT(*)::int AS count FROM note WHERE id = $1`,
+      [destinationOnly.id],
+    )).rows[0].count).toBe(1)
+    const canonicalCollection = await db.query<{
+      created_at: Date
+      updated_at: Date
+      deleted_at: Date | null
+    }>(
+      `SELECT created_at, updated_at, deleted_at FROM collection WHERE id = $1`,
+      [collection.id],
+    )
+    expect(canonicalCollection.rows[0].created_at.toISOString())
+      .toBe(canonicalCollection.rows[0].updated_at.toISOString())
+    expect(canonicalCollection.rows[0].deleted_at).toBeNull()
+
+    expect((await importShard(db, archive, { conflictStrategy: 'replace' })).success).toBe(true)
+    const repeatedFiles = unpackTarGz(await exportShard(db))
+    for (const component of ['notes.jsonl', 'collections.json', 'tags.json', 'links.jsonl']) {
+      expect(decoder.decode(repeatedFiles.get(component)))
+        .toBe(decoder.decode(convergedFiles.get(component)))
+    }
+  })
+
+  it('rolls back promoted blobs when the SQL transaction fails', async () => {
+    const sourceDb = await createTestDb()
+    const sourceBlobs = new MemoryBlobStore()
+    const sourceNotes = new NotesRepository(sourceDb)
+    const note = await sourceNotes.create({ content: 'blob owner', title: 'Blob owner' })
+    const sourceAttachments = new AttachmentsRepository(sourceDb, sourceBlobs)
+    await sourceAttachments.attach({
+      noteId: note.id,
+      data: encoder.encode('rollback bytes'),
+      filename: 'rollback.txt',
+    })
+    const files = unpackTarGz(await exportShard(sourceDb, {
+      includeBlobs: true,
+      blobStore: sourceBlobs,
+    }))
+    await sourceDb.close()
+
+    const invalidLink: ShardLink = {
+      id: 'invalid-link',
+      from_note_id: note.id,
+      to_note_id: 'missing-note',
+      to_url: null,
+      kind: 'related',
+      score: null,
+      created_at: '2026-01-01T00:00:00.000Z',
+    }
+    const linkData = encoder.encode(JSON.stringify(invalidLink))
+    files.set('links.jsonl', linkData)
+    const manifest = JSON.parse(decoder.decode(files.get('manifest.json'))) as ShardManifest
+    manifest.counts.links = 1
+    manifest.checksums['links.jsonl'] = await sha256Hex(linkData)
+    files.set('manifest.json', encoder.encode(JSON.stringify(manifest)))
+
+    const targetBlobs = new MemoryBlobStore()
+    const preexistingChecksum = await targetBlobs.put(encoder.encode('preexisting bytes'))
+    const exportedNote = JSON.parse(
+      decoder.decode(files.get('notes.jsonl')).split('\n')[0],
+    ) as ShardNote
+    const blobChecksum = exportedNote.attachments![0].attachment.checksum
+    const result = await importShard(db, packTarGz(files), { blobStore: targetBlobs })
+
+    expect(result.success).toBe(false)
+    expect(result.errors.join('\n')).toContain('Transaction failed (rolled back)')
+    expect((await db.query<{ count: number }>(
+      `SELECT COUNT(*)::int AS count FROM note`,
+    )).rows[0].count).toBe(0)
+    expect(await targetBlobs.has(blobChecksum)).toBe(false)
+    expect(await targetBlobs.has(preexistingChecksum)).toBe(true)
+  })
+
+  it('does not revive a destination tombstone newer than a legacy live note', async () => {
+    const sourceDb = await createTestDb()
+    const sourceNotes = new NotesRepository(sourceDb)
+    const note = await sourceNotes.create({ content: 'live source' })
+    await sourceDb.query(
+      `UPDATE note SET updated_at = '2026-01-01T00:00:00.000Z' WHERE id = $1`,
+      [note.id],
+    )
+    const archive = await exportShard(sourceDb)
+    await sourceDb.close()
+
+    expect((await importShard(db, archive)).success).toBe(true)
+    await db.query(
+      `UPDATE note
+          SET updated_at = '2099-01-01T00:00:00.000Z',
+              deleted_at = '2099-01-01T00:00:00.000Z'
+        WHERE id = $1`,
+      [note.id],
+    )
+
+    expect((await importShard(db, archive, { conflictStrategy: 'replace' })).success).toBe(true)
+    const restored = await db.query<{ deleted_at: Date | null }>(
+      `SELECT deleted_at FROM note WHERE id = $1`,
+      [note.id],
+    )
+    expect(restored.rows[0].deleted_at?.toISOString()).toBe('2099-01-01T00:00:00.000Z')
+  })
+
   it('skip strategy: existing records untouched', async () => {
     const { archive, sourceDb } = await createTestShard()
 
@@ -912,6 +1125,8 @@ describe('importShard — E1 attachment round-trip (#237)', { timeout: 30_000 },
     expect(reexportedNote.attachments).toEqual([
       {
         extracted_text: 'report text',
+        created_at: expect.any(String),
+        deleted_at: null,
         attachment: {
           id: rows.rows[0].id,
           path: 'report.pdf',

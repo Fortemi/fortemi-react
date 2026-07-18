@@ -25,6 +25,7 @@ export type {
   RecordListOptions,
   RecordStore,
   RecordStoreCapabilities,
+  RecordMutation,
 } from './types.js'
 export { RECORD_COLLECTIONS, RECORD_STORE_CAPABILITIES } from './types.js'
 

@@ -102,7 +102,19 @@ export function linkToShard(link: {
   link_type: string
   confidence: number | null
   created_at: Date | string
+  updated_at?: Date | string | null
+  deleted_at?: Date | string | null
 }): ShardLink {
+  const legacyState = link.deleted_at
+    ? {
+        fortemi_legacy_state: {
+          updated_at: link.updated_at === null || link.updated_at === undefined
+            ? null
+            : toISOString(link.updated_at),
+          deleted_at: toISOString(link.deleted_at),
+        },
+      }
+    : null
   return {
     id: link.id,
     from_note_id: link.source_note_id,
@@ -111,7 +123,7 @@ export function linkToShard(link: {
     kind: link.link_type,
     score: link.confidence,
     created_at: toISOString(link.created_at),
-    metadata: null,
+    metadata: legacyState,
   }
 }
 
@@ -124,10 +136,22 @@ export function urlLinkToShard(link: {
   confidence: number | null
   metadata_json?: Record<string, unknown> | string | null
   created_at: Date | string
+  updated_at?: Date | string | null
+  deleted_at?: Date | string | null
 }): ShardLink {
   const metadata = typeof link.metadata_json === 'string'
     ? JSON.parse(link.metadata_json) as Record<string, unknown>
     : link.metadata_json ?? null
+  const legacyState = link.deleted_at
+    ? {
+        fortemi_legacy_state: {
+          updated_at: link.updated_at === null || link.updated_at === undefined
+            ? null
+            : toISOString(link.updated_at),
+          deleted_at: toISOString(link.deleted_at),
+        },
+      }
+    : null
   return {
     id: link.id,
     from_note_id: link.source_note_id,
@@ -136,7 +160,9 @@ export function urlLinkToShard(link: {
     kind: link.link_type,
     score: link.confidence,
     created_at: toISOString(link.created_at),
-    metadata,
+    metadata: metadata || legacyState
+      ? { ...(metadata ?? {}), ...(legacyState ?? {}) }
+      : null,
   }
 }
 
@@ -149,8 +175,20 @@ export function linkFromShard(shard: ShardLink): {
   link_type: string
   confidence: number | null
   created_at: string
+  updated_at: string | null
+  deleted_at: string | null
   metadata: Record<string, unknown> | null
 } {
+  const metadata = shard.metadata ? { ...shard.metadata } : null
+  const legacyState = metadata?.fortemi_legacy_state
+  if (metadata) delete metadata.fortemi_legacy_state
+  const state = (
+    legacyState
+    && typeof legacyState === 'object'
+    && !Array.isArray(legacyState)
+  )
+    ? legacyState as { updated_at?: unknown; deleted_at?: unknown }
+    : null
   return {
     id: shard.id,
     source_note_id: shard.from_note_id,
@@ -159,7 +197,9 @@ export function linkFromShard(shard: ShardLink): {
     link_type: shard.kind,
     confidence: shard.score,
     created_at: shard.created_at,
-    metadata: shard.metadata ?? null,
+    updated_at: typeof state?.updated_at === 'string' ? state.updated_at : null,
+    deleted_at: typeof state?.deleted_at === 'string' ? state.deleted_at : null,
+    metadata: metadata && Object.keys(metadata).length > 0 ? metadata : null,
   }
 }
 
@@ -173,6 +213,8 @@ export function collectionToShard(
     description: string | null
     parent_id: string | null
     created_at: Date | string
+    updated_at?: Date | string
+    deleted_at?: Date | string | null
   },
   noteCount?: number,
 ): ShardCollection {
@@ -182,6 +224,16 @@ export function collectionToShard(
     description: collection.description,
     parent_id: collection.parent_id,
     created_at: toISOString(collection.created_at),
+    ...(collection.updated_at !== undefined
+      ? { updated_at: toISOString(collection.updated_at) }
+      : {}),
+    ...(collection.deleted_at !== undefined
+      ? {
+          deleted_at: collection.deleted_at === null
+            ? null
+            : toISOString(collection.deleted_at),
+        }
+      : {}),
     note_count: noteCount,
   }
 }
@@ -193,6 +245,8 @@ export function collectionFromShard(shard: ShardCollection): {
   description: string | null
   parent_id: string | null
   created_at: string
+  updated_at: string
+  deleted_at: string | null
 } {
   return {
     id: shard.id,
@@ -200,6 +254,8 @@ export function collectionFromShard(shard: ShardCollection): {
     description: shard.description,
     parent_id: shard.parent_id,
     created_at: shard.created_at,
+    updated_at: shard.updated_at ?? shard.created_at,
+    deleted_at: shard.deleted_at ?? null,
   }
 }
 

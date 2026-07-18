@@ -51,6 +51,8 @@ import type {
 } from './types.js'
 import { parseJsonArrayBytes, parseJsonlBytes } from './parse.js'
 import { validateCoreV1ShardArchive } from './schema-validator.js'
+import { promoteBlobs } from './blob-staging.js'
+import { shouldApplyReplacement } from './convergence.js'
 import {
   createShardCapabilityReport,
   profileSupportError,
@@ -58,6 +60,30 @@ import {
 
 const decoder = new TextDecoder()
 const DEFAULT_BATCH_SIZE = 250
+
+function emptyCounts(): ImportCounts {
+  return {
+    notes: 0,
+    collections: 0,
+    templates: 0,
+    tags: 0,
+    links: 0,
+    embedding_sets: 0,
+    embedding_configs: 0,
+    embedding_set_members: 0,
+    embeddings: 0,
+    skos_schemes: 0,
+    skos_concepts: 0,
+    skos_relations: 0,
+    note_skos_tags: 0,
+    provenance_edges: 0,
+    graph_sources: 0,
+    graph_edges: 0,
+    community_sets: 0,
+    communities: 0,
+    community_assignments: 0,
+  }
+}
 
 /**
  * Apply the ADR-014 signed-shard policy. Returns an error string to abort the
@@ -147,31 +173,9 @@ export async function importShard(
   const errors: string[] = []
   let importedAttachmentReferenceCount = 0
   let notesWithImportedAttachmentReferences = 0
-  // Sidecar bytes to write to the BlobStore *after* the import transaction
-  // commits — keyed by content hash so identical blobs hydrate once, and kept
-  // out of the transaction so a rollback leaves no orphaned bytes.
+  // Verified sidecar bytes staged before the logical transaction.
   const blobsToHydrate = new Map<string, Uint8Array>()
-  const counts: ImportCounts = {
-    notes: 0,
-    collections: 0,
-    templates: 0,
-    tags: 0,
-    links: 0,
-    embedding_sets: 0,
-    embedding_configs: 0,
-    embedding_set_members: 0,
-    embeddings: 0,
-    skos_schemes: 0,
-    skos_concepts: 0,
-    skos_relations: 0,
-    note_skos_tags: 0,
-    provenance_edges: 0,
-    graph_sources: 0,
-    graph_edges: 0,
-    community_sets: 0,
-    communities: 0,
-    community_assignments: 0,
-  }
+  const counts = emptyCounts()
   const skipped: Partial<ImportCounts> = {}
   let capabilityReport = createShardCapabilityReport({
     backend: 'pglite',
@@ -345,6 +349,7 @@ export async function importShard(
   }
   let parsedNotes: ShardNote[]
   let parsedCollections: ShardCollection[]
+  let parsedTags: ShardTag[]
   let parsedTemplates: ShardTemplate[]
   let parsedLinks: ShardLink[]
   let parsedEmbSets: ShardEmbeddingSet[]
@@ -365,7 +370,7 @@ export async function importShard(
       ? [...noteClusters].sort((a, b) => a.offset - b.offset).flatMap((ref) => parseJsonlBytes<ShardNote>(files.get(ref.href)))
       : parseJsonlBytes<ShardNote>(files.get('notes.jsonl')))
     parsedCollections = parseComponent('collections.json', () => parseJsonArrayBytes<ShardCollection>(files.get('collections.json')))
-    parseComponent('tags.json', () => parseJsonArrayBytes<ShardTag>(files.get('tags.json')))
+    parsedTags = parseComponent('tags.json', () => parseJsonArrayBytes<ShardTag>(files.get('tags.json')))
     parsedTemplates = parseComponent('templates.json', () => parseJsonArrayBytes<ShardTemplate>(files.get('templates.json')))
     parsedLinks = parseComponent('links.jsonl', () => parseJsonlBytes<ShardLink>(files.get('links.jsonl')))
     parsedEmbSets = parseComponent('embedding_sets.json', () => parseJsonArrayBytes<ShardEmbeddingSet>(files.get('embedding_sets.json')))
@@ -416,8 +421,91 @@ export async function importShard(
       warnings.push(`Unknown component skipped: ${filename}`)
     }
   }
+
+  const existingNoteRows = parsedNotes.length === 0
+    ? { rows: [] as Array<{
+        id: string
+        created_at: Date | string
+        updated_at: Date | string
+        deleted_at: Date | string | null
+      }> }
+    : await db.query<{
+        id: string
+        created_at: Date | string
+        updated_at: Date | string
+        deleted_at: Date | string | null
+      }>(
+        `SELECT id, created_at, updated_at, deleted_at
+           FROM note
+          WHERE id = ANY($1::text[])`,
+        [parsedNotes.map((note) => note.id)],
+      )
+  const existingNoteById = new Map(existingNoteRows.rows.map((note) => [note.id, note]))
+  const eligibleNoteIds = new Set<string>()
+  for (const shardNote of parsedNotes) {
+    const existing = existingNoteById.get(shardNote.id)
+    if (!existing || strategy === 'error') {
+      eligibleNoteIds.add(shardNote.id)
+      continue
+    }
+    if (strategy === 'skip') continue
+    if (shouldApplyReplacement(existing, shardNote)) {
+      eligibleNoteIds.add(shardNote.id)
+    }
+  }
+
+  for (const shardNote of parsedNotes) {
+    if (!eligibleNoteIds.has(shardNote.id) || !shardNote.attachments?.length) continue
+    notesWithImportedAttachmentReferences++
+    for (const projection of shardNote.attachments) {
+      const ref = projection.attachment
+      let hydrated = false
+      if (sidecarBlobs) {
+        if (blobsToHydrate.has(ref.checksum)) {
+          hydrated = true
+        } else {
+          const bytes = sidecarBlobs.get(blobChecksumToHex(ref.checksum))
+          if (bytes && computeBlobHash(bytes) === ref.checksum) {
+            blobsToHydrate.set(ref.checksum, bytes)
+            hydrated = true
+          } else if (bytes) {
+            warnings.push(
+              `Sidecar blob for attachment ${ref.id} failed BLAKE3 integrity ` +
+                `check (expected ${ref.checksum}); imported as reference-only.`,
+            )
+          }
+        }
+      }
+      if (!hydrated) importedAttachmentReferenceCount++
+    }
+  }
+  if (importedAttachmentReferenceCount > 0) {
+    warnings.push(
+      `${importedAttachmentReferenceCount} attachment reference(s) across ${notesWithImportedAttachmentReferences} note(s) were imported as metadata only: ` +
+        'these shard records carry extracted text plus attachment metadata but no matching byte-sidecar entry, ' +
+        'so their BlobStore bytes are unavailable (getBlob() returns null). Export a self-contained shard ' +
+        '(`includeBlobs` + a `blobStore`) and import with a `blobStore` to hydrate bytes. Tracking: #271 / server #1046.',
+    )
+  }
+
+  let promotion
+  try {
+    promotion = await promoteBlobs(options?.blobStore, blobsToHydrate)
+  } catch (err) {
+    return {
+      success: false,
+      counts: emptyCounts(),
+      skipped,
+      warnings,
+      errors: [`Blob promotion failed (rolled back): ${err instanceof Error ? err.message : String(err)}`],
+      duration_ms: performance.now() - start,
+      capability_report: capabilityReport,
+    }
+  }
+
   // ── Step 5: Transactional insert ──────────────────────────────────────
   const conflictClause = strategy === 'skip' ? 'ON CONFLICT DO NOTHING' : ''
+  const tagCreatedAt = new Map(parsedTags.map((tag) => [tag.name, tag.created_at]))
 
   try {
     await db.transaction(async (tx) => {
@@ -456,17 +544,57 @@ export async function importShard(
           continue
         }
         if (strategy === 'replace') {
+          const existing = await tx.query<{
+            created_at: Date | string
+            updated_at: Date | string
+            deleted_at: Date | string | null
+          }>(
+            `SELECT created_at, updated_at, deleted_at FROM collection WHERE id = $1`,
+            [col.id],
+          )
+          if (
+            existing.rows[0]
+            && !shouldApplyReplacement(existing.rows[0], col)
+          ) {
+            skipped.collections = (skipped.collections ?? 0) + 1
+            warnings.push(`Collection ${col.id} is older than destination state and was not replaced.`)
+            report?.({ phase: 'collections', done: index + 1, total: parsedCollections.length })
+            await maybeYield(index + 1, batchSize)
+            continue
+          }
           await tx.query(
-            `INSERT INTO collection (id, name, description, parent_id, created_at)
-             VALUES ($1, $2, $3, $4, $5)
-             ON CONFLICT (id) DO UPDATE SET name = $2, description = $3, parent_id = $4`,
-            [col.id, col.name, col.description, col.parent_id, col.created_at],
+            `INSERT INTO collection (
+               id, name, description, parent_id, created_at, updated_at, deleted_at
+             )
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (id) DO UPDATE SET
+               name = $2, description = $3, parent_id = $4,
+               created_at = $5, updated_at = $6, deleted_at = $7`,
+            [
+              col.id,
+              col.name,
+              col.description,
+              col.parent_id,
+              col.created_at,
+              col.updated_at,
+              col.deleted_at,
+            ],
           )
         } else {
           await tx.query(
-            `INSERT INTO collection (id, name, description, parent_id, created_at)
-             VALUES ($1, $2, $3, $4, $5) ${conflictClause}`,
-            [col.id, col.name, col.description, col.parent_id, col.created_at],
+            `INSERT INTO collection (
+               id, name, description, parent_id, created_at, updated_at, deleted_at
+             )
+             VALUES ($1, $2, $3, $4, $5, $6, $7) ${conflictClause}`,
+            [
+              col.id,
+              col.name,
+              col.description,
+              col.parent_id,
+              col.created_at,
+              col.updated_at,
+              col.deleted_at,
+            ],
           )
         }
         counts.collections++
@@ -511,6 +639,17 @@ export async function importShard(
           await maybeYield(index + 1, batchSize)
           continue
         }
+        if (
+          strategy === 'replace'
+          && existingNoteById.has(note.id)
+          && !eligibleNoteIds.has(note.id)
+        ) {
+          skipped.notes = (skipped.notes ?? 0) + 1
+          warnings.push(`Note ${note.id} is older than destination state and was not replaced.`)
+          report?.({ phase: 'notes', done: index + 1, total: parsedNotes.length })
+          await maybeYield(index + 1, batchSize)
+          continue
+        }
         const contentHash = computeHash(new TextEncoder().encode(note.original_content))
 
         if (strategy === 'replace') {
@@ -519,7 +658,8 @@ export async function importShard(
             `INSERT INTO note (id, title, format, source, is_starred, is_archived, created_at, updated_at, deleted_at)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
              ON CONFLICT (id) DO UPDATE SET title = $2, format = $3, source = $4,
-               is_starred = $5, is_archived = $6, updated_at = $8, deleted_at = $9`,
+               is_starred = $5, is_archived = $6, created_at = $7,
+               updated_at = $8, deleted_at = $9`,
             [
               note.id, note.title, note.format, note.source,
               note.is_starred, note.is_archived,
@@ -533,24 +673,28 @@ export async function importShard(
           )
           if (existingOrig.rows.length > 0) {
             await tx.query(
-              `UPDATE note_original SET content = $1, content_hash = $2 WHERE note_id = $3`,
-              [note.original_content, contentHash, note.id],
+              `UPDATE note_original
+                  SET content = $1, content_hash = $2, created_at = $3
+                WHERE note_id = $4`,
+              [note.original_content, contentHash, note.created_at, note.id],
             )
           } else {
             await tx.query(
-              `INSERT INTO note_original (id, note_id, content, content_hash) VALUES ($1, $2, $3, $4)`,
-              [generateId(), note.id, note.original_content, contentHash],
+              `INSERT INTO note_original (id, note_id, content, content_hash, created_at)
+               VALUES ($1, $2, $3, $4, $5)`,
+              [generateId(), note.id, note.original_content, contentHash, note.created_at],
             )
           }
-          // Upsert current revision (note_id is PK)
           await tx.query(
-            `INSERT INTO note_revised_current (note_id, content, ai_metadata)
-             VALUES ($1, $2, $3::jsonb)
-             ON CONFLICT (note_id) DO UPDATE SET content = $2, ai_metadata = $3::jsonb`,
+            `INSERT INTO note_revised_current (note_id, content, ai_metadata, updated_at)
+             VALUES ($1, $2, $3::jsonb, $4)
+             ON CONFLICT (note_id) DO UPDATE SET
+               content = $2, ai_metadata = $3::jsonb, updated_at = $4`,
             [
               note.id,
-              note.revised_content ?? note.original_content,
+              note.revised_content,
               note.ai_metadata == null ? null : JSON.stringify(note.ai_metadata),
+              note.updated_at,
             ],
           )
         } else {
@@ -566,47 +710,71 @@ export async function importShard(
           )
           // Insert original (unique on note_id)
           await tx.query(
-            `INSERT INTO note_original (id, note_id, content, content_hash)
-             VALUES ($1, $2, $3, $4) ${conflictClause}`,
-            [generateId(), note.id, note.original_content, contentHash],
+            `INSERT INTO note_original (id, note_id, content, content_hash, created_at)
+             VALUES ($1, $2, $3, $4, $5) ${conflictClause}`,
+            [generateId(), note.id, note.original_content, contentHash, note.created_at],
           )
-          // Insert current revision
           await tx.query(
-            `INSERT INTO note_revised_current (note_id, content, ai_metadata)
-             VALUES ($1, $2, $3::jsonb) ${conflictClause}`,
+            `INSERT INTO note_revised_current (note_id, content, ai_metadata, updated_at)
+             VALUES ($1, $2, $3::jsonb, $4) ${conflictClause}`,
             [
               note.id,
-              note.revised_content ?? note.original_content,
+              note.revised_content,
               note.ai_metadata == null ? null : JSON.stringify(note.ai_metadata),
+              note.updated_at,
             ],
           )
         }
 
         // Import note tags
+        if (strategy === 'replace') {
+          await tx.query(
+            `DELETE FROM note_tag
+              WHERE note_id = $1
+                AND NOT (tag = ANY($2::text[]))`,
+            [note.id, note.tags],
+          )
+        }
         for (const tag of note.tags) {
           await tx.query(
-            `INSERT INTO note_tag (id, note_id, tag) VALUES ($1, $2, $3)
-             ON CONFLICT (note_id, tag) DO NOTHING`,
-            [generateId(), note.id, tag],
+            `INSERT INTO note_tag (id, note_id, tag, created_at)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (note_id, tag) DO UPDATE SET created_at = $4`,
+            [generateId(), note.id, tag, tagCreatedAt.get(tag) ?? note.created_at],
           )
+          counts.tags++
         }
 
+        if (strategy === 'replace') {
+          await tx.query(
+            `DELETE FROM collection_note
+              WHERE note_id = $1
+                AND ($2::text IS NULL OR collection_id <> $2)`,
+            [note.id, note.collection_id],
+          )
+        }
         if (note.collection_id) {
           await tx.query(
-            `INSERT INTO collection_note (collection_id, note_id)
-             VALUES ($1, $2)
+            `INSERT INTO collection_note (collection_id, note_id, added_at)
+             VALUES ($1, $2, $3)
              ON CONFLICT (collection_id, note_id) DO NOTHING`,
-            [note.collection_id, note.id],
+            [note.collection_id, note.id, note.created_at],
           )
         }
 
-        // Shard projection records carry extracted text plus attachment
-        // metadata, never raw bytes. When the shard includes a portable
-        // `blobs/<hex>` byte sidecar (Fortemi/fortemi#1046) and an import
-        // `blobStore` is supplied, matching bytes are hydrated after commit so
-        // getBlob() resolves; otherwise attachments import as reference-only.
+        const incomingAttachmentIds = (note.attachments ?? []).map(
+          (projection) => projection.attachment.id,
+        )
+        if (strategy === 'replace') {
+          await tx.query(
+            `DELETE FROM attachment
+              WHERE note_id = $1
+                AND deleted_at IS NULL
+                AND NOT (id = ANY($2::text[]))`,
+            [note.id, incomingAttachmentIds],
+          )
+        }
         if (note.attachments?.length) {
-          notesWithImportedAttachmentReferences++
           for (let position = 0; position < note.attachments.length; position += 1) {
             const projection = note.attachments[position]
             const ref = projection.attachment
@@ -628,9 +796,32 @@ export async function importShard(
             }
             const filename = ref.path.split('/').filter(Boolean).pop() ?? ref.path
             if (strategy === 'replace') {
+              const incomingAttachment = {
+                created_at: projection.created_at ?? note.created_at,
+                deleted_at: projection.deleted_at ?? null,
+              }
+              const existingAttachment = await tx.query<{
+                created_at: Date | string
+                deleted_at: Date | string | null
+              }>(
+                `SELECT created_at, deleted_at FROM attachment WHERE id = $1`,
+                [ref.id],
+              )
+              if (
+                existingAttachment.rows[0]
+                && !shouldApplyReplacement(existingAttachment.rows[0], incomingAttachment)
+              ) {
+                warnings.push(
+                  `Attachment ${ref.id} is older than destination state and was not replaced.`,
+                )
+                continue
+              }
               await tx.query(
-                `INSERT INTO attachment (id, note_id, blob_id, filename, mime_type, extracted_text, position)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7)
+                `INSERT INTO attachment (
+                   id, note_id, blob_id, filename, mime_type, extracted_text,
+                   position, created_at, deleted_at
+                 )
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                  ON CONFLICT (id) DO UPDATE SET
                    note_id = $2,
                    blob_id = $3,
@@ -638,42 +829,39 @@ export async function importShard(
                    mime_type = $5,
                    extracted_text = $6,
                    position = $7,
-                   deleted_at = NULL`,
-                [ref.id, note.id, blobId, filename, ref.mime, projection.extracted_text, position],
+                   created_at = $8,
+                   deleted_at = $9`,
+                [
+                  ref.id,
+                  note.id,
+                  blobId,
+                  filename,
+                  ref.mime,
+                  projection.extracted_text,
+                  position,
+                  projection.created_at ?? note.created_at,
+                  projection.deleted_at ?? null,
+                ],
               )
             } else {
               await tx.query(
-                `INSERT INTO attachment (id, note_id, blob_id, filename, mime_type, extracted_text, position)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7) ${conflictClause}`,
-                [ref.id, note.id, blobId, filename, ref.mime, projection.extracted_text, position],
+                `INSERT INTO attachment (
+                   id, note_id, blob_id, filename, mime_type, extracted_text,
+                   position, created_at, deleted_at
+                 )
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ${conflictClause}`,
+                [
+                  ref.id,
+                  note.id,
+                  blobId,
+                  filename,
+                  ref.mime,
+                  projection.extracted_text,
+                  position,
+                  projection.created_at ?? note.created_at,
+                  projection.deleted_at ?? null,
+                ],
               )
-            }
-            // Portable byte sidecar hydration (Fortemi/fortemi#1046): if the
-            // shard carried this attachment's bytes, verify them against the
-            // BLAKE3 checksum and queue a post-commit BlobStore write so
-            // getBlob() returns real bytes. Otherwise the attachment stays
-            // reference-only, exactly as before.
-            let hydrated = false
-            if (sidecarBlobs) {
-              if (blobsToHydrate.has(ref.checksum)) {
-                hydrated = true
-              } else {
-                const bytes = sidecarBlobs.get(blobChecksumToHex(ref.checksum))
-                if (bytes) {
-                  if (computeBlobHash(bytes) === ref.checksum) {
-                    blobsToHydrate.set(ref.checksum, bytes)
-                    hydrated = true
-                  } else {
-                    warnings.push(
-                      `Sidecar blob for attachment ${ref.id} failed BLAKE3 integrity ` +
-                        `check (expected ${ref.checksum}); imported as reference-only.`,
-                    )
-                  }
-                }
-              }
-            }
-            if (!hydrated) {
-              importedAttachmentReferenceCount++
             }
           }
         }
@@ -681,15 +869,6 @@ export async function importShard(
         counts.notes++
         report?.({ phase: 'notes', done: index + 1, total: parsedNotes.length })
         await maybeYield(index + 1, batchSize)
-      }
-
-      if (importedAttachmentReferenceCount > 0) {
-        warnings.push(
-          `${importedAttachmentReferenceCount} attachment reference(s) across ${notesWithImportedAttachmentReferences} note(s) were imported as metadata only: ` +
-            'these shard records carry extracted text plus attachment metadata but no matching byte-sidecar entry, ' +
-            'so their BlobStore bytes are unavailable (getBlob() returns null). Export a self-contained shard ' +
-            '(`includeBlobs` + a `blobStore`) and import with a `blobStore` to hydrate bytes. Tracking: #271 / server #1046.',
-        )
       }
 
       // Import SKOS schemes and concepts before note concept assignments.
@@ -760,15 +939,43 @@ export async function importShard(
             continue
           }
           const metadata = link.metadata == null ? null : JSON.stringify(link.metadata)
+          if (strategy === 'replace') {
+            const existing = await tx.query<{
+              created_at: Date | string
+              updated_at: Date | string | null
+              deleted_at: Date | string | null
+            }>(
+              `SELECT created_at, updated_at, deleted_at FROM link_url_target WHERE id = $1`,
+              [link.id],
+            )
+            if (existing.rows[0] && !shouldApplyReplacement(existing.rows[0], link)) {
+              skipped.links = (skipped.links ?? 0) + 1
+              warnings.push(`Link ${link.id} is older than destination state and was not replaced.`)
+              report?.({ phase: 'links', done: index + 1, total: parsedLinks.length })
+              await maybeYield(index + 1, batchSize)
+              continue
+            }
+          }
           await tx.query(
             `INSERT INTO link_url_target (
-               id, source_note_id, to_url, link_type, confidence, metadata_json, created_at
+               id, source_note_id, to_url, link_type, confidence, metadata_json,
+               created_at, updated_at, deleted_at
              )
-             VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
+             VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9)
              ${strategy === 'replace'
-               ? 'ON CONFLICT (id) DO UPDATE SET source_note_id = $2, to_url = $3, link_type = $4, confidence = $5, metadata_json = $6::jsonb, created_at = $7'
+               ? 'ON CONFLICT (id) DO UPDATE SET source_note_id = $2, to_url = $3, link_type = $4, confidence = $5, metadata_json = $6::jsonb, created_at = $7, updated_at = $8, deleted_at = $9'
                : conflictClause}`,
-            [link.id, link.source_note_id, link.to_url, link.link_type, link.confidence, metadata, link.created_at],
+            [
+              link.id,
+              link.source_note_id,
+              link.to_url,
+              link.link_type,
+              link.confidence,
+              metadata,
+              link.created_at,
+              link.updated_at,
+              link.deleted_at,
+            ],
           )
           counts.links++
           report?.({ phase: 'links', done: index + 1, total: parsedLinks.length })
@@ -781,22 +988,86 @@ export async function importShard(
           continue
         }
         if (strategy === 'replace') {
+          const existing = await tx.query<{
+            created_at: Date | string
+            updated_at: Date | string | null
+            deleted_at: Date | string | null
+          }>(
+            `SELECT created_at, updated_at, deleted_at FROM link WHERE id = $1`,
+            [link.id],
+          )
+          if (existing.rows[0] && !shouldApplyReplacement(existing.rows[0], link)) {
+            skipped.links = (skipped.links ?? 0) + 1
+            warnings.push(`Link ${link.id} is older than destination state and was not replaced.`)
+            report?.({ phase: 'links', done: index + 1, total: parsedLinks.length })
+            await maybeYield(index + 1, batchSize)
+            continue
+          }
           await tx.query(
-            `INSERT INTO link (id, source_note_id, target_note_id, link_type, confidence, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6)
-             ON CONFLICT (id) DO UPDATE SET link_type = $4, confidence = $5`,
-            [link.id, link.source_note_id, link.target_note_id, link.link_type, link.confidence, link.created_at],
+            `INSERT INTO link (
+               id, source_note_id, target_note_id, link_type, confidence,
+               created_at, updated_at, deleted_at
+             )
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             ON CONFLICT (id) DO UPDATE SET
+               source_note_id = $2, target_note_id = $3, link_type = $4,
+               confidence = $5, created_at = $6, updated_at = $7, deleted_at = $8`,
+            [
+              link.id,
+              link.source_note_id,
+              link.target_note_id,
+              link.link_type,
+              link.confidence,
+              link.created_at,
+              link.updated_at,
+              link.deleted_at,
+            ],
           )
         } else {
           await tx.query(
-            `INSERT INTO link (id, source_note_id, target_note_id, link_type, confidence, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6) ${conflictClause}`,
-            [link.id, link.source_note_id, link.target_note_id, link.link_type, link.confidence, link.created_at],
+            `INSERT INTO link (
+               id, source_note_id, target_note_id, link_type, confidence,
+               created_at, updated_at, deleted_at
+             )
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ${conflictClause}`,
+            [
+              link.id,
+              link.source_note_id,
+              link.target_note_id,
+              link.link_type,
+              link.confidence,
+              link.created_at,
+              link.updated_at,
+              link.deleted_at,
+            ],
           )
         }
         counts.links++
         report?.({ phase: 'links', done: index + 1, total: parsedLinks.length })
         await maybeYield(index + 1, batchSize)
+      }
+      if (strategy === 'replace' && eligibleNoteIds.size > 0) {
+        const noteIds = [...eligibleNoteIds]
+        const noteLinkIds = parsedLinks
+          .filter((link) => link.to_note_id !== null)
+          .map((link) => link.id)
+        const urlLinkIds = parsedLinks
+          .filter((link) => link.to_note_id === null && Boolean(link.to_url))
+          .map((link) => link.id)
+        await tx.query(
+          `DELETE FROM link
+            WHERE source_note_id = ANY($1::text[])
+              AND deleted_at IS NULL
+              AND NOT (id = ANY($2::text[]))`,
+          [noteIds, noteLinkIds],
+        )
+        await tx.query(
+          `DELETE FROM link_url_target
+            WHERE source_note_id = ANY($1::text[])
+              AND deleted_at IS NULL
+              AND NOT (id = ANY($2::text[]))`,
+          [noteIds, urlLinkIds],
+        )
       }
 
       // Import SKOS relations and note assignments after concepts and notes.
@@ -1132,34 +1403,25 @@ export async function importShard(
     })
     report?.({ phase: 'index', done: 1, total: 1 })
   } catch (err) {
+    let rollbackError: unknown
+    try {
+      await promotion.rollback()
+    } catch (rollbackFailure) {
+      rollbackError = rollbackFailure
+    }
+    const rollbackSuffix = rollbackError
+      ? `; blob rollback also failed: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`
+      : ''
     return {
       success: false,
-      counts,
+      counts: emptyCounts(),
       skipped,
       warnings,
-      errors: [`Transaction failed (rolled back): ${err instanceof Error ? err.message : String(err)}`],
+      errors: [
+        `Transaction failed (rolled back): ${err instanceof Error ? err.message : String(err)}${rollbackSuffix}`,
+      ],
       duration_ms: performance.now() - start,
       capability_report: capabilityReport,
-    }
-  }
-
-  // Hydrate attachment bytes from the portable sidecar *after* the import
-  // transaction has committed, so a rollback never leaves orphaned blobs. The
-  // BlobStore is content-addressed and separate from the SQL transaction; a
-  // failure here is non-fatal (bytes can be re-imported), so it degrades to a
-  // warning rather than discarding a successful metadata import.
-  if (options?.blobStore && blobsToHydrate.size > 0) {
-    try {
-      for (const [, bytes] of blobsToHydrate) {
-        // Entries were BLAKE3-verified against ref.checksum before queueing;
-        // put() recomputes the hash, so the stored key always matches.
-        await options.blobStore.put(bytes)
-      }
-    } catch (err) {
-      warnings.push(
-        `Imported metadata successfully but failed to hydrate ${blobsToHydrate.size} ` +
-          `attachment blob(s) into the BlobStore: ${err instanceof Error ? err.message : String(err)}.`,
-      )
     }
   }
 

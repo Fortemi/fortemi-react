@@ -16,6 +16,7 @@ import { migration0014 } from './0014_url_links.js'
 import { migration0015 } from './0015_embedding_set_server_metadata.js'
 import { migration0016 } from './0016_embedding_server_metadata.js'
 import { migration0017 } from './0017_attachment_blob_parity.js'
+import { migration0018 } from './0018_nullable_revised_content.js'
 
 export const allMigrations: Migration[] = [
   migration0001,
@@ -35,4 +36,5 @@ export const allMigrations: Migration[] = [
   migration0015,
   migration0016,
   migration0017,
+  migration0018,
 ]

@@ -50,6 +50,17 @@ function contractSuite(label: string, makeStore: () => Promise<BlobStore>) {
       await store.close()
     })
 
+    it('delete removes exactly one promoted checksum', async () => {
+      const store = await makeStore()
+      const checksum = await store.put(DATA_A)
+      expect(store.delete).toBeTypeOf('function')
+      expect(await store.delete!(checksum)).toBe(true)
+      expect(await store.delete!(checksum)).toBe(false)
+      expect(await store.has(checksum)).toBe(false)
+      expect(await store.read(checksum)).toBeNull()
+      await store.close()
+    })
+
     it('duplicate puts deduplicate to one checksum', async () => {
       const store = await makeStore()
       const first = await store.put(DATA_A)

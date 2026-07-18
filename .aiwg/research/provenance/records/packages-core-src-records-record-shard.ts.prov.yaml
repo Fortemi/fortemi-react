@@ -1,22 +1,22 @@
 metadata:
   schema_version: "1.0.0"
-  created_at: "2026-07-17T23:10:58Z"
-  description: "Provenance for RecordStore profile capability enforcement"
+  created_at: "2026-07-18T00:08:46Z"
+  description: "Provenance for implement legacy shard convergence and atomic record/blob rollback semantics"
 entity:
   id: "urn:aiwg:artifact:packages/core/src/records/record-shard.ts"
   type: code
-  created_at: "2026-07-17T23:10:58Z"
-  checksum: "sha256:5069c3d54ccfd8020b6936bb09a8f990cccf22e6d3497aee893e6931087618e0"
-  size_bytes: 28626
+  created_at: "2026-07-18T00:07:21Z"
+  checksum: "sha256:14911ac39d24b4434ca7346ef1f7e1964fe79f41057c9ef1ba879e4c4afebe76"
+  size_bytes: 33767
   attributes:
-    change_scope: "named-portability-profiles"
-    base_revision: "2f30626922a7dfad4dec1f4673ec76349335bba9"
+    change_scope: "legacy-shard-convergence"
+    base_revision: "e18bc50c2419ca4a0f5e53a1527b55589e513695"
 activity:
-  id: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:002"
+  id: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:356"
   type: modification
-  started_at: "2026-07-17T23:10:58Z"
-  ended_at: "2026-07-17T23:10:58Z"
-  description: "Reject named profiles unsupported by RecordStore before mutation"
+  started_at: "2026-07-18T00:15:28Z"
+  ended_at: "2026-07-18T00:15:28Z"
+  description: "Implement legacy shard convergence and atomic record/blob rollback semantics"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
   type: ai_assistant
@@ -26,19 +26,19 @@ agent:
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:packages/core/src/records/record-shard.ts"
-    activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:002"
-    time: "2026-07-17T23:10:58Z"
+    activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:356"
+    time: "2026-07-18T00:15:28Z"
   used:
-    - activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:002"
-      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:2f30626922a7dfad4dec1f4673ec76349335bba9:packages/core/src/records/record-shard.ts"
+    - activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:356"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e18bc50c2419ca4a0f5e53a1527b55589e513695:packages/core/src/records/record-shard.ts"
       role: "previous_revision"
   wasDerivedFrom:
     - entity: "urn:aiwg:artifact:packages/core/src/records/record-shard.ts"
-      source: "urn:aiwg:artifact:packages/core/src/shard/profile-registry.ts"
-      derivation_type: "depends"
-      activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:002"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:356"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:356"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:002"
+    activity: "urn:aiwg:activity:modification:packages-core-src-records-record-shard-ts:356"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:

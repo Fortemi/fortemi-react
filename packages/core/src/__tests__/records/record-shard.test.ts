@@ -24,10 +24,11 @@ import { CanonicalAttachmentsRepository } from '../../records/canonical-attachme
 import { exportShardFromRecords, importShardToRecords } from '../../records/record-shard.js'
 import { importShard } from '../../shard/shard-import.js'
 import { exportShard } from '../../shard/shard-export.js'
-import { packTarGz } from '../../shard/shard-tar.js'
+import { packTarGz, unpackTarGz } from '../../shard/shard-tar.js'
 import { AllowlistTrustStore } from '../../shard/shard-signature.js'
 import { MemoryBlobStore } from '../../blob-store.js'
 import type { DatabaseClient } from '../../storage-backend.js'
+import type { JournalEntry } from '../../records/types.js'
 
 const bytes = (s: string) => new TextEncoder().encode(s)
 const testDir = fileURLToPath(new URL('../shard/', import.meta.url))
@@ -58,7 +59,7 @@ async function seededStore() {
   await notes.addTag(a.note.id, 'storage')
   await notes.addTag(b.note.id, 'storage')
   await notes.addTag(b.note.id, 'bytes')
-  await notes.createLink(a.note.id, b.note.id, 'related')
+  const link = await notes.createLink(a.note.id, b.note.id, 'related')
   const collection = await notes.createCollection('Research', 'storage notes')
   await notes.addNoteToCollection(collection.id, a.note.id)
   const attachment = await attachments.attach({
@@ -69,7 +70,7 @@ async function seededStore() {
     extractedText: 'attachment payload',
   })
 
-  return { store, blobStore, notes, attachments, a, b, collection, attachment }
+  return { store, blobStore, notes, attachments, a, b, link, collection, attachment }
 }
 
 describe('record-shard (DB-free)', () => {
@@ -162,6 +163,184 @@ describe('record-shard (DB-free)', () => {
     expect(errorResult.success).toBe(false)
     expect(errorResult.errors[0]).toMatch(/already exists/)
     expect(await dst.headSeq()).toBe(before) // zero writes
+  })
+
+  it('replace converges legacy nulls, tombstones, timestamps, and note relationships', async () => {
+    const src = await seededStore()
+    const revised = await src.store.get('note_revised_current', src.a.note.id)
+    await src.store.put('note_revised_current', {
+      ...revised!,
+      content: null,
+      ai_metadata: { preserved: true },
+      updated_at: src.a.note.updated_at,
+    })
+    await src.notes.softDelete(src.b.note.id)
+    await src.notes.softDeleteLink(src.link.id)
+    await src.attachments.delete(src.attachment.id)
+    const archive = await exportShardFromRecords(src.store, {
+      includeBlobs: true,
+      blobStore: src.blobStore,
+    })
+
+    const dst = new MemoryRecordStore()
+    const dstBlobs = new MemoryBlobStore()
+    expect((await importShardToRecords(dst, archive, { blobStore: dstBlobs })).success).toBe(true)
+
+    const dstNotes = new CanonicalNotesRepository(dst)
+    const dstAttachments = new CanonicalAttachmentsRepository(dst, dstBlobs)
+    await dstNotes.addTag(src.a.note.id, 'stale-tag')
+    const staleCollection = await dstNotes.createCollection('Stale')
+    await dstNotes.addNoteToCollection(staleCollection.id, src.a.note.id)
+    const destinationOnly = await dstNotes.create({
+      title: 'Destination only',
+      content: 'not present in the shard',
+    })
+    await dstNotes.createLink(src.a.note.id, destinationOnly.note.id, 'stale-link')
+    await dstAttachments.attach({
+      noteId: src.a.note.id,
+      data: bytes('stale bytes'),
+      filename: 'stale.txt',
+    })
+
+    const merged = await importShardToRecords(dst, archive, {
+      conflictStrategy: 'skip',
+      blobStore: dstBlobs,
+    })
+    expect(merged.success).toBe(true)
+    expect((await dst.list('link')).some((link) => link.link_type === 'stale-link')).toBe(true)
+
+    const first = await importShardToRecords(dst, archive, {
+      conflictStrategy: 'replace',
+      blobStore: dstBlobs,
+    })
+    expect(first.success).toBe(true)
+    expect((await dst.get('note_revised_current', src.a.note.id))?.content).toBeNull()
+    expect((await dst.get('note_revised_current', src.a.note.id))?.ai_metadata).toEqual({
+      preserved: true,
+    })
+    expect((await dst.get('note', src.b.note.id))?.deleted_at).not.toBeNull()
+    expect((await dst.list('note_tag')).filter((tag) => tag.note_id === src.a.note.id).map((tag) => tag.tag))
+      .toEqual(['storage'])
+    expect((await dst.list('collection_note')).filter((item) => item.note_id === src.a.note.id))
+      .toHaveLength(1)
+    expect((await dst.list('link')).filter((link) => link.link_type === 'stale-link'))
+      .toHaveLength(0)
+    expect((await dst.list('attachment')).filter((attachment) => attachment.filename === 'stale.txt'))
+      .toHaveLength(0)
+
+    const sourceFiles = unpackTarGz(archive)
+    const converged = await exportShardFromRecords(dst, {
+      includeBlobs: true,
+      blobStore: dstBlobs,
+    })
+    const convergedFiles = unpackTarGz(converged)
+    const sourceNoteIds = new Set([src.a.note.id, src.b.note.id])
+    const sourceNotes = new TextDecoder().decode(sourceFiles.get('notes.jsonl'))
+    const convergedNotes = new TextDecoder().decode(convergedFiles.get('notes.jsonl'))
+      .split('\n')
+      .filter((line) => sourceNoteIds.has((JSON.parse(line) as { id: string }).id))
+      .join('\n')
+    expect(convergedNotes).toBe(sourceNotes)
+    for (const component of ['tags.json', 'links.jsonl']) {
+      expect(new TextDecoder().decode(convergedFiles.get(component)))
+        .toBe(new TextDecoder().decode(sourceFiles.get(component)))
+    }
+    expect(await dst.get('note', destinationOnly.note.id)).not.toBeNull()
+    expect(await dst.get('collection', src.collection.id))
+      .toEqual(await src.store.get('collection', src.collection.id))
+
+    const repeat = await importShardToRecords(dst, archive, {
+      conflictStrategy: 'replace',
+      blobStore: dstBlobs,
+    })
+    expect(repeat.success).toBe(true)
+    const repeatedFiles = unpackTarGz(await exportShardFromRecords(dst))
+    for (const component of ['notes.jsonl', 'collections.json', 'tags.json', 'links.jsonl']) {
+      expect(new TextDecoder().decode(repeatedFiles.get(component)))
+        .toBe(new TextDecoder().decode(convergedFiles.get(component)))
+    }
+  })
+
+  it('does not revive a destination tombstone newer than a legacy live record', async () => {
+    const src = await seededStore()
+    const archive = await exportShardFromRecords(src.store)
+    const dst = new MemoryRecordStore()
+    expect((await importShardToRecords(dst, archive)).success).toBe(true)
+    const note = await dst.get('note', src.b.note.id)
+    await dst.put('note', {
+      ...note!,
+      updated_at: '2099-01-01T00:00:00.000Z',
+      deleted_at: '2099-01-01T00:00:00.000Z',
+    })
+
+    expect((await importShardToRecords(dst, archive, { conflictStrategy: 'replace' })).success)
+      .toBe(true)
+    expect((await dst.get('note', src.b.note.id))?.deleted_at)
+      .toBe('2099-01-01T00:00:00.000Z')
+  })
+
+  it('rolls back promoted blobs when the atomic record batch fails', async () => {
+    class FailingBatchStore extends MemoryRecordStore {
+      override async applyBatch(): Promise<JournalEntry[]> {
+        throw new Error('injected record failure')
+      }
+    }
+
+    const src = await seededStore()
+    const archive = await exportShardFromRecords(src.store, {
+      includeBlobs: true,
+      blobStore: src.blobStore,
+    })
+    const dst = new FailingBatchStore()
+    const dstBlobs = new MemoryBlobStore()
+    const preexistingChecksum = await dstBlobs.put(bytes('preexisting bytes'))
+    const checksum = (await src.store.list('attachment_blob'))[0].content_hash
+
+    const result = await importShardToRecords(dst, archive, { blobStore: dstBlobs })
+    expect(result.success).toBe(false)
+    expect(result.errors.join('\n')).toContain('injected record failure')
+    expect(await dst.headSeq()).toBe(0)
+    expect(await dst.list('note')).toEqual([])
+    expect(await dstBlobs.has(checksum)).toBe(false)
+    expect(await dstBlobs.has(preexistingChecksum)).toBe(true)
+  })
+
+  it('rejects a rollback-unsafe custom blob store before mutation', async () => {
+    const src = await seededStore()
+    const archive = await exportShardFromRecords(src.store, {
+      includeBlobs: true,
+      blobStore: src.blobStore,
+    })
+    const dst = new MemoryRecordStore()
+    const rollbackUnsafe = new MemoryBlobStore()
+    Object.defineProperty(rollbackUnsafe, 'delete', { value: undefined })
+    const checksum = (await src.store.list('attachment_blob'))[0].content_hash
+
+    const result = await importShardToRecords(dst, archive, { blobStore: rollbackUnsafe })
+    expect(result.success).toBe(false)
+    expect(result.errors.join('\n')).toContain('must implement delete()')
+    expect(await dst.headSeq()).toBe(0)
+    expect(await dst.list('note')).toEqual([])
+    expect(await rollbackUnsafe.has(checksum)).toBe(false)
+  })
+
+  it('rejects a non-atomic custom record store before blob or record mutation', async () => {
+    const src = await seededStore()
+    const archive = await exportShardFromRecords(src.store, {
+      includeBlobs: true,
+      blobStore: src.blobStore,
+    })
+    const batchUnsafe = new MemoryRecordStore()
+    Object.defineProperty(batchUnsafe, 'applyBatch', { value: undefined })
+    const dstBlobs = new MemoryBlobStore()
+    const checksum = (await src.store.list('attachment_blob'))[0].content_hash
+
+    const result = await importShardToRecords(batchUnsafe, archive, { blobStore: dstBlobs })
+    expect(result.success).toBe(false)
+    expect(result.errors.join('\n')).toContain('must implement applyBatch()')
+    expect(await batchUnsafe.headSeq()).toBe(0)
+    expect(await batchUnsafe.list('note')).toEqual([])
+    expect(await dstBlobs.has(checksum)).toBe(false)
   })
 
   it('rejects unsigned shards under verifySignature: require before any write', async () => {

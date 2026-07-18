@@ -1,0 +1,42 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-18T00:07:21Z"
+  description: "Provenance for implement legacy shard convergence and atomic record/blob rollback semantics"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/shard/convergence.ts"
+  type: code
+  created_at: "2026-07-18T00:07:21Z"
+  checksum: "sha256:27239da004584aeecd3dbd1fee81795b2235968fabe34313a942e0319f2f067d"
+  size_bytes: 1280
+  attributes:
+    change_scope: "legacy-shard-convergence"
+    base_revision: "e18bc50c2419ca4a0f5e53a1527b55589e513695"
+activity:
+  id: "urn:aiwg:activity:generation:packages-core-src-shard-convergence-ts:356"
+  type: generation
+  started_at: "2026-07-18T00:07:21Z"
+  ended_at: "2026-07-18T00:07:21Z"
+  description: "Implement legacy shard convergence and atomic record/blob rollback semantics"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: ai_assistant
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/shard/convergence.ts"
+    activity: "urn:aiwg:activity:generation:packages-core-src-shard-convergence-ts:356"
+    time: "2026-07-18T00:07:21Z"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/shard/convergence.ts"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:356"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:generation:packages-core-src-shard-convergence-ts:356"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:packages-core-src-shard-convergence-ts:356"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/shard/convergence.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

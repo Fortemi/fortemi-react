@@ -3,16 +3,16 @@ metadata:
   created_at: "2026-07-18T00:07:21Z"
   description: "Provenance for implement legacy shard convergence and atomic record/blob rollback semantics"
 entity:
-  id: "urn:aiwg:artifact:packages/core/src/shard/types.ts"
+  id: "urn:aiwg:artifact:packages/core/src/blob-store.ts"
   type: code
   created_at: "2026-07-18T00:07:21Z"
-  checksum: "sha256:8031e1b02b219632dbbdcd89cdc2e8914a76fa6cc36e35e73dc11f1717b5b360"
-  size_bytes: 17867
+  checksum: "sha256:7688b086cd1eb9e1231a6b0e549b7af56654be175c349da789ddbeb0300d7a11"
+  size_bytes: 15652
   attributes:
     change_scope: "legacy-shard-convergence"
     base_revision: "e18bc50c2419ca4a0f5e53a1527b55589e513695"
 activity:
-  id: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:356"
+  id: "urn:aiwg:activity:modification:packages-core-src-blob-store-ts:356"
   type: modification
   started_at: "2026-07-18T00:12:13Z"
   ended_at: "2026-07-18T00:12:13Z"
@@ -25,22 +25,22 @@ agent:
   tool: "codex"
 relationships:
   wasGeneratedBy:
-    entity: "urn:aiwg:artifact:packages/core/src/shard/types.ts"
-    activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:356"
+    entity: "urn:aiwg:artifact:packages/core/src/blob-store.ts"
+    activity: "urn:aiwg:activity:modification:packages-core-src-blob-store-ts:356"
     time: "2026-07-18T00:12:13Z"
   used:
-    - activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:356"
-      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e18bc50c2419ca4a0f5e53a1527b55589e513695:packages/core/src/shard/types.ts"
+    - activity: "urn:aiwg:activity:modification:packages-core-src-blob-store-ts:356"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e18bc50c2419ca4a0f5e53a1527b55589e513695:packages/core/src/blob-store.ts"
       role: "previous_revision"
   wasDerivedFrom:
-    - entity: "urn:aiwg:artifact:packages/core/src/shard/types.ts"
+    - entity: "urn:aiwg:artifact:packages/core/src/blob-store.ts"
       source: "urn:gitea:Fortemi/fortemi-react:issue:356"
       derivation_type: "implements"
-      activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:356"
+      activity: "urn:aiwg:activity:modification:packages-core-src-blob-store-ts:356"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:packages-core-src-shard-types-ts:356"
+    activity: "urn:aiwg:activity:modification:packages-core-src-blob-store-ts:356"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:
-    entity: "urn:aiwg:artifact:packages/core/src/shard/types.ts"
+    entity: "urn:aiwg:artifact:packages/core/src/blob-store.ts"
     agent: "urn:aiwg:agent:codex-gpt-5"

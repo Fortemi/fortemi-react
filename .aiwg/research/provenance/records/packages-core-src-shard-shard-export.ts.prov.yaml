@@ -1,22 +1,22 @@
 metadata:
   schema_version: "1.0.0"
-  created_at: "2026-07-17T23:10:58Z"
-  description: "Provenance for the explicit core-v1 PGlite producer"
+  created_at: "2026-07-18T00:07:21Z"
+  description: "Provenance for implement legacy shard convergence and atomic record/blob rollback semantics"
 entity:
   id: "urn:aiwg:artifact:packages/core/src/shard/shard-export.ts"
   type: code
-  created_at: "2026-07-17T23:10:58Z"
-  checksum: "sha256:75e2965be548b244ab650d9cb68ed72df9852d53a92592420d36a276a7c2a956"
-  size_bytes: 38928
+  created_at: "2026-07-18T00:07:21Z"
+  checksum: "sha256:9c2be68f15b70b01f0c41500b74769ae82d46c566d46e9586fffdd5c61a9fa43"
+  size_bytes: 40224
   attributes:
-    change_scope: "named-portability-profiles"
-    base_revision: "2f30626922a7dfad4dec1f4673ec76349335bba9"
+    change_scope: "legacy-shard-convergence"
+    base_revision: "e18bc50c2419ca4a0f5e53a1527b55589e513695"
 activity:
-  id: "urn:aiwg:activity:modification:packages-core-src-shard-shard-export-ts:001"
+  id: "urn:aiwg:activity:modification:packages-core-src-shard-shard-export-ts:356"
   type: modification
-  started_at: "2026-07-17T23:10:58Z"
-  ended_at: "2026-07-17T23:10:58Z"
-  description: "Emit self-validating core-v1 archives with explicit capability and loss reports"
+  started_at: "2026-07-18T00:07:21Z"
+  ended_at: "2026-07-18T00:07:21Z"
+  description: "Implement legacy shard convergence and atomic record/blob rollback semantics"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
   type: ai_assistant
@@ -26,23 +26,19 @@ agent:
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:packages/core/src/shard/shard-export.ts"
-    activity: "urn:aiwg:activity:modification:packages-core-src-shard-shard-export-ts:001"
-    time: "2026-07-17T23:10:58Z"
+    activity: "urn:aiwg:activity:modification:packages-core-src-shard-shard-export-ts:356"
+    time: "2026-07-18T00:07:21Z"
   used:
-    - activity: "urn:aiwg:activity:modification:packages-core-src-shard-shard-export-ts:001"
-      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:2f30626922a7dfad4dec1f4673ec76349335bba9:packages/core/src/shard/shard-export.ts"
+    - activity: "urn:aiwg:activity:modification:packages-core-src-shard-shard-export-ts:356"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e18bc50c2419ca4a0f5e53a1527b55589e513695:packages/core/src/shard/shard-export.ts"
       role: "previous_revision"
   wasDerivedFrom:
     - entity: "urn:aiwg:artifact:packages/core/src/shard/shard-export.ts"
-      source: "urn:aiwg:artifact:packages/core/src/shard/profile-registry.ts"
-      derivation_type: "depends"
-      activity: "urn:aiwg:activity:modification:packages-core-src-shard-shard-export-ts:001"
-    - entity: "urn:aiwg:artifact:packages/core/src/shard/shard-export.ts"
-      source: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard.schema.receipt.json"
-      derivation_type: "derives_from"
-      activity: "urn:aiwg:activity:modification:packages-core-src-shard-shard-export-ts:001"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:356"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:modification:packages-core-src-shard-shard-export-ts:356"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:packages-core-src-shard-shard-export-ts:001"
+    activity: "urn:aiwg:activity:modification:packages-core-src-shard-shard-export-ts:356"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:

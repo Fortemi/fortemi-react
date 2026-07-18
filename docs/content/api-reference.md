@@ -179,14 +179,18 @@ Controls where PGlite stores data.
 
 ```typescript
 interface BlobStore {
-  write(key: string, data: Uint8Array): Promise<void>
-  read(key: string): Promise<Uint8Array | null>
-  remove(key: string): Promise<void>
-  exists(key: string): Promise<boolean>
+  put(bytes: Uint8Array): Promise<string>
+  read(checksum: string): Promise<Uint8Array | null>
+  has(checksum: string): Promise<boolean>
+  delete?(checksum: string): Promise<boolean>
+  reconcile(liveChecksums: Iterable<string>, opts?: BlobReconcileOptions): Promise<BlobReconcileResult>
+  gc(opts?: BlobGcOptions): Promise<BlobGcResult>
+  diagnostics(): Promise<BlobStoreDiagnostics>
+  close(): Promise<void>
 }
 ```
 
-Abstract interface for binary blob storage. All four methods are required. Keys are arbitrary strings; by convention they are attachment IDs.
+Content-addressed binary storage keyed by canonical `blake3:<hex>` checksums. Built-in stores implement the optional `delete` capability for rollback-safe shard sidecar promotion; custom stores without it remain API-compatible but cannot import sidecar bytes atomically.
 
 ---
 
@@ -1453,6 +1457,7 @@ interface RecordStore {
   get<C extends RecordCollectionName>(collection: C, id: string): Promise<RecordCollections[C] | null>
   put<C extends RecordCollectionName>(collection: C, record: RecordCollections[C]): Promise<JournalEntry>
   remove(collection: RecordCollectionName, id: string): Promise<JournalEntry>
+  applyBatch?(mutations: readonly RecordMutation[]): Promise<JournalEntry[]>
   list<C extends RecordCollectionName>(collection: C, opts?: RecordListOptions): Promise<RecordCollections[C][]>
   journalSince(sinceSeq: number, limit?: number): Promise<JournalEntry[]>
   headSeq(): Promise<number>
@@ -1461,7 +1466,7 @@ interface RecordStore {
 }
 ```
 
-The store contract plus the durable IndexedDB implementation (`createRecordStore` → `IdbRecordStore`, with schema versioning and a newer-schema guard) and the in-memory test double. Collections: `note`, `note_original`, `note_revised_current`, `note_tag`, `link`, `collection`, `collection_note`, `attachment`, `attachment_blob`. `capabilities` reports the query boundary explicitly (`boundedTextScan: true`, `fullTextSearch: false`, `vectorSearch: false`, `sqlJoins: false`).
+The store contract plus the durable IndexedDB implementation (`createRecordStore` → `IdbRecordStore`, with schema versioning and a newer-schema guard) and the in-memory test double. Collections: `note`, `note_original`, `note_revised_current`, `note_tag`, `link`, `collection`, `collection_note`, `attachment`, `attachment_blob`. The built-in stores implement the optional `applyBatch` capability, committing mutations across collections and their journal entries in one transaction, and report `atomicBatch: true`. Custom stores without that capability can continue to implement the public interface but shard import fails before mutation. Query capabilities remain explicit (`boundedTextScan: true`, `fullTextSearch: false`, `vectorSearch: false`, `sqlJoins: false`).
 
 #### `CanonicalNotesRepository` / `CanonicalAttachmentsRepository`
 
@@ -1482,7 +1487,7 @@ function exportShardFromRecords(store: RecordStore, options?: ExportOptions): Pr
 function importShardToRecords(store: RecordStore, data: Uint8Array | ArrayBuffer, options?: ImportOptions): Promise<ImportResult>
 ```
 
-Knowledge Shard round-trip with zero PGlite, format-parity with `exportShard`/`importShard`. Export honors `collectionId`/`tag` filters, `clusterNotesSize`, and the `includeBlobs` + `blobStore` byte sidecar. Import runs the same ADR-014 signature policy before any write, validates checksums, hydrates sidecar bytes through the supplied `blobStore`, pre-scans `error`-strategy conflicts (a conflicting archive writes nothing), and skips components the canonical tier cannot persist with explicit warnings.
+Knowledge Shard handling with zero PGlite. Export honors `collectionId`/`tag` filters, `clusterNotesSize`, and the `includeBlobs` + `blobStore` byte sidecar. Import runs the same ADR-014 signature policy before any write, validates checksums, stages verified sidecar bytes, commits all record and journal mutations through `applyBatch`, and rolls newly promoted bytes back if that batch fails. Legacy unprofiled replace import reconciles tags, memberships, attachments, and note links for imported notes while preserving explicit null revisions and tombstone ordering. RecordStore advertises no named portability profile until an authority-owned profile and cross-consumer fixtures exist.
 
 #### `projectNotes(db, store)` / `projectRecords(db, store)` / `dropNoteProjection(db)`
 
@@ -1551,7 +1556,7 @@ interface ImportResult {
 }
 ```
 
-Structured-error contract: a malformed manifest or component **resolves** to `{ success: false, errors: [...] }` — the promise does not reject. When `blobStore` is provided, sidecar entries matching imported attachments' `content_hash` are written to the store after the import transaction commits, so `getBlob()` returns real bytes; without it, attachments import as reference-only metadata.
+Structured-error contract: a malformed manifest or component **resolves** to `{ success: false, errors: [...] }` — the promise does not reject. With `blobStore`, verified sidecar entries are promoted before the logical transaction; a failure rolls back newly promoted hashes and logical writes, while hashes that existed before import remain untouched. Custom stores without the optional `delete` capability fail before promotion. Without a blob store, attachments import as reference-only metadata. In legacy unprofiled `replace` mode, imported-note relationships converge to the archive and older live records cannot revive newer destination tombstones. These legacy semantics do not expand the named `core-v1` contract.
 
 #### `openShard(source, options?)`
 

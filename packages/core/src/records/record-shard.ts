@@ -11,11 +11,9 @@
  * warnings, and are never emitted on export.
  *
  * Atomicity: manifest, version, signature (ADR-014 verify-before-persist),
- * and checksum validation all run BEFORE any record or byte is written, and
- * `error`-strategy conflicts are pre-scanned so a conflicting archive writes
- * nothing. Each record commit is then individually atomic and journaled; an
- * interrupted import leaves a recoverable prefix that a re-import with
- * `conflictStrategy: 'skip'` completes idempotently.
+ * and checksum validation all run before mutation. Verified sidecar bytes are
+ * promoted with rollback, then every record and journal mutation commits in
+ * one multi-collection RecordStore batch.
  *
  * @implements @.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md
  * @depends @packages/core/src/shard/schema-validator.ts
@@ -23,7 +21,11 @@
  * @agent Codex
  */
 
-import type { RecordStore, AttachmentRecord, AttachmentBlobRecord } from './types.js'
+import type {
+  RecordStore,
+  RecordMutation,
+  AttachmentRecord,
+} from './types.js'
 import { VERSION } from '../index.js'
 import { packTarGz, unpackTarGz } from '../shard/shard-tar.js'
 import { sha256Hex, validateChecksums } from '../shard/checksum.js'
@@ -54,12 +56,15 @@ import type {
   ShardNote,
   ShardLink,
   ShardCollection,
+  ShardTag,
   ShardAttachmentProjection,
   ShardCapabilityReport,
   ShardExportResult,
 } from '../shard/types.js'
 import { parseJsonArrayBytes, parseJsonlBytes } from '../shard/parse.js'
 import { validateCoreV1ShardArchive } from '../shard/schema-validator.js'
+import { promoteBlobs } from '../shard/blob-staging.js'
+import { shouldApplyReplacement } from '../shard/convergence.js'
 import {
   createShardCapabilityReport,
   profileSupportError,
@@ -171,7 +176,7 @@ export async function exportShardFromRecords(
     membershipNoteIds.set(m.collection_id, set)
   }
 
-  let notes = allNotes.filter((n) => n.deleted_at === null)
+  let notes = allNotes
   if (options?.collectionId) {
     const inCollection = membershipNoteIds.get(options.collectionId) ?? new Set<string>()
     notes = notes.filter((n) => inCollection.has(n.id))
@@ -180,16 +185,17 @@ export async function exportShardFromRecords(
   }
   notes.sort((a, b) => a.created_at.localeCompare(b.created_at))
 
-  const liveAttachments = attachments
-    .filter((a) => a.deleted_at === null)
+  const orderedAttachments = attachments
     .sort((a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at))
   const attachmentsByNote = new Map<string, ShardAttachmentProjection[]>()
   const exportedBlobChecksums: string[] = []
-  for (const att of liveAttachments) {
+  for (const att of orderedAttachments) {
     const blob = blobById.get(att.blob_id)
     if (!blob) continue // manifest without a blob record cannot be projected
     const projection: ShardAttachmentProjection = {
       extracted_text: att.extracted_text,
+      created_at: att.created_at,
+      deleted_at: att.deleted_at,
       attachment: {
         // `path` is the display filename per the binary-attachment projection
         // contract — never a physical storage key.
@@ -247,13 +253,20 @@ export async function exportShardFromRecords(
   components.push('notes')
   counts.notes = shardNotes.length
 
-  const liveCollections = collections
-    .filter((c) => c.deleted_at === null)
+  const orderedCollections = collections
     .sort((a, b) => a.name.localeCompare(b.name))
-  const shardCollections = liveCollections.map((c) =>
+  const shardCollections = orderedCollections.map((c) =>
     collectionToShard(
       // Canonical collections are flat (no parent hierarchy yet).
-      { id: c.id, name: c.name, description: c.description, parent_id: null, created_at: c.created_at },
+      {
+        id: c.id,
+        name: c.name,
+        description: c.description,
+        parent_id: null,
+        created_at: c.created_at,
+        updated_at: c.updated_at,
+        deleted_at: c.deleted_at,
+      },
       membershipNoteIds.get(c.id)?.size ?? 0,
     ),
   )
@@ -266,7 +279,17 @@ export async function exportShardFromRecords(
       .filter((t) => exportedNoteIds.has(t.note_id) || (!options?.collectionId && !options?.tag))
       .map((t) => t.tag),
   )].sort()
-  const shardTags = tagsToShard(distinctTags.map((name) => ({ name, created_at: new Date() })))
+  const tagCreatedAt = new Map<string, string>()
+  for (const row of tagRows) {
+    const current = tagCreatedAt.get(row.tag)
+    if (!current || row.created_at < current) tagCreatedAt.set(row.tag, row.created_at)
+  }
+  const shardTags = tagsToShard(
+    distinctTags.map((name) => ({
+      name,
+      created_at: tagCreatedAt.get(name) ?? new Date(0).toISOString(),
+    })),
+  )
   files.set('tags.json', encoder.encode(JSON.stringify(shardTags)))
   components.push('tags')
   counts.tags = shardTags.length
@@ -274,7 +297,6 @@ export async function exportShardFromRecords(
   const links = await store.list('link')
   const isFiltered = !!(options?.collectionId || options?.tag)
   const shardLinks = links
-    .filter((l) => l.deleted_at === null)
     .filter((l) => !isFiltered || (exportedNoteIds.has(l.source_note_id) && exportedNoteIds.has(l.target_note_id)))
     .sort((a, b) => a.created_at.localeCompare(b.created_at))
     .map((l) => linkToShard({
@@ -285,6 +307,7 @@ export async function exportShardFromRecords(
       // Canonical links carry no confidence score (PGlite-tier column).
       confidence: null,
       created_at: l.created_at,
+      deleted_at: l.deleted_at,
     }))
   files.set('links.jsonl', encoder.encode(shardLinks.map((l) => JSON.stringify(l)).join('\n')))
   components.push('links')
@@ -311,7 +334,7 @@ export async function exportShardFromRecords(
   files.set('manifest.json', encoder.encode(JSON.stringify(manifest, null, 2)))
 
   // Portable byte sidecar — self-verifying `blobs/<hex>` entries, one per
-  // distinct live content hash; a blob the store cannot return is skipped
+  // distinct projected content hash; a blob the store cannot return is skipped
   // (its attachment stays reference-only).
   if (options?.includeBlobs && options.blobStore) {
     const packed = new Set<string>()
@@ -473,7 +496,6 @@ export async function importShardToRecords(
       capabilityReport,
     )
   }
-
   if (manifest.min_reader_version && compareShardVersions(manifest.min_reader_version, CURRENT_SHARD_VERSION) > 0) {
     return failure(counts, skipped, warnings,
       `Shard requires reader version ${manifest.min_reader_version}, ` +
@@ -510,12 +532,14 @@ export async function importShardToRecords(
   let parsedNotes: ShardNote[]
   let parsedCollections: ShardCollection[]
   let parsedLinks: ShardLink[]
+  let parsedTags: ShardTag[]
   try {
     parsedNotes = noteClusters && noteClusters.length > 0
       ? [...noteClusters].sort((a, b) => a.offset - b.offset).flatMap((ref) => parseJsonlBytes<ShardNote>(files.get(ref.href)))
       : parseJsonlBytes<ShardNote>(files.get('notes.jsonl'))
     parsedCollections = parseJsonArrayBytes<ShardCollection>(files.get('collections.json'))
     parsedLinks = parseJsonlBytes<ShardLink>(files.get('links.jsonl'))
+    parsedTags = parseJsonArrayBytes<ShardTag>(files.get('tags.json'))
   } catch (err) {
     return failure(counts, skipped, warnings,
       `Failed to parse shard component: ${err instanceof Error ? err.message : String(err)}`,
@@ -538,70 +562,140 @@ export async function importShardToRecords(
     }
   }
 
-  // `error` strategy: pre-scan conflicts so a conflicting archive writes nothing.
+  const applyBatch = store.applyBatch?.bind(store)
+  if (!applyBatch) {
+    return failure(
+      counts,
+      skipped,
+      warnings,
+      'RecordStore must implement applyBatch() before shard records can be imported atomically',
+      start,
+      capabilityReport,
+    )
+  }
+
+  const [
+    storedCollections,
+    storedNotes,
+    storedOriginals,
+    storedRevised,
+    storedTags,
+    storedMemberships,
+    storedAttachments,
+    storedBlobs,
+    storedLinks,
+  ] = await Promise.all([
+    store.list('collection'),
+    store.list('note'),
+    store.list('note_original'),
+    store.list('note_revised_current'),
+    store.list('note_tag'),
+    store.list('collection_note'),
+    store.list('attachment'),
+    store.list('attachment_blob'),
+    store.list('link'),
+  ])
+  const collectionsById = new Map(storedCollections.map((record) => [record.id, record]))
+  const notesById = new Map(storedNotes.map((record) => [record.id, record]))
+  const originalsByNote = new Map(storedOriginals.map((record) => [record.note_id, record]))
+  const revisedByNote = new Map(storedRevised.map((record) => [record.id, record]))
+  const blobsByChecksum = new Map(storedBlobs.map((record) => [record.content_hash, record]))
+  const linksById = new Map(storedLinks.map((record) => [record.id, record]))
+  const tagsByNote = new Map<string, typeof storedTags>()
+  const membershipsByNote = new Map<string, typeof storedMemberships>()
+  const attachmentsByNote = new Map<string, typeof storedAttachments>()
+  for (const tag of storedTags) {
+    const records = tagsByNote.get(tag.note_id) ?? []
+    records.push(tag)
+    tagsByNote.set(tag.note_id, records)
+  }
+  for (const membership of storedMemberships) {
+    const records = membershipsByNote.get(membership.note_id) ?? []
+    records.push(membership)
+    membershipsByNote.set(membership.note_id, records)
+  }
+  for (const attachment of storedAttachments) {
+    const records = attachmentsByNote.get(attachment.note_id) ?? []
+    records.push(attachment)
+    attachmentsByNote.set(attachment.note_id, records)
+  }
+
   if (strategy === 'error') {
     for (const col of parsedCollections) {
-      if (await store.get('collection', col.id)) {
-        return failure(
-          counts,
-          skipped,
-          warnings,
-          `Collection already exists: ${col.id}`,
-          start,
-          capabilityReport,
-        )
+      if (collectionsById.has(col.id)) {
+        return failure(counts, skipped, warnings, `Collection already exists: ${col.id}`, start, capabilityReport)
       }
     }
-    for (const shardNote of parsedNotes) {
-      if (await store.get('note', shardNote.id)) {
-        return failure(
-          counts,
-          skipped,
-          warnings,
-          `Note already exists: ${shardNote.id}`,
-          start,
-          capabilityReport,
-        )
+    for (const note of parsedNotes) {
+      if (notesById.has(note.id)) {
+        return failure(counts, skipped, warnings, `Note already exists: ${note.id}`, start, capabilityReport)
       }
     }
   }
 
-  // ── Collections ────────────────────────────────────────────────────────────
-  const nowIso = new Date().toISOString()
+  const mutations: RecordMutation[] = []
+  const blobsToHydrate = new Map<string, Uint8Array>()
+  const tagCreatedAt = new Map(parsedTags.map((tag) => [tag.name, tag.created_at]))
+  const reconciledNoteIds = new Set<string>()
+  let referenceOnlyCount = 0
+  let notesWithAttachmentRefs = 0
+
   for (const shardCol of parsedCollections) {
     const col = collectionFromShard(shardCol)
-    const existing = await store.get('collection', col.id)
+    const existing = collectionsById.get(col.id)
     if (existing && strategy === 'skip') {
       skipped.collections = (skipped.collections ?? 0) + 1
       continue
     }
-    await store.put('collection', {
+    if (existing && strategy === 'replace' && !shouldApplyReplacement(existing, col)) {
+      skipped.collections = (skipped.collections ?? 0) + 1
+      warnings.push(`Collection ${col.id} is older than destination state and was not replaced.`)
+      continue
+    }
+    const record = {
       id: col.id,
       name: col.name,
       description: col.description,
       created_at: col.created_at,
-      updated_at: existing?.updated_at ?? nowIso,
-      deleted_at: existing?.deleted_at ?? null,
-    })
+      updated_at: col.updated_at,
+      deleted_at: col.deleted_at,
+    }
+    mutations.push({ op: 'put', collection: 'collection', record })
+    collectionsById.set(record.id, record)
     counts.collections++
   }
 
-  // ── Notes (+ tags, memberships, attachment manifests) ──────────────────────
-  const existingBlobs = await store.list('attachment_blob')
-  const blobIdByChecksum = new Map(existingBlobs.map((b) => [b.content_hash, b.id]))
-  const blobsToHydrate = new Map<string, Uint8Array>()
-  let referenceOnlyCount = 0
-  let notesWithAttachmentRefs = 0
-
   for (const shardNote of parsedNotes) {
     const note = noteFromShard(shardNote)
-    const existing = await store.get('note', note.id)
+    const createdAt = typeof note.created_at === 'string'
+      ? note.created_at
+      : note.created_at.toISOString()
+    const updatedAt = typeof note.updated_at === 'string'
+      ? note.updated_at
+      : note.updated_at.toISOString()
+    const deletedAt = note.deleted_at
+      ? (typeof note.deleted_at === 'string' ? note.deleted_at : note.deleted_at.toISOString())
+      : null
+    const existing = notesById.get(note.id)
     if (existing && strategy === 'skip') {
       skipped.notes = (skipped.notes ?? 0) + 1
       continue
     }
+    if (
+      existing
+      && strategy === 'replace'
+      && !shouldApplyReplacement(existing, {
+        created_at: createdAt,
+        updated_at: updatedAt,
+        deleted_at: deletedAt,
+      })
+    ) {
+      skipped.notes = (skipped.notes ?? 0) + 1
+      warnings.push(`Note ${note.id} is older than destination state and was not replaced.`)
+      continue
+    }
 
-    await store.put('note', {
+    const noteRecord = {
       id: note.id,
       archive_id: existing?.archive_id ?? null,
       title: note.title,
@@ -612,124 +706,158 @@ export async function importShardToRecords(
       is_starred: note.is_starred,
       is_pinned: existing?.is_pinned ?? false,
       is_archived: note.is_archived,
-      created_at: typeof note.created_at === 'string' ? note.created_at : note.created_at.toISOString(),
-      updated_at: typeof note.updated_at === 'string' ? note.updated_at : note.updated_at.toISOString(),
-      deleted_at: note.deleted_at
-        ? (typeof note.deleted_at === 'string' ? note.deleted_at : note.deleted_at.toISOString())
-        : null,
-    })
+      created_at: createdAt,
+      updated_at: updatedAt,
+      deleted_at: deletedAt,
+    }
+    mutations.push({ op: 'put', collection: 'note', record: noteRecord })
+    notesById.set(note.id, noteRecord)
+    reconciledNoteIds.add(note.id)
 
-    const contentHash = computeHash(encoder.encode(note.original_content))
-    const existingOriginal = existing
-      ? (await store.list('note_original')).find((o) => o.note_id === note.id)
-      : undefined
-    await store.put('note_original', {
+    const existingOriginal = originalsByNote.get(note.id)
+    const originalRecord = {
       id: existingOriginal?.id ?? generateId(),
       note_id: note.id,
       content: note.original_content,
-      content_hash: contentHash,
-      created_at: existingOriginal?.created_at ?? nowIso,
-    })
+      content_hash: computeHash(encoder.encode(note.original_content)),
+      created_at: createdAt,
+    }
+    mutations.push({ op: 'put', collection: 'note_original', record: originalRecord })
+    originalsByNote.set(note.id, originalRecord)
 
-    const existingRevised = existing ? await store.get('note_revised_current', note.id) : null
-    await store.put('note_revised_current', {
+    const existingRevised = revisedByNote.get(note.id)
+    const revisedRecord = {
       id: note.id,
-      content: note.revised_content ?? note.original_content,
+      content: note.revised_content,
       ai_metadata: note.ai_metadata ?? null,
       generation_count: existingRevised?.generation_count ?? 0,
       model: existingRevised?.model ?? null,
       is_user_edited: existingRevised?.is_user_edited ?? false,
-      updated_at: typeof note.updated_at === 'string' ? note.updated_at : note.updated_at.toISOString(),
-    })
-
-    const existingTags = new Set(
-      (await store.list('note_tag')).filter((t) => t.note_id === note.id).map((t) => t.tag),
-    )
-    for (const tag of note.tags) {
-      if (existingTags.has(tag)) continue // UNIQUE(note_id, tag)
-      await store.put('note_tag', { id: generateId(), note_id: note.id, tag, created_at: nowIso })
+      updated_at: updatedAt,
     }
+    mutations.push({ op: 'put', collection: 'note_revised_current', record: revisedRecord })
+    revisedByNote.set(note.id, revisedRecord)
 
-    if (note.collection_id && (await store.get('collection', note.collection_id))) {
-      const member = (await store.list('collection_note')).find(
-        (cn) => cn.collection_id === note.collection_id && cn.note_id === note.id,
+    const existingTags = tagsByNote.get(note.id) ?? []
+    const incomingTags = new Set(note.tags)
+    if (strategy === 'replace') {
+      for (const tag of existingTags) {
+        if (!incomingTags.has(tag.tag)) {
+          mutations.push({ op: 'delete', collection: 'note_tag', id: tag.id })
+        }
+      }
+    }
+    for (const tag of note.tags) {
+      const existingTag = existingTags.find((record) => record.tag === tag)
+      if (!existingTag || strategy === 'replace') {
+        mutations.push({
+          op: 'put',
+          collection: 'note_tag',
+          record: {
+            id: existingTag?.id ?? generateId(),
+            note_id: note.id,
+            tag,
+            created_at: tagCreatedAt.get(tag) ?? createdAt,
+          },
+        })
+      }
+    }
+    counts.tags += note.tags.length
+
+    const existingMemberships = membershipsByNote.get(note.id) ?? []
+    if (strategy === 'replace') {
+      for (const membership of existingMemberships) {
+        if (membership.collection_id !== note.collection_id) {
+          mutations.push({ op: 'delete', collection: 'collection_note', id: membership.id })
+        }
+      }
+    }
+    if (note.collection_id && collectionsById.has(note.collection_id)) {
+      const existingMembership = existingMemberships.find(
+        (membership) => membership.collection_id === note.collection_id,
       )
-      if (!member) {
-        await store.put('collection_note', {
-          id: generateId(),
-          collection_id: note.collection_id,
-          note_id: note.id,
-          created_at: nowIso,
+      if (!existingMembership) {
+        mutations.push({
+          op: 'put',
+          collection: 'collection_note',
+          record: {
+            id: generateId(),
+            collection_id: note.collection_id,
+            note_id: note.id,
+            created_at: createdAt,
+          },
         })
       }
     }
 
+    const existingAttachments = attachmentsByNote.get(note.id) ?? []
+    const incomingAttachmentIds = new Set(
+      (note.attachments ?? []).map((projection) => projection.attachment.id),
+    )
+    if (strategy === 'replace') {
+      for (const attachment of existingAttachments) {
+        if (attachment.deleted_at === null && !incomingAttachmentIds.has(attachment.id)) {
+          mutations.push({ op: 'delete', collection: 'attachment', id: attachment.id })
+        }
+      }
+    }
     if (note.attachments?.length) {
       notesWithAttachmentRefs++
       for (let position = 0; position < note.attachments.length; position += 1) {
         const projection = note.attachments[position]
         const ref = projection.attachment
-
-        let blobId = blobIdByChecksum.get(ref.checksum)
-        if (!blobId) {
-          const blob: AttachmentBlobRecord = {
+        let blob = blobsByChecksum.get(ref.checksum)
+        if (!blob) {
+          blob = {
             id: generateId(),
             content_hash: ref.checksum,
             size_bytes: ref.bytes,
-            created_at: nowIso,
+            created_at: projection.created_at ?? createdAt,
           }
-          await store.put('attachment_blob', blob)
-          blobIdByChecksum.set(ref.checksum, blob.id)
-          blobId = blob.id
+          mutations.push({ op: 'put', collection: 'attachment_blob', record: blob })
+          blobsByChecksum.set(ref.checksum, blob)
         }
-
-        const filename = ref.path.split('/').filter(Boolean).pop() ?? ref.path
         const attachment: AttachmentRecord = {
           id: ref.id,
           note_id: note.id,
-          blob_id: blobId,
+          blob_id: blob.id,
           document_type_id: null,
           mime_type: ref.mime,
           extracted_text: projection.extracted_text,
-          filename,
+          filename: ref.path.split('/').filter(Boolean).pop() ?? ref.path,
           display_name: null,
           position,
-          created_at: nowIso,
-          deleted_at: null,
+          created_at: projection.created_at ?? createdAt,
+          deleted_at: projection.deleted_at ?? null,
         }
-        const existingAttachment = await store.get('attachment', ref.id)
-        if (!existingAttachment || strategy === 'replace') {
-          await store.put('attachment', {
-            ...attachment,
-            created_at: existingAttachment?.created_at ?? nowIso,
-          })
+        const existingAttachment = existingAttachments.find((record) => record.id === ref.id)
+        if (
+          !existingAttachment
+          || (strategy === 'replace' && shouldApplyReplacement(existingAttachment, attachment))
+        ) {
+          mutations.push({ op: 'put', collection: 'attachment', record: attachment })
         }
 
-        // Sidecar hydration (verify against the BLAKE3 name before queueing);
-        // an absent or corrupt entry leaves the attachment reference-only.
         let hydrated = false
         if (sidecarBlobs) {
           if (blobsToHydrate.has(ref.checksum)) {
             hydrated = true
           } else {
             const bytes = sidecarBlobs.get(blobChecksumToHex(ref.checksum))
-            if (bytes) {
-              if (computeBlobHash(bytes) === ref.checksum) {
-                blobsToHydrate.set(ref.checksum, bytes)
-                hydrated = true
-              } else {
-                warnings.push(
-                  `Sidecar blob for attachment ${ref.id} failed BLAKE3 integrity ` +
-                    `check (expected ${ref.checksum}); imported as reference-only.`,
-                )
-              }
+            if (bytes && computeBlobHash(bytes) === ref.checksum) {
+              blobsToHydrate.set(ref.checksum, bytes)
+              hydrated = true
+            } else if (bytes) {
+              warnings.push(
+                `Sidecar blob for attachment ${ref.id} failed BLAKE3 integrity ` +
+                  `check (expected ${ref.checksum}); imported as reference-only.`,
+              )
             }
           }
         }
         if (!hydrated) referenceOnlyCount++
       }
     }
-
     counts.notes++
   }
 
@@ -741,7 +869,7 @@ export async function importShardToRecords(
     )
   }
 
-  // ── Links (note-to-note only; URL links are a PGlite-tier capability) ──────
+  const incomingLinkIds = new Set<string>()
   for (const shardLink of parsedLinks) {
     const link = linkFromShard(shardLink)
     if (!link.target_note_id) {
@@ -753,35 +881,82 @@ export async function importShardToRecords(
       )
       continue
     }
-    const existing = await store.get('link', link.id)
+    incomingLinkIds.add(link.id)
+    const existing = linksById.get(link.id)
     if (existing && strategy === 'skip') {
       skipped.links = (skipped.links ?? 0) + 1
       continue
     }
-    await store.put('link', {
+    const linkRecord = {
       id: link.id,
       source_note_id: link.source_note_id,
       target_note_id: link.target_note_id,
       link_type: link.link_type,
       created_at: link.created_at,
-      deleted_at: existing?.deleted_at ?? null,
-    })
+      deleted_at: link.deleted_at,
+    }
+    if (
+      existing
+      && strategy === 'replace'
+      && !shouldApplyReplacement(existing, {
+        ...linkRecord,
+        updated_at: link.updated_at,
+      })
+    ) {
+      skipped.links = (skipped.links ?? 0) + 1
+      warnings.push(`Link ${link.id} is older than destination state and was not replaced.`)
+      continue
+    }
+    mutations.push({ op: 'put', collection: 'link', record: linkRecord })
+    linksById.set(link.id, linkRecord)
     counts.links++
   }
 
-  // ── Hydrate sidecar bytes (after all record commits) ───────────────────────
-  const errors: string[] = []
-  if (options?.blobStore && blobsToHydrate.size > 0) {
-    try {
-      for (const [, bytes] of blobsToHydrate) {
-        await options.blobStore.put(bytes)
+  if (strategy === 'replace') {
+    for (const existing of storedLinks) {
+      if (
+        reconciledNoteIds.has(existing.source_note_id)
+        && existing.deleted_at === null
+        && !incomingLinkIds.has(existing.id)
+      ) {
+        mutations.push({ op: 'delete', collection: 'link', id: existing.id })
       }
-    } catch (err) {
-      warnings.push(
-        `Imported records successfully but failed to hydrate ${blobsToHydrate.size} ` +
-          `attachment blob(s) into the BlobStore: ${err instanceof Error ? err.message : String(err)}.`,
-      )
     }
+  }
+
+  let promotion
+  try {
+    promotion = await promoteBlobs(options?.blobStore, blobsToHydrate)
+  } catch (err) {
+    return failure(
+      emptyCounts(),
+      skipped,
+      warnings,
+      `Blob promotion failed (rolled back): ${err instanceof Error ? err.message : String(err)}`,
+      start,
+      capabilityReport,
+    )
+  }
+  try {
+    await applyBatch(mutations)
+  } catch (err) {
+    let rollbackError: unknown
+    try {
+      await promotion.rollback()
+    } catch (rollbackFailure) {
+      rollbackError = rollbackFailure
+    }
+    const rollbackSuffix = rollbackError
+      ? `; blob rollback also failed: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`
+      : ''
+    return failure(
+      emptyCounts(),
+      skipped,
+      warnings,
+      `Record transaction failed (rolled back): ${err instanceof Error ? err.message : String(err)}${rollbackSuffix}`,
+      start,
+      capabilityReport,
+    )
   }
 
   return {
@@ -789,7 +964,7 @@ export async function importShardToRecords(
     counts,
     skipped,
     warnings,
-    errors,
+    errors: [],
     duration_ms: performance.now() - start,
     capability_report: capabilityReport,
   }

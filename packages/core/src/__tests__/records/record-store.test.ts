@@ -90,6 +90,49 @@ function contractSuite(label: string, makeStore: () => Promise<RecordStore>) {
       await store.close()
     })
 
+    it('commits a multi-collection batch and journal atomically', async () => {
+      const store = await makeStore()
+      const ts = new Date().toISOString()
+      const entries = await store.applyBatch!([
+        { op: 'put', collection: 'note', record: noteRecord('batch-note') },
+        {
+          op: 'put',
+          collection: 'note_tag',
+          record: {
+            id: 'batch-tag',
+            note_id: 'batch-note',
+            tag: 'atomic',
+            created_at: ts,
+          },
+        },
+      ])
+
+      expect(entries).toHaveLength(2)
+      expect(await store.get('note', 'batch-note')).not.toBeNull()
+      expect(await store.get('note_tag', 'batch-tag')).not.toBeNull()
+      expect(await store.journalSince(0)).toHaveLength(2)
+      await store.close()
+    })
+
+    it('rolls back the whole batch when a later record cannot be cloned', async () => {
+      const store = await makeStore()
+      const invalid = {
+        ...noteRecord('invalid'),
+        title: () => 'not cloneable',
+      } as unknown as NoteRecord0
+
+      await expect(store.applyBatch!([
+        { op: 'put', collection: 'note', record: noteRecord('would-be-prefix') },
+        { op: 'put', collection: 'note', record: invalid },
+      ])).rejects.toThrow()
+
+      expect(await store.get('note', 'would-be-prefix')).toBeNull()
+      expect(await store.get('note', 'invalid')).toBeNull()
+      expect(await store.headSeq()).toBe(0)
+      expect(await store.journalSince(0)).toEqual([])
+      await store.close()
+    })
+
     it('journalSince returns only entries after the cursor', async () => {
       const store = await makeStore()
       await store.put('note', noteRecord('n1'))
@@ -106,6 +149,7 @@ function contractSuite(label: string, makeStore: () => Promise<RecordStore>) {
     it('reports its capability boundary explicitly', async () => {
       const store = await makeStore()
       expect(store.capabilities.crud).toBe(true)
+      expect(store.capabilities.atomicBatch).toBe(true)
       expect(store.capabilities.fullTextSearch).toBe(false)
       expect(store.capabilities.vectorSearch).toBe(false)
       await store.close()

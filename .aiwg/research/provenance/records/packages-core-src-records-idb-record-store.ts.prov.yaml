@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-18T00:07:21Z"
+  description: "Provenance for implement legacy shard convergence and atomic record/blob rollback semantics"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/records/idb-record-store.ts"
+  type: code
+  created_at: "2026-07-18T00:07:21Z"
+  checksum: "sha256:1e40dd3d52abb784435f279a18a5efdfcce796cbe79d0089a24e5c13a190bfd3"
+  size_bytes: 8071
+  attributes:
+    change_scope: "legacy-shard-convergence"
+    base_revision: "e18bc50c2419ca4a0f5e53a1527b55589e513695"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-src-records-idb-record-store-ts:356"
+  type: modification
+  started_at: "2026-07-18T00:07:21Z"
+  ended_at: "2026-07-18T00:07:21Z"
+  description: "Implement legacy shard convergence and atomic record/blob rollback semantics"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: ai_assistant
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/records/idb-record-store.ts"
+    activity: "urn:aiwg:activity:modification:packages-core-src-records-idb-record-store-ts:356"
+    time: "2026-07-18T00:07:21Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-src-records-idb-record-store-ts:356"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e18bc50c2419ca4a0f5e53a1527b55589e513695:packages/core/src/records/idb-record-store.ts"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/records/idb-record-store.ts"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:356"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:modification:packages-core-src-records-idb-record-store-ts:356"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-src-records-idb-record-store-ts:356"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/records/idb-record-store.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

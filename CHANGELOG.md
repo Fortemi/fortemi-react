@@ -30,6 +30,14 @@ All notable changes to fortemi-react are documented here.
   storage epic (#322): PGlite is now fully optional and rebuildable.
 - `CanonicalNoteUpdateInput` accepts `format` and `visibility`;
   `linkToShard` / `collectionToShard` accept canonical ISO-string records.
+- Legacy unprofiled shard replacement now preserves representable nulls,
+  tombstones, and timestamps, removes stale source-owned relationships, and
+  rolls back record, journal, and newly promoted blob mutations atomically.
+  Built-in record stores expose optional `applyBatch` / `atomicBatch`
+  capabilities, and built-in blob stores expose optional `delete`; custom
+  stores lacking either rollback capability fail before import mutation.
+- `NoteRevisedCurrentRecord.content` is now `string | null`. Consumers reading
+  current revisions must handle `null` rather than assuming a string.
 
 ## v2026.7.7 - 2026-07-16
 

@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-18T00:07:21Z"
+  description: "Provenance for verify legacy shard convergence, timestamp preservation, and atomic rollback"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/__tests__/records/record-store.test.ts"
+  type: test
+  created_at: "2026-07-18T00:07:21Z"
+  checksum: "sha256:1d093e4c2f78e553bb7c21c8160d435c22afa6b8726ad29050f76019ee2bf0a3"
+  size_bytes: 7816
+  attributes:
+    change_scope: "legacy-shard-convergence"
+    base_revision: "e18bc50c2419ca4a0f5e53a1527b55589e513695"
+activity:
+  id: "urn:aiwg:activity:testing:packages-core-src-tests-records-record-store-test-ts:356"
+  type: testing
+  started_at: "2026-07-18T00:15:28Z"
+  ended_at: "2026-07-18T00:15:28Z"
+  description: "Verify legacy shard convergence, timestamp preservation, and atomic rollback"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: ai_assistant
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/records/record-store.test.ts"
+    activity: "urn:aiwg:activity:testing:packages-core-src-tests-records-record-store-test-ts:356"
+    time: "2026-07-18T00:15:28Z"
+  used:
+    - activity: "urn:aiwg:activity:testing:packages-core-src-tests-records-record-store-test-ts:356"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e18bc50c2419ca4a0f5e53a1527b55589e513695:packages/core/src/__tests__/records/record-store.test.ts"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/__tests__/records/record-store.test.ts"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:356"
+      derivation_type: "tests"
+      activity: "urn:aiwg:activity:testing:packages-core-src-tests-records-record-store-test-ts:356"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:testing:packages-core-src-tests-records-record-store-test-ts:356"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "test_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/records/record-store.test.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-18T00:07:21Z"
+  description: "Provenance for verify legacy shard convergence, timestamp preservation, and atomic rollback"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/__tests__/blob-store.test.ts"
+  type: test
+  created_at: "2026-07-18T00:07:21Z"
+  checksum: "sha256:e4ac281b715ca893df645cfc11154a7fc409ddef04e30c714502e7a498b103af"
+  size_bytes: 10443
+  attributes:
+    change_scope: "legacy-shard-convergence"
+    base_revision: "e18bc50c2419ca4a0f5e53a1527b55589e513695"
+activity:
+  id: "urn:aiwg:activity:testing:packages-core-src-tests-blob-store-test-ts:356"
+  type: testing
+  started_at: "2026-07-18T00:12:13Z"
+  ended_at: "2026-07-18T00:12:13Z"
+  description: "Verify legacy shard convergence, timestamp preservation, and atomic rollback"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: ai_assistant
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/blob-store.test.ts"
+    activity: "urn:aiwg:activity:testing:packages-core-src-tests-blob-store-test-ts:356"
+    time: "2026-07-18T00:12:13Z"
+  used:
+    - activity: "urn:aiwg:activity:testing:packages-core-src-tests-blob-store-test-ts:356"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e18bc50c2419ca4a0f5e53a1527b55589e513695:packages/core/src/__tests__/blob-store.test.ts"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/__tests__/blob-store.test.ts"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:356"
+      derivation_type: "tests"
+      activity: "urn:aiwg:activity:testing:packages-core-src-tests-blob-store-test-ts:356"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:testing:packages-core-src-tests-blob-store-test-ts:356"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "test_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/blob-store.test.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

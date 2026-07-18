@@ -37,7 +37,7 @@ export interface NoteOriginalRecord {
 export interface NoteRevisedCurrentRecord {
   /** Keyed by note id (mirrors the SQL PK `note_id`). */
   id: string
-  content: string
+  content: string | null
   ai_metadata: unknown | null
   generation_count: number
   model: string | null
@@ -154,6 +154,8 @@ export interface JournalEntry {
 export interface RecordStoreCapabilities {
   crud: true
   journal: true
+  /** Multi-collection record and journal mutations commit atomically. */
+  atomicBatch?: true
   /** Bounded substring scan over titles/content — not ranked FTS. */
   boundedTextScan: true
   fullTextSearch: false
@@ -164,6 +166,7 @@ export interface RecordStoreCapabilities {
 export const RECORD_STORE_CAPABILITIES: RecordStoreCapabilities = {
   crud: true,
   journal: true,
+  atomicBatch: true,
   boundedTextScan: true,
   fullTextSearch: false,
   vectorSearch: false,
@@ -176,6 +179,20 @@ export interface RecordListOptions {
   /** Maximum records returned (applied after filtering). */
   limit?: number
 }
+
+export type RecordMutation =
+  | {
+      [C in RecordCollectionName]: {
+        op: 'put'
+        collection: C
+        record: RecordCollections[C]
+      }
+    }[RecordCollectionName]
+  | {
+      op: 'delete'
+      collection: RecordCollectionName
+      id: string
+    }
 
 /**
  * The writable canonical structured-record store. Implementations MUST make
@@ -197,6 +214,12 @@ export interface RecordStore {
 
   /** Hard-remove one record, journaled atomically (soft-delete is a field upstream). */
   remove(collection: RecordCollectionName, id: string): Promise<JournalEntry>
+
+  /**
+   * Commit all record mutations and their journal entries as one transaction.
+   * An error leaves both record state and the journal unchanged.
+   */
+  applyBatch?(mutations: readonly RecordMutation[]): Promise<JournalEntry[]>
 
   /** All records of a collection (insertion order not guaranteed). */
   list<C extends RecordCollectionName>(
