@@ -198,6 +198,8 @@ jobs:
           }
           CHECK
 
+          node tools/release/verify-core-package.mjs "$CORE_TGZ" "$TAG_VERSION"
+
       - name: Publish packages to npmjs.org (OIDC trusted publishing + provenance)
         # Tokenless: no NODE_AUTH_TOKEN, no .npmrc auth block. npm >= 11.5.1
         # (11.12.1 in this container) negotiates OIDC against npmjs.org using

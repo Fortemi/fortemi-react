@@ -131,4 +131,15 @@ jobs:
       - uses: pnpm/action-setup@v4
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - name: Verify clean-installed Core package
+        run: |
+          set -euo pipefail
+          CORE_VERSION="$(node -p "require('./packages/core/package.json').version")"
+          PACK_DIR="/tmp/fortemi-core-ci-pack"
+          rm -rf "$PACK_DIR"
+          mkdir -p "$PACK_DIR"
+          (cd packages/core && pnpm pack --pack-destination "$PACK_DIR")
+          node tools/release/verify-core-package.mjs \
+            "$PACK_DIR/fortemi-core-${CORE_VERSION}.tgz" \
+            "$CORE_VERSION"
       - run: pnpm report:bundle
