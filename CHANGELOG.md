@@ -6,15 +6,18 @@ All notable changes to fortemi-react are documented here.
 
 ### `@fortemi/core` - Canonical Knowledge Shard package boundary (#354, #355, #362)
 
-- Pinned Fortemi Knowledge Shard contract revision 18 and its exact
+- Pinned Fortemi Knowledge Shard contract revision 19 and its exact
   `core-v1`, `record-v1`, and `full-v1` schema bundle. Core validates the
   authority's signed 33-component server fixture, declared files and counts,
   component checksums, signature-envelope shape, and mandatory attachment
-  sidecars. This adds validation authority only: PGlite still advertises
+  sidecars. Schema 1.2 additionally validates nullable embedding contract
+  fingerprints as exact lowercase SHA-256 values while preserving historical
+  1.1 archives with absent lineage. This adds validation authority only:
+  PGlite still advertises
   `core-v1`, RecordStore still advertises `record-v1`, and neither backend
   advertises `full-v1`.
 - The AIWG v2 converter now emits a deterministic, self-validating schema
-  `1.1.0` `core-v1` archive directly. It preserves the complete AIWG source
+  `1.2.0` `core-v1` archive directly. It preserves the complete AIWG source
   record in note/link metadata, fills the canonical manifest and count
   inventory, and rejects the former partial rich-component projection instead
   of labeling it portable.

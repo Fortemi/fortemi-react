@@ -1,0 +1,32 @@
+{
+  "profile": "full-v1",
+  "status": "signed-integrated-route-fixture",
+  "archive": "tests/fixtures/shards/full-v1-integrated-candidate.shard",
+  "archiveSha256": "c2e06eaa9802efd25ed70f5fe7e339548bd0b561ae86fb1a0f2d2fdf45305659",
+  "manifestSha256": "0d489651d6f60585bd7a623395c89799e8396ee6487d2781e3a109dda618724f",
+  "signatureEntry": "signature.json",
+  "signatureEnvelopeSha256": "6b289964ed82731b60ec236a34ed565e0c8859ba94c477d56b24cbcc3445032e",
+  "signatureAlgorithm": "ed25519",
+  "signerKeyId": "fortemi-fixture-1",
+  "signerPublicKey": "6kpsY-KcUgq-9VB7Ey7F-ZVHdq6-vnuSQh7qaRRG0iw",
+  "signerTrust": "deterministic public test fixture; never trust this key in production",
+  "componentCount": 33,
+  "componentChecksumCount": 33,
+  "noteCount": 2,
+  "attachmentReferenceCount": 2,
+  "distinctBlobCount": 1,
+  "blobChecksum": "blake3:1098b345e8aacd29e640d3bf724368680c1bfd401b5a9105cb2dc924740c27ad",
+  "blobBytes": 35,
+  "semanticAssertions": [
+    "the canonical Ed25519 signature authenticates the exact manifest and blob inventory",
+    "all component schemas and cross-component relationships validate",
+    "original and revised current content match the note projection",
+    "revision parent chain and current revision identity are preserved",
+    "populated and null embedding contract fingerprints survive clean and repeated import",
+    "two attachment references resolve to one byte-identical sidecar"
+  ],
+  "conformanceClaim": false,
+  "remainingGates": [
+    "cross-repository producer and consumer receipts"
+  ]
+}

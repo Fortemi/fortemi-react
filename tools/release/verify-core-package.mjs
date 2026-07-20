@@ -79,7 +79,56 @@ try {
   const core = await import(pathToFileURL(resolve(packageRoot, 'dist/index.js')).href)
   const aiwg = await import(pathToFileURL(resolve(packageRoot, 'dist/aiwg-index.js')).href)
   assert.equal(core.VERSION, expectedVersion)
+  assert.equal(core.CURRENT_SHARD_VERSION, '1.2.0')
   assert.equal(typeof aiwg.aiwgFortemiIndexToKnowledgeShard, 'function')
+
+  const authority = core.getKnowledgeShardContractReceipt()
+  assert.deepEqual(authority.source, {
+    repository: 'https://git.integrolabs.net/Fortemi/fortemi',
+    commit: '81fbeaf065df3818edd046ed8a744f10eeb00e6f',
+    contractPath: 'contracts/knowledge-shard/contract.json',
+    contractSha256: '5debc14e0bc7eef403a75e8e063a10f53019e1d74857485d6eda3abaec9397e2',
+  })
+  assert.equal(authority.knowledgeShard.schemaVersion, '1.2.0')
+  assert.equal(
+    authority.schemaBundle.sha256,
+    'deec0cb66dc09865667256e29340d096c02dd9b0e55bdc1ae60b7effb68ac595',
+  )
+
+  const embedding = {
+    id: '018f2d2d-bc00-7cc8-8ad2-f147d6a2e77e',
+    note_id: null,
+    embedding_set_id: null,
+    chunk_index: 0,
+    text: 'package fingerprint check',
+    vector: null,
+    model: 'package-smoke',
+    created_at: null,
+  }
+  for (const contractFingerprint of ['a'.repeat(64), null]) {
+    assert.deepEqual(
+      core.validateShardComponentRecord(
+        'embeddings',
+        { ...embedding, contract_fingerprint: contractFingerprint },
+        'full-v1',
+        '1.2.0',
+      ),
+      { valid: true, errors: [] },
+    )
+  }
+  assert.equal(
+    core.validateShardComponentRecord(
+      'embeddings',
+      { ...embedding, contract_fingerprint: 'A'.repeat(64) },
+      'full-v1',
+      '1.2.0',
+    ).valid,
+    false,
+  )
+  assert.deepEqual(
+    core.validateShardComponentRecord('embeddings', embedding, 'full-v1', '1.1.0'),
+    { valid: true, errors: [] },
+  )
 
   const index = {
     schema_version: 'aiwg.fortemi.index.export.v2',
@@ -119,7 +168,7 @@ try {
   const links = decoder.decode(files.get('links.jsonl')).trim().split('\n')
     .map((line) => JSON.parse(line))
 
-  assert.equal(manifest.version, '1.1.0')
+  assert.equal(manifest.version, '1.2.0')
   assert.equal(manifest.profile, 'core-v1')
   assert.deepEqual(manifest.producer, {
     name: 'fortemi-core-aiwg-index',

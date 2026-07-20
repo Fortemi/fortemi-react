@@ -97,9 +97,9 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       portable: true,
       advertised_profiles: ['core-v1'],
       authority: {
-        commit: 'e62ee6bb7eb30f2ef68c0be0a1207ee687222c56',
-        contract_revision: '18',
-        schema_version: '1.1.0',
+        commit: '81fbeaf065df3818edd046ed8a744f10eeb00e6f',
+        contract_revision: '19',
+        schema_version: '1.2.0',
       },
     })
     expect(createShardCapabilityReport({
@@ -195,7 +195,7 @@ describe('Knowledge Shard portability profiles (#355)', () => {
 
     const manifest = JSON.parse(decoder.decode(files.get('manifest.json'))) as ShardManifest
     expect(manifest).toMatchObject({
-      version: '1.1.0',
+      version: '1.2.0',
       profile: 'core-v1',
       producer: { name: 'fortemi-react' },
       components: ['notes', 'collections', 'tags', 'templates', 'links'],

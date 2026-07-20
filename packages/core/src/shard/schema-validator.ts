@@ -17,47 +17,51 @@ import legacyCollectionSchema from '../../schemas/knowledge-shard/1.0.0/core-v1/
 import legacyTagSchema from '../../schemas/knowledge-shard/1.0.0/core-v1/tag.schema.json' with { type: 'json' }
 import legacyTemplateSchema from '../../schemas/knowledge-shard/1.0.0/core-v1/template.schema.json' with { type: 'json' }
 import legacyLinkSchema from '../../schemas/knowledge-shard/1.0.0/core-v1/link.schema.json' with { type: 'json' }
-import manifestSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/manifest.schema.json' with { type: 'json' }
-import noteSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/note.schema.json' with { type: 'json' }
-import collectionSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/collection.schema.json' with { type: 'json' }
-import tagSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/tag.schema.json' with { type: 'json' }
-import templateSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/template.schema.json' with { type: 'json' }
-import linkSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/link.schema.json' with { type: 'json' }
-import recordManifestSchema from '../../schemas/knowledge-shard/1.1.0/record-v1/manifest.schema.json' with { type: 'json' }
-import recordNoteSchema from '../../schemas/knowledge-shard/1.1.0/record-v1/note.schema.json' with { type: 'json' }
-import recordCollectionSchema from '../../schemas/knowledge-shard/1.1.0/record-v1/collection.schema.json' with { type: 'json' }
-import recordTagSchema from '../../schemas/knowledge-shard/1.1.0/record-v1/tag.schema.json' with { type: 'json' }
-import recordLinkSchema from '../../schemas/knowledge-shard/1.1.0/record-v1/link.schema.json' with { type: 'json' }
-import fullManifestSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/manifest.schema.json' with { type: 'json' }
-import fullNoteOriginalSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/note-original.schema.json' with { type: 'json' }
-import fullNoteOriginalHistorySchema from '../../schemas/knowledge-shard/1.1.0/full-v1/note-original-history.schema.json' with { type: 'json' }
-import fullNoteRevisedCurrentSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/note-revised-current.schema.json' with { type: 'json' }
-import fullNoteRevisionSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/note-revision.schema.json' with { type: 'json' }
-import fullEmbeddingConfigSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/embedding-config.schema.json' with { type: 'json' }
-import fullEmbeddingSetSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/embedding-set.schema.json' with { type: 'json' }
-import fullEmbeddingSetMemberSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/embedding-set-member.schema.json' with { type: 'json' }
-import fullEmbeddingSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/embedding.schema.json' with { type: 'json' }
-import fullProvenanceEdgeSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/provenance-edge.schema.json' with { type: 'json' }
-import fullProvenanceActivitySchema from '../../schemas/knowledge-shard/1.1.0/full-v1/provenance-activity.schema.json' with { type: 'json' }
-import fullNamedLocationSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/named-location.schema.json' with { type: 'json' }
-import fullProvenanceLocationSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/provenance-location.schema.json' with { type: 'json' }
-import fullProvenanceDeviceSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/provenance-device.schema.json' with { type: 'json' }
-import fullProvenanceRecordSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/provenance-record.schema.json' with { type: 'json' }
-import fullSkosSchemeSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/skos-scheme.schema.json' with { type: 'json' }
-import fullSkosConceptSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/skos-concept.schema.json' with { type: 'json' }
-import fullSkosLabelSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/skos-label.schema.json' with { type: 'json' }
-import fullSkosNoteSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/skos-note.schema.json' with { type: 'json' }
-import fullSkosRelationSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/skos-relation.schema.json' with { type: 'json' }
-import fullSkosMappingRelationSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/skos-mapping-relation.schema.json' with { type: 'json' }
-import fullSkosSchemeMembershipSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/skos-scheme-membership.schema.json' with { type: 'json' }
-import fullNoteSkosTagSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/note-skos-tag.schema.json' with { type: 'json' }
-import fullSkosCollectionSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/skos-collection.schema.json' with { type: 'json' }
-import fullSkosCollectionMemberSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/skos-collection-member.schema.json' with { type: 'json' }
-import fullGraphSourceSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/graph-source.schema.json' with { type: 'json' }
-import fullGraphEdgeSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/graph-edge.schema.json' with { type: 'json' }
-import fullCommunitySetSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/community-set.schema.json' with { type: 'json' }
-import fullCommunityAssignmentSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/community-assignment.schema.json' with { type: 'json' }
-import fullSignatureSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/signature.schema.json' with { type: 'json' }
+import v1_1CoreManifestSchema from '../../schemas/knowledge-shard/1.1.0/core-v1/manifest.schema.json' with { type: 'json' }
+import v1_1RecordManifestSchema from '../../schemas/knowledge-shard/1.1.0/record-v1/manifest.schema.json' with { type: 'json' }
+import v1_1FullManifestSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/manifest.schema.json' with { type: 'json' }
+import v1_1FullEmbeddingSchema from '../../schemas/knowledge-shard/1.1.0/full-v1/embedding.schema.json' with { type: 'json' }
+import manifestSchema from '../../schemas/knowledge-shard/1.2.0/core-v1/manifest.schema.json' with { type: 'json' }
+import noteSchema from '../../schemas/knowledge-shard/1.2.0/core-v1/note.schema.json' with { type: 'json' }
+import collectionSchema from '../../schemas/knowledge-shard/1.2.0/core-v1/collection.schema.json' with { type: 'json' }
+import tagSchema from '../../schemas/knowledge-shard/1.2.0/core-v1/tag.schema.json' with { type: 'json' }
+import templateSchema from '../../schemas/knowledge-shard/1.2.0/core-v1/template.schema.json' with { type: 'json' }
+import linkSchema from '../../schemas/knowledge-shard/1.2.0/core-v1/link.schema.json' with { type: 'json' }
+import recordManifestSchema from '../../schemas/knowledge-shard/1.2.0/record-v1/manifest.schema.json' with { type: 'json' }
+import recordNoteSchema from '../../schemas/knowledge-shard/1.2.0/record-v1/note.schema.json' with { type: 'json' }
+import recordCollectionSchema from '../../schemas/knowledge-shard/1.2.0/record-v1/collection.schema.json' with { type: 'json' }
+import recordTagSchema from '../../schemas/knowledge-shard/1.2.0/record-v1/tag.schema.json' with { type: 'json' }
+import recordLinkSchema from '../../schemas/knowledge-shard/1.2.0/record-v1/link.schema.json' with { type: 'json' }
+import fullManifestSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/manifest.schema.json' with { type: 'json' }
+import fullNoteOriginalSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/note-original.schema.json' with { type: 'json' }
+import fullNoteOriginalHistorySchema from '../../schemas/knowledge-shard/1.2.0/full-v1/note-original-history.schema.json' with { type: 'json' }
+import fullNoteRevisedCurrentSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/note-revised-current.schema.json' with { type: 'json' }
+import fullNoteRevisionSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/note-revision.schema.json' with { type: 'json' }
+import fullEmbeddingConfigSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/embedding-config.schema.json' with { type: 'json' }
+import fullEmbeddingSetSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/embedding-set.schema.json' with { type: 'json' }
+import fullEmbeddingSetMemberSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/embedding-set-member.schema.json' with { type: 'json' }
+import fullEmbeddingSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/embedding.schema.json' with { type: 'json' }
+import fullProvenanceEdgeSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/provenance-edge.schema.json' with { type: 'json' }
+import fullProvenanceActivitySchema from '../../schemas/knowledge-shard/1.2.0/full-v1/provenance-activity.schema.json' with { type: 'json' }
+import fullNamedLocationSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/named-location.schema.json' with { type: 'json' }
+import fullProvenanceLocationSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/provenance-location.schema.json' with { type: 'json' }
+import fullProvenanceDeviceSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/provenance-device.schema.json' with { type: 'json' }
+import fullProvenanceRecordSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/provenance-record.schema.json' with { type: 'json' }
+import fullSkosSchemeSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/skos-scheme.schema.json' with { type: 'json' }
+import fullSkosConceptSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/skos-concept.schema.json' with { type: 'json' }
+import fullSkosLabelSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/skos-label.schema.json' with { type: 'json' }
+import fullSkosNoteSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/skos-note.schema.json' with { type: 'json' }
+import fullSkosRelationSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/skos-relation.schema.json' with { type: 'json' }
+import fullSkosMappingRelationSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/skos-mapping-relation.schema.json' with { type: 'json' }
+import fullSkosSchemeMembershipSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/skos-scheme-membership.schema.json' with { type: 'json' }
+import fullNoteSkosTagSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/note-skos-tag.schema.json' with { type: 'json' }
+import fullSkosCollectionSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/skos-collection.schema.json' with { type: 'json' }
+import fullSkosCollectionMemberSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/skos-collection-member.schema.json' with { type: 'json' }
+import fullGraphSourceSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/graph-source.schema.json' with { type: 'json' }
+import fullGraphEdgeSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/graph-edge.schema.json' with { type: 'json' }
+import fullCommunitySetSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/community-set.schema.json' with { type: 'json' }
+import fullCommunityAssignmentSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/community-assignment.schema.json' with { type: 'json' }
+import fullSignatureSchema from '../../schemas/knowledge-shard/1.2.0/full-v1/signature.schema.json' with { type: 'json' }
 import { validateChecksums } from './checksum.js'
 import { unpackTarGz } from './shard-tar.js'
 import { CURRENT_SHARD_VERSION } from './types.js'
@@ -74,7 +78,8 @@ type ShardFiles = Map<string, Uint8Array>
 type CoreV1Component = 'notes' | 'collections' | 'tags' | 'templates' | 'links'
 type RecordV1Component = 'notes' | 'collections' | 'tags' | 'links'
 type FullV1Component = ShardComponent
-export type CoreV1SchemaVersion = '1.0.0' | '1.1.0'
+export type CoreV1SchemaVersion = '1.0.0' | '1.1.0' | '1.2.0'
+type CurrentCanonicalSchemaVersion = '1.1.0' | '1.2.0'
 type RecordEncoding = 'json-array' | 'jsonl'
 type IdentifiedSchema = object & { $id: string }
 
@@ -220,6 +225,14 @@ const CORE_V1_SCHEMAS: Record<
     links: legacyLinkSchema,
   },
   '1.1.0': {
+    manifest: v1_1CoreManifestSchema,
+    notes: noteSchema,
+    collections: collectionSchema,
+    tags: tagSchema,
+    templates: templateSchema,
+    links: linkSchema,
+  },
+  '1.2.0': {
     manifest: manifestSchema,
     notes: noteSchema,
     collections: collectionSchema,
@@ -229,7 +242,10 @@ const CORE_V1_SCHEMAS: Record<
   },
 }
 
-const RECORD_V1_SCHEMAS: Record<RecordV1Component | 'manifest', IdentifiedSchema> = {
+const RECORD_V1_CURRENT_SCHEMAS: Record<
+  RecordV1Component | 'manifest',
+  IdentifiedSchema
+> = {
   manifest: recordManifestSchema,
   notes: recordNoteSchema,
   collections: recordCollectionSchema,
@@ -237,7 +253,21 @@ const RECORD_V1_SCHEMAS: Record<RecordV1Component | 'manifest', IdentifiedSchema
   links: recordLinkSchema,
 }
 
-const FULL_V1_SCHEMAS: Record<FullV1Component | 'manifest' | 'signature', IdentifiedSchema> = {
+const RECORD_V1_SCHEMAS: Record<
+  CurrentCanonicalSchemaVersion,
+  Record<RecordV1Component | 'manifest', IdentifiedSchema>
+> = {
+  '1.1.0': {
+    ...RECORD_V1_CURRENT_SCHEMAS,
+    manifest: v1_1RecordManifestSchema,
+  },
+  '1.2.0': RECORD_V1_CURRENT_SCHEMAS,
+}
+
+const FULL_V1_CURRENT_SCHEMAS: Record<
+  FullV1Component | 'manifest' | 'signature',
+  IdentifiedSchema
+> = {
   manifest: fullManifestSchema,
   notes: noteSchema,
   collections: collectionSchema,
@@ -275,14 +305,26 @@ const FULL_V1_SCHEMAS: Record<FullV1Component | 'manifest' | 'signature', Identi
   signature: fullSignatureSchema,
 }
 
+const FULL_V1_SCHEMAS: Record<
+  CurrentCanonicalSchemaVersion,
+  Record<FullV1Component | 'manifest' | 'signature', IdentifiedSchema>
+> = {
+  '1.1.0': {
+    ...FULL_V1_CURRENT_SCHEMAS,
+    manifest: v1_1FullManifestSchema,
+    embeddings: v1_1FullEmbeddingSchema,
+  },
+  '1.2.0': FULL_V1_CURRENT_SCHEMAS,
+}
+
 let legacyAjvInstance: Ajv2020 | undefined
 let coreAjvInstance: Ajv2020 | undefined
 let recordAjvInstance: Ajv2020 | undefined
 let fullAjvInstance: Ajv2020 | undefined
 const legacyValidators = new Map<LegacySchemaDefName, ValidateFunction>()
 const coreValidators = new Map<string, ValidateFunction>()
-const recordValidators = new Map<RecordV1Component | 'manifest', ValidateFunction>()
-const fullValidators = new Map<FullV1Component | 'manifest' | 'signature', ValidateFunction>()
+const recordValidators = new Map<string, ValidateFunction>()
+const fullValidators = new Map<string, ValidateFunction>()
 
 export function getKnowledgeShardSchema(): unknown {
   return {
@@ -299,7 +341,7 @@ export function getKnowledgeShardSchema(): unknown {
       tags: recordTagSchema,
       links: recordLinkSchema,
     },
-    fullV1: FULL_V1_SCHEMAS,
+    fullV1: FULL_V1_CURRENT_SCHEMAS,
   }
 }
 
@@ -347,9 +389,13 @@ function getCoreAjv(): Ajv2020 {
       validateFormats: true,
     })
     addCanonicalFormats(coreAjvInstance)
+    const registered = new Set<string>()
     for (const bundle of Object.values(CORE_V1_SCHEMAS)) {
       for (const schema of Object.values(bundle)) {
-        coreAjvInstance.addSchema(schema)
+        if (!registered.has(schema.$id)) {
+          coreAjvInstance.addSchema(schema)
+          registered.add(schema.$id)
+        }
       }
     }
   }
@@ -364,8 +410,14 @@ function getRecordAjv(): Ajv2020 {
       validateFormats: true,
     })
     addCanonicalFormats(recordAjvInstance)
-    for (const schema of Object.values(RECORD_V1_SCHEMAS)) {
-      recordAjvInstance.addSchema(schema)
+    const registered = new Set<string>()
+    for (const bundle of Object.values(RECORD_V1_SCHEMAS)) {
+      for (const schema of Object.values(bundle)) {
+        if (!registered.has(schema.$id)) {
+          recordAjvInstance.addSchema(schema)
+          registered.add(schema.$id)
+        }
+      }
     }
   }
   return recordAjvInstance
@@ -379,8 +431,14 @@ function getFullAjv(): Ajv2020 {
       validateFormats: true,
     })
     addCanonicalFormats(fullAjvInstance)
-    for (const schema of Object.values(FULL_V1_SCHEMAS)) {
-      fullAjvInstance.addSchema(schema)
+    const registered = new Set<string>()
+    for (const bundle of Object.values(FULL_V1_SCHEMAS)) {
+      for (const schema of Object.values(bundle)) {
+        if (!registered.has(schema.$id)) {
+          fullAjvInstance.addSchema(schema)
+          registered.add(schema.$id)
+        }
+      }
     }
   }
   return fullAjvInstance
@@ -396,7 +454,15 @@ function legacyValidatorFor(defName: LegacySchemaDefName): ValidateFunction {
 }
 
 function coreSchemaVersion(value: string): CoreV1SchemaVersion | undefined {
-  return value === '1.0.0' || value === '1.1.0' ? value : undefined
+  return value === '1.0.0' || value === '1.1.0' || value === '1.2.0'
+    ? value
+    : undefined
+}
+
+function currentCanonicalSchemaVersion(
+  value: string,
+): CurrentCanonicalSchemaVersion | undefined {
+  return value === '1.1.0' || value === '1.2.0' ? value : undefined
 }
 
 function coreValidatorFor(
@@ -412,23 +478,29 @@ function coreValidatorFor(
   return validator
 }
 
-function recordValidatorFor(name: RecordV1Component | 'manifest'): ValidateFunction {
-  const cached = recordValidators.get(name)
+function recordValidatorFor(
+  name: RecordV1Component | 'manifest',
+  version: CurrentCanonicalSchemaVersion = CURRENT_SHARD_VERSION,
+): ValidateFunction {
+  const key = `${version}:${name}`
+  const cached = recordValidators.get(key)
   if (cached) return cached
-  const schema = RECORD_V1_SCHEMAS[name]
+  const schema = RECORD_V1_SCHEMAS[version][name]
   const validator = getRecordAjv().getSchema(schema.$id) ?? getRecordAjv().compile(schema)
-  recordValidators.set(name, validator)
+  recordValidators.set(key, validator)
   return validator
 }
 
 function fullValidatorFor(
   name: FullV1Component | 'manifest' | 'signature',
+  version: CurrentCanonicalSchemaVersion = CURRENT_SHARD_VERSION,
 ): ValidateFunction {
-  const cached = fullValidators.get(name)
+  const key = `${version}:${name}`
+  const cached = fullValidators.get(key)
   if (cached) return cached
-  const schema = FULL_V1_SCHEMAS[name]
+  const schema = FULL_V1_SCHEMAS[version][name]
   const validator = getFullAjv().getSchema(schema.$id) ?? getFullAjv().compile(schema)
-  fullValidators.set(name, validator)
+  fullValidators.set(key, validator)
   return validator
 }
 
@@ -460,9 +532,27 @@ export function validateShardManifest(value: unknown): ShardSchemaValidationResu
     }
     validate = coreValidatorFor('manifest', version)
   } else if (profile === 'record-v1') {
-    validate = recordValidatorFor('manifest')
+    const version = value && typeof value === 'object' && !Array.isArray(value)
+      ? currentCanonicalSchemaVersion(String((value as Record<string, unknown>).version ?? ''))
+      : undefined
+    if (!version) {
+      return {
+        valid: false,
+        errors: ['(root) uses an unsupported canonical record-v1 schema version'],
+      }
+    }
+    validate = recordValidatorFor('manifest', version)
   } else if (profile === 'full-v1') {
-    validate = fullValidatorFor('manifest')
+    const version = value && typeof value === 'object' && !Array.isArray(value)
+      ? currentCanonicalSchemaVersion(String((value as Record<string, unknown>).version ?? ''))
+      : undefined
+    if (!version) {
+      return {
+        valid: false,
+        errors: ['(root) uses an unsupported canonical full-v1 schema version'],
+      }
+    }
+    validate = fullValidatorFor('manifest', version)
   } else {
     validate = legacyValidatorFor('manifest')
   }
@@ -669,7 +759,11 @@ function validateCoreV1Structure(files: ShardFiles, manifest: ShardManifest): st
 
 function validateFullV1Structure(files: ShardFiles, manifest: ShardManifest): string[] {
   const errors: string[] = []
-  const manifestValidator = fullValidatorFor('manifest')
+  const schemaVersion = currentCanonicalSchemaVersion(manifest.version)
+  if (!schemaVersion) {
+    return ['manifest.json uses an unsupported canonical full-v1 schema version']
+  }
+  const manifestValidator = fullValidatorFor('manifest', schemaVersion)
   if (!manifestValidator(manifest)) {
     return formatErrors(manifestValidator.errors).map((error) => `manifest.json ${error}`)
   }
@@ -703,7 +797,7 @@ function validateFullV1Structure(files: ShardFiles, manifest: ShardManifest): st
     const spec = FULL_V1_COMPONENT_FILES[component]
     const parsed = parseRecords(files.get(spec.file), spec.file, spec.encoding)
     errors.push(...parsed.errors)
-    const validator = fullValidatorFor(component)
+    const validator = fullValidatorFor(component, schemaVersion)
     for (const [index, record] of parsed.records.entries()) {
       if (!validator(record)) {
         errors.push(
@@ -742,7 +836,7 @@ function validateFullV1Structure(files: ShardFiles, manifest: ShardManifest): st
   if (signatureBytes) {
     try {
       const signature = JSON.parse(decoder.decode(signatureBytes)) as unknown
-      const signatureValidator = fullValidatorFor('signature')
+      const signatureValidator = fullValidatorFor('signature', schemaVersion)
       if (!signatureValidator(signature)) {
         errors.push(
           ...formatErrors(signatureValidator.errors).map(
@@ -776,7 +870,11 @@ function validateFullV1Structure(files: ShardFiles, manifest: ShardManifest): st
 
 function validateRecordV1Structure(files: ShardFiles, manifest: ShardManifest): string[] {
   const errors: string[] = []
-  const manifestValidator = recordValidatorFor('manifest')
+  const schemaVersion = currentCanonicalSchemaVersion(manifest.version)
+  if (!schemaVersion) {
+    return ['manifest.json uses an unsupported canonical record-v1 schema version']
+  }
+  const manifestValidator = recordValidatorFor('manifest', schemaVersion)
   if (!manifestValidator(manifest)) {
     return formatErrors(manifestValidator.errors).map((error) => `manifest.json ${error}`)
   }
@@ -805,7 +903,7 @@ function validateRecordV1Structure(files: ShardFiles, manifest: ShardManifest): 
     const spec = RECORD_V1_COMPONENT_FILES[component]
     const parsed = parseRecords(files.get(spec.file), spec.file, spec.encoding)
     errors.push(...parsed.errors)
-    const validator = recordValidatorFor(component)
+    const validator = recordValidatorFor(component, schemaVersion)
     for (const [index, record] of parsed.records.entries()) {
       if (!validator(record)) {
         errors.push(
@@ -978,9 +1076,23 @@ export function validateShardComponentRecord(
   if (profile === 'core-v1' && component in CORE_V1_COMPONENT_FILES) {
     validate = coreValidatorFor(component as CoreV1Component, version)
   } else if (profile === 'record-v1' && component in RECORD_V1_COMPONENT_FILES) {
-    validate = recordValidatorFor(component as RecordV1Component)
+    const canonicalVersion = currentCanonicalSchemaVersion(version)
+    if (!canonicalVersion) {
+      return {
+        valid: false,
+        errors: [`(root) uses an unsupported canonical record-v1 schema version ${version}`],
+      }
+    }
+    validate = recordValidatorFor(component as RecordV1Component, canonicalVersion)
   } else if (profile === 'full-v1' && component in FULL_V1_COMPONENT_FILES) {
-    validate = fullValidatorFor(component as FullV1Component)
+    const canonicalVersion = currentCanonicalSchemaVersion(version)
+    if (!canonicalVersion) {
+      return {
+        valid: false,
+        errors: [`(root) uses an unsupported canonical full-v1 schema version ${version}`],
+      }
+    }
+    validate = fullValidatorFor(component as FullV1Component, canonicalVersion)
   } else {
     const legacyDef = LEGACY_COMPONENT_SCHEMA_DEFS[component]
     if (!legacyDef) {

@@ -42,8 +42,16 @@ const historicalCanonicalFixtureRoot = resolve(
   testDir,
   'fixtures/canonical-core-v1-v1.0',
 )
+const v1_1CanonicalFixtureRoot = resolve(
+  testDir,
+  'fixtures/canonical-core-v1-v1.1',
+)
 const recordCanonicalFixtureRoot = resolve(testDir, 'fixtures/canonical-record-v1')
 const fullV1FixturePath = resolve(
+  testDir,
+  'fixtures/full-v1/server-full-v1-revision-19.shard',
+)
+const historicalFullV1FixturePath = resolve(
   testDir,
   'fixtures/full-v1/server-full-v1-revision-18.shard',
 )
@@ -78,6 +86,15 @@ function historicalCanonicalCoreV1Files(): Map<string, Uint8Array> {
   )
 }
 
+function v1_1CanonicalCoreV1Files(): Map<string, Uint8Array> {
+  return new Map(
+    canonicalFixtureNames.map((name) => [
+      name,
+      readFileSync(resolve(v1_1CanonicalFixtureRoot, name)),
+    ]),
+  )
+}
+
 function canonicalRecordV1Files(): Map<string, Uint8Array> {
   return new Map(
     recordCanonicalFixtureNames.map((name) => [
@@ -102,7 +119,7 @@ async function createTestDb(): Promise<PGlite> {
 }
 
 describe('knowledge shard AJV schema validator (#255)', () => {
-  it('pins the exact Fortemi 1.1.0 core-v1 authority and historical receipt', () => {
+  it('pins the exact Fortemi 1.2.0 authority and historical receipts', () => {
     const receipt = getKnowledgeShardContractReceipt() as {
       source: { repository: string; commit: string; contractPath: string; contractSha256: string }
       schemaBundle: { sha256: string }
@@ -118,32 +135,37 @@ describe('knowledge shard AJV schema validator (#255)', () => {
           schemaBundle: { sha256: string }
           goldenCorpus: { sha256: string }
         }
+        '1.1.0/core-v1': {
+          migrationTo: string
+          schemaBundle: { sha256: string }
+          goldenCorpus: { sha256: string }
+        }
       }
     }
 
     expect(receipt.source).toEqual({
       repository: 'https://git.integrolabs.net/Fortemi/fortemi',
-      commit: 'e62ee6bb7eb30f2ef68c0be0a1207ee687222c56',
+      commit: '81fbeaf065df3818edd046ed8a744f10eeb00e6f',
       contractPath: 'contracts/knowledge-shard/contract.json',
-      contractSha256: 'dbe9ce4999835b40af540c17fd543b18aafea1d5e73ec436d969d02343d2e4bd',
+      contractSha256: '5debc14e0bc7eef403a75e8e063a10f53019e1d74857485d6eda3abaec9397e2',
     })
     expect(receipt.schemaBundle.sha256).toBe(
-      '7d3ebc4d1e1789ad0dc0e27ea3de58a16c3ffd0d8e19b92cbe23eb4f8b58dacb',
+      'deec0cb66dc09865667256e29340d096c02dd9b0e55bdc1ae60b7effb68ac595',
     )
     expect(receipt.goldenCorpus.sha256).toBe(
-      '7b19ec48e1d5dbf73e7664d7853fafa86227fc042f85c02ada6bbf75941de164',
+      'a0096f0e7cfc202ade6d32c39bb2c23c8edbd909fbcfec52711fa7f1fe0ef4fe',
     )
     expect(receipt.recordV1GoldenCorpus.sha256).toBe(
       '76ad7cdeba3c5935ca39a32044609b0cc826862145910f8450b0d2b5fc128a19',
     )
     expect(receipt.fullV1IntegratedFixture).toEqual({
       sourceArchive: 'tests/fixtures/shards/full-v1-integrated-candidate.shard',
-      vendoredArchive: 'src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-18.shard',
-      archiveSha256: 'b6110221bc6c5a5ad5596f565c49141eaa3b58a17111c4f525d2310ed3fcd7ae',
+      vendoredArchive: 'src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-19.shard',
+      archiveSha256: 'c2e06eaa9802efd25ed70f5fe7e339548bd0b561ae86fb1a0f2d2fdf45305659',
       sourceReceipt: 'tests/fixtures/shards/full-v1-integrated-candidate.shard.receipt.json',
       vendoredReceipt:
-        'src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-18.shard.receipt.json',
-      receiptSha256: 'bc0c068a0c6470b20e485eec1fe1d8f172c4a5eaeabdfd1c324b1534977d8375',
+        'src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-19.shard.receipt.json',
+      receiptSha256: 'e993fd0e037e8ecc5677114b64c05959f93dcf0947b55a1df41f634c38160984',
     })
     expect(receipt.historicalReleases['1.0.0/core-v1']).toMatchObject({
       migrationTo: '1.1.0',
@@ -154,6 +176,15 @@ describe('knowledge shard AJV schema validator (#255)', () => {
     expect(receipt.historicalReleases['1.0.0/core-v1'].goldenCorpus.sha256).toBe(
       '7e8c529b7f5ac404d27302499c74470e137b03d27fce54111acf8989b1147ae1',
     )
+    expect(receipt.historicalReleases['1.1.0/core-v1']).toMatchObject({
+      migrationTo: '1.2.0',
+      schemaBundle: {
+        sha256: '272df54aac6abf90d3d2005c2cf7cf938e3e6e140d4d15d67f2732d9b5108230',
+      },
+      goldenCorpus: {
+        sha256: '7b19ec48e1d5dbf73e7664d7853fafa86227fc042f85c02ada6bbf75941de164',
+      },
+    })
   })
 
   it('validates the exact Fortemi core-v1 golden corpus and checksums', async () => {
@@ -176,6 +207,16 @@ describe('knowledge shard AJV schema validator (#255)', () => {
     })
   })
 
+  it('retains exact validation for the immutable Fortemi 1.1.0 corpus', async () => {
+    const files = v1_1CanonicalCoreV1Files()
+
+    expect(validateShardArchive(files)).toEqual({ valid: true, errors: [] })
+    await expect(validateCoreV1ShardArchive(files)).resolves.toEqual({
+      valid: true,
+      errors: [],
+    })
+  })
+
   it('validates the exact supported Fortemi record-v1 corpus and checksums', async () => {
     const files = canonicalRecordV1Files()
 
@@ -186,13 +227,62 @@ describe('knowledge shard AJV schema validator (#255)', () => {
     })
   })
 
-  it('validates the exact Fortemi revision-18 full-v1 integrated archive', async () => {
+  it('validates revision 19 populated and legacy-null embedding fingerprints', async () => {
     const archive = readFileSync(fullV1FixturePath)
+    const files = unpackTarGz(archive)
+    const embeddings = new TextDecoder().decode(files.get('embeddings.jsonl'))
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line) as { contract_fingerprint?: string | null })
 
     expect(validateShardArchive(archive)).toEqual({ valid: true, errors: [] })
     await expect(validateFullV1ShardArchive(archive)).resolves.toEqual({
       valid: true,
       errors: [],
+    })
+    expect(embeddings.map((embedding) => embedding.contract_fingerprint)).toEqual([
+      'a'.repeat(64),
+      null,
+    ])
+  })
+
+  it('retains revision 18 full-v1 validation without inventing lineage', async () => {
+    const archive = readFileSync(historicalFullV1FixturePath)
+    const files = unpackTarGz(archive)
+    const embeddings = new TextDecoder().decode(files.get('embeddings.jsonl'))
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line) as { contract_fingerprint?: string | null })
+
+    expect(validateShardArchive(archive)).toEqual({ valid: true, errors: [] })
+    await expect(validateFullV1ShardArchive(archive)).resolves.toEqual({
+      valid: true,
+      errors: [],
+    })
+    expect(embeddings.every((embedding) => !('contract_fingerprint' in embedding))).toBe(true)
+  })
+
+  it.each([
+    ['uppercase', 'A'.repeat(64)],
+    ['short', 'a'.repeat(63)],
+    ['non-hex', `${'a'.repeat(63)}g`],
+  ])('rejects a %s revision 19 embedding fingerprint', (_label, fingerprint) => {
+    const files = unpackTarGz(readFileSync(fullV1FixturePath))
+    const embeddings = new TextDecoder().decode(files.get('embeddings.jsonl'))
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line) as Record<string, unknown>)
+    embeddings[0].contract_fingerprint = fingerprint
+    files.set(
+      'embeddings.jsonl',
+      new TextEncoder().encode(embeddings.map((embedding) => JSON.stringify(embedding)).join('\n')),
+    )
+
+    expect(validateShardArchive(files)).toMatchObject({
+      valid: false,
+      errors: expect.arrayContaining([
+        expect.stringContaining('embeddings.jsonl[0]'),
+      ]),
     })
   })
 

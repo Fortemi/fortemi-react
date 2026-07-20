@@ -123,7 +123,7 @@ describe('importShard', { timeout: 30_000 }, () => {
     expect(after.rows[0].count).toBe(before.rows[0].count)
   })
 
-  it('rejects an invalid 1.1.0 tombstone before any PGlite mutation', async () => {
+  it('rejects an invalid 1.2.0 tombstone before any PGlite mutation', async () => {
     const files = canonicalCoreV1Files()
     const note = JSON.parse(decoder.decode(files.get('notes.jsonl'))) as Record<string, unknown>
     note.deleted_at = 'not-a-timestamp'

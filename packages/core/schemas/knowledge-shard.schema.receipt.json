@@ -2,73 +2,73 @@
   "schemaVersion": 1,
   "source": {
     "repository": "https://git.integrolabs.net/Fortemi/fortemi",
-    "commit": "e62ee6bb7eb30f2ef68c0be0a1207ee687222c56",
+    "commit": "81fbeaf065df3818edd046ed8a744f10eeb00e6f",
     "contractPath": "contracts/knowledge-shard/contract.json",
-    "contractSha256": "dbe9ce4999835b40af540c17fd543b18aafea1d5e73ec436d969d02343d2e4bd"
+    "contractSha256": "5debc14e0bc7eef403a75e8e063a10f53019e1d74857485d6eda3abaec9397e2"
   },
   "knowledgeShard": {
-    "schemaVersion": "1.1.0",
+    "schemaVersion": "1.2.0",
     "profile": "core-v1",
-    "minimumReaderVersion": "1.1.0"
+    "minimumReaderVersion": "1.2.0"
   },
   "schemaBundle": {
-    "sourceRoot": "contracts/knowledge-shard/1.1.0",
-    "vendoredRoot": "schemas/knowledge-shard/1.1.0",
+    "sourceRoot": "contracts/knowledge-shard/1.2.0",
+    "vendoredRoot": "schemas/knowledge-shard/1.2.0",
     "aggregateAlgorithm": "sha256(raw file bytes concatenated in lexicographic path order)",
-    "sha256": "7d3ebc4d1e1789ad0dc0e27ea3de58a16c3ffd0d8e19b92cbe23eb4f8b58dacb",
+    "sha256": "deec0cb66dc09865667256e29340d096c02dd9b0e55bdc1ae60b7effb68ac595",
     "files": {
-      "core-v1/collection.schema.json": "4708374341b2ca1c9f51290c140281deaefd33aaad0cf5051d17b53eb23f3cf6",
-      "core-v1/link.schema.json": "c907ca29ab9233af2e8f45d0a39beeeb3c1bdf2219f947ac353689af6c1c848f",
-      "core-v1/manifest.schema.json": "b1946ade68d9ee0abd6f1ba083853f754d538bd8e07d03508b1b6a0793fa939d",
-      "core-v1/note.schema.json": "1494dda5ab3184ff0c302d91d103b10dfba4872c48dec7e2eaaf83d18f62d487",
-      "core-v1/tag.schema.json": "79f4a6a7a996600a0ddb44a6194e2744196c47af8d72c04b8d78a2f42899b92a",
-      "core-v1/template.schema.json": "fdd4f9a6d2c9e34652e67652424bd81d479bdd16772a0375dbf12bc4b181db17",
-      "full-v1/community-assignment.schema.json": "e589ca5cfb9a7498bb238449bc35e52a39f202e66f1f98b2ae662a3bfbd3e575",
-      "full-v1/community-set.schema.json": "0f28ab050919b5f6cff5c7065fe52a8f6ebcec58567f525772bf9e39939b1ebb",
-      "full-v1/embedding-config.schema.json": "40ea1250ea8ecf9850f6dd22891ed519c20182f0f2956ae87f3c51ed2962a770",
-      "full-v1/embedding-set-member.schema.json": "011ca0653b89b3075a251b3c4d7ac92888d414cb00763381eebcfe9018a101aa",
-      "full-v1/embedding-set.schema.json": "7d8dc0d4caf3c45835181c336d5111e10c1a07086e2e21252122fde2024586b8",
-      "full-v1/embedding.schema.json": "531be536f38d9af2bf13c5ddf1c077e1dfa969b7abf24fc5595ea98c530370d2",
-      "full-v1/graph-edge.schema.json": "7df521c217de27f114254737e3745bd4daf693ff432cab84d7faded47f79f1a6",
-      "full-v1/graph-source.schema.json": "bbe45c85518783028932b416495d4beb0b4316e38a9d085d494a438aeb51668c",
-      "full-v1/manifest.schema.json": "3bc34056745a710e959676fc498f16f385a36a98bb1e3d9c59f3e5f9dd95e423",
-      "full-v1/named-location.schema.json": "f86ec38aa92432765ee1424f57a58abb8cef85d14f2396a40ca237848f4bb118",
-      "full-v1/note-original-history.schema.json": "d8c4f0724748b38cde81dae727a305e2ac515965df22e0de5d86806bfd6f8ce4",
-      "full-v1/note-original.schema.json": "bc525530162860fcdd2b6583352a23dd75029eb3e0c7e318e27900650425b3e7",
-      "full-v1/note-revised-current.schema.json": "2f128e9a0cb18618e0141d16f76b6f66635aeddb523691e592b1c13604f5f950",
-      "full-v1/note-revision.schema.json": "a86bbec5d992d1d7d91530ea6efc698ac5b6c3070f5b44a80cb9449002b7d31e",
-      "full-v1/note-skos-tag.schema.json": "c161aee0a71a0733f57676f013d62e14c88c635780ead967b7f3cc5e6f0ba9b4",
-      "full-v1/provenance-activity.schema.json": "01250dafd0604bb233f67c2d8aca334e890237ffc9022bc622ee1a66cc2f9977",
-      "full-v1/provenance-device.schema.json": "8037afafe7b83b6c61df7da424bdea7afd74ca6a89249ffc6c27dcb9e4d62772",
-      "full-v1/provenance-edge.schema.json": "80c84d675873c82687b629fc2f59392a03621531255c5a1d720571ed853cd3c1",
-      "full-v1/provenance-location.schema.json": "48a2cc223a8d1ee453889375392bc968358baf027509ba701853d840d30b8a14",
-      "full-v1/provenance-record.schema.json": "44c5ee7fdd7a59c368069d8b93cf17d6e1fe6824728febac9e9517fdb6da9b63",
-      "full-v1/signature.schema.json": "31f3034d789df165914284344b61e3415d5366c095bfd30ef5ac85e3d2b89532",
-      "full-v1/skos-collection-member.schema.json": "0a437fbd7176871c992c310b0a10619ff259becd39e6f69822ca5886a65ae906",
-      "full-v1/skos-collection.schema.json": "03243f57d063106f079985c75c38a8e07885d3714927e8864599f003fce33aa1",
-      "full-v1/skos-concept.schema.json": "537e7f043012e6d2564ad7c81a6a81fa44d350a5198677137dd3b1a239b67d3c",
-      "full-v1/skos-label.schema.json": "bd867f722b66fe3cb8106a7a2a4119cc8188b34468fd5069d483ae1f08d8ba99",
-      "full-v1/skos-mapping-relation.schema.json": "d562c44c4c3f0a27256d45e976cb40f7f1a1de2d24b1701a3d707637619c2532",
-      "full-v1/skos-note.schema.json": "d97bf9ea27d3868bc1c881e311710957d9bc72a7f4a58b4a6d7e09783c7f8830",
-      "full-v1/skos-relation.schema.json": "c476c082da6be5550afd9f7277a2bb68b9b20a51a4cd97e4d10b246aa0b08f71",
-      "full-v1/skos-scheme-membership.schema.json": "68b8b69cd7d92bc08b58c9597c21831ea2b01ce15731928865337346b34c1c69",
-      "full-v1/skos-scheme.schema.json": "61fd27dd2eed109a63a69cf5a1ef98475ec6af03d6afd52d2ac54a94fe45a9de",
-      "record-v1/collection.schema.json": "61bc4d717b097b3e6c77b716a9adaa71acbca9228b66f0d4b7d83a060476680d",
-      "record-v1/link.schema.json": "3fe3b6632412c23319f8a4385c937066fbf2ba90af7f8170eaa57a951f4d65c5",
-      "record-v1/manifest.schema.json": "42cd8b8c3d30014b819076fa4ab4e462d18171511985f428d8fa99947466ee03",
-      "record-v1/note.schema.json": "b684e6765cd972486b8b207c1c19adc8097761ffefcb738def15700e0707a273",
-      "record-v1/tag.schema.json": "48fed2ac2e19cd4c6ed955e07070f7f3771365c2cc08efdea09c3186e9a51922"
+      "core-v1/collection.schema.json": "b1902dfe4aa1cef8079e71ade7caf876d75773f5b0fe906543f54a8a721786b9",
+      "core-v1/link.schema.json": "442bc4ec038257071ef4b2e492b335a2f9556b9cce89702843ad4594622d160a",
+      "core-v1/manifest.schema.json": "604c2d65bb1ba7a85d4eb5b011c40f97a4cd26b884d30af314d12c4af99ae4ce",
+      "core-v1/note.schema.json": "64cdda2c0af1ae2e42cf5b1117f7d5aca94fb55482b7680caf5d5df6dacd040a",
+      "core-v1/tag.schema.json": "0517e99584179ec1f974a0e2f5d3ff00597dca0a9460eef6de38266ffb98eb6e",
+      "core-v1/template.schema.json": "631187eddfef9c37b8fa91897f9a841c672d5ff5c5ca6dfdd74f94235cc3360b",
+      "full-v1/community-assignment.schema.json": "54fe43302a7822cb0157a8c25e2f081878fb575d41ff2a11dd2b7e5e057e6bb0",
+      "full-v1/community-set.schema.json": "45b564ffa488dd9db4a0c69a154136671ff05c6dca19b6a687b069b440950621",
+      "full-v1/embedding-config.schema.json": "bc2d83b94dede9328dbfff44be978f2c45a5d53284ce7903531e1ddd28eca331",
+      "full-v1/embedding-set-member.schema.json": "d56039a9673bdf98491e8ede78bd4dbd68c99a911a9b2beeb5cb0d55363a3528",
+      "full-v1/embedding-set.schema.json": "05c96a7d70ec6458dd69fbb73b781f65878930c7de6537cdd8ccc9d6b78269ae",
+      "full-v1/embedding.schema.json": "a1c59098a7213830a7f601accb6b277bf8739df6abe8ea6ee89bb9797fa5572a",
+      "full-v1/graph-edge.schema.json": "b716b787d93eac042a9c7742443f2dba980fd0d8792c43a697fb6756d2b96544",
+      "full-v1/graph-source.schema.json": "d77b79b9776898fdbc0e65622ceb074734a958e4e8b88ca94c74ace429c3ae04",
+      "full-v1/manifest.schema.json": "f6234c53185bb262a253926c81378ea1121a6d9c6021215234ba26c8dcb20c47",
+      "full-v1/named-location.schema.json": "26e5d78374e5a5e84b61d0eb58ef92ce84d9d1ed9f5642896f4d68871188b137",
+      "full-v1/note-skos-tag.schema.json": "128fcf79937135cce2e94fac6f4689a32e984aacd344e0908cbcbbb631c62075",
+      "full-v1/note-original-history.schema.json": "e2a01bb6a50e0404e295029b6ac18d2613cdc696305bc2d81961aee8ece32af7",
+      "full-v1/note-original.schema.json": "0e23ac2e1076fd5d8e14325d1d14d842ba7fc382f50573777b3cfd15c2730361",
+      "full-v1/note-revised-current.schema.json": "05851052e92d54b729ddc77718c279a49662ab7ec172a3a5c19349c8ab0aa6c5",
+      "full-v1/note-revision.schema.json": "e4f586683b1157ad4a25cf3216463d40e1501955c85451f30ccb28cecaec1caf",
+      "full-v1/provenance-activity.schema.json": "92faf1412d7cf86319266349c6f1a1eb0242c4b6041b5d7525e9735ad10f7fb8",
+      "full-v1/provenance-device.schema.json": "80a0de568bdec65f2e2cd2e93a4dc63617984c7493be2450f908e7d81e366c15",
+      "full-v1/provenance-edge.schema.json": "7367f6046748805829fb5882ac2798cfe18dae65825e642ead3a4126d3097038",
+      "full-v1/provenance-location.schema.json": "923648083efe46eb1f4e88ce9b45f86559baa2b79783861d434ea2ae1c3fff0c",
+      "full-v1/provenance-record.schema.json": "e47a21d213b7b4e7612ffad270f22f85886c93b9c461d53a0a493bc1f01c772c",
+      "full-v1/skos-collection-member.schema.json": "07818981cea2c9d791321b66e8f18ca82afe381ece3896dd3fa37642a94720f4",
+      "full-v1/skos-collection.schema.json": "d9b4700968974672dcf8b86d6ea0ef0c72187cee50fba236cc77678269466962",
+      "full-v1/skos-concept.schema.json": "74fda1eed85166be6588b8f9a2684c1c6f4ca88cfdcbb67ac631490935a1fda5",
+      "full-v1/skos-label.schema.json": "f951073c51cf2a1de58e5bbf487b78ef01889f90acdd33267600049bf9b69882",
+      "full-v1/skos-mapping-relation.schema.json": "07c4195de1a9ef118ed89fb642be01571807ba376b81c7f117fcdfd136e35a39",
+      "full-v1/skos-note.schema.json": "ffa06b24e5186fc445417a00712b250f696a38bbf195f63d11526d3588d94c87",
+      "full-v1/skos-relation.schema.json": "da8d2f51958bbeee6229fb973fa79dc01da963cf20a3c91ed36772a03903676c",
+      "full-v1/skos-scheme-membership.schema.json": "5bd3d6c23116c2404c88cb0d27657d655b900d33f0ecde95096080c1393e334b",
+      "full-v1/skos-scheme.schema.json": "2f8d832f20cb3a582f482d5d6056bfa2f831957f64903d2a150fca7aefc48285",
+      "full-v1/signature.schema.json": "8819cd51340fdb04ede977bb83dcbad4af202388a0007a455abb2a28166c97c6",
+      "record-v1/collection.schema.json": "1337c688e1665ad134793939ebdc6a8f694996fade157f1aec679f015a671cb6",
+      "record-v1/link.schema.json": "19f4db2110518b0e2c858cecac2c97ca217833d37881d6c2ab923ee82e93df54",
+      "record-v1/manifest.schema.json": "b4e61e330271889de2eb3a122dd1d75a69e9284ee494ea7d302a81e9ece84165",
+      "record-v1/note.schema.json": "89b790178b1a4f03051c76d2a42f50a2172c6998c03bceb77592e05a6dd15563",
+      "record-v1/tag.schema.json": "5deb8ac3e38006ed15bd9499eab8901089e8ba941196711fca6a8cf5b0f08015"
     }
   },
   "goldenCorpus": {
-    "sourceRoot": "tests/fixtures/shards/core-v1-v1.1-valid",
+    "sourceRoot": "tests/fixtures/shards/core-v1-v1.2-valid",
     "vendoredRoot": "src/__tests__/shard/fixtures/canonical-core-v1",
     "aggregateAlgorithm": "sha256(raw file bytes concatenated in lexicographic path order)",
-    "sha256": "7b19ec48e1d5dbf73e7664d7853fafa86227fc042f85c02ada6bbf75941de164",
+    "sha256": "a0096f0e7cfc202ade6d32c39bb2c23c8edbd909fbcfec52711fa7f1fe0ef4fe",
     "files": {
       "collections.json": "463e593c963de97a4f676374da0dafd38d38433cbdecddf3b58632263dac5e43",
       "links.jsonl": "1962da6f5ac3f43e54b7711ee91dc8867109bec9a0f89f95893bed2016b63125",
-      "manifest.json": "be5ace39d278e80964baa608be1f296af563634bab303d7d277e59e6983d4af1",
+      "manifest.json": "246b89d6ca1d2e2c4a19b650e4cebe7825b69d39306280e281f4a94c80c2b008",
       "notes.jsonl": "bb20b7e173b1de22644d6175e4287f39cf1e3f9a67995009359988805b809b2f",
       "tags.json": "36b794bb9dda00a6ac09653c0a68dab306b20cdc716eaf8fc25d85ccf7e28e42",
       "templates.json": "7d364d22cdfca298817620b81bffdbd716977535922e887c6b0bbc5bb1c11291"
@@ -89,11 +89,11 @@
   },
   "fullV1IntegratedFixture": {
     "sourceArchive": "tests/fixtures/shards/full-v1-integrated-candidate.shard",
-    "vendoredArchive": "src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-18.shard",
-    "archiveSha256": "b6110221bc6c5a5ad5596f565c49141eaa3b58a17111c4f525d2310ed3fcd7ae",
+    "vendoredArchive": "src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-19.shard",
+    "archiveSha256": "c2e06eaa9802efd25ed70f5fe7e339548bd0b561ae86fb1a0f2d2fdf45305659",
     "sourceReceipt": "tests/fixtures/shards/full-v1-integrated-candidate.shard.receipt.json",
-    "vendoredReceipt": "src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-18.shard.receipt.json",
-    "receiptSha256": "bc0c068a0c6470b20e485eec1fe1d8f172c4a5eaeabdfd1c324b1534977d8375"
+    "vendoredReceipt": "src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-19.shard.receipt.json",
+    "receiptSha256": "e993fd0e037e8ecc5677114b64c05959f93dcf0947b55a1df41f634c38160984"
   },
   "historicalReleases": {
     "1.0.0/core-v1": {
@@ -126,13 +126,45 @@
           "templates.json": "7d364d22cdfca298817620b81bffdbd716977535922e887c6b0bbc5bb1c11291"
         }
       }
+    },
+    "1.1.0/core-v1": {
+      "migrationTo": "1.2.0",
+      "schemaBundle": {
+        "sourceRoot": "contracts/knowledge-shard/1.1.0/core-v1",
+        "vendoredRoot": "schemas/knowledge-shard/1.1.0/core-v1",
+        "aggregateAlgorithm": "sha256(raw file bytes concatenated in lexicographic path order)",
+        "sha256": "272df54aac6abf90d3d2005c2cf7cf938e3e6e140d4d15d67f2732d9b5108230",
+        "files": {
+          "collection.schema.json": "4708374341b2ca1c9f51290c140281deaefd33aaad0cf5051d17b53eb23f3cf6",
+          "link.schema.json": "c907ca29ab9233af2e8f45d0a39beeeb3c1bdf2219f947ac353689af6c1c848f",
+          "manifest.schema.json": "b1946ade68d9ee0abd6f1ba083853f754d538bd8e07d03508b1b6a0793fa939d",
+          "note.schema.json": "1494dda5ab3184ff0c302d91d103b10dfba4872c48dec7e2eaaf83d18f62d487",
+          "tag.schema.json": "79f4a6a7a996600a0ddb44a6194e2744196c47af8d72c04b8d78a2f42899b92a",
+          "template.schema.json": "fdd4f9a6d2c9e34652e67652424bd81d479bdd16772a0375dbf12bc4b181db17"
+        }
+      },
+      "goldenCorpus": {
+        "sourceRoot": "tests/fixtures/shards/core-v1-v1.1-valid",
+        "vendoredRoot": "src/__tests__/shard/fixtures/canonical-core-v1-v1.1",
+        "aggregateAlgorithm": "sha256(raw file bytes concatenated in lexicographic path order)",
+        "sha256": "7b19ec48e1d5dbf73e7664d7853fafa86227fc042f85c02ada6bbf75941de164",
+        "files": {
+          "collections.json": "463e593c963de97a4f676374da0dafd38d38433cbdecddf3b58632263dac5e43",
+          "links.jsonl": "1962da6f5ac3f43e54b7711ee91dc8867109bec9a0f89f95893bed2016b63125",
+          "manifest.json": "be5ace39d278e80964baa608be1f296af563634bab303d7d277e59e6983d4af1",
+          "notes.jsonl": "bb20b7e173b1de22644d6175e4287f39cf1e3f9a67995009359988805b809b2f",
+          "tags.json": "36b794bb9dda00a6ac09653c0a68dab306b20cdc716eaf8fc25d85ccf7e28e42",
+          "templates.json": "7d364d22cdfca298817620b81bffdbd716977535922e887c6b0bbc5bb1c11291"
+        }
+      }
     }
   },
   "limitations": [
-    "This receipt proves exact vendored core-v1, record-v1, and full-v1 authority bytes plus the server's signed integrated full-v1 fixture.",
+    "This receipt proves exact vendored core-v1, record-v1, and full-v1 authority bytes plus the server signed integrated full-v1 fixture.",
     "The pinned authority marks record-v1 as supported; RecordStore producer and consumer advertisements are enabled.",
     "The pinned authority marks full-v1 as supported, but React backends do not advertise it until their complete producer and persistence paths are implemented.",
     "Schema 1.0.0 note records map missing deleted_at to the documented null active state.",
-    "The full-v1 validator enforces the complete component inventory and mandatory attachment bytes; it does not by itself establish a React producer or destination receipt."
+    "Schema 1.1.0 full-v1 embedding records map missing contract_fingerprint to the documented null legacy-lineage state.",
+    "The full-v1 validator enforces the complete component inventory, embedding contract lineage, and mandatory attachment bytes; it does not by itself establish a React producer or destination receipt."
   ]
 }

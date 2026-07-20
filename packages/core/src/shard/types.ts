@@ -13,7 +13,7 @@
 import type { BlobStore } from '../blob-store.js'
 import type { ShardTrustStore } from './shard-signature.js'
 
-export const CURRENT_SHARD_VERSION = '1.1.0'
+export const CURRENT_SHARD_VERSION = '1.2.0'
 export const SHARD_FORMAT = 'matric-shard'
 
 function parseVersion(value: string): number[] {

@@ -220,7 +220,7 @@ describe('AIWG Fortemi index adapter', () => {
     expect(restored).toEqual(portableIndex)
     expect(await validateCoreV1ShardArchive(files)).toEqual({ valid: true, errors: [] })
     expect(manifest).toMatchObject({
-      version: '1.1.0',
+      version: '1.2.0',
       profile: 'core-v1',
       producer: {
         name: 'fortemi-core-aiwg-index',

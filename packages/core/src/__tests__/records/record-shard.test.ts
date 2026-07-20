@@ -129,7 +129,7 @@ describe('record-shard (DB-free)', () => {
       min_reader_version: string
     }
     expect(manifest).toMatchObject({
-      version: '1.1.0',
+      version: '1.2.0',
       profile: 'record-v1',
       producer: { name: 'fortemi-react-record-store' },
       components: ['notes', 'collections', 'tags', 'links'],
@@ -144,7 +144,7 @@ describe('record-shard (DB-free)', () => {
         embeddings: 0,
         embedding_configs: 0,
       },
-      min_reader_version: '1.1.0',
+      min_reader_version: '1.2.0',
     })
 
     const dst = new MemoryRecordStore()
