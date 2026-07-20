@@ -7,6 +7,8 @@ Fortemi follows the AIWG security-engineering supply-chain baseline for npm publ
 - Release publishes run only from `v*` tags or an explicit operator dispatch that resolves to a `v*` tag.
 - Release tags must verify against the release-key public bundle committed under `.gitea/keys/maintainers.asc` or an equivalent `.gitea/allowed_signers` file.
 - Fortemi follows AIWG's two-key model: personal maintainer keys sign commits; the release-only key signs `v*` tags. `tools/release/cut-tag.sh` fetches the release key and machine passphrase from OpenBao into an isolated temporary keyring, verifies the expected fingerprint, signs and verifies the tag, and removes the keyring on exit. It has no host-keyring fallback.
+- Release signing always uses GPG loopback mode with the OpenBao passphrase file; it never opens interactive pinentry or requires the operator to know the generated machine passphrase.
+- Fortemi React uses project-specific signing keys. The active release authority is `Fortemi React Release Signing` (`26CB074F65E89E5F4DFD7C71F410C8C763C90CC9`), stored at `kv_internal/gpg/fortemi-react-release-signing-key`. The project commit key is `Fortemi React Commit Signing` (`CD2CD155A057B212A525E1C2A7E29DCA3E39B9B8`), stored separately at `kv_internal/gpg/fortemi-react-commit-signing-key`. Retired public release authorities remain in the bundle so historical tags continue to verify.
 - Release-sensitive workflow actions and containers are pinned by immutable SHA or digest and recorded in `ci/digests.txt`.
 - The pnpm workspace enforces `minimumReleaseAge: 10080` and `blockExoticSubdeps: true`.
 - The publish workflow verifies package versions against the release tag before publishing.
@@ -33,6 +35,10 @@ command-line arguments or printed:
 - `RELEASE_SIGNING_KEY_VAULT_PATH` and `RELEASE_SIGNING_KEY_VAULT_FIELD`
 - `RELEASE_SIGNING_PASSPHRASE_VAULT_PATH` and
   `RELEASE_SIGNING_PASSPHRASE_VAULT_FIELD`
+
+For Fortemi React releases, both vault path variables resolve to
+`kv_internal/gpg/fortemi-react-release-signing-key`; the key field is
+`armored_private_key` and the passphrase field is `passphrase`.
 
 For the current `rca-g2.s9.internal` endpoint, set `VAULT_CACERT` to
 `ci/trust/integro-labs-root-ca-g2.crt`. This public root is copied from the

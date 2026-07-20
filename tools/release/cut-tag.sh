@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-RELEASE_KEY_FINGERPRINT="${FORTEMI_RELEASE_KEY_FINGERPRINT:-FE9272F0BC5781E1DE77FAAA719AB63879E84CE8}"
+RELEASE_KEY_FINGERPRINT="${FORTEMI_RELEASE_KEY_FINGERPRINT:-26CB074F65E89E5F4DFD7C71F410C8C763C90CC9}"
 
 if [ $# -lt 1 ]; then
   cat <<EOF >&2
@@ -138,28 +138,19 @@ gpg --batch --import "$GPG_SIGNING_KEY_FILE" >/dev/null 2>&1
 GPG_WRAPPER="$GNUPGHOME/git-gpg.sh"
 GPG_PROBE="$GNUPGHOME/signing-probe"
 printf 'fortemi release signing probe\n' >"$GPG_PROBE"
-if gpg --batch --yes --local-user "$RELEASE_KEY_FINGERPRINT" \
-  --detach-sign "$GPG_PROBE" >/dev/null 2>&1; then
-  rm -f "$GPG_PROBE.sig"
-  cat >"$GPG_WRAPPER" <<'WRAP'
-#!/usr/bin/env bash
-exec gpg "$@"
-WRAP
-else
-  printf 'pinentry-mode loopback\n' >"$GNUPGHOME/gpg.conf"
-  cat >"$GPG_WRAPPER" <<WRAP
+printf 'pinentry-mode loopback\n' >"$GNUPGHOME/gpg.conf"
+cat >"$GPG_WRAPPER" <<WRAP
 #!/usr/bin/env bash
 exec gpg --batch --pinentry-mode loopback --passphrase-file "$GPG_PASSPHRASE_FILE" "\$@"
 WRAP
-  if ! "$GPG_WRAPPER" --yes --local-user "$RELEASE_KEY_FINGERPRINT" \
-    --detach-sign "$GPG_PROBE" >/dev/null 2>&1; then
-    echo "FAIL: OpenBao release key could not complete the signing probe." >&2
-    exit 1
-  fi
-  rm -f "$GPG_PROBE.sig"
-fi
-rm -f "$GPG_PROBE"
 chmod 700 "$GPG_WRAPPER"
+if ! "$GPG_WRAPPER" --yes --local-user "$RELEASE_KEY_FINGERPRINT" \
+  --detach-sign "$GPG_PROBE" >/dev/null 2>&1; then
+  echo "FAIL: OpenBao release key could not complete the signing probe." >&2
+  exit 1
+fi
+rm -f "$GPG_PROBE.sig"
+rm -f "$GPG_PROBE"
 GIT_TAG_GPG_OPTS=(-c "gpg.program=$GPG_WRAPPER")
 
 if ! gpg --show-keys --with-colons .gitea/keys/maintainers.asc 2>/dev/null \

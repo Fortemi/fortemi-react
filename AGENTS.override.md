@@ -20,3 +20,17 @@ for this repository.
 - Changes to shard or AIWG conversion behavior require source tests, the
   published-package boundary test where applicable, and real producer/consumer
   import evidence before release.
+
+## Signing Keys
+
+Private signing-key custody is OpenBao-only. Hydrate only the required key into
+a temporary `GNUPGHOME`, verify the operation, and remove the temporary keyring.
+
+- Release tags: `26CB074F65E89E5F4DFD7C71F410C8C763C90CC9`
+  (`Fortemi React Release Signing`), at
+  `kv_internal/gpg/fortemi-react-release-signing-key`.
+- Commits: `CD2CD155A057B212A525E1C2A7E29DCA3E39B9B8`
+  (`Fortemi React Commit Signing`), at
+  `kv_internal/gpg/fortemi-react-commit-signing-key`.
+
+Never use the commit key for release tags or the release key for commits.

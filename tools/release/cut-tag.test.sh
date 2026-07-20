@@ -7,7 +7,7 @@ RUNTIME_PARENT="$(mktemp -d /dev/shm/fortemi-release-test.XXXXXX)"
 trap 'rm -rf "$TMP" "$RUNTIME_PARENT"' EXIT
 
 VERSION="$(node -e "console.log(require('$ROOT/package.json').version)")"
-FINGERPRINT="FE9272F0BC5781E1DE77FAAA719AB63879E84CE8"
+FINGERPRINT="26CB074F65E89E5F4DFD7C71F410C8C763C90CC9"
 FIXTURE="$TMP/repo"
 FAKE_BIN="$TMP/bin"
 mkdir -p "$FIXTURE/tools/release" "$FIXTURE/ci" "$FIXTURE/.gitea/keys" \
@@ -56,9 +56,9 @@ cat >"$FAKE_BIN/gpg" <<'EOF'
 #!/usr/bin/env bash
 printf 'gpg %s\n' "$*" >>"$FAKE_LOG"
 if [[ "$*" == *"--import-options show-only"* ]]; then
-  printf 'fpr:::::::::%s:\n' "${FAKE_GPG_FINGERPRINT:-FE9272F0BC5781E1DE77FAAA719AB63879E84CE8}"
+  printf 'fpr:::::::::%s:\n' "${FAKE_GPG_FINGERPRINT:-26CB074F65E89E5F4DFD7C71F410C8C763C90CC9}"
 elif [[ "$*" == *"--show-keys --with-colons"* ]]; then
-  printf 'fpr:::::::::FE9272F0BC5781E1DE77FAAA719AB63879E84CE8:\n'
+  printf 'fpr:::::::::26CB074F65E89E5F4DFD7C71F410C8C763C90CC9:\n'
 elif [[ "$*" == *"--detach-sign"* ]]; then
   [ "${FAKE_GPG_SIGN_FAIL:-0}" != "1" ] || exit 1
 fi

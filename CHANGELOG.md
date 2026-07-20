@@ -4,6 +4,10 @@ All notable changes to fortemi-react are documented here.
 
 ## v2026.7.9 - 2026-07-18
 
+- Added isolated Fortemi React release and commit signing keys under separate
+  OpenBao paths. Release tags now pin the project release key; retired public
+  authorities remain available for historical verification.
+
 ### `@fortemi/core` - Canonical Knowledge Shard package boundary (#354, #355, #362)
 
 - Pinned Fortemi Knowledge Shard contract revision 19 and its exact
