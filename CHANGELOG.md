@@ -551,6 +551,7 @@ Three interchangeable read paths for the same knowledge base — a pre-indexed P
 ### Release engineering
 
 - The Gitea and npmjs publish workflows now create a repository **Release** for each signed tag and attach the packaged `@fortemi/core`, `@fortemi/graph`, and `@fortemi/react` tarballs (`fortemi-<pkg>-<version>.tgz`) as release assets, alongside the npm publishes — so every release carries downloadable packages on both Gitea and GitHub. Release creation is idempotent (re-runnable from `workflow_dispatch`) and driven by `tools/release/create-repo-release.mjs`. Notes come from `docs/releases/<tag>.md` when present.
+- Each repository release now includes a `SHA256SUMS` manifest generated from the exact tarball bytes uploaded to that release surface. Download all four assets and run `sha256sum -c SHA256SUMS` to verify them.
 
 ## v2026.6.3 - 2026-06-15
 

@@ -20,8 +20,10 @@
 
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { createChecksumManifest } from './checksum-manifest.mjs';
 
 const PACKAGES = ['core', 'graph', 'react'];
+const CHECKSUM_MANIFEST = 'SHA256SUMS';
 
 function env(name, required = true, fallback = '') {
   const v = process.env[name] ?? fallback;
@@ -90,18 +92,18 @@ async function deleteGiteaAsset(releaseId, assetId) {
   await fetch(`${api}/repos/${repo}/releases/${releaseId}/assets/${assetId}`, { method: 'DELETE', headers: jsonHeaders });
 }
 
-async function uploadGithubAsset(release, name, bytes) {
+async function uploadGithubAsset(release, name, bytes, contentType) {
   const base = release.upload_url.split('{')[0];
   return readJson(await fetch(`${base}?name=${encodeURIComponent(name)}`, {
     method: 'POST',
-    headers: { Authorization: authHeader, 'Content-Type': 'application/gzip' },
+    headers: { Authorization: authHeader, 'Content-Type': contentType },
     body: bytes,
   }));
 }
 
-async function uploadGiteaAsset(releaseId, name, bytes) {
+async function uploadGiteaAsset(releaseId, name, bytes, contentType) {
   const form = new FormData();
-  form.append('attachment', new Blob([bytes], { type: 'application/gzip' }), name);
+  form.append('attachment', new Blob([bytes], { type: contentType }), name);
   return readJson(await fetch(`${api}/repos/${repo}/releases/${releaseId}/assets?name=${encodeURIComponent(name)}`, {
     method: 'POST',
     headers: { Authorization: authHeader },
@@ -120,23 +122,34 @@ async function main() {
 
   const existing = new Map((release.assets ?? []).map((a) => [a.name, a.id]));
 
-  for (const pkg of PACKAGES) {
+  const assets = PACKAGES.map((pkg) => {
     const name = `fortemi-${pkg}-${version}.tgz`;
     const file = join(packDir, name);
     if (!existsSync(file)) throw new Error(`missing packed tarball: ${file}`);
     const bytes = readFileSync(file);
+    return { name, bytes, contentType: 'application/gzip' };
+  });
+
+  const manifest = createChecksumManifest(assets);
+  assets.push({
+    name: CHECKSUM_MANIFEST,
+    bytes: Buffer.from(manifest, 'utf8'),
+    contentType: 'text/plain; charset=utf-8',
+  });
+
+  for (const { name, bytes, contentType } of assets) {
 
     if (existing.has(name)) {
       if (platform === 'github') await deleteGithubAsset(existing.get(name));
       else await deleteGiteaAsset(release.id, existing.get(name));
     }
 
-    if (platform === 'github') await uploadGithubAsset(release, name, bytes);
-    else await uploadGiteaAsset(release.id, name, bytes);
+    if (platform === 'github') await uploadGithubAsset(release, name, bytes, contentType);
+    else await uploadGiteaAsset(release.id, name, bytes, contentType);
     console.log(`  attached ${name} (${bytes.length} bytes)`);
   }
 
-  console.log(`${platform} release ${tag} ready with ${PACKAGES.length} package assets.`);
+  console.log(`${platform} release ${tag} ready with ${assets.length} verified assets.`);
 }
 
 main().catch((err) => {
