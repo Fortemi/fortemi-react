@@ -144,8 +144,9 @@ cat >"$GPG_WRAPPER" <<WRAP
 exec gpg --batch --pinentry-mode loopback --passphrase-file "$GPG_PASSPHRASE_FILE" "\$@"
 WRAP
 chmod 700 "$GPG_WRAPPER"
-if ! "$GPG_WRAPPER" --yes --local-user "$RELEASE_KEY_FINGERPRINT" \
-  --detach-sign "$GPG_PROBE" >/dev/null 2>&1; then
+if ! gpg --batch --pinentry-mode loopback --passphrase-file "$GPG_PASSPHRASE_FILE" \
+  --yes --local-user "$RELEASE_KEY_FINGERPRINT" --detach-sign "$GPG_PROBE" \
+  >/dev/null 2>&1; then
   echo "FAIL: OpenBao release key could not complete the signing probe." >&2
   exit 1
 fi
