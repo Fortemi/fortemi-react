@@ -40,6 +40,16 @@ For Fortemi React releases, both vault path variables resolve to
 `kv_internal/gpg/fortemi-react-release-signing-key`; the key field is
 `armored_private_key` and the passphrase field is `passphrase`.
 
+## Maintainer Git identity
+
+Fortemi React commits use the project commit key through
+`tools/git/gpg-from-openbao.sh`. Author and committer identity are configured
+repository-locally as `roctinam <1159087+jmagly@users.noreply.github.com>`.
+Pushes to authoritative Gitea `origin` use
+`tools/git/push-origin-as-roctinam.sh`; it hydrates the project SSH key from
+`kv_internal/gitea/fortemi-react-roctinam-ssh-key` into tmpfs, verifies that
+Gitea authenticates the key as `roctinam`, pushes, and removes the key.
+
 For the current `rca-g2.s9.internal` endpoint, set `VAULT_CACERT` to
 `ci/trust/integro-labs-root-ca-g2.crt`. This public root is copied from the
 authoritative `roctinam/itops` artifact `configs/ca/root-g2.crt`, introduced by

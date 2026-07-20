@@ -34,3 +34,10 @@ a temporary `GNUPGHOME`, verify the operation, and remove the temporary keyring.
   `kv_internal/gpg/fortemi-react-commit-signing-key`.
 
 Never use the commit key for release tags or the release key for commits.
+
+Repository-local Git identity must be `roctinam` with the verified email
+`1159087+jmagly@users.noreply.github.com`. Commit signing uses
+`tools/git/gpg-from-openbao.sh`. Pushes to authoritative `origin` use
+`tools/git/push-origin-as-roctinam.sh`, which hydrates the dedicated SSH key at
+`kv_internal/gitea/fortemi-react-roctinam-ssh-key` into tmpfs and refuses to
+push unless Gitea identifies it as `roctinam`.
