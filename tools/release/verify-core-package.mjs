@@ -78,9 +78,19 @@ try {
 
   const core = await import(pathToFileURL(resolve(packageRoot, 'dist/index.js')).href)
   const aiwg = await import(pathToFileURL(resolve(packageRoot, 'dist/aiwg-index.js')).href)
+  const aiwgShard = await import(pathToFileURL(resolve(packageRoot, 'dist/aiwg-index-shard.js')).href)
   assert.equal(core.VERSION, expectedVersion)
   assert.equal(core.CURRENT_SHARD_VERSION, '1.2.0')
-  assert.equal(typeof aiwg.aiwgFortemiIndexToKnowledgeShard, 'function')
+  assert.equal(typeof aiwg.createAiwgIndexController, 'function')
+  assert.equal(aiwg.aiwgFortemiIndexToKnowledgeShard, undefined)
+  assert.equal(typeof aiwgShard.aiwgFortemiIndexToKnowledgeShard, 'function')
+
+  const staticIndexSource = readFileSync(resolve(packageRoot, 'dist/aiwg-index.js'), 'utf8')
+  assert.ok(
+    Buffer.byteLength(staticIndexSource) <= 50_000,
+    `dist/aiwg-index.js exceeds 50 KB: ${Buffer.byteLength(staticIndexSource)} bytes`,
+  )
+  assert.doesNotMatch(staticIndexSource, /\bimport\b/)
 
   const authority = core.getKnowledgeShardContractReceipt()
   assert.deepEqual(authority.source, {
@@ -215,8 +225,8 @@ try {
     createdAt: '2026-07-18T12:00:00.000Z',
     matricVersion: expectedVersion,
   }
-  const archive = await aiwg.aiwgFortemiIndexToKnowledgeShard(index, options)
-  const repeated = await aiwg.aiwgFortemiIndexToKnowledgeShard(index, options)
+  const archive = await aiwgShard.aiwgFortemiIndexToKnowledgeShard(index, options)
+  const repeated = await aiwgShard.aiwgFortemiIndexToKnowledgeShard(index, options)
   assert.deepEqual(repeated, archive)
   assert.deepEqual(await core.validateCoreV1ShardArchive(archive), {
     valid: true,

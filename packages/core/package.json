@@ -48,6 +48,10 @@
       "types": "./dist/aiwg-index-schema.d.ts",
       "import": "./dist/aiwg-index-schema.js"
     },
+    "./aiwg-index-shard": {
+      "types": "./dist/aiwg-index-shard.d.ts",
+      "import": "./dist/aiwg-index-shard.js"
+    },
     "./worker/pglite-worker": "./dist/worker/pglite-worker.js",
     "./service-worker/sw": "./dist/service-worker/sw.js",
     "./package.json": "./package.json"

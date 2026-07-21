@@ -485,8 +485,6 @@ export {
   assertAiwgFortemiChunkManifest,
   assertAiwgFortemiChunkPart,
   assertAiwgStaticEmbeddingSet,
-  aiwgFortemiIndexFromKnowledgeShard,
-  aiwgFortemiIndexToKnowledgeShard,
   aiwgFortemiIndexToCommunityGraph,
   buildAiwgChunkedIndex,
   buildAiwgStaticEmbeddingSet,
@@ -505,6 +503,11 @@ export {
   validateAiwgFortemiIndexExport,
   validateAiwgStaticEmbeddingSet,
 } from './aiwg-index.js'
+export {
+  aiwgFortemiIndexFromKnowledgeShard,
+  aiwgFortemiIndexToKnowledgeShard,
+} from './aiwg-index-shard.js'
+export type { AiwgKnowledgeShardOptions } from './aiwg-index-shard.js'
 export {
   getAiwgFortemiIndexExportSchema,
   validateAiwgFortemiIndexExportSchema,
@@ -557,7 +560,6 @@ export type {
   AiwgIndexQueryResult,
   AiwgIndexQueryWeights,
   AiwgIndexValidationResult,
-  AiwgKnowledgeShardOptions,
   AiwgPrivacyClassification,
   AiwgProvenanceConfidence,
   AiwgRelationshipDirection,

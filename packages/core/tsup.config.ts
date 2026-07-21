@@ -11,6 +11,7 @@ export default defineConfig([
     entry: {
       index: 'src/index.ts',
       'aiwg-index-schema': 'src/aiwg-index-schema.ts',
+      'aiwg-index-shard': 'src/aiwg-index-shard.ts',
     },
     format: ['esm'],
     dts: true,
@@ -29,6 +30,8 @@ export default defineConfig([
     ],
   },
   {
+    // Dependency-free static-search artifact. Keep shard/schema/runtime code in
+    // their dedicated subpaths so this file remains directly vendorable.
     entry: {
       'aiwg-index': 'src/aiwg-index.ts',
     },

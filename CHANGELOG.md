@@ -4,6 +4,14 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+### `@fortemi/core` - Restore the vendorable static AIWG index boundary (#317)
+
+- `@fortemi/core/aiwg-index` is dependency-free again and its minified artifact
+  is package-tested for zero imports and a maximum 50 KB raw size.
+- AIWG-to-Knowledge-Shard conversion moved to the explicit
+  `@fortemi/core/aiwg-index-shard` build-oriented subpath; the top-level Core
+  entry continues to export the conversion helpers for full-runtime consumers.
+
 ## v2026.7.11 - 2026-07-21
 
 ### `@fortemi/core` - RecordStore collection hierarchy parity (#355)

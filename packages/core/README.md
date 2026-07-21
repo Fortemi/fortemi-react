@@ -123,8 +123,22 @@ const results = controller.query('deployment', {
 ```
 
 Use this subpath for Pagenary-style command palettes, static docs search, and
-vanilla JavaScript review surfaces. The top-level `@fortemi/core` export remains
-available for full archive/runtime integrations.
+vanilla JavaScript review surfaces. Its published `dist/aiwg-index.js` artifact
+is dependency-free, contains no import statements, and is kept below 50 KB so
+no-bundler consumers can vendor it verbatim.
+
+Knowledge Shard conversion intentionally lives on the build-oriented subpath:
+
+```ts
+import {
+  aiwgFortemiIndexFromKnowledgeShard,
+  aiwgFortemiIndexToKnowledgeShard,
+} from '@fortemi/core/aiwg-index-shard'
+```
+
+That subpath owns the schema, tar/gzip, checksum, and UUID dependencies. The
+top-level `@fortemi/core` export also remains available for full archive/runtime
+integrations.
 
 The AIWG index adapter accepts both `aiwg.fortemi.index.export.v1` and
 `aiwg.fortemi.index.export.v2` envelopes. The v1 record contract keeps the

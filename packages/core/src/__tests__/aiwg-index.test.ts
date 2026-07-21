@@ -2,8 +2,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   AIWG_SCAN_REQUIRED_FIELDS,
   aiwgDetailHrefForId,
-  aiwgFortemiIndexFromKnowledgeShard,
-  aiwgFortemiIndexToKnowledgeShard,
   aiwgFortemiIndexToCommunityGraph,
   buildAiwgChunkedIndex,
   buildAiwgStaticEmbeddingSet,
@@ -30,6 +28,10 @@ import {
   type AiwgFortemiRecord,
   type AiwgStaticEmbeddingSet,
 } from '../aiwg-index.js'
+import {
+  aiwgFortemiIndexFromKnowledgeShard,
+  aiwgFortemiIndexToKnowledgeShard,
+} from '../aiwg-index-shard.js'
 import { unpackTarGz } from '../shard/shard-tar.js'
 import { validateCoreV1ShardArchive } from '../shard/schema-validator.js'
 import {
