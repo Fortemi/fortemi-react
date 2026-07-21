@@ -17,6 +17,7 @@ import { EmbeddingSetsRepository } from '../../repositories/embedding-sets-repos
 import { AttachmentsRepository } from '../../repositories/attachments-repository.js'
 import { MemoryBlobStore } from '../../blob-store.js'
 import { exportShard } from '../../shard/shard-export.js'
+import { linkFromShard } from '../../shard/field-mapper.js'
 import { unpackTarGz } from '../../shard/shard-tar.js'
 import { validateChecksums } from '../../shard/checksum.js'
 import { validateShardArchive, validateShardComponentRecord } from '../../shard/schema-validator.js'
@@ -266,7 +267,11 @@ describe('exportShard', () => {
     expect(shardLink.to_note_id).toBe(note2.id)
     expect(shardLink.to_url).toBeNull()
     expect(shardLink.kind).toBe('related')
-    expect(shardLink.metadata).toBeNull()
+    expect(shardLink.score).toBe(1)
+    expect(shardLink.metadata).toMatchObject({
+      fortemi_legacy_state: { confidence: null },
+    })
+    expect(linkFromShard(shardLink).confidence).toBeNull()
     expect(validateShardComponentRecord('links', shardLink)).toEqual({ valid: true, errors: [] })
     expect(shardUrlLink).toMatchObject({
       from_note_id: note1.id,

@@ -12,6 +12,8 @@ import { vector } from '@electric-sql/pglite/vector'
 import { MigrationRunner } from '../../migration-runner.js'
 import { allMigrations } from '../../migrations/index.js'
 import { NotesRepository } from '../../repositories/notes-repository.js'
+import { LinksRepository } from '../../repositories/links-repository.js'
+import { CollectionsRepository } from '../../repositories/collections-repository.js'
 import { MemoryRecordStore } from '../../records/memory-record-store.js'
 import {
   exportShardFromRecordsWithReport,
@@ -118,6 +120,8 @@ describe('Knowledge Shard portability profiles (#355)', () => {
   it('emits a self-validating core-v1 archive and reports omitted extension data', async () => {
     db = await createTestDb()
     const notes = new NotesRepository(db)
+    const links = new LinksRepository(db)
+    const collections = new CollectionsRepository(db)
     const activeNote = await notes.create({
       content: 'Profiled note',
       title: 'Core export',
@@ -129,6 +133,13 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       tags: [],
     })
     await notes.delete(deletedNote.id)
+    const unscoredLink = await links.create(activeNote.id, deletedNote.id, 'related')
+    expect(unscoredLink.confidence).toBeNull()
+    const parentCollection = await collections.create({ name: 'Z parent' })
+    const childCollection = await collections.create({
+      name: 'A child',
+      parent_id: parentCollection.id,
+    })
     const sourceTombstone = await db.query<{ deleted_at: Date }>(
       'SELECT deleted_at FROM note WHERE id = $1',
       [deletedNote.id],
@@ -201,10 +212,10 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       components: ['notes', 'collections', 'tags', 'templates', 'links'],
       counts: {
         notes: 2,
-        collections: 0,
+        collections: 2,
         tags: 2,
         templates: 1,
-        links: 0,
+        links: 1,
         embedding_sets: 0,
         embedding_set_members: 0,
         embeddings: 0,
@@ -228,6 +239,28 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       expect.objectContaining({ name: 'note-tag' }),
       expect.objectContaining({ name: 'template-tag' }),
     ])
+    const exportedLinks = decoder.decode(files.get('links.jsonl'))
+      .split('\n')
+      .map((line) => JSON.parse(line) as {
+        id: string
+        score: number
+        metadata: { fortemi_legacy_state?: { confidence?: null } } | null
+      })
+    expect(exportedLinks).toContainEqual(expect.objectContaining({
+      id: unscoredLink.id,
+      score: 1,
+      metadata: expect.objectContaining({
+        fortemi_legacy_state: expect.objectContaining({ confidence: null }),
+      }),
+    }))
+    const exportedCollections = JSON.parse(decoder.decode(files.get('collections.json'))) as Array<{
+      id: string
+      parent_id: string | null
+    }>
+    expect(exportedCollections.map((collection) => collection.id)).toEqual([
+      childCollection.id,
+      parentCollection.id,
+    ])
 
     await db.close()
     db = await createTestDb()
@@ -248,6 +281,23 @@ describe('Knowledge Shard portability profiles (#355)', () => {
     )
     expect(restoredTombstone.rows[0].deleted_at?.toISOString())
       .toBe(sourceTombstone.rows[0].deleted_at.toISOString())
+    const restoredLink = await db.query<{ confidence: number | null }>(
+      'SELECT confidence FROM link WHERE id = $1',
+      [unscoredLink.id],
+    )
+    expect(restoredLink.rows[0].confidence).toBeNull()
+    const restoredHierarchy = await db.query<{ parent_id: string | null }>(
+      'SELECT parent_id FROM collection WHERE id = $1',
+      [childCollection.id],
+    )
+    expect(restoredHierarchy.rows[0].parent_id).toBe(parentCollection.id)
+
+    const reexported = await exportShardWithReport(db, { profile: 'core-v1' })
+    expect(reexported.success).toBe(true)
+    await expect(validateCoreV1ShardArchive(unpackTarGz(reexported.archive!))).resolves.toEqual({
+      valid: true,
+      errors: [],
+    })
 
     const records = new MemoryRecordStore()
     const recordResult = await importShardToRecords(records, result.archive!)

@@ -130,6 +130,69 @@ try {
     { valid: true, errors: [] },
   )
 
+  let sourceDb
+  let targetDb
+  try {
+    sourceDb = await core.createPGliteInstance('memory', 'package-source')
+    await new core.MigrationRunner(sourceDb).apply(core.allMigrations)
+    const sourceNotes = new core.NotesRepository(sourceDb)
+    const sourceCollections = new core.CollectionsRepository(sourceDb)
+    const sourceLinks = new core.LinksRepository(sourceDb)
+    const firstNote = await sourceNotes.create({ content: 'Packed PGlite source' })
+    const secondNote = await sourceNotes.create({ content: 'Packed PGlite target' })
+    const unscoredLink = await sourceLinks.create(firstNote.id, secondNote.id, 'related')
+    const parentCollection = await sourceCollections.create({ name: 'Z parent' })
+    const childCollection = await sourceCollections.create({
+      name: 'A child',
+      parent_id: parentCollection.id,
+    })
+    assert.equal(unscoredLink.confidence, null)
+
+    const pgliteExport = await core.exportShardWithReport(sourceDb, { profile: 'core-v1' })
+    assert.equal(pgliteExport.success, true)
+    const pgliteFiles = core.unpackTarGz(pgliteExport.archive)
+    assert.deepEqual(await core.validateCoreV1ShardArchive(pgliteFiles), {
+      valid: true,
+      errors: [],
+    })
+    const pgliteLinks = new TextDecoder().decode(pgliteFiles.get('links.jsonl')).trim()
+      .split('\n').map((line) => JSON.parse(line))
+    const pgliteCollections = JSON.parse(
+      new TextDecoder().decode(pgliteFiles.get('collections.json')),
+    )
+    assert.equal(pgliteLinks[0].score, 1)
+    assert.equal(pgliteLinks[0].metadata.fortemi_legacy_state.confidence, null)
+    assert.deepEqual(
+      pgliteCollections.map((collection) => collection.id),
+      [childCollection.id, parentCollection.id],
+    )
+
+    targetDb = await core.createPGliteInstance('memory', 'package-target')
+    await new core.MigrationRunner(targetDb).apply(core.allMigrations)
+    const pgliteImport = await core.importShard(targetDb, pgliteExport.archive)
+    assert.equal(pgliteImport.success, true)
+    const restoredLink = await targetDb.query(
+      'SELECT confidence FROM link WHERE id = $1',
+      [unscoredLink.id],
+    )
+    const restoredCollection = await targetDb.query(
+      'SELECT parent_id FROM collection WHERE id = $1',
+      [childCollection.id],
+    )
+    assert.equal(restoredLink.rows[0].confidence, null)
+    assert.equal(restoredCollection.rows[0].parent_id, parentCollection.id)
+
+    const pgliteReexport = await core.exportShardWithReport(targetDb, { profile: 'core-v1' })
+    assert.equal(pgliteReexport.success, true)
+    assert.deepEqual(await core.validateCoreV1ShardArchive(pgliteReexport.archive), {
+      valid: true,
+      errors: [],
+    })
+  } finally {
+    await targetDb?.close()
+    await sourceDb?.close()
+  }
+
   const index = {
     schema_version: 'aiwg.fortemi.index.export.v2',
     generated_at: '2026-07-18T12:00:00.000Z',

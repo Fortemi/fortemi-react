@@ -131,7 +131,17 @@ function toCoreV1Link(link: ShardLink): ShardLink {
   const coreLink = { ...link }
   if (coreLink.metadata?.fortemi_legacy_state) {
     const metadata = { ...coreLink.metadata }
-    delete metadata.fortemi_legacy_state
+    const state = metadata.fortemi_legacy_state
+    metadata.fortemi_legacy_state = (
+      state
+      && typeof state === 'object'
+      && !Array.isArray(state)
+      && 'confidence' in state
+      && state.confidence === null
+    )
+      ? { confidence: null }
+      : undefined
+    if (metadata.fortemi_legacy_state === undefined) delete metadata.fortemi_legacy_state
     coreLink.metadata = Object.keys(metadata).length > 0 ? metadata : null
   }
   return coreLink

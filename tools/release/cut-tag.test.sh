@@ -38,13 +38,10 @@ case "$*" in
   *auth/token/revoke-self*)
     printf '{}\n'
     ;;
-  *release/data/key*)
+  *kv_internal/data/gpg/fortemi-react-release-signing-key*)
     if [ "${FAKE_OPENBAO_UNAVAILABLE:-0}" = "1" ]; then exit 22; fi
     if [ "${FAKE_OPENBAO_MALFORMED:-0}" = "1" ]; then printf '{'; exit 0; fi
-    printf '{"data":{"data":{"private_key":"test-private-key"}}}\n'
-    ;;
-  *release/data/passphrase*)
-    printf '{"data":{"data":{"passphrase":"test-passphrase"}}}\n'
+    printf '{"data":{"data":{"armored_private_key":"test-private-key","passphrase":"test-passphrase"}}}\n'
     ;;
   *)
     printf '{}\n'
@@ -103,10 +100,6 @@ run_case() {
     export VAULT_ADDR="https://openbao.example.test"
     export VAULT_CI_ROLE_ID="test-role"
     export VAULT_CI_SECRET_ID="test-secret"
-    export RELEASE_SIGNING_KEY_VAULT_PATH="release/key"
-    export RELEASE_SIGNING_KEY_VAULT_FIELD="private_key"
-    export RELEASE_SIGNING_PASSPHRASE_VAULT_PATH="release/passphrase"
-    export RELEASE_SIGNING_PASSPHRASE_VAULT_FIELD="passphrase"
     unset VAULT_CACERT
     "$@"
   )

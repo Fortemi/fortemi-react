@@ -85,6 +85,34 @@ function emptyCounts(): ImportCounts {
   }
 }
 
+function orderCollectionsParentsFirst(collections: ShardCollection[]): ShardCollection[] {
+  const byId = new Map(collections.map((collection) => [collection.id, collection]))
+  const visiting = new Set<string>()
+  const visited = new Set<string>()
+  const ordered: ShardCollection[] = []
+
+  const visit = (collection: ShardCollection): void => {
+    if (visited.has(collection.id)) return
+    if (visiting.has(collection.id)) {
+      throw new Error(`collection hierarchy contains a cycle at ${collection.id}`)
+    }
+    visiting.add(collection.id)
+    if (collection.parent_id) {
+      const parent = byId.get(collection.parent_id)
+      if (!parent) {
+        throw new Error(`collection ${collection.id} references missing parent ${collection.parent_id}`)
+      }
+      visit(parent)
+    }
+    visiting.delete(collection.id)
+    visited.add(collection.id)
+    ordered.push(collection)
+  }
+
+  for (const collection of collections) visit(collection)
+  return ordered
+}
+
 /**
  * Apply the ADR-014 signed-shard policy. Returns an error string to abort the
  * import (nothing persisted yet at the call site), or null to proceed.
@@ -369,7 +397,9 @@ export async function importShard(
     parsedNotes = parseComponent('notes', () => noteClusters && noteClusters.length > 0
       ? [...noteClusters].sort((a, b) => a.offset - b.offset).flatMap((ref) => parseJsonlBytes<ShardNote>(files.get(ref.href)))
       : parseJsonlBytes<ShardNote>(files.get('notes.jsonl')))
-    parsedCollections = parseComponent('collections.json', () => parseJsonArrayBytes<ShardCollection>(files.get('collections.json')))
+    parsedCollections = parseComponent('collections.json', () => orderCollectionsParentsFirst(
+      parseJsonArrayBytes<ShardCollection>(files.get('collections.json')),
+    ))
     parsedTags = parseComponent('tags.json', () => parseJsonArrayBytes<ShardTag>(files.get('tags.json')))
     parsedTemplates = parseComponent('templates.json', () => parseJsonArrayBytes<ShardTemplate>(files.get('templates.json')))
     parsedLinks = parseComponent('links.jsonl', () => parseJsonlBytes<ShardLink>(files.get('links.jsonl')))

@@ -3,6 +3,7 @@ import {
   noteToShard,
   noteFromShard,
   linkToShard,
+  urlLinkToShard,
   linkFromShard,
   collectionToShard,
   collectionFromShard,
@@ -134,10 +135,33 @@ describe('field-mapper: links', () => {
     expect(back.confidence).toBe(0.85)
   })
 
-  it('handles null confidence → null score', () => {
+  it('emits a canonical score and round-trips absent confidence', () => {
     const noConf = { ...browserLink, confidence: null }
     const shard = linkToShard(noConf)
-    expect(shard.score).toBeNull()
+    expect(shard.score).toBe(1)
+    expect(shard.metadata).toMatchObject({
+      fortemi_legacy_state: { confidence: null },
+    })
+    expect(linkFromShard(shard).confidence).toBeNull()
+  })
+
+  it('preserves URL-link metadata while round-tripping absent confidence', () => {
+    const shard = urlLinkToShard({
+      id: 'url-link-1',
+      source_note_id: 'note-a',
+      to_url: 'https://example.com/source',
+      link_type: 'source',
+      confidence: null,
+      metadata_json: { label: 'Primary source' },
+      created_at: new Date('2026-01-15T10:00:00.000Z'),
+    })
+
+    expect(shard.score).toBe(1)
+    expect(shard.metadata).toMatchObject({
+      label: 'Primary source',
+      fortemi_legacy_state: { confidence: null },
+    })
+    expect(linkFromShard(shard).confidence).toBeNull()
   })
 })
 

@@ -2,6 +2,18 @@
 
 All notable changes to fortemi-react are documented here.
 
+## v2026.7.10 - 2026-07-20
+
+### `@fortemi/core` - PGlite `core-v1` portability corrections (#355)
+
+- Unscored note and URL links now emit the canonical asserted-link score `1`
+  while preserving absent PGlite confidence in metadata for lossless re-import.
+- Clean imports now order nested collections parent-first and reject missing or
+  cyclic parents before mutating PGlite.
+- This is a profile-preserving correction to the standard PGlite path. Contract
+  revision 19, schema 1.2.0, and the existing `core-v1`/`record-v1` backend
+  advertisements are unchanged.
+
 ## v2026.7.9 - 2026-07-18
 
 - Added isolated Fortemi React release and commit signing keys under separate

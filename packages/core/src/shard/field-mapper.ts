@@ -105,13 +105,14 @@ export function linkToShard(link: {
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
 }): ShardLink {
-  const legacyState = link.deleted_at
+  const legacyState = link.deleted_at || link.confidence === null
     ? {
         fortemi_legacy_state: {
           updated_at: link.updated_at === null || link.updated_at === undefined
             ? null
             : toISOString(link.updated_at),
-          deleted_at: toISOString(link.deleted_at),
+          deleted_at: link.deleted_at ? toISOString(link.deleted_at) : null,
+          ...(link.confidence === null ? { confidence: null } : {}),
         },
       }
     : null
@@ -121,7 +122,7 @@ export function linkToShard(link: {
     to_note_id: link.target_note_id,
     to_url: null,
     kind: link.link_type,
-    score: link.confidence,
+    score: link.confidence ?? 1,
     created_at: toISOString(link.created_at),
     metadata: legacyState,
   }
@@ -142,13 +143,14 @@ export function urlLinkToShard(link: {
   const metadata = typeof link.metadata_json === 'string'
     ? JSON.parse(link.metadata_json) as Record<string, unknown>
     : link.metadata_json ?? null
-  const legacyState = link.deleted_at
+  const legacyState = link.deleted_at || link.confidence === null
     ? {
         fortemi_legacy_state: {
           updated_at: link.updated_at === null || link.updated_at === undefined
             ? null
             : toISOString(link.updated_at),
-          deleted_at: toISOString(link.deleted_at),
+          deleted_at: link.deleted_at ? toISOString(link.deleted_at) : null,
+          ...(link.confidence === null ? { confidence: null } : {}),
         },
       }
     : null
@@ -158,7 +160,7 @@ export function urlLinkToShard(link: {
     to_note_id: null,
     to_url: link.to_url,
     kind: link.link_type,
-    score: link.confidence,
+    score: link.confidence ?? 1,
     created_at: toISOString(link.created_at),
     metadata: metadata || legacyState
       ? { ...(metadata ?? {}), ...(legacyState ?? {}) }
@@ -187,7 +189,7 @@ export function linkFromShard(shard: ShardLink): {
     && typeof legacyState === 'object'
     && !Array.isArray(legacyState)
   )
-    ? legacyState as { updated_at?: unknown; deleted_at?: unknown }
+    ? legacyState as { updated_at?: unknown; deleted_at?: unknown; confidence?: unknown }
     : null
   return {
     id: shard.id,
@@ -195,7 +197,7 @@ export function linkFromShard(shard: ShardLink): {
     target_note_id: shard.to_note_id,
     to_url: shard.to_url ?? null,
     link_type: shard.kind,
-    confidence: shard.score,
+    confidence: state?.confidence === null ? null : shard.score,
     created_at: shard.created_at,
     updated_at: typeof state?.updated_at === 'string' ? state.updated_at : null,
     deleted_at: typeof state?.deleted_at === 'string' ? state.deleted_at : null,

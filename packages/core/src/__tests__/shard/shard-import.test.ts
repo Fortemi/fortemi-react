@@ -143,6 +143,51 @@ describe('importShard', { timeout: 30_000 }, () => {
     expect(after.rows[0].count).toBe(before.rows[0].count)
   })
 
+  it.each([
+    {
+      name: 'missing collection parent',
+      mutate: (collections: Array<Record<string, unknown>>) => {
+        collections[0].parent_id = '018f2d2d-bc00-7cc8-8ad2-f147d6a2ffff'
+      },
+      message: 'parent_id does not reference a declared collection',
+    },
+    {
+      name: 'cyclic collection hierarchy',
+      mutate: (collections: Array<Record<string, unknown>>) => {
+        const parentId = collections[0].id
+        const childId = '018f2d2d-bc00-7cc8-8ad2-f147d6a2e799'
+        collections[0].parent_id = childId
+        collections.push({
+          ...collections[0],
+          id: childId,
+          name: 'Cyclic child',
+          parent_id: parentId,
+        })
+      },
+      message: 'collection hierarchy contains a cycle',
+    },
+  ])('rejects $name before any PGlite mutation', async ({ mutate, message }) => {
+    const files = canonicalCoreV1Files()
+    const collections = JSON.parse(decoder.decode(files.get('collections.json'))) as Array<
+      Record<string, unknown>
+    >
+    mutate(collections)
+    const collectionData = encoder.encode(JSON.stringify(collections))
+    files.set('collections.json', collectionData)
+    const manifest = JSON.parse(decoder.decode(files.get('manifest.json'))) as ShardManifest
+    manifest.counts.collections = collections.length
+    manifest.checksums['collections.json'] = await sha256Hex(collectionData)
+    files.set('manifest.json', encoder.encode(JSON.stringify(manifest)))
+
+    const before = await db.query<{ count: number }>('SELECT COUNT(*)::int AS count FROM collection')
+    const result = await importShard(db, packTarGz(files))
+    const after = await db.query<{ count: number }>('SELECT COUNT(*)::int AS count FROM collection')
+
+    expect(result.success).toBe(false)
+    expect(result.errors.join('\n')).toContain(message)
+    expect(after.rows[0].count).toBe(before.rows[0].count)
+  })
+
   it('reports import progress phases without changing existing result shape', async () => {
     const { archive, sourceDb } = await createTestShard()
     const progress: ImportProgress[] = []
