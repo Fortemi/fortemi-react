@@ -2,6 +2,11 @@
 ## [2026-06-12 16:14] deploy | aiwg use all --provider codex
 ## [2026-06-13 21:20] deploy | aiwg use all
 ## [2026-06-13 21:20] deploy | aiwg use all --provider codex
+## [2026-06-16 21:38] promote | #191 backend seam (data-backend.ts + ADR) merged to main via PR #195 — CI run 155 green
+## [2026-06-16 22:01] promote | released v2026.6.5 — signed tag, Gitea publish run 159 green, release entry #1279; GitHub mirror + npm-publish triggered
+## [2026-06-17 20:25] promote | v2026.6.6 released — docs link fix (#193); 5 pkgs bumped 2026.6.5->2026.6.6 lockstep; signed tag pushed origin+github; publish CI running
+## [2026-06-17 20:32] promote | v2026.6.6 publish CI all green — Gitea internal publish + GitHub public npmjs (provenance) succeeded; docsite deployed
+## [2026-06-17 23:33] deploy | aiwg use all --provider codex
 ## [2026-07-06 03:33] create | AIWG portable-schema audit report + ADR-010/011 + security appendix in .aiwg/
 ## [2026-07-06 03:33] update | SAD.md R-002 mitigation corrected (parity suite guards DB tables, not portable contract)
 ## [2026-07-09 17:14] update | ADR-010/011 accepted; SAD portable-contract topology and aiwg-index decomposition tasks recorded
@@ -34,3 +39,13 @@
 ## [2026-07-17 06:25] update | fortemi.com PR #24 conflict resolved (merged origin/main, lockfile regenerated, build+lint green); pushed 5f7fd75; awaiting CI 21243
 ## [2026-07-17 06:27] promote | fortemi.com PR #24 merged to main (6232003); branch deleted; watching post-merge runs 21244/21245
 ## [2026-07-17 06:28] update | fortemi.com post-merge runs 21244/21245 both green — all outstanding PRs delivered
+## [2026-07-17 07:17] promote | v2026.7.8: PR #351 merged (274d842), signed tag pushed to origin+github; watching release runs 428-431
+## [2026-07-17 07:25] promote | v2026.7.8 released: npm @fortemi/{core,graph,react}@2026.7.8 live on npmjs; Gitea release 1832 published; all 4 workflows green; mirror synced
+## [2026-07-17 07:32] update | GitHub mirror PR #2 closed as superseded (work landed via Gitea in 30b9ccb + v2026.7.3+; golden fixture superseded by server-2026.7.1 pin)
+## [2026-07-17 19:10] promote | PR #352 merged: knowledge-workspace demo opens on Graph tab by default; gallery smoke test updated
+## [2026-07-17 19:15] deploy | demo.fortemi.com/react redeployed on demand with graph-default knowledge-workspace (PR #352, 701e1d3)
+## [2026-07-20 19:24] deploy | aiwg use all
+## [2026-07-20 19:24] deploy | aiwg use all --provider codex
+## [2026-07-21 18:02] update | issue #355 closed after profile-scoped portability matrix verification (9/9 cells passed; core-v1/record-v1 evidence)
+## [2026-07-21 18:19] promote | PR #376 merged fast-forward-only after CI run #481 passed 8/8 jobs; issue #317 closed
+## [2026-07-21 22:25] update | aiwg index stats --json

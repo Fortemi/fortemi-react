@@ -5,9 +5,16 @@ dist/
 coverage/
 apps/standalone/playwright-report/
 apps/standalone/test-results/
+/playwright-report/
+/test-results/
+tmux-*.log
 .claude/
 .agents/
 .codex/
+
+# Machine-local AIWG toolsmith runtime inventory
+.aiwg/smiths/toolsmith/runtime.json
+.aiwg/smiths/toolsmith/runtime-info.md
 
 # docsite (pagenary): generated per-package pages (READMEs are the source of truth)
 docs/content/packages/
