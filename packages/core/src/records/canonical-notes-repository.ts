@@ -251,12 +251,20 @@ export class CanonicalNotesRepository {
 
   // ── Collections ───────────────────────────────────────────────────────────
 
-  async createCollection(name: string, description?: string): Promise<CollectionRecord> {
+  async createCollection(
+    name: string,
+    description?: string,
+    parentId: string | null = null,
+  ): Promise<CollectionRecord> {
+    if (parentId !== null && !(await this.store.get('collection', parentId))) {
+      throw new Error(`Parent collection not found: ${parentId}`)
+    }
     const ts = nowIso()
     const collection: CollectionRecord = {
       id: generateId(),
       name,
       description: description ?? null,
+      parent_id: parentId,
       created_at: ts,
       updated_at: ts,
       deleted_at: null,

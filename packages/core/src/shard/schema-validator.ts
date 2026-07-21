@@ -669,6 +669,24 @@ function coreReferenceErrors(records: Map<CoreV1Component, unknown[]>): string[]
       errors.push(`collections.json[${index}] parent_id does not reference a declared collection`)
     }
   }
+  const collectionById = new Map(collections.map((collection) => [collection.id, collection]))
+  const visiting = new Set<unknown>()
+  const visited = new Set<unknown>()
+  const visitCollection = (collection: Record<string, unknown>): void => {
+    if (visited.has(collection.id)) return
+    if (visiting.has(collection.id)) {
+      errors.push(`collection hierarchy contains a cycle at ${String(collection.id)}`)
+      return
+    }
+    visiting.add(collection.id)
+    const parent = collection.parent_id === null
+      ? undefined
+      : collectionById.get(collection.parent_id)
+    if (parent) visitCollection(parent)
+    visiting.delete(collection.id)
+    visited.add(collection.id)
+  }
+  for (const collection of collections) visitCollection(collection)
   for (const [index, note] of notes.entries()) {
     if (note.collection_id !== null && !collectionIds.has(note.collection_id)) {
       errors.push(`notes.jsonl[${index}] collection_id does not reference a declared collection`)

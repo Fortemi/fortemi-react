@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { packTarGz, unpackTarGz } from '../../shard/shard-tar.js'
 
 describe('shard-tar', () => {
@@ -102,6 +102,26 @@ describe('shard-tar', () => {
       'embedding_set_members.jsonl',
       'embedding_sets.json',
     ])
+  })
+
+  it('produces byte-identical archives across wall-clock times', () => {
+    const files = new Map([
+      ['manifest.json', new TextEncoder().encode('{"version":"1.2.0"}')],
+      ['notes.jsonl', new TextEncoder().encode('{"id":"note-1"}\n')],
+    ])
+
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'))
+      const first = packTarGz(files)
+      vi.setSystemTime(new Date('2026-07-21T12:34:56.000Z'))
+      const second = packTarGz(files)
+
+      expect(second).toEqual(first)
+      expect([...first.slice(4, 8)]).toEqual([0, 0, 0, 0])
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
 

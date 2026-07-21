@@ -33,6 +33,37 @@ export interface RecordProjectionResult extends NoteProjectionResult {
   attachments: AttachmentProjectionResult
 }
 
+function collectionsParentFirst<T extends { id: string; parent_id?: string | null }>(
+  collections: T[],
+): T[] {
+  const byId = new Map(collections.map((collection) => [collection.id, collection]))
+  const ordered: T[] = []
+  const visiting = new Set<string>()
+  const visited = new Set<string>()
+
+  const visit = (collection: T): void => {
+    if (visited.has(collection.id)) return
+    if (visiting.has(collection.id)) {
+      throw new Error(`Collection hierarchy contains a cycle at ${collection.id}`)
+    }
+    visiting.add(collection.id)
+    const parentId = collection.parent_id ?? null
+    if (parentId !== null) {
+      const parent = byId.get(parentId)
+      if (!parent) {
+        throw new Error(`Collection ${collection.id} references missing parent ${parentId}`)
+      }
+      visit(parent)
+    }
+    visiting.delete(collection.id)
+    visited.add(collection.id)
+    ordered.push(collection)
+  }
+
+  for (const collection of collections) visit(collection)
+  return ordered
+}
+
 /**
  * Project all canonical note-tier records into PGlite. Safe to run at any
  * time: startup, after journal consumption, or as a full rebuild after the
@@ -53,16 +84,20 @@ export async function projectNotes(
     store.list('collection_note'),
   ])
 
-  for (const c of collections) {
+  for (const c of collectionsParentFirst(collections)) {
     await db.query(
-      `INSERT INTO collection (id, name, description, created_at, updated_at, deleted_at)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO collection (id, name, description, parent_id, created_at, updated_at, deleted_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (id) DO UPDATE SET
          name = EXCLUDED.name,
          description = EXCLUDED.description,
+         parent_id = EXCLUDED.parent_id,
          updated_at = EXCLUDED.updated_at,
          deleted_at = EXCLUDED.deleted_at`,
-      [c.id, c.name, c.description, c.created_at, c.updated_at, c.deleted_at],
+      [
+        c.id, c.name, c.description, c.parent_id ?? null,
+        c.created_at, c.updated_at, c.deleted_at,
+      ],
     )
   }
 

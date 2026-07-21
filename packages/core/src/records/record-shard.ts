@@ -363,12 +363,11 @@ async function buildRecordShardArchive(
     .sort((a, b) => a.name.localeCompare(b.name))
   const shardCollections = orderedCollections.map((c) => {
     const mapped = collectionToShard(
-      // Canonical collections are flat (no parent hierarchy yet).
       {
         id: c.id,
         name: c.name,
         description: c.description,
-        parent_id: null,
+        parent_id: c.parent_id ?? null,
         created_at: c.created_at,
         updated_at: c.updated_at,
         deleted_at: c.deleted_at,
@@ -862,6 +861,7 @@ export async function importShardToRecords(
       id: col.id,
       name: col.name,
       description: col.description,
+      parent_id: col.parent_id,
       created_at: col.created_at,
       updated_at: col.updated_at,
       deleted_at: col.deleted_at,

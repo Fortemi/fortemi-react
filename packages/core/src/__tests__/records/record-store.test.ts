@@ -54,6 +54,23 @@ function contractSuite(label: string, makeStore: () => Promise<RecordStore>) {
       await store.close()
     })
 
+    it('normalizes legacy root collections before storing and journaling', async () => {
+      const store = await makeStore()
+      const ts = new Date().toISOString()
+      const entry = await store.put('collection', {
+        id: 'legacy-root',
+        name: 'Legacy root',
+        description: null,
+        created_at: ts,
+        updated_at: ts,
+        deleted_at: null,
+      })
+
+      expect((await store.get('collection', 'legacy-root'))?.parent_id).toBeNull()
+      expect(entry.record).toMatchObject({ parent_id: null })
+      await store.close()
+    })
+
     it('remove deletes the record', async () => {
       const store = await makeStore()
       await store.put('note', noteRecord('n1'))
@@ -163,6 +180,37 @@ contractSuite('IdbRecordStore', () =>
 )
 
 describe('IdbRecordStore durability', () => {
+  it('migrates schema-v1 collection rows to explicit root collections', async () => {
+    const factory = new IDBFactory()
+    const initialized = await createRecordStore('schema-v1-collection', { indexedDB: factory })
+    await initialized.close()
+
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = factory.open('fortemi-schema-v1-collection-records')
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => reject(request.error)
+    })
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(['meta', 'collection'], 'readwrite')
+      tx.objectStore('meta').put(1, 'schemaVersion')
+      tx.objectStore('collection').put({
+        id: 'legacy-root',
+        name: 'Legacy root',
+        description: null,
+        created_at: '2026-07-01T00:00:00.000Z',
+        updated_at: '2026-07-01T00:00:00.000Z',
+        deleted_at: null,
+      })
+      tx.oncomplete = () => resolve()
+      tx.onerror = () => reject(tx.error)
+    })
+    db.close()
+
+    const migrated = await createRecordStore('schema-v1-collection', { indexedDB: factory })
+    expect((await migrated.get('collection', 'legacy-root'))?.parent_id).toBeNull()
+    await migrated.close()
+  })
+
   it('records, journal, and head seq survive close/reopen', async () => {
     const factory = new IDBFactory()
     const first = await createRecordStore('durable', { indexedDB: factory })

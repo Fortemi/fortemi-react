@@ -1470,7 +1470,7 @@ The store contract plus the durable IndexedDB implementation (`createRecordStore
 
 #### `CanonicalNotesRepository` / `CanonicalAttachmentsRepository`
 
-DB-free note workflows (CRUD, soft-delete/restore, tags, links, collections, recent/by-tag queries, bounded text scan) and attachment workflows (bytes-first attach through the Bytecask `BlobStore`, dedupe, reference-only reads, manifest-derived `reconcileBlobs`/`gcBlobs`).
+DB-free note workflows (CRUD, soft-delete/restore, tags, links, nested collections, recent/by-tag queries, bounded text scan) and attachment workflows (bytes-first attach through the Bytecask `BlobStore`, dedupe, reference-only reads, manifest-derived `reconcileBlobs`/`gcBlobs`). `createCollection(name, description?, parentId?)` validates the optional parent before writing.
 
 #### `createRecordBackend(store, options?)`
 
@@ -1487,7 +1487,7 @@ function exportShardFromRecords(store: RecordStore, options?: ExportOptions): Pr
 function importShardToRecords(store: RecordStore, data: Uint8Array | ArrayBuffer, options?: ImportOptions): Promise<ImportResult>
 ```
 
-Knowledge Shard handling with zero PGlite. Export honors `collectionId`/`tag` filters, `clusterNotesSize`, and the `includeBlobs` + `blobStore` byte sidecar. Import runs the same ADR-014 signature policy before any write, validates checksums, stages verified sidecar bytes, commits all record and journal mutations through `applyBatch`, and rolls newly promoted bytes back if that batch fails. Legacy unprofiled replace import reconciles tags, memberships, attachments, and note links for imported notes while preserving explicit null revisions and tombstone ordering. RecordStore advertises no named portability profile until an authority-owned profile and cross-consumer fixtures exist.
+Knowledge Shard handling with zero PGlite. Export honors `collectionId`/`tag` filters, `clusterNotesSize`, and the `includeBlobs` + `blobStore` byte sidecar. Import runs the same ADR-014 signature policy before any write, validates checksums, stages verified sidecar bytes, commits all record and journal mutations through `applyBatch`, and rolls newly promoted bytes back if that batch fails. Legacy unprofiled replace import reconciles tags, memberships, attachments, and note links for imported notes while preserving explicit null revisions and tombstone ordering. RecordStore advertises only the authority-owned `record-v1` subset; its import/export preserves collection hierarchy and reports profile-specific losses.
 
 #### `projectNotes(db, store)` / `projectRecords(db, store)` / `dropNoteProjection(db)`
 

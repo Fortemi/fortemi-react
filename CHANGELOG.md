@@ -2,6 +2,21 @@
 
 All notable changes to fortemi-react are documented here.
 
+## Unreleased
+
+### `@fortemi/core` - RecordStore collection hierarchy parity (#355)
+
+- Canonical RecordStore collections now preserve `parent_id` through memory
+  and IndexedDB storage, `record-v1` import/export, and PGlite projection.
+- Existing IndexedDB collection rows migrate additively to root collections,
+  while missing or cyclic projection parents fail before partial projection.
+
+### `@fortemi/core` - Reproducible Knowledge Shard archives (#355)
+
+- Tar entries and the outer gzip header now use canonical zero mtimes, so
+  identical shard inputs produce byte-identical archives across wall-clock
+  times. This makes archive digests and cross-repository receipts reproducible.
+
 ## v2026.7.10 - 2026-07-20
 
 ### `@fortemi/core` - PGlite `core-v1` portability corrections (#355)

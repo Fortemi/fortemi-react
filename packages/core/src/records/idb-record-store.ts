@@ -25,13 +25,17 @@ import type {
   RecordStore,
   RecordStoreCapabilities,
 } from './types.js'
-import { RECORD_COLLECTIONS, RECORD_STORE_CAPABILITIES } from './types.js'
+import {
+  normalizeRecordMutation,
+  RECORD_COLLECTIONS,
+  RECORD_STORE_CAPABILITIES,
+} from './types.js'
 
 const DB_VERSION = 1
 const JOURNAL_STORE = 'journal'
 const META_STORE = 'meta'
 /** Logical record-schema version stored in `meta` (independent of DB_VERSION). */
-export const RECORD_SCHEMA_VERSION = 1
+export const RECORD_SCHEMA_VERSION = 2
 
 function requestToPromise<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -92,18 +96,25 @@ export class IdbRecordStore implements RecordStore {
   }
 
   private async ensureSchemaVersion(): Promise<void> {
-    const tx = this.db.transaction(META_STORE, 'readwrite')
+    const tx = this.db.transaction([META_STORE, 'collection'], 'readwrite')
     const meta = tx.objectStore(META_STORE)
     const current = await requestToPromise<number | undefined>(meta.get('schemaVersion'))
-    if (current === undefined) {
-      meta.put(RECORD_SCHEMA_VERSION, 'schemaVersion')
-    } else if (current > RECORD_SCHEMA_VERSION) {
+    if (current !== undefined && current > RECORD_SCHEMA_VERSION) {
       throw new Error(
         `IdbRecordStore: records were written by a newer schema (v${current} > v${RECORD_SCHEMA_VERSION}); refusing to open`,
       )
     }
-    // current < RECORD_SCHEMA_VERSION: additive migrations hook in here as
-    // the schema grows; v1 has nothing to migrate.
+    if ((current ?? 0) < 2) {
+      const collections = await requestToPromise<Array<Record<string, unknown>>>(
+        tx.objectStore('collection').getAll(),
+      )
+      for (const collection of collections) {
+        if (!Object.hasOwn(collection, 'parent_id')) {
+          tx.objectStore('collection').put({ ...collection, parent_id: null })
+        }
+      }
+    }
+    meta.put(RECORD_SCHEMA_VERSION, 'schemaVersion')
     await transactionComplete(tx)
   }
 
@@ -133,7 +144,8 @@ export class IdbRecordStore implements RecordStore {
   async applyBatch(mutations: readonly RecordMutation[]): Promise<JournalEntry[]> {
     if (mutations.length === 0) return []
 
-    const collections = [...new Set(mutations.map((mutation) => mutation.collection))]
+    const normalizedMutations = mutations.map(normalizeRecordMutation)
+    const collections = [...new Set(normalizedMutations.map((mutation) => mutation.collection))]
     const tx = this.db.transaction([...collections, JOURNAL_STORE], 'readwrite')
     const completed = transactionComplete(tx)
     const pendingEntries: Array<{
@@ -142,7 +154,7 @@ export class IdbRecordStore implements RecordStore {
     }> = []
 
     try {
-      for (const mutation of mutations) {
+      for (const mutation of normalizedMutations) {
         const records = tx.objectStore(mutation.collection)
         const pending: Omit<JournalEntry, 'seq'> = mutation.op === 'put'
           ? {

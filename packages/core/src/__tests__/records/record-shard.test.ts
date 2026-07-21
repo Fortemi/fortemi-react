@@ -32,6 +32,7 @@ import { packTarGz, unpackTarGz } from '../../shard/shard-tar.js'
 import { AllowlistTrustStore } from '../../shard/shard-signature.js'
 import { MemoryBlobStore } from '../../blob-store.js'
 import { validateRecordV1ShardArchive } from '../../shard/schema-validator.js'
+import { sha256Hex } from '../../shard/checksum.js'
 import type { DatabaseClient } from '../../storage-backend.js'
 import type { JournalEntry } from '../../records/types.js'
 
@@ -174,6 +175,64 @@ describe('record-shard (DB-free)', () => {
       expect(new TextDecoder().decode(reexportedFiles.get(component)))
         .toBe(new TextDecoder().decode(files.get(component)))
     }
+  })
+
+  it('preserves nested collections through record-v1 import and re-export', async () => {
+    const src = await seededStore()
+    const child = await src.notes.createCollection('Nested', 'child', src.collection.id)
+    await src.notes.addNoteToCollection(child.id, src.b.note.id)
+
+    const exported = await exportShardFromRecordsWithReport(src.store, {
+      profile: 'record-v1',
+    })
+    expect(exported.success).toBe(true)
+    const files = unpackTarGz(exported.archive!)
+    const collections = JSON.parse(
+      new TextDecoder().decode(files.get('collections.json')),
+    ) as Array<{ id: string; parent_id: string | null }>
+    expect(collections.find((collection) => collection.id === child.id)?.parent_id)
+      .toBe(src.collection.id)
+
+    const dst = new MemoryRecordStore()
+    const imported = await importShardToRecords(dst, exported.archive!, {
+      conflictStrategy: 'replace',
+    })
+    expect(imported.success).toBe(true)
+    expect((await dst.get('collection', child.id))?.parent_id).toBe(src.collection.id)
+
+    const reexported = await exportShardFromRecordsWithReport(dst, {
+      profile: 'record-v1',
+    })
+    expect(reexported.success).toBe(true)
+    expect(new TextDecoder().decode(unpackTarGz(reexported.archive!).get('collections.json')))
+      .toBe(new TextDecoder().decode(files.get('collections.json')))
+  })
+
+  it('rejects a cyclic record-v1 hierarchy before any RecordStore mutation', async () => {
+    const src = await seededStore()
+    const exported = await exportShardFromRecordsWithReport(src.store, {
+      profile: 'record-v1',
+    })
+    const files = unpackTarGz(exported.archive!)
+    const collections = JSON.parse(
+      new TextDecoder().decode(files.get('collections.json')),
+    ) as Array<Record<string, unknown>>
+    collections[0].parent_id = collections[0].id
+    const collectionBytes = new TextEncoder().encode(JSON.stringify(collections))
+    files.set('collections.json', collectionBytes)
+    const manifest = JSON.parse(
+      new TextDecoder().decode(files.get('manifest.json')),
+    ) as { checksums: Record<string, string> }
+    manifest.checksums['collections.json'] = await sha256Hex(collectionBytes)
+    files.set('manifest.json', new TextEncoder().encode(JSON.stringify(manifest)))
+
+    const dst = new MemoryRecordStore()
+    const imported = await importShardToRecords(dst, packTarGz(files))
+    expect(imported.success).toBe(false)
+    expect(imported.errors.join('\n')).toContain('collection hierarchy contains a cycle')
+    expect(await dst.headSeq()).toBe(0)
+    expect(await dst.list('collection')).toEqual([])
+    expect(await dst.list('note')).toEqual([])
   })
 
   it('round-trips records and sidecar bytes into a fresh store with zero PGlite', async () => {

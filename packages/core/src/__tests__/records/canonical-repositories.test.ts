@@ -83,6 +83,19 @@ describe('CanonicalNotesRepository (DB-free)', () => {
     expect(await repo.notesInCollection(col.id)).toHaveLength(2)
   })
 
+  it('creates nested collections only beneath an existing parent', async () => {
+    const store = new MemoryRecordStore()
+    const repo = new CanonicalNotesRepository(store)
+    const parent = await repo.createCollection('Parent')
+    const child = await repo.createCollection('Child', 'nested', parent.id)
+
+    expect(child.parent_id).toBe(parent.id)
+    expect((await store.get('collection', child.id))?.parent_id).toBe(parent.id)
+    await expect(
+      repo.createCollection('Orphan', undefined, '00000000-0000-4000-8000-000000000000'),
+    ).rejects.toThrow(/Parent collection not found/)
+  })
+
   it('bounded text scan matches titles and revised content, skipping deleted notes', async () => {
     const repo = makeRepo()
     const hit = await repo.create({ title: 'Kepler notes', content: 'orbital mechanics' })

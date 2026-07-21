@@ -430,6 +430,19 @@ describe('knowledge shard AJV schema validator (#255)', () => {
       'to_note_id does not reference a declared note',
     )
 
+    const cyclicHierarchy = canonicalRecordV1Files()
+    const collections = JSON.parse(
+      new TextDecoder().decode(cyclicHierarchy.get('collections.json')),
+    ) as Array<Record<string, unknown>>
+    collections[0].parent_id = collections[0].id
+    cyclicHierarchy.set(
+      'collections.json',
+      new TextEncoder().encode(JSON.stringify(collections)),
+    )
+    expect(validateShardArchive(cyclicHierarchy).errors.join('\n')).toContain(
+      'collection hierarchy contains a cycle',
+    )
+
     const checksumDrift = canonicalRecordV1Files()
     checksumDrift.set('tags.json', new TextEncoder().encode('[]'))
     expect((await validateRecordV1ShardArchive(checksumDrift)).errors.join('\n')).toContain(

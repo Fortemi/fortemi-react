@@ -54,7 +54,7 @@ async function readProjection(db: PGlite): Promise<ProjectedState> {
     tags: await q(`SELECT note_id, tag FROM note_tag ORDER BY note_id, tag`),
     links: await q(`SELECT id, source_note_id, target_note_id, link_type,
                            deleted_at IS NULL AS active FROM link ORDER BY id`),
-    collections: await q(`SELECT id, name, description FROM collection ORDER BY id`),
+    collections: await q(`SELECT id, name, description, parent_id FROM collection ORDER BY id`),
     memberships: await q(`SELECT collection_id, note_id FROM collection_note
                           ORDER BY collection_id, note_id`),
   }
@@ -73,7 +73,8 @@ async function seededCanon() {
   await notes.addTag(a.note.id, 'storage')
   await notes.addTag(a.note.id, 'projection')
   await notes.createLink(a.note.id, b.note.id, 'related')
-  const collection = await notes.createCollection('Research')
+  const parentCollection = await notes.createCollection('Research')
+  const collection = await notes.createCollection('Active research', undefined, parentCollection.id)
   await notes.addNoteToCollection(collection.id, a.note.id)
   await attachments.attach({
     noteId: a.note.id,
@@ -82,7 +83,7 @@ async function seededCanon() {
     mimeType: 'text/plain',
   })
 
-  return { store, blobStore, notes, attachments, a, b, collection }
+  return { store, blobStore, notes, attachments, a, b, parentCollection, collection }
 }
 
 describe('record projection — rebuild parity (#323/#322)', () => {
@@ -95,7 +96,7 @@ describe('record projection — rebuild parity (#323/#322)', () => {
     expect(result.notes).toBe(2)
     expect(result.tags).toBe(2)
     expect(result.links).toBe(1)
-    expect(result.collections).toBe(1)
+    expect(result.collections).toBe(2)
     expect(result.memberships).toBe(1)
     expect(result.attachments.attachments).toBe(1)
 
@@ -107,6 +108,12 @@ describe('record projection — rebuild parity (#323/#322)', () => {
     expect(alpha.current.content).toBe('alpha revised')
     expect(alpha.is_starred).toBe(true)
     expect(alpha.tags.sort()).toEqual(['projection', 'storage'])
+    expect(
+      (await db.query<{ parent_id: string | null }>(
+        `SELECT parent_id FROM collection WHERE id = $1`,
+        [canon.collection.id],
+      )).rows[0]?.parent_id,
+    ).toBe(canon.parentCollection.id)
 
     // Soft-deleted note projects its deleted_at (excluded from list).
     const listed = await sqlNotes.list({})

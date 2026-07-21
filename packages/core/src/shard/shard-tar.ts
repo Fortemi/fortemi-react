@@ -47,8 +47,8 @@ function createTarHeader(filename: string, size: number): Uint8Array {
   writeOctal(header, 116, 0, 8)
   // size (124, 12)
   writeOctal(header, 124, size, 12)
-  // mtime (136, 12)
-  writeOctal(header, 136, Math.floor(Date.now() / 1000), 12)
+  // mtime (136, 12) -- canonical zero keeps identical shard inputs byte-stable.
+  writeOctal(header, 136, 0, 12)
   // typeflag (156) — '0' for regular file
   header[156] = 48 // ASCII '0'
   // magic (257, 8) — ustar\000
@@ -161,7 +161,7 @@ export function packTarGz(
         ' exceeds cap ' + cap + ' bytes',
     )
   }
-  return gzipSync(tarData)
+  return gzipSync(tarData, { mtime: 0 })
 }
 
 /**

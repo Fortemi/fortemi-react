@@ -12,7 +12,7 @@ import type {
   RecordStore,
   RecordStoreCapabilities,
 } from './types.js'
-import { RECORD_STORE_CAPABILITIES } from './types.js'
+import { normalizeRecordMutation, RECORD_STORE_CAPABILITIES } from './types.js'
 
 export class MemoryRecordStore implements RecordStore {
   readonly capabilities: RecordStoreCapabilities = RECORD_STORE_CAPABILITIES
@@ -70,7 +70,8 @@ export class MemoryRecordStore implements RecordStore {
       return records
     }
 
-    for (const mutation of mutations) {
+    for (const rawMutation of mutations) {
+      const mutation = normalizeRecordMutation(rawMutation)
       const entry: JournalEntry = mutation.op === 'put'
         ? {
             seq: ++stagedSeq,

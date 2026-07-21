@@ -65,6 +65,8 @@ export interface CollectionRecord {
   id: string
   name: string
   description: string | null
+  /** Omitted only by legacy schema-v1 callers; built-in stores normalize it to null. */
+  parent_id?: string | null
   created_at: string
   updated_at: string
   deleted_at: string | null
@@ -193,6 +195,19 @@ export type RecordMutation =
       collection: RecordCollectionName
       id: string
     }
+
+export function normalizeRecordMutation(mutation: RecordMutation): RecordMutation {
+  if (mutation.op === 'put' && mutation.collection === 'collection') {
+    return {
+      ...mutation,
+      record: {
+        ...mutation.record,
+        parent_id: mutation.record.parent_id ?? null,
+      },
+    }
+  }
+  return mutation
+}
 
 /**
  * The writable canonical structured-record store. Implementations MUST make
