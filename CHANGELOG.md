@@ -4,6 +4,8 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.7.11 - 2026-07-21
+
 ### `@fortemi/core` - RecordStore collection hierarchy parity (#355)
 
 - Canonical RecordStore collections now preserve `parent_id` through memory
