@@ -24,7 +24,12 @@ name: Docsite Deploy
 
 on:
   push:
+    branches: [main]
     tags: ['v*']
+    paths:
+      - 'docs/**'
+      - 'docsite/**'
+      - '.gitea/workflows/docsite-deploy.yml'
   # Allow redeploying the docs site on demand (e.g. a docsite-only fix) without
   # cutting a package release.
   workflow_dispatch: {}

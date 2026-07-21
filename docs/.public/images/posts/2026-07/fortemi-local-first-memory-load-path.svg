@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Fortemi local-to-server load path diagram</title>
+  <desc id="desc">Professional workload ladder showing local, browser/client, and server memory paths with concrete transition triggers.</desc>
+  <defs>
+    <style>
+      .ui{font-family:Inter,Arial,sans-serif}
+      .mono{font-family:"SFMono-Regular","Cascadia Mono",Consolas,monospace}
+      .title{fill:#f8fafc;font-size:48px;font-weight:850}
+      .subtitle{fill:#a8b3c7;font-size:24px}
+      .card-title{font-size:34px;font-weight:850}
+      .card-body{font-size:22px}
+      .trigger{fill:#dbeafe;font-size:20px;font-weight:750}
+      .small{fill:#a8b3c7;font-size:18px}
+    </style>
+    <radialGradient id="bg1" cx="28%" cy="18%" r="80%">
+      <stop offset="0%" stop-color="#12345a"/>
+      <stop offset="48%" stop-color="#081827"/>
+      <stop offset="100%" stop-color="#050b14"/>
+    </radialGradient>
+    <linearGradient id="glass" x1="0" x2="1">
+      <stop offset="0%" stop-color="#10233a" stop-opacity=".92"/>
+      <stop offset="100%" stop-color="#0b1524" stop-opacity=".82"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" x2="1">
+      <stop offset="0%" stop-color="#0f766e"/>
+      <stop offset="100%" stop-color="#0b3b3a"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" x2="1">
+      <stop offset="0%" stop-color="#7c4a03"/>
+      <stop offset="100%" stop-color="#2a1906"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity=".35"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,8 L10,4 z" fill="#cbd5e1"/>
+    </marker>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg1)"/>
+  <path d="M0 700 C240 620 360 710 560 612 C760 510 880 320 1120 286 C1330 257 1460 328 1600 250" fill="none" stroke="#1e3a5f" stroke-width="2" opacity=".55"/>
+  <path d="M0 742 C230 660 392 760 616 632 C832 508 940 402 1130 366 C1334 328 1470 374 1600 306" fill="none" stroke="#164e63" stroke-width="2" opacity=".45"/>
+
+  <text x="800" y="96" class="ui title" text-anchor="middle">Choose the lightest memory path that can do the job</text>
+  <text x="800" y="142" class="ui subtitle" text-anchor="middle">The workload should pull the architecture upward only when the trigger is real.</text>
+
+  <rect x="418" y="182" width="764" height="94" rx="24" fill="#07111f" stroke="#475569" stroke-width="1.5" opacity=".88"/>
+  <text x="800" y="229" class="mono" fill="#f8fafc" font-size="25" text-anchor="middle" dominant-baseline="middle">Start with X because Y. Reconsider when Z.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="112" y="502" width="352" height="212" rx="30" fill="url(#glass)" stroke="#38bdf8" stroke-width="2"/>
+    <rect x="624" y="424" width="352" height="212" rx="30" fill="url(#teal)" stroke="#2dd4bf" stroke-width="2"/>
+    <rect x="1136" y="346" width="352" height="212" rx="30" fill="url(#amber)" stroke="#f59e0b" stroke-width="2"/>
+  </g>
+
+  <g class="ui" text-anchor="middle">
+    <text x="288" y="570" class="card-title" fill="#e0f2fe">Local</text>
+    <text x="288" y="618" class="card-body" fill="#bae6fd">
+      <tspan x="288">private corpus</tspan>
+      <tspan x="288" dy="32">offline use</tspan>
+      <tspan x="288" dy="32">single-user learning</tspan>
+    </text>
+
+    <text x="800" y="492" class="card-title" fill="#ccfbf1">Browser/client</text>
+    <text x="800" y="540" class="card-body" fill="#a7f3d0">
+      <tspan x="800">packaged reference set</tspan>
+      <tspan x="800" dy="32">embedded search</tspan>
+      <tspan x="800" dy="32">lightweight distribution</tspan>
+    </text>
+
+    <text x="1312" y="414" class="card-title" fill="#fef3c7">Server</text>
+    <text x="1312" y="462" class="card-body" fill="#fde68a">
+      <tspan x="1312">shared writes</tspan>
+      <tspan x="1312" dy="32">always-on ingest</tspan>
+      <tspan x="1312" dy="32">governance and audit</tspan>
+    </text>
+  </g>
+
+  <path d="M464 608 C540 608 548 530 624 530" stroke="#cbd5e1" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+  <path d="M976 530 C1052 530 1060 452 1136 452" stroke="#cbd5e1" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+
+  <g class="ui" text-anchor="middle">
+    <rect x="476" y="520" width="168" height="92" rx="18" fill="#0f172a" stroke="#60a5fa" stroke-width="1.5"/>
+    <text x="560" y="550" class="trigger">move when</text>
+    <text x="560" y="581" class="small">shared UX or</text>
+    <text x="560" y="605" class="small">packaged search</text>
+
+    <rect x="988" y="442" width="168" height="92" rx="18" fill="#0f172a" stroke="#5eead4" stroke-width="1.5"/>
+    <text x="1072" y="472" class="trigger">move when</text>
+    <text x="1072" y="503" class="small">continuous ingest</text>
+    <text x="1072" y="527" class="small">or governance</text>
+  </g>
+
+  <text x="800" y="786" class="ui" fill="#cbd5e1" font-size="22" text-anchor="middle">The decision is reversible: choose the smallest path that answers the current workload.</text>
+</svg>
