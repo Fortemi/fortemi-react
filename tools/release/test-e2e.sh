@@ -28,9 +28,10 @@ if [ "$installed_version" != "$PLAYWRIGHT_VERSION" ]; then
   exit 1
 fi
 
-docker run --rm --ipc=host \
+docker run --rm --ipc=host --ulimit nofile=65536:65536 \
   --user "$(id -u):$(id -g)" \
   -e CI=true \
+  -e CHOKIDAR_USEPOLLING=true \
   -e HOME=/tmp \
   -e COREPACK_HOME="/tmp/corepack-$(id -u)" \
   -v "$ROOT:/workspace" \

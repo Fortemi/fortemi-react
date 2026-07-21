@@ -1609,6 +1609,17 @@ review surfaces. The subpath contains only the static index helpers, the
 framework-agnostic controller, and their types; it does not import React, PGlite,
 workers, shards, or browser storage.
 
+When a build step needs to convert an AIWG export into a Knowledge Shard, import
+the converter from the separate build-oriented subpath:
+
+```typescript
+import { convertAiwgIndexToKnowledgeShard } from '@fortemi/core/aiwg-index-shard'
+```
+
+That path intentionally carries shard dependencies and emits the `core-v1`
+profile. Keep it out of static documentation bundles; the top-level
+`@fortemi/core` entry remains available to full-runtime consumers.
+
 Use `loadIndex()` for small single-file exports. Use `loadChunkedIndex()` for
 large static indexes when first load and memory must stay bounded. Plain browse
 calls fetch only the intersecting part files; filtered and ranked searches scan

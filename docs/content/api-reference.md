@@ -1708,6 +1708,13 @@ import { createAiwgIndexController, queryAiwgFortemiIndex } from '@fortemi/core/
 
 The schema authority is vendored at `packages/core/schemas/aiwg-fortemi-index-export.schema.json` (pinned with a provenance receipt).
 
+This subpath is intentionally limited to dependency-free static-index helpers.
+Build pipelines that convert an AIWG export into a validated Knowledge Shard
+must import `convertAiwgIndexToKnowledgeShard` from
+`@fortemi/core/aiwg-index-shard`. Full-runtime consumers may continue importing
+the converter from the top-level `@fortemi/core` entry. The converter emits the
+`core-v1` shard profile; it does not advertise `full-v1` browser persistence.
+
 #### `createAiwgIndexController(initialIndex?)`
 
 ```typescript

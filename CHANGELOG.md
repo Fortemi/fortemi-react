@@ -4,6 +4,8 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.7.12 - 2026-07-21
+
 ### `@fortemi/core` - Restore the vendorable static AIWG index boundary (#317)
 
 - `@fortemi/core/aiwg-index` is dependency-free again and its minified artifact
@@ -11,6 +13,12 @@ All notable changes to fortemi-react are documented here.
 - AIWG-to-Knowledge-Shard conversion moved to the explicit
   `@fortemi/core/aiwg-index-shard` build-oriented subpath; the top-level Core
   entry continues to export the conversion helpers for full-runtime consumers.
+
+### Release operations
+
+- The pinned Playwright release wrapper now uses polling and raises the
+  container file-descriptor limit so Vite can start reliably on hosts with a
+  saturated shared inotify pool or restrictive Docker defaults.
 
 ## v2026.7.11 - 2026-07-21
 
