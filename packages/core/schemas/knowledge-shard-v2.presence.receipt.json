@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "status": "local-conformance-passed",
+  "tuple": {
+    "schemaVersion": "2.0.0",
+    "profiles": [
+      "core-v1",
+      "record-v1",
+      "full-v1"
+    ]
+  },
+  "authority": {
+    "repository": "https://git.integrolabs.net/Fortemi/fortemi",
+    "commit": "6343bd899958445bbc7e7e87b0dc92a8429d5a06",
+    "contractSha256": "5bf8d2fd8147d8df92599b1a3ce6b405ce022c83893f37547aefa7ca659f0783",
+    "schemaBundleSha256": "66dee80876c73fdc8756541c72e96ae189c098113a831c849d619381c4121c02",
+    "fieldSemanticsSha256": "43e5704bc8d805158aa67f33eef6d440fecfeb8385d4f622d79084be3424da09"
+  },
+  "matrix": {
+    "fields": 220,
+    "wildcardFields": 10,
+    "stateVectorsPerField": 6,
+    "semanticAssertions": 1320,
+    "storageBackends": [
+      "pglite",
+      "memory-record-store",
+      "indexeddb-record-store"
+    ]
+  },
+  "implementation": {
+    "scripts/generate-presence-receipt.mjs": "9d3a46df5c6464389c964512d8a74422c9bcc48cb23919c3861a9b8b1c700777",
+    "scripts/verify-knowledge-shard-contract.mjs": "7ebf0db84f8202637d00df393e31b9bb2dab6fe5376a90a723890fa26c2e7966",
+    "src/shard/presence.ts": "77a36e4011b0de378d725467b5c670a0e0082e96346ed52d4755456aa7645985",
+    "src/shard/presence-store.ts": "99163e2d3e60a97bffa5bb6fa73d456e81ca0d6113cf21317ea661d40f22d35c",
+    "src/shard/shard-import.ts": "71036913aa6d3b749bba1ef79ead1e5255026722fd5c2daf318efd3106cd5560",
+    "src/shard/shard-export.ts": "64af3349dc5414bf342032b0096fa5bac2aa4cbd811eff583ba2dfb6b6dca6ac",
+    "src/records/types.ts": "329ce6ff994c17ba77f67cb7597f38b9230e8b3ccb31f7b6301ff7ac346e4273",
+    "src/records/memory-record-store.ts": "6fb02714f1c7258de7ef25f346683e910404d2030d2f652ffeb3823f917c48ee",
+    "src/records/idb-record-store.ts": "956bab4c002e27089f4127905c3f6bb819bfb3ce4b8f1d270d46be6837a80a19",
+    "src/records/record-shard.ts": "2e29c6f8dc6a25c1cc657e748ed14dbb688081b6288465fa68d3634a8beb7edb",
+    "src/migrations/0019_shard_field_presence.ts": "7410ed0ef405970ce040f347644c1da7e438a5f62cc1d743a2dff09c15a20cf9",
+    "src/migrations/0021_attachment_extraction_projection.ts": "681c4569e8067b745c97851e66aaf779d411ef5738a90cdefbea1744fdc5a6b1",
+    "src/migrations/index.ts": "e77f1179a03b4ae224c4c514948c38c2946b3dc5e706643b95f87cf7f8757f46",
+    "src/__tests__/shard/presence.test.ts": "46477a1da4b542861e651e1a9dd3318afd8b11e3ef13d96aed21508fdbde5645",
+    "src/__tests__/records/record-store.test.ts": "5ebd62d0b656cd19894fe12a203a8aad59103eb05e5b8577d0411f0089b2e005",
+    "src/__tests__/records/record-shard.test.ts": "896b9e9fedf74dd28fe5a8e9bbe6b6f99938ab5589c05488e1e077e0f24bfac6"
+  },
+  "evidence": {
+    "command": "pnpm --filter @fortemi/core test:portable-contract",
+    "assertions": [
+      "all-authority-fields-loaded",
+      "all-authority-state-rules-enforced",
+      "wildcards-expanded-per-array-member",
+      "unsupported-states-rejected-before-import-mutation",
+      "pglite-presence-sidecar-roundtrip",
+      "memory-record-store-roundtrip",
+      "indexeddb-record-store-roundtrip",
+      "pglite-attachment-value-reexport",
+      "record-store-manifest-link-attachment-reexport",
+      "legacy-indeterminate-export-rejected"
+    ]
+  }
+}

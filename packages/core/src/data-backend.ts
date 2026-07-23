@@ -360,6 +360,13 @@ function urlLinkToBackend(link: {
 }
 
 function shardLinkToBackend(link: ShardLink): BackendLink {
+  const metadata = (
+    link.metadata
+    && typeof link.metadata === 'object'
+    && !Array.isArray(link.metadata)
+  )
+    ? link.metadata as Record<string, unknown>
+    : undefined
   return {
     id: link.id,
     fromNoteId: link.from_note_id,
@@ -368,7 +375,7 @@ function shardLinkToBackend(link: ShardLink): BackendLink {
     kind: link.kind,
     score: link.score,
     createdAt: link.created_at,
-    ...(link.metadata ? { metadata: link.metadata } : {}),
+    ...(metadata ? { metadata } : {}),
   }
 }
 

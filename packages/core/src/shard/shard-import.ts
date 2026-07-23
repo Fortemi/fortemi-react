@@ -907,18 +907,20 @@ export async function importShard(
               await tx.query(
                 `INSERT INTO attachment (
                    id, note_id, blob_id, filename, mime_type, extracted_text,
-                   position, created_at, deleted_at
+                   extraction_status, extraction_reason, position, created_at, deleted_at
                  )
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
                  ON CONFLICT (id) DO UPDATE SET
                    note_id = $2,
                    blob_id = $3,
                    filename = $4,
                    mime_type = $5,
                    extracted_text = $6,
-                   position = $7,
-                   created_at = $8,
-                   deleted_at = $9`,
+                   extraction_status = $7,
+                   extraction_reason = $8,
+                   position = $9,
+                   created_at = $10,
+                   deleted_at = $11`,
                 [
                   ref.id,
                   note.id,
@@ -926,6 +928,8 @@ export async function importShard(
                   filename,
                   ref.mime,
                   projection.extracted_text,
+                  projection.extraction_status ?? null,
+                  projection.reason ?? null,
                   position,
                   projection.created_at ?? note.created_at,
                   projection.deleted_at ?? null,
@@ -935,9 +939,9 @@ export async function importShard(
               await tx.query(
                 `INSERT INTO attachment (
                    id, note_id, blob_id, filename, mime_type, extracted_text,
-                   position, created_at, deleted_at
+                   extraction_status, extraction_reason, position, created_at, deleted_at
                  )
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ${conflictClause}`,
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ${conflictClause}`,
                 [
                   ref.id,
                   note.id,
@@ -945,6 +949,8 @@ export async function importShard(
                   filename,
                   ref.mime,
                   projection.extracted_text,
+                  projection.extraction_status ?? null,
+                  projection.reason ?? null,
                   position,
                   projection.created_at ?? note.created_at,
                   projection.deleted_at ?? null,

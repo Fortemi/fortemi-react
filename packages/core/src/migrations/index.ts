@@ -19,6 +19,7 @@ import { migration0017 } from './0017_attachment_blob_parity.js'
 import { migration0018 } from './0018_nullable_revised_content.js'
 import { migration0019 } from './0019_shard_field_presence.js'
 import { migration0020 } from './0020_full_v1_snapshot.js'
+import { migration0021 } from './0021_attachment_extraction_projection.js'
 
 export const allMigrations: Migration[] = [
   migration0001,
@@ -41,4 +42,5 @@ export const allMigrations: Migration[] = [
   migration0018,
   migration0019,
   migration0020,
+  migration0021,
 ]

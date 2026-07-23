@@ -116,8 +116,11 @@ function toCoreV1Note(note: ShardNote): ShardNote {
     deleted_at: note.deleted_at ?? null,
     attachments: (note.attachments ?? []).map((projection) => ({
       extracted_text: projection.extracted_text,
-      extraction_status: projection.extracted_text === null ? 'deferred' : 'extracted',
-      reason: projection.extracted_text === null ? 'no_extracted_text' : null,
+      extraction_status: projection.extraction_status
+        ?? (projection.extracted_text === null ? 'deferred' : 'extracted'),
+      reason: Object.hasOwn(projection, 'reason')
+        ? projection.reason
+        : (projection.extracted_text === null ? 'no_extracted_text' : null),
       attachment: projection.attachment,
     })),
   }
@@ -132,8 +135,13 @@ function toCoreV1Collection(collection: ShardCollection): ShardCollection {
 
 function toCoreV1Link(link: ShardLink): ShardLink {
   const coreLink = { ...link }
-  if (coreLink.metadata?.fortemi_legacy_state) {
-    const metadata = { ...coreLink.metadata }
+  if (
+    coreLink.metadata
+    && typeof coreLink.metadata === 'object'
+    && !Array.isArray(coreLink.metadata)
+    && (coreLink.metadata as Record<string, unknown>).fortemi_legacy_state
+  ) {
+    const metadata = { ...coreLink.metadata as Record<string, unknown> }
     const state = metadata.fortemi_legacy_state
     metadata.fortemi_legacy_state = (
       state
@@ -164,8 +172,16 @@ async function restoreV2Records<T extends object>(
 ): Promise<T[]> {
   if (schemaVersion !== '2.0.0') return records
   return Promise.all(records.map(async (record) => {
-    const presence = await readStoredPresence(db, schemaVersion, 'core-v1', component, idOf(record))
-    return restoreStoredPresence(record as Record<string, unknown>, presence) as T
+    const document = record as Record<string, unknown>
+    const presence = await readStoredPresence(
+      db,
+      schemaVersion,
+      'core-v1',
+      component,
+      idOf(record),
+      document,
+    )
+    return restoreStoredPresence(document, presence) as T
   }))
 }
 
@@ -439,6 +455,8 @@ async function exportShardBytes(
     filename: string
     mime_type: string | null
     extracted_text: string | null
+    extraction_status: ShardAttachmentProjection['extraction_status'] | null
+    extraction_reason: ShardAttachmentProjection['reason']
     content_hash: string
     size_bytes: number
     storage_path: string | null
@@ -450,6 +468,8 @@ async function exportShardBytes(
             a.filename,
             a.mime_type,
             a.extracted_text,
+            a.extraction_status,
+            a.extraction_reason,
             b.content_hash,
             b.size_bytes,
             b.storage_path,
@@ -464,6 +484,12 @@ async function exportShardBytes(
   for (const row of attachmentRows.rows) {
     const source: ShardAttachmentProjection = {
       extracted_text: row.extracted_text,
+      ...(row.extraction_status !== null
+        ? { extraction_status: row.extraction_status }
+        : {}),
+      ...(row.extraction_reason !== null
+        ? { reason: row.extraction_reason }
+        : {}),
       ...(!coreV1
         ? {
             created_at: iso(row.created_at),

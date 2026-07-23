@@ -26,21 +26,60 @@ function decodePointerPart(part: string): string {
   return part.replaceAll('~1', '/').replaceAll('~0', '~')
 }
 
+function encodePointerPart(part: string): string {
+  return part.replaceAll('~', '~0').replaceAll('/', '~1')
+}
+
 function pointerParts(pointer: string): string[] {
   if (!pointer.startsWith('/')) throw new Error(`Invalid JSON Pointer '${pointer}'`)
   return pointer.slice(1).split('/').map(decodePointerPart)
 }
 
-function parentAndKey(document: unknown, pointer: string): { parent: Record<string, unknown>; key: string } {
+function pointerFromParts(parts: readonly string[]): string {
+  return `/${parts.map(encodePointerPart).join('/')}`
+}
+
+/**
+ * Expand authority wildcards to the concrete array-member paths present in a
+ * document. A wildcard over an empty or missing collection has no field
+ * instances; structural schema validation owns the collection itself.
+ */
+export function concretePresencePointers(document: unknown, pointer: string): string[] {
+  const parts = pointerParts(pointer)
+  const visit = (value: unknown, index: number, concrete: string[]): string[] => {
+    if (index === parts.length) return [pointerFromParts(concrete)]
+    const part = parts[index]
+    if (part === '*') {
+      if (!Array.isArray(value)) return []
+      return value.flatMap((item, itemIndex) => visit(item, index + 1, [
+        ...concrete,
+        String(itemIndex),
+      ]))
+    }
+    const next = value && typeof value === 'object'
+      ? (value as Record<string, unknown>)[part]
+      : undefined
+    return visit(next, index + 1, [...concrete, part])
+  }
+  return visit(document, 0, [])
+}
+
+function parentAndKey(
+  document: unknown,
+  pointer: string,
+  required = true,
+): { parent: Record<string, unknown>; key: string } | null {
   const parts = pointerParts(pointer)
   let parent: unknown = document
   for (const part of parts.slice(0, -1)) {
-    if (!parent || typeof parent !== 'object' || Array.isArray(parent)) {
+    if (!parent || typeof parent !== 'object') {
+      if (!required) return null
       throw new Error(`JSON Pointer '${pointer}' does not resolve through an object`)
     }
     parent = (parent as Record<string, unknown>)[part]
   }
-  if (!parent || typeof parent !== 'object' || Array.isArray(parent)) {
+  if (!parent || typeof parent !== 'object') {
+    if (!required) return null
     throw new Error(`JSON Pointer '${pointer}' parent is not an object`)
   }
   return { parent: parent as Record<string, unknown>, key: parts.at(-1)! }
@@ -54,12 +93,17 @@ export function classifyPresenceValue(value: unknown): Exclude<ShardPresenceStat
 }
 
 export function classifyOwnProperty(document: unknown, pointer: string): ShardPresenceState {
-  const { parent, key } = parentAndKey(document, pointer)
+  const resolved = parentAndKey(document, pointer, false)
+  if (!resolved) return 'absent'
+  const { parent, key } = resolved
   return Object.hasOwn(parent, key) ? classifyPresenceValue(parent[key]) : 'absent'
 }
 
 export function capturePresence(document: unknown, pointers: readonly string[]): ShardPresenceMap {
-  return Object.fromEntries(pointers.map((pointer) => [pointer, classifyOwnProperty(document, pointer)]))
+  return Object.fromEntries(pointers.flatMap((pointer) =>
+    concretePresencePointers(document, pointer)
+      .map((concrete) => [concrete, classifyOwnProperty(document, concrete)]),
+  ))
 }
 
 export function presencePointers(
@@ -69,7 +113,6 @@ export function presencePointers(
   return fields
     .filter((field) => field.profile === profile && field.component === component)
     .map((field) => field.pointer)
-    .filter((pointer) => !pointer.includes('/*'))
 }
 
 function emptyKind(value: unknown): 'empty-array' | 'empty-object' | 'empty-string' | null {
@@ -86,26 +129,33 @@ export function presenceLosses(
   recordId?: string,
 ): ShardLossEntry[] {
   return fields.flatMap((field) => {
-    if (field.profile !== profile || field.component !== component || field.pointer.includes('/*')) return []
-    const state = classifyOwnProperty(record, field.pointer)
-    const supported = state === 'absent'
-      ? field.states.absent === 'preserve'
-      : state === 'null'
-        ? field.states.null === 'preserve'
-        : state === 'value'
-          ? field.states.value === 'preserve'
-          : field.states.empty.includes(emptyKind(parentAndKey(record, field.pointer).parent[parentAndKey(record, field.pointer).key])!)
-    if (supported) return []
-    return [{
-      code: 'unsupported-presence-state',
-      message: `${component}${recordId ? ` ${recordId}` : ''} ${field.pointer} does not support ${state}`,
-      component: component === 'manifest' || component === 'signature' ? undefined : component,
-      record_id: recordId,
-      field_path: field.pointer,
-      source_state: state,
-      action: 'reject',
-      reason: 'authority-field-semantics',
-    }]
+    if (field.profile !== profile || field.component !== component) return []
+    return concretePresencePointers(record, field.pointer).flatMap((pointer) => {
+      const state = classifyOwnProperty(record, pointer)
+      const supported = state === 'absent'
+        ? field.states.absent === 'preserve'
+        : state === 'null'
+          ? field.states.null === 'preserve'
+          : state === 'value'
+            ? field.states.value === 'preserve'
+            : (() => {
+                const resolved = parentAndKey(record, pointer, false)
+                return resolved
+                  ? field.states.empty.includes(emptyKind(resolved.parent[resolved.key])!)
+                  : false
+              })()
+      if (supported) return []
+      return [{
+        code: 'unsupported-presence-state',
+        message: `${component}${recordId ? ` ${recordId}` : ''} ${pointer} does not support ${state}`,
+        component: component === 'manifest' || component === 'signature' ? undefined : component,
+        record_id: recordId,
+        field_path: pointer,
+        source_state: state,
+        action: 'reject',
+        reason: 'authority-field-semantics',
+      }]
+    })
   })
 }
 
@@ -141,7 +191,9 @@ export function restoreStoredPresence<T extends Record<string, unknown>>(
 ): T {
   const restored = structuredClone(document)
   for (const [pointer, stored] of Object.entries(presence)) {
-    const { parent, key } = parentAndKey(restored, pointer)
+    const resolved = parentAndKey(restored, pointer)
+    if (!resolved) throw new Error(`JSON Pointer '${pointer}' parent is not an object`)
+    const { parent, key } = resolved
     if (stored === 'legacy-indeterminate') {
       throw new Error(`Cannot emit schema 2.0 with legacy-indeterminate state at ${pointer}`)
     }

@@ -43,7 +43,7 @@ export interface BrowserNoteExport {
   deleted_at: Date | string | null
   original_content: string
   revised_content: string | null
-  ai_metadata?: Record<string, unknown> | null
+  ai_metadata?: unknown
   collection_id?: string | null
   attachments?: ShardAttachmentProjection[]
   tags: string[]
@@ -179,11 +179,26 @@ export function linkFromShard(shard: ShardLink): {
   created_at: string
   updated_at: string | null
   deleted_at: string | null
-  metadata: Record<string, unknown> | null
+  metadata: unknown
 } {
-  const metadata = shard.metadata ? { ...shard.metadata } : null
-  const legacyState = metadata?.fortemi_legacy_state
-  if (metadata) delete metadata.fortemi_legacy_state
+  const metadata = (
+    shard.metadata
+    && typeof shard.metadata === 'object'
+    && !Array.isArray(shard.metadata)
+  )
+    ? { ...shard.metadata as Record<string, unknown> }
+    : shard.metadata ?? null
+  const metadataObject = (
+    metadata
+    && typeof metadata === 'object'
+    && !Array.isArray(metadata)
+  )
+    ? metadata as Record<string, unknown>
+    : null
+  const legacyState = metadataObject?.fortemi_legacy_state
+  if (metadataObject) {
+    delete metadataObject.fortemi_legacy_state
+  }
   const state = (
     legacyState
     && typeof legacyState === 'object'
@@ -201,7 +216,12 @@ export function linkFromShard(shard: ShardLink): {
     created_at: shard.created_at,
     updated_at: typeof state?.updated_at === 'string' ? state.updated_at : null,
     deleted_at: typeof state?.deleted_at === 'string' ? state.deleted_at : null,
-    metadata: metadata && Object.keys(metadata).length > 0 ? metadata : null,
+    metadata: (
+      metadata
+      && typeof metadata === 'object'
+      && !Array.isArray(metadata)
+      && Object.keys(metadataObject!).length === 0
+    ) ? null : metadata,
   }
 }
 

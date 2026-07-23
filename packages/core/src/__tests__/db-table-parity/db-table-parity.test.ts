@@ -220,9 +220,16 @@ describe('DB Table Parity', () => {
     // extracted text, so these appear here as browser-only extras. Export JSON
     // parity is preserved elsewhere (notes carry `attachments`, not attachment
     // columns). Assert the exact allowed set so any *other* divergence still fails.
-    // Browser-only additive columns: mime_type + extracted_text (0010) and
-    // position (carries the server's display_order semantics locally).
-    expect([...comparison.extra].sort()).toEqual(['extracted_text', 'mime_type', 'position'])
+    // Browser-only additive columns: mime_type + extracted_text (0010),
+    // position (carries the server's display_order semantics locally), and
+    // schema-2 extraction projection fields (0021).
+    expect([...comparison.extra].sort()).toEqual([
+      'extracted_text',
+      'extraction_reason',
+      'extraction_status',
+      'mime_type',
+      'position',
+    ])
   })
 
   it('job_queue table shape matches server', async () => {

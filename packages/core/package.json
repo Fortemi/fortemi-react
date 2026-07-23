@@ -72,6 +72,7 @@
     "shard:refresh-golden": "node scripts/refresh-knowledge-shard-golden.mjs",
     "shard:generate-aiwg-full-v1": "pnpm build && node scripts/generate-aiwg-full-v1-fixture.mjs",
     "shard:generate-pglite-full-v1": "pnpm build && node scripts/generate-pglite-full-v1-receipt.mjs",
+    "shard:generate-presence-receipt": "node scripts/generate-presence-receipt.mjs",
     "test:watch": "vitest",
     "verify:fortemi-compatibility": "node tools/verify-fortemi-compatibility.mjs",
     "prepack": "pnpm build"

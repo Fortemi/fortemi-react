@@ -160,6 +160,15 @@ SKOS, provenance, embedding, and graph records when the AIWG source is fully
 representable. Derived, defaulted, or omitted source information returns
 `archive: null` with typed `losses`; lossy output is never labeled `full-v1`.
 
+Knowledge Shard 2.0 treats absent, `null`, empty, and non-empty values as
+distinct authority states. PGlite persists `core-v1` field presence in a
+transactional sidecar, while RecordStore carries its `record-v1` projection and
+manifest state in the same atomic batch. Wildcard fields are tracked per array
+member, such as `/attachments/0/reason`. Import rejects unsupported states
+before mutation, and export rejects legacy rows whose original presence is
+indeterminate. The pinned local matrix receipt is
+`schemas/knowledge-shard-v2.presence.receipt.json`.
+
 The AIWG index adapter accepts both `aiwg.fortemi.index.export.v1` and
 `aiwg.fortemi.index.export.v2` envelopes. The v1 record contract keeps the
 existing flat fields for filtering and search: `facets`, `tags`, `concepts`,
