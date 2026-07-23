@@ -21,26 +21,34 @@
     "sha256": "054da5528276806b9be69dcfff364a6969b72344045f05f9f6fcbeaca82a7a59"
   },
   "implementation": {
-    "scripts/generate-pglite-full-v1-receipt.mjs": "81c50d6d797866ba16ec93963bcb3d680a6174804efc4fb3adb1712276fb08ee",
+    "scripts/generate-pglite-full-v1-receipt.mjs": "631aac222804a850561f01368f2cf21215a5e4ac7e371e01873735919f2c570c",
     "src/shard/full-v1-store.ts": "cc19742768a38f6966bdc3bdbfc352105d203ba0841036b9ce2b22ae11a5f320",
+    "src/shard/live-full-v1.ts": "22f26caeaee929c941277a58c2afdaafc50410222febc84c9390713a3c414343",
     "src/shard/schema-validator.ts": "b45e349a43d472bfd0411adc4e87a2852ec43ad28f8a7ded64f0cca228c62c69",
     "src/shard/shard-import.ts": "71036913aa6d3b749bba1ef79ead1e5255026722fd5c2daf318efd3106cd5560",
-    "src/shard/shard-export.ts": "64af3349dc5414bf342032b0096fa5bac2aa4cbd811eff583ba2dfb6b6dca6ac",
+    "src/shard/shard-export.ts": "f52a3ad1c012dcf633306fcef044ef7de97a18e658f78e30b3032df65a570b3f",
     "src/shard/profile-registry.ts": "8b59d8dfbae629b1be5402c1033e56d5992e3c40eca63ba188ca4c98ccac22a1",
     "src/shard/shard-signature.ts": "fa3590f493e42edcf3a34fbdc62887eaf237f9e4563bbeb5b7fe7a8c57894070",
     "src/shard/blob-staging.ts": "1108e578a92466452f731838fb13077183a7a60bd6e7881d2b25708fb5185f97",
     "src/migrations/0020_full_v1_snapshot.ts": "54b5d47b521dc6fe44423b75f9032885e80f8e3fcbf04c11478baf98a9dc8841",
-    "src/migrations/index.ts": "e77f1179a03b4ae224c4c514948c38c2946b3dc5e706643b95f87cf7f8757f46",
-    "src/__tests__/shard/full-v1-store.test.ts": "bee1444fbadb477ac9f6b1ab0a415855ef44cc12160c887687fd79e0e8be0440",
+    "src/migrations/0022_embedding_config_timestamps.ts": "9e1de11f047cd1e071cc49d1ab231e5e4e01d5e80dda1ec63cb950e11adea0e0",
+    "src/migrations/index.ts": "de20d3f4d4a4fc4eeae30e90ff71d96fad8cce5ca834424abb176e35c6b84cdd",
+    "src/__tests__/shard/full-v1-store.test.ts": "2ab75adcc64db605211e3b72d1288be0f77d137c1fbc876551cda73409396b84",
     "schemas/knowledge-shard-v2.schema.receipt.json": "70657d6bcd501b684d0a143bcbf7c2a0d41fe909ef3aff32b1fb1f542506a53a"
   },
   "evidence": {
     "command": "pnpm --filter @fortemi/core test:portable-contract",
     "assertions": [
       "all-33-components-persisted",
+      "all-33-components-produced-from-live-pglite",
+      "live-domain-relationships-materialized",
+      "stable-live-identities-and-timestamps",
       "mandatory-blobs-reference-counted",
+      "missing-live-blob-rejected",
       "invalid-source-signature-removed-after-manifest-rewrite",
       "valid-runtime-signature-retained",
+      "live-runtime-signature-produced-and-verified",
+      "unrepresentable-live-state-rejected-with-typed-loss",
       "validate-before-mutation",
       "repeat-import-converges",
       "exact-logical-files-reexported"
