@@ -71,6 +71,34 @@ function contractSuite(label: string, makeStore: () => Promise<RecordStore>) {
       await store.close()
     })
 
+    it('preserves explicitly absent optional note tombstone state', async () => {
+      const store = await makeStore()
+      const ts = new Date().toISOString()
+      const record = {
+        id: 'presence-note',
+        archive_id: null,
+        title: 'Presence note',
+        format: 'markdown',
+        source: 'test',
+        visibility: 'private',
+        revision_mode: 'standard',
+        is_starred: false,
+        is_pinned: false,
+        is_archived: false,
+        created_at: ts,
+        updated_at: ts,
+        deleted_at: null,
+        __fortemi_presence: { '/deleted_at': 'absent' },
+      } as NoteRecord0
+      delete (record as unknown as Record<string, unknown>).deleted_at
+      await store.put('note', record)
+
+      const stored = await store.get('note', 'presence-note')
+      expect(Object.hasOwn(stored!, 'deleted_at')).toBe(false)
+      expect(stored?.__fortemi_presence).toEqual({ '/deleted_at': 'absent' })
+      await store.close()
+    })
+
     it('remove deletes the record', async () => {
       const store = await makeStore()
       await store.put('note', noteRecord('n1'))

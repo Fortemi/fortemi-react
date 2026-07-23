@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "package": {
+    "name": "@fortemi/core",
+    "version": "2026.7.13-candidate"
+  },
+  "source": {
+    "path": "src/__tests__/shard/fixtures/aiwg-full-v1/aiwg-index-v2.json",
+    "sha256": "4cb6d89768f0ec37851012e3df4aedf09622dce911d76233916f099e10d5cfde"
+  },
+  "implementation": {
+    "path": "src/aiwg-index-full-shard.ts",
+    "sha256": "2ff069fce85adaf4c35815c5f329daef784c848cf529ebd4dbde08b5e647dd66"
+  },
+  "archive": {
+    "path": "src/__tests__/shard/fixtures/aiwg-full-v1/aiwg-full-v1.shard",
+    "bytes": 3941,
+    "sha256": "df87edc5725e3f0c8d95d8d4328c64a263e9b021520a127d9df5b7301c2afee5"
+  },
+  "conversion": {
+    "schema_version": "fortemi.aiwg-full-v1-conversion-receipt.v1",
+    "source_schema_version": "aiwg.fortemi.index.export.v2",
+    "authority_repository": "https://git.integrolabs.net/Fortemi/fortemi",
+    "authority_commit": "6343bd899958445bbc7e7e87b0dc92a8429d5a06",
+    "authority_contract_sha256": "5bf8d2fd8147d8df92599b1a3ce6b405ce022c83893f37547aefa7ca659f0783",
+    "authority_schema_bundle_sha256": "66dee80876c73fdc8756541c72e96ae189c098113a831c849d619381c4121c02",
+    "manifest_sha256": "e39da33e8e735a4db1389a0f90d1ea3e77402da635a54f6689d54229ef78c2b1",
+    "component_checksums": {
+      "notes.jsonl": "d5dd79d946bfd493b7e26dd330a51e6aa8ac3fd8dee7751ee41145da42012218",
+      "collections.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "tags.json": "3aae2dd65722e50680121660b8485bb6b17d1281bf742589f75378649fd065f1",
+      "templates.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "links.jsonl": "2aca14d5c4155040482f2ded951925386e3a53c23f6f7f13dd5b7f2a0e2f1685",
+      "note_originals.jsonl": "033925717e9afa00fa51b1de6843c337650d65b4f8aff396fbc1990ec9fa9ce2",
+      "note_original_history.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "note_revised_current.jsonl": "322561ae568565c712bc297a031bc5206c1a3357102f78f7574563ab1f73b2d4",
+      "note_revisions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "embedding_configs.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "embedding_sets.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "embedding_set_members.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "embeddings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "provenance_edges.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "provenance_activities.jsonl": "a59c95fbe1a1bf7775f1108387a85a179b490c4a1bccb27776b21316fc86e71f",
+      "named_locations.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "provenance_locations.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "provenance_devices.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "provenance_records.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "skos_schemes.json": "e671dd76072d215fc28eba5eb5db9cca21574e818d47711d29ab219dd1d67d2b",
+      "skos_concepts.json": "1d7a30a64dc6d6d418bc335d5cb43803cb9c1b15c977a05b2d9c56eed393a221",
+      "skos_labels.jsonl": "2cc04a35ac937053b954d6cad1a9ff6059c740d55aa79c6947d01a8341dddbb9",
+      "skos_notes.jsonl": "7243760d61245fb0f5be9816f04a81fbf6d96d30d75e852c0abf7194e8d1bebd",
+      "skos_relations.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "skos_mapping_relations.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "skos_scheme_memberships.jsonl": "d5580975a274a3744fb7255095e0c422ad27aa20af3bdf763f28342778106f94",
+      "note_skos_tags.jsonl": "063238ea63e6108395ac266e0659a87b5035f8f795ee6aa8818aeb41dbbc32e1",
+      "skos_collections.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "skos_collection_members.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "graph_sources.json": "b15f52924feccc4db5613cd959fe0ce84e4bc35cdb1db1303845298df662b64b",
+      "graph_edges.jsonl": "755a22277b7a29032e23ad0ac3dfd85fce30d79cbd51d7be994560ab3864b1ba",
+      "communities.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "community_assignments.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "contract_valid": true,
+    "signed": false
+  },
+  "lossless": true,
+  "losses": []
+}

@@ -1515,6 +1515,8 @@ APIs are exported from the `@fortemi/core` root.
 function exportShard(db: DatabaseClient, options?: ExportOptions): Promise<Uint8Array>
 
 interface ExportOptions {
+  profile?: 'core-v1' | 'full-v1'
+  schemaVersion?: '1.2.0' | '2.0.0'
   includeEmbeddings?: boolean
   collectionId?: string          // export only notes in this collection
   tag?: string                   // export only notes with this tag (e.g. 'app:research')
@@ -1527,6 +1529,13 @@ interface ExportOptions {
 ```
 
 Produces the `.shard` archive bytes. With `includeBlobs`, attachment bytes are read from `blobStore` by `content_hash` and packed as BLAKE3-addressed `blobs/<hex>` sidecar entries, making the shard self-contained; a blob the store cannot return is skipped (that attachment stays reference-only) rather than failing the export.
+
+Named profiles require `exportShardWithReport`; `exportShard` rejects a named
+profile so capability and loss evidence cannot be discarded. The exact
+`2.0.0/full-v1` PGlite path re-emits a complete, previously validated snapshot
+and requires a `BlobStore` for mandatory attachment bytes. It is callable for
+conformance testing but is not advertised while the authority receipt remains
+`specified-implementation-pending`. Schema 1.x `full-v1` is not accepted.
 
 #### `importShard(db, data, options?)`
 
@@ -1710,10 +1719,16 @@ The schema authority is vendored at `packages/core/schemas/aiwg-fortemi-index-ex
 
 This subpath is intentionally limited to dependency-free static-index helpers.
 Build pipelines that convert an AIWG export into a validated Knowledge Shard
-must import `convertAiwgIndexToKnowledgeShard` from
+must import `aiwgFortemiIndexToKnowledgeShard` or
+`aiwgFortemiIndexToKnowledgeShardWithReport` from
 `@fortemi/core/aiwg-index-shard`. Full-runtime consumers may continue importing
-the converter from the top-level `@fortemi/core` entry. The converter emits the
-`core-v1` shard profile; it does not advertise `full-v1` browser persistence.
+the converters from the top-level `@fortemi/core` entry. The archive-only entry
+emits the reversible schema 1.2.0 `core-v1` profile. The report-bearing entry
+emits exact `2.0.0/full-v1` only for lossless input and validates all 33 component
+files. Defaulted or unavailable AIWG concepts return `archive: null` plus typed
+loss entries. PGlite import/export
+support for that exact tuple does not imply unqualified server, RecordStore, or
+AIWG semantic parity.
 
 #### `createAiwgIndexController(initialIndex?)`
 

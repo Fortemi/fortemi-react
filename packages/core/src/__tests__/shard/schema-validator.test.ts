@@ -451,7 +451,13 @@ describe('knowledge shard AJV schema validator (#255)', () => {
   })
 
   it('compiles the committed schema and validates a manifest', () => {
-    expect(getKnowledgeShardSchema()).toBeTruthy()
+    const schemas = getKnowledgeShardSchema() as {
+      fullV1V2: Record<string, { $id: string }>
+    }
+    expect(Object.keys(schemas.fullV1V2)).toHaveLength(35)
+    for (const [component, schema] of Object.entries(schemas.fullV1V2)) {
+      expect(schema.$id, component).toContain('/knowledge-shard/2.0.0/')
+    }
     const result = validateShardManifest({
       version: '1.0.0',
       matric_version: '2026.7.3',

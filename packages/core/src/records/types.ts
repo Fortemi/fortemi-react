@@ -8,9 +8,16 @@
  * canonical records or attachment bytes.
  */
 
+import { classifyOwnProperty, type ShardPresenceMap } from '../shard/presence.js'
+
+export interface PresenceTrackedRecord {
+  /** Internal schema-2.0 state; never serialized as a shard component field. */
+  __fortemi_presence?: ShardPresenceMap
+}
+
 // ── Record shapes (projection-compatible with the SQL schema) ───────────────
 
-export interface NoteRecord0 {
+export interface NoteRecord0 extends PresenceTrackedRecord {
   id: string
   archive_id: string | null
   title: string | null
@@ -26,7 +33,7 @@ export interface NoteRecord0 {
   deleted_at: string | null
 }
 
-export interface NoteOriginalRecord {
+export interface NoteOriginalRecord extends PresenceTrackedRecord {
   id: string
   note_id: string
   content: string
@@ -34,7 +41,7 @@ export interface NoteOriginalRecord {
   created_at: string
 }
 
-export interface NoteRevisedCurrentRecord {
+export interface NoteRevisedCurrentRecord extends PresenceTrackedRecord {
   /** Keyed by note id (mirrors the SQL PK `note_id`). */
   id: string
   content: string | null
@@ -45,14 +52,14 @@ export interface NoteRevisedCurrentRecord {
   updated_at: string
 }
 
-export interface NoteTagRecord {
+export interface NoteTagRecord extends PresenceTrackedRecord {
   id: string
   note_id: string
   tag: string
   created_at: string
 }
 
-export interface LinkRecord0 {
+export interface LinkRecord0 extends PresenceTrackedRecord {
   id: string
   source_note_id: string
   target_note_id: string
@@ -61,7 +68,7 @@ export interface LinkRecord0 {
   deleted_at: string | null
 }
 
-export interface CollectionRecord {
+export interface CollectionRecord extends PresenceTrackedRecord {
   id: string
   name: string
   description: string | null
@@ -72,14 +79,14 @@ export interface CollectionRecord {
   deleted_at: string | null
 }
 
-export interface CollectionNoteRecord {
+export interface CollectionNoteRecord extends PresenceTrackedRecord {
   id: string
   collection_id: string
   note_id: string
   created_at: string
 }
 
-export interface AttachmentRecord {
+export interface AttachmentRecord extends PresenceTrackedRecord {
   id: string
   note_id: string
   blob_id: string
@@ -93,7 +100,7 @@ export interface AttachmentRecord {
   deleted_at: string | null
 }
 
-export interface AttachmentBlobRecord {
+export interface AttachmentBlobRecord extends PresenceTrackedRecord {
   id: string
   content_hash: string
   size_bytes: number
@@ -197,16 +204,23 @@ export type RecordMutation =
     }
 
 export function normalizeRecordMutation(mutation: RecordMutation): RecordMutation {
-  if (mutation.op === 'put' && mutation.collection === 'collection') {
-    return {
-      ...mutation,
-      record: {
-        ...mutation.record,
-        parent_id: mutation.record.parent_id ?? null,
-      },
+  if (mutation.op !== 'put') return mutation
+  const record = {
+    ...mutation.record,
+    ...(mutation.collection === 'collection'
+      ? { parent_id: mutation.record.parent_id ?? null }
+      : {}),
+  } as Record<string, unknown> & PresenceTrackedRecord
+  if (record.__fortemi_presence) {
+    const presence = { ...record.__fortemi_presence }
+    for (const pointer of Object.keys(presence)) {
+      const match = pointer.match(/^\/([^/]+)$/)
+      if (!match) throw new Error(`RecordStore presence path must address one record field: ${pointer}`)
+      presence[pointer] = classifyOwnProperty(record, pointer)
     }
+    record.__fortemi_presence = presence
   }
-  return mutation
+  return { ...mutation, record } as unknown as RecordMutation
 }
 
 /**

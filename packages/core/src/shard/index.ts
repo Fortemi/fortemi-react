@@ -14,6 +14,7 @@
 // Types
 export {
   CURRENT_SHARD_VERSION,
+  MAX_SHARD_READER_VERSION,
   SHARD_FORMAT,
 } from './types.js'
 export type {
@@ -117,11 +118,29 @@ export {
 } from './field-mapper.js'
 export type { BrowserNoteExport } from './field-mapper.js'
 
+export {
+  assertStoredPresence,
+  capturePresence,
+  classifyOwnProperty,
+  classifyPresenceValue,
+  presenceLosses,
+  presencePointers,
+  restoreStoredPresence,
+} from './presence.js'
+export type {
+  ShardPresenceMap,
+  ShardPresenceState,
+  StoredPresenceState,
+} from './presence.js'
+export { readStoredPresence, replaceStoredPresence } from './presence-store.js'
+export type { StoredShardPresence } from './presence-store.js'
+
 // Export pipeline
 export { exportShard, exportShardWithReport } from './shard-export.js'
 
 // Import pipeline
 export { importShard } from './shard-import.js'
+export { importFullV1Snapshot, exportFullV1Snapshot } from './full-v1-store.js'
 
 // Schema validation
 export {

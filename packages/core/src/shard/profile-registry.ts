@@ -9,6 +9,8 @@
 
 import upstreamContract from '../../schemas/knowledge-shard/upstream-contract.json' with { type: 'json' }
 import authorityReceipt from '../../schemas/knowledge-shard.schema.receipt.json' with { type: 'json' }
+import authorityV2Receipt from '../../schemas/knowledge-shard-v2.schema.receipt.json' with { type: 'json' }
+import fullV1ImplementationReceipt from '../../schemas/knowledge-shard-v2.implementation.receipt.json' with { type: 'json' }
 import type {
   KnowledgeShardProfile,
   ShardBackend,
@@ -28,6 +30,11 @@ export const CORE_V1_COMPONENTS = [
 ] as const satisfies readonly ShardComponent[]
 
 const ALL_PROFILES = ['core-v1', 'full-v1', 'record-v1'] as const
+const FULL_V1_IMPLEMENTED = fullV1ImplementationReceipt.status === 'local-conformance-passed'
+  && fullV1ImplementationReceipt.tuple.schemaVersion === '2.0.0'
+  && fullV1ImplementationReceipt.tuple.profile === 'full-v1'
+  && fullV1ImplementationReceipt.authority.commit === authorityV2Receipt.source.commit
+  && fullV1ImplementationReceipt.authority.schemaBundleSha256 === authorityV2Receipt.schemaBundle.sha256
 
 const ALL_COMPONENTS: readonly ShardComponent[] = [
   'notes',
@@ -142,6 +149,7 @@ export interface CreateShardCapabilityReportInput {
   backend: ShardBackend
   operation: ShardOperation
   requestedProfile: string | null
+  requestedSchemaVersion?: string | null
   declaredComponents?: readonly ShardComponent[]
   omittedComponents?: readonly ShardComponent[]
   losses?: readonly ShardLossEntry[]
@@ -150,7 +158,11 @@ export interface CreateShardCapabilityReportInput {
 export function createShardCapabilityReport(
   input: CreateShardCapabilityReportInput,
 ): ShardCapabilityReport {
-  const advertisedProfiles = [...BACKEND_PROFILES[input.backend][input.operation]]
+  const requestedSchemaVersion = input.requestedSchemaVersion ?? null
+  const authorityPending = requestedSchemaVersion === '2.0.0'
+  const advertisedProfiles = authorityPending
+    ? []
+    : [...BACKEND_PROFILES[input.backend][input.operation]]
   const requestedProfile = input.requestedProfile
   const knownProfile = requestedProfile && isKnownProfile(requestedProfile)
     ? requestedProfile
@@ -158,9 +170,13 @@ export function createShardCapabilityReport(
   const authorityStatus = requestedProfile === null
     ? 'unprofiled'
     : knownProfile
-      ? registryEntry(knownProfile).authority_status
+      ? authorityPending
+        ? 'candidate'
+        : registryEntry(knownProfile).authority_status
       : 'unknown'
-  const backendSupported = knownProfile !== null && advertisedProfiles.includes(knownProfile)
+  const backendSupported = !authorityPending
+    && knownProfile !== null
+    && advertisedProfiles.includes(knownProfile)
   const backendComponents = new Set(BACKEND_COMPONENTS[input.backend][input.operation])
   const profileComponents = knownProfile === 'core-v1'
     ? CORE_V1_COMPONENTS
@@ -179,10 +195,18 @@ export function createShardCapabilityReport(
     backend: input.backend,
     operation: input.operation,
     requested_profile: requestedProfile,
+    requested_schema_version: requestedSchemaVersion,
     authority_status: authorityStatus,
     backend_supported: backendSupported,
     portable: backendSupported,
-    authority: {
+    authority: requestedSchemaVersion === '2.0.0' ? {
+      repository: authorityV2Receipt.source.repository,
+      commit: authorityV2Receipt.source.commit,
+      contract_sha256: authorityV2Receipt.source.contractSha256,
+      contract_revision: '20',
+      schema_version: authorityV2Receipt.knowledgeShard.schemaVersion,
+      schema_bundle_sha256: authorityV2Receipt.schemaBundle.sha256,
+    } : {
       repository: authorityReceipt.source.repository,
       commit: authorityReceipt.source.commit,
       contract_sha256: authorityReceipt.source.contractSha256,
@@ -202,6 +226,18 @@ export function createShardCapabilityReport(
 export function profileSupportError(report: ShardCapabilityReport): string | null {
   if (report.requested_profile === null) return null
   if (report.backend_supported) return null
+  // Schema 2.0 paths are callable for receipt generation and matrix testing,
+  // but remain deliberately absent from capability advertisements until the
+  // authority changes its specified-implementation-pending status.
+  if (report.requested_schema_version === '2.0.0') {
+    if (report.requested_profile === 'core-v1' && report.backend === 'pglite') return null
+    if (report.requested_profile === 'record-v1' && report.backend === 'record-store') return null
+    if (
+      report.requested_profile === 'full-v1'
+      && report.backend === 'pglite'
+      && FULL_V1_IMPLEMENTED
+    ) return null
+  }
   if (report.authority_status === 'reserved') {
     return `Knowledge Shard profile '${report.requested_profile}' is reserved by the pinned Fortemi authority and is not supported`
   }

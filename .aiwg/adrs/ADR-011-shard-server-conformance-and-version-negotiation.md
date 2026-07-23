@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Date**: 2026-07-05
 - **Accepted**: 2026-07-09
-- **Amended**: 2026-07-18
+- **Amended**: 2026-07-22
 - **Issue**: #235 (audit epic)
 - **Relates**: ADR-010 (source-of-truth principle), server ADR-028 (shard archive migration system), server issue `Fortemi/fortemi#1013`
 
@@ -56,6 +56,14 @@ The manifest profile is normative. Producers MUST NOT infer compatibility from
 the presence of familiar filenames, and consumers MUST NOT silently skip an
 unknown required component.
 
+The 2026-07-22 authority amendment defines identity as the exact tuple
+`(manifest.version, manifest.profile)`. Schema `2.0.0` retains the `core-v1`,
+`record-v1`, and `full-v1` profile names while adding direct JSON-key presence
+semantics; it does not mutate any 1.x tuple. Capability reports must include
+the requested schema version. No schema 2.0 profile may be advertised while
+the pinned authority remains `specified-implementation-pending`; local paths
+are callable only to generate the required matrix evidence.
+
 **6. Validate before mutation and make import atomic.** Importers unpack into
 staging and validate archive structure, schema, semantic versions, profile,
 checksums, record shapes, component/file/count coherence, and required
@@ -85,13 +93,21 @@ insufficient release evidence.
 - @packages/core/src/__tests__/shard/shard-import.test.ts and @packages/core/src/__tests__/records/record-shard.test.ts verify validation failures leave both destinations unchanged.
 - @packages/core/src/shard/profile-registry.ts derives authority status and backend advertisements from the pinned receipt.
 - @packages/core/src/shard/shard-export.ts emits and self-validates explicit PGlite `core-v1` archives with machine-readable capability/loss reports.
+- @packages/core/src/shard/full-v1-store.ts persists and re-emits every logical
+  file in exact `2.0.0/full-v1`, stores all 33 validated component record sets,
+  retains signatures when present, and reference-counts mandatory blob bytes.
+- @packages/core/src/aiwg-index-full-shard.ts maps native AIWG note,
+  relationship, SKOS, provenance, embedding, and graph records into exact
+  `2.0.0/full-v1` only when the conversion is lossless. Its report-bearing
+  public API returns `archive: null` plus typed losses when source information
+  would be defaulted or omitted.
 - @packages/core/src/__tests__/shard/profile-registry.test.ts verifies authority status independently from backend advertisements, strict producer output, PGlite import, and RecordStore fail-closed behavior.
 - On 2026-07-17, a React-produced archive (`sha256:5444ca75a9a4d76dfff118e1a5afc05f0e33cbc66b6900d63513311608d6849c`) passed both dry-run and mutating multipart import through Fortemi commit `6f13e7ad86243f39666f8bbb0bb680b3cebab9e9`; Fortemi then re-exported the clean database (`sha256:ce42b96733fdbac18ca98a1d70afc97c6fdab92b04e87f77d56486fb2ce9df47`), and a clean PGlite import restored the note and tags. This is evidence for `core-v1` only.
 - @packages/core/src/shard/schema-validator.ts selects the immutable `1.0.0` or current `1.1.0` canonical bundle from the manifest version. Named PGlite exports use `1.1.0`, include active and soft-deleted notes, emit exact `deleted_at` state, and restore that state inside the existing import transaction.
 - On 2026-07-18, a schema `1.1.0` React archive containing an active note and a soft-deleted note (`sha256:c3605945c69893ba2e56091a4b1149b7ab598087d3fa2ee5c288acb506969f94`) passed isolated dry-run and repeated mutating imports through Fortemi commit `f39b01c995f10f8da4cad662ff8e86c6130ba2b0`. Dry-run left the clean destination at zero notes and zero tag rows. Fortemi re-exported the populated destination (`sha256:cac731d33f1183d73c5db958c454f22e9dfac09846e7e01c4c7486805c7b631a`); the React validator accepted that archive and a clean PGlite import restored both bodies, all three note-tag associations, active `deleted_at:null`, and tombstone instant `2026-07-18T04:30:00.000Z`. This receipt proves only the declared, byte-free `core-v1` surface.
 - @packages/core/src/records/types.ts, @packages/core/src/records/idb-record-store.ts, and @packages/core/src/records/memory-record-store.ts provide a multi-collection atomic batch with journal atomicity for RecordStore import.
 - @packages/core/src/shard/blob-staging.ts promotes verified sidecars before the logical transaction and removes only newly introduced hashes on synchronous failure.
-- @packages/core/src/shard/shard-import.ts and @packages/core/src/records/record-shard.ts preserve representable null, tombstone, and timestamp state and reconcile imported-note relationships for legacy unprofiled replace imports. Failure-injection and repeat-import tests cover PGlite and RecordStore. The pinned revision-18 authority supports all three named profiles; PGlite still advertises only `core-v1`, RecordStore advertises only `record-v1`, and neither backend advertises `full-v1` until its complete producer and persistence path exists.
+- @packages/core/src/shard/shard-import.ts and @packages/core/src/records/record-shard.ts preserve representable null, tombstone, and timestamp state and reconcile imported-note relationships for legacy unprofiled replace imports. Failure-injection and repeat-import tests cover PGlite and RecordStore. Schema 2.0 capability advertisements remain empty while the authority receipt is pending; the exact-tuple paths exist only for conformance and matrix testing. Existing schema 1.2 defaults remain unchanged.
 
 ## Consequences
 
@@ -114,3 +130,4 @@ than relying on implicit ignore behavior.
 
 - @.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md - Contract ownership and pinned-receipt decision.
 - @packages/core/schemas/knowledge-shard.schema.receipt.json - Pinned Fortemi authority receipt.
+- @packages/core/schemas/knowledge-shard-v2.schema.receipt.json - Pinned schema 2.0.0 presence and full-inventory authority receipt.

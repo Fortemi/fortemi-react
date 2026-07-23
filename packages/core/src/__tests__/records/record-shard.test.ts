@@ -177,6 +177,92 @@ describe('record-shard (DB-free)', () => {
     }
   })
 
+  it('preserves schema-2.0 absent note fields through RecordStore round trips', async () => {
+    const src = await seededStore()
+    for (const sourceNote of await src.store.list('note')) {
+      const trackedNote = {
+        ...sourceNote,
+        deleted_at: null,
+        __fortemi_presence: {
+          '/deleted_at': sourceNote.id === src.b.note.id ? 'absent' : 'null',
+        },
+      }
+      if (sourceNote.id === src.b.note.id) {
+        delete (trackedNote as Partial<typeof trackedNote>).deleted_at
+      }
+      await src.store.put('note', trackedNote as typeof sourceNote)
+    }
+
+    const exported = await exportShardFromRecordsWithReport(src.store, {
+      profile: 'record-v1',
+      schemaVersion: '2.0.0',
+    })
+    expect(exported.success, exported.errors.join('; ')).toBe(true)
+    await expect(validateRecordV1ShardArchive(exported.archive!)).resolves.toEqual({
+      valid: true,
+      errors: [],
+    })
+    const files = unpackTarGz(exported.archive!)
+    const sourceNotes = new TextDecoder().decode(files.get('notes.jsonl'))
+      .trim().split('\n').map((line) => JSON.parse(line) as Record<string, unknown>)
+    expect(Object.hasOwn(
+      sourceNotes.find((note) => note.id === src.b.note.id)!,
+      'deleted_at',
+    )).toBe(false)
+
+    const dst = new MemoryRecordStore()
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const imported = await importShardToRecords(dst, exported.archive!, {
+        conflictStrategy: 'replace',
+      })
+      expect(imported.success, imported.errors.join('; ')).toBe(true)
+    }
+    const stored = (await dst.get('note', src.b.note.id)) as unknown as Record<string, unknown>
+    expect(Object.hasOwn(stored, 'deleted_at')).toBe(false)
+    expect(stored.__fortemi_presence).toEqual({ '/deleted_at': 'absent' })
+
+    const reexported = await exportShardFromRecordsWithReport(dst, {
+      profile: 'record-v1',
+      schemaVersion: '2.0.0',
+    })
+    expect(reexported.success, reexported.errors.join('; ')).toBe(true)
+    expect(new TextDecoder().decode(unpackTarGz(reexported.archive!).get('notes.jsonl')))
+      .toBe(new TextDecoder().decode(files.get('notes.jsonl')))
+
+    const destinationNotes = new CanonicalNotesRepository(dst)
+    await destinationNotes.softDelete(src.b.note.id)
+    const deletedArchive = await exportShardFromRecordsWithReport(dst, {
+      profile: 'record-v1', schemaVersion: '2.0.0',
+    })
+    const deletedNote = new TextDecoder().decode(
+      unpackTarGz(deletedArchive.archive!).get('notes.jsonl'),
+    ).trim().split('\n').map((line) => JSON.parse(line) as Record<string, unknown>)
+      .find((note) => note.id === src.b.note.id)!
+    expect(typeof deletedNote.deleted_at).toBe('string')
+
+    await destinationNotes.restore(src.b.note.id)
+    const restoredArchive = await exportShardFromRecordsWithReport(dst, {
+      profile: 'record-v1', schemaVersion: '2.0.0',
+    })
+    const restoredNote = new TextDecoder().decode(
+      unpackTarGz(restoredArchive.archive!).get('notes.jsonl'),
+    ).trim().split('\n').map((line) => JSON.parse(line) as Record<string, unknown>)
+      .find((note) => note.id === src.b.note.id)!
+    expect(restoredNote.deleted_at).toBeNull()
+  })
+
+  it('rejects schema-2.0 export when legacy RecordStore presence is indeterminate', async () => {
+    const src = await seededStore()
+    const exported = await exportShardFromRecordsWithReport(src.store, {
+      profile: 'record-v1',
+      schemaVersion: '2.0.0',
+    })
+    expect(exported.success).toBe(false)
+    expect(exported.errors.join('\n')).toContain(
+      'Cannot emit schema 2.0 with legacy-indeterminate state at /deleted_at',
+    )
+  })
+
   it('preserves nested collections through record-v1 import and re-export', async () => {
     const src = await seededStore()
     const child = await src.notes.createCollection('Nested', 'child', src.collection.id)

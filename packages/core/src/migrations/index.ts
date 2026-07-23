@@ -17,6 +17,8 @@ import { migration0015 } from './0015_embedding_set_server_metadata.js'
 import { migration0016 } from './0016_embedding_server_metadata.js'
 import { migration0017 } from './0017_attachment_blob_parity.js'
 import { migration0018 } from './0018_nullable_revised_content.js'
+import { migration0019 } from './0019_shard_field_presence.js'
+import { migration0020 } from './0020_full_v1_snapshot.js'
 
 export const allMigrations: Migration[] = [
   migration0001,
@@ -37,4 +39,6 @@ export const allMigrations: Migration[] = [
   migration0016,
   migration0017,
   migration0018,
+  migration0019,
+  migration0020,
 ]

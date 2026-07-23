@@ -26,6 +26,7 @@ export type {
   RecordStore,
   RecordStoreCapabilities,
   RecordMutation,
+  PresenceTrackedRecord,
 } from './types.js'
 export { RECORD_COLLECTIONS, RECORD_STORE_CAPABILITIES } from './types.js'
 

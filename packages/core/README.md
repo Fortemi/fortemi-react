@@ -133,12 +133,32 @@ Knowledge Shard conversion intentionally lives on the build-oriented subpath:
 import {
   aiwgFortemiIndexFromKnowledgeShard,
   aiwgFortemiIndexToKnowledgeShard,
+  aiwgFortemiIndexToKnowledgeShardWithReport,
 } from '@fortemi/core/aiwg-index-shard'
 ```
 
 That subpath owns the schema, tar/gzip, checksum, and UUID dependencies. The
 top-level `@fortemi/core` export also remains available for full archive/runtime
 integrations.
+
+`aiwgFortemiIndexToKnowledgeShard` retains the reversible schema 1.2.0
+`core-v1` adapter. Native conversion uses the report-bearing entry point and
+the exact `2.0.0/full-v1` tuple:
+
+```ts
+const result = await aiwgFortemiIndexToKnowledgeShardWithReport(index)
+
+if (!result.success) {
+  console.table(result.losses)
+  throw new Error('AIWG input cannot be represented as full-v1')
+}
+await importShard(db, result.archive!, { blobStore, conflictStrategy: 'replace' })
+```
+
+The full converter emits all 33 authority files and native note, relationship,
+SKOS, provenance, embedding, and graph records when the AIWG source is fully
+representable. Derived, defaulted, or omitted source information returns
+`archive: null` with typed `losses`; lossy output is never labeled `full-v1`.
 
 The AIWG index adapter accepts both `aiwg.fortemi.index.export.v1` and
 `aiwg.fortemi.index.export.v2` envelopes. The v1 record contract keeps the

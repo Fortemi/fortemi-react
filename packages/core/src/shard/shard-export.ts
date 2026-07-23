@@ -39,6 +39,9 @@ import {
   provenanceEdgeToShard,
 } from './field-mapper.js'
 import type { BrowserNoteExport } from './field-mapper.js'
+import { restoreStoredPresence } from './presence.js'
+import { readStoredPresence } from './presence-store.js'
+import { exportFullV1Snapshot } from './full-v1-store.js'
 import type { LinkRow } from '../repositories/links-repository.js'
 import type { CollectionRow } from '../repositories/collections-repository.js'
 import {
@@ -152,6 +155,20 @@ async function rowCount(db: DatabaseClient, sql: string): Promise<number> {
   return Number(result.rows[0]?.count ?? 0)
 }
 
+async function restoreV2Records<T extends object>(
+  db: DatabaseClient,
+  schemaVersion: string,
+  component: ShardComponent,
+  records: T[],
+  idOf: (record: T) => string,
+): Promise<T[]> {
+  if (schemaVersion !== '2.0.0') return records
+  return Promise.all(records.map(async (record) => {
+    const presence = await readStoredPresence(db, schemaVersion, 'core-v1', component, idOf(record))
+    return restoreStoredPresence(record as Record<string, unknown>, presence) as T
+  }))
+}
+
 async function collectCoreV1Losses(
   db: DatabaseClient,
   options: ExportOptions,
@@ -224,10 +241,32 @@ export async function exportShardWithReport(
   db: DatabaseClient,
   options: ExportOptions & { profile: string },
 ): Promise<ShardExportResult> {
+  if (options.profile === 'full-v1') {
+    const capabilityReport = createShardCapabilityReport({
+      backend: 'pglite', operation: 'export', requestedProfile: options.profile,
+      requestedSchemaVersion: options.schemaVersion ?? null,
+    })
+    if (options.schemaVersion !== '2.0.0') {
+      return {
+        success: false, archive: null,
+        errors: ['PGlite complete full-v1 production requires schemaVersion: 2.0.0.'],
+        capability_report: capabilityReport,
+      }
+    }
+    if (!options.blobStore) {
+      return {
+        success: false, archive: null,
+        errors: ['PGlite complete full-v1 production requires a BlobStore.'],
+        capability_report: capabilityReport,
+      }
+    }
+    return exportFullV1Snapshot(db, options.blobStore)
+  }
   let capabilityReport = createShardCapabilityReport({
     backend: 'pglite',
     operation: 'export',
     requestedProfile: options.profile,
+    requestedSchemaVersion: options.schemaVersion ?? CURRENT_SHARD_VERSION,
     declaredComponents: options.profile === 'core-v1' ? CORE_V1_COMPONENTS : [],
     omittedComponents: options.profile === 'core-v1' ? CORE_V1_OMITTED_COMPONENTS : [],
   })
@@ -288,11 +327,13 @@ async function exportShardBytes(
   options?: ExportOptions,
 ): Promise<Uint8Array> {
   const coreV1 = options?.profile === 'core-v1'
+  const canonicalSchemaVersion = coreV1 ? (options?.schemaVersion ?? CURRENT_SHARD_VERSION) : '1.0.0'
   if (options?.profile) {
     const capabilityReport = createShardCapabilityReport({
       backend: 'pglite',
       operation: 'export',
       requestedProfile: options.profile,
+      requestedSchemaVersion: options.schemaVersion ?? CURRENT_SHARD_VERSION,
       declaredComponents: coreV1 ? CORE_V1_COMPONENTS : [],
     })
     const profileError = profileSupportError(capabilityReport)
@@ -453,10 +494,19 @@ async function exportShardBytes(
   // Collect exported note IDs for scoping related data
   const exportedNoteIds = new Set(notes.map((n) => n.id))
 
-  const shardNotes = notes.map((n) => {
+  let shardNotes = notes.map((n) => {
     const shardNote = noteToShard(n)
     return coreV1 ? toCoreV1Note(shardNote) : shardNote
   })
+  if (coreV1) {
+    shardNotes = await restoreV2Records(
+      db,
+      canonicalSchemaVersion,
+      'notes',
+      shardNotes,
+      (note) => note.id,
+    )
+  }
   let layout: ShardLayout | undefined
   const clusterSize = options?.clusterNotesSize
   if (clusterSize && Number.isInteger(clusterSize) && clusterSize > 0 && shardNotes.length > 0) {
@@ -488,10 +538,19 @@ async function exportShardBytes(
     noteCountMap.set(row.collection_id, parseInt(row.cnt, 10))
   }
 
-  const shardCollections = collectionRows.rows.map((c) => {
+  let shardCollections = collectionRows.rows.map((c) => {
     const collection = collectionToShard(c, noteCountMap.get(c.id) ?? 0)
     return coreV1 ? toCoreV1Collection(collection) : collection
   })
+  if (coreV1) {
+    shardCollections = await restoreV2Records(
+      db,
+      canonicalSchemaVersion,
+      'collections',
+      shardCollections,
+      (collection) => collection.id,
+    )
+  }
   files.set('collections.json', encoder.encode(JSON.stringify(shardCollections)))
   components.push('collections')
   counts.collections = shardCollections.length
@@ -530,7 +589,16 @@ async function exportShardBytes(
     updated_at: Date
   }>(`SELECT * FROM template ORDER BY created_at, id`)
   if (templateRows.rows.length > 0 || coreV1) {
-    const shardTemplates = templateRows.rows.map((template) => templateToShard(template))
+    let shardTemplates = templateRows.rows.map((template) => templateToShard(template))
+    if (coreV1) {
+      shardTemplates = await restoreV2Records(
+        db,
+        canonicalSchemaVersion,
+        'templates',
+        shardTemplates,
+        (template) => template.id,
+      )
+    }
     files.set('templates.json', encoder.encode(JSON.stringify(shardTemplates)))
     components.push('templates')
     counts.templates = shardTemplates.length
@@ -558,10 +626,19 @@ async function exportShardBytes(
   const filteredUrlLinks = (options?.tag || options?.collectionId)
     ? urlLinkRows.rows.filter((l) => exportedNoteIds.has(l.source_note_id))
     : urlLinkRows.rows
-  const shardLinks = [
+  let shardLinks = [
     ...filteredLinks.map((l) => linkToShard(l)),
     ...filteredUrlLinks.map((l) => urlLinkToShard(l)),
   ].map((link) => coreV1 ? toCoreV1Link(link) : link)
+  if (coreV1) {
+    shardLinks = await restoreV2Records(
+      db,
+      canonicalSchemaVersion,
+      'links',
+      shardLinks,
+      (link) => link.id,
+    )
+  }
   const linksJsonl = shardLinks.map((l) => JSON.stringify(l)).join('\n')
   files.set('links.jsonl', encoder.encode(linksJsonl))
   components.push('links')
@@ -1013,7 +1090,7 @@ async function exportShardBytes(
 
   // ── Build manifest ──────────────────────────────────────────────────
   const manifest: ShardManifest = {
-    version: coreV1 ? CURRENT_SHARD_VERSION : '1.0.0',
+    version: canonicalSchemaVersion,
     ...(coreV1
       ? {
           profile: 'core-v1',
@@ -1028,7 +1105,7 @@ async function exportShardBytes(
     components,
     counts,
     checksums,
-    min_reader_version: coreV1 ? CURRENT_SHARD_VERSION : '1.0.0',
+    min_reader_version: canonicalSchemaVersion,
     migration_history: [],
     ...(!coreV1 ? { migrated_from: null } : {}),
     ...(!coreV1 && layout ? { layout } : {}),

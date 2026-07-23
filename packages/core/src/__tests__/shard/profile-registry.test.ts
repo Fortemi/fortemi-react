@@ -115,6 +115,22 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       advertised_profiles: ['record-v1'],
       supported_components: ['notes', 'collections', 'tags', 'links'],
     })
+    expect(createShardCapabilityReport({
+      backend: 'pglite', operation: 'export', requestedProfile: 'full-v1',
+      requestedSchemaVersion: '2.0.0',
+    })).toMatchObject({
+      requested_profile: 'full-v1',
+      requested_schema_version: '2.0.0',
+      authority_status: 'candidate',
+      backend_supported: false,
+      portable: false,
+      advertised_profiles: [],
+      authority: {
+        commit: '6343bd899958445bbc7e7e87b0dc92a8429d5a06',
+        contract_revision: '20',
+        schema_version: '2.0.0',
+      },
+    })
   })
 
   it('emits a self-validating core-v1 archive and reports omitted extension data', async () => {
@@ -314,7 +330,7 @@ describe('Knowledge Shard portability profiles (#355)', () => {
     expect(await records.headSeq()).toBe(0)
   }, 30_000)
 
-  it('rejects authority-supported but unimplemented profiles before querying or mutating', async () => {
+  it('rejects full-v1 outside the exact 2.0.0 tuple before querying or mutating', async () => {
     const archive = reservedProfileArchive('full-v1')
     const noQueryDb = {
       query: () => {
@@ -330,13 +346,12 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       success: false,
       capability_report: {
         requested_profile: 'full-v1',
+        requested_schema_version: '1.0.0',
         authority_status: 'supported',
         backend_supported: false,
       },
     })
-    expect(pglite.errors.join('\n')).toContain(
-      'not supported by the pglite import path',
-    )
+    expect(pglite.errors.join('\n')).toContain('requires the exact 2.0.0/full-v1 authority tuple')
 
     const records = new MemoryRecordStore()
     const recordResult = await importShardToRecords(records, archive)
