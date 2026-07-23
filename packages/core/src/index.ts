@@ -4,7 +4,7 @@
  * @created 2026-07-17
  * @agent Codex
  */
-export const VERSION = '2026.7.12'
+export const VERSION = '2026.7.13'
 
 export { generateId } from './uuid.js'
 

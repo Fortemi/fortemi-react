@@ -1533,9 +1533,12 @@ Produces the `.shard` archive bytes. With `includeBlobs`, attachment bytes are r
 Named profiles require `exportShardWithReport`; `exportShard` rejects a named
 profile so capability and loss evidence cannot be discarded. The exact
 `2.0.0/full-v1` PGlite path re-emits a complete, previously validated snapshot
-and requires a `BlobStore` for mandatory attachment bytes. It is callable for
-conformance testing but is not advertised while the authority receipt remains
-`specified-implementation-pending`. Schema 1.x `full-v1` is not accepted.
+or produces a complete archive from representable live PGlite state and
+requires a `BlobStore` for mandatory attachment bytes. The delivered local
+implementation receipt makes this exact-tuple path callable for producer and
+conformance use. It is not included in backend capability advertisements until
+the independent cross-repository receipt tracked by #382 is delivered. Schema
+1.x `full-v1` is not accepted.
 
 #### `importShard(db, data, options?)`
 
