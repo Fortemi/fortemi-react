@@ -42,6 +42,7 @@ import type { BrowserNoteExport } from './field-mapper.js'
 import { restoreStoredPresence } from './presence.js'
 import { readStoredPresence } from './presence-store.js'
 import { exportFullV1Snapshot } from './full-v1-store.js'
+import { exportLiveFullV1 } from './live-full-v1.js'
 import type { LinkRow } from '../repositories/links-repository.js'
 import type { CollectionRow } from '../repositories/collections-repository.js'
 import {
@@ -169,8 +170,10 @@ async function restoreV2Records<T extends object>(
   component: ShardComponent,
   records: T[],
   idOf: (record: T) => string,
+  nativePresence = false,
 ): Promise<T[]> {
   if (schemaVersion !== '2.0.0') return records
+  if (nativePresence) return records
   return Promise.all(records.map(async (record) => {
     const document = record as Record<string, unknown>
     const presence = await readStoredPresence(
@@ -276,7 +279,37 @@ export async function exportShardWithReport(
         capability_report: capabilityReport,
       }
     }
-    return exportFullV1Snapshot(db, options.blobStore)
+    try {
+      const persisted = await db.query<{ present: boolean }>(
+        `SELECT EXISTS (
+           SELECT 1 FROM knowledge_shard_snapshot
+            WHERE schema_version = '2.0.0' AND profile = 'full-v1'
+         ) AS present`,
+      )
+      if (persisted.rows[0]?.present) {
+        return exportFullV1Snapshot(db, options.blobStore)
+      }
+      const coreArchive = await exportShardBytes(
+        db,
+        { profile: 'core-v1', schemaVersion: '2.0.0' },
+        { nativeSchema2Presence: true },
+      )
+      const legacyArchive = await exportShardBytes(db, {
+        includeEmbeddings: true,
+        includeMaterializedSelectors: true,
+      })
+      return exportLiveFullV1(db, coreArchive, legacyArchive, {
+        blobStore: options.blobStore,
+        signing: options.signing,
+      })
+    } catch (error) {
+      return {
+        success: false,
+        archive: null,
+        errors: [error instanceof Error ? error.message : String(error)],
+        capability_report: capabilityReport,
+      }
+    }
   }
   let capabilityReport = createShardCapabilityReport({
     backend: 'pglite',
@@ -341,6 +374,7 @@ export async function exportShard(
 async function exportShardBytes(
   db: DatabaseClient,
   options?: ExportOptions,
+  mode?: { nativeSchema2Presence?: boolean },
 ): Promise<Uint8Array> {
   const coreV1 = options?.profile === 'core-v1'
   const canonicalSchemaVersion = coreV1 ? (options?.schemaVersion ?? CURRENT_SHARD_VERSION) : '1.0.0'
@@ -531,6 +565,7 @@ async function exportShardBytes(
       'notes',
       shardNotes,
       (note) => note.id,
+      mode?.nativeSchema2Presence,
     )
   }
   let layout: ShardLayout | undefined
@@ -575,6 +610,7 @@ async function exportShardBytes(
       'collections',
       shardCollections,
       (collection) => collection.id,
+      mode?.nativeSchema2Presence,
     )
   }
   files.set('collections.json', encoder.encode(JSON.stringify(shardCollections)))
@@ -623,6 +659,7 @@ async function exportShardBytes(
         'templates',
         shardTemplates,
         (template) => template.id,
+        mode?.nativeSchema2Presence,
       )
     }
     files.set('templates.json', encoder.encode(JSON.stringify(shardTemplates)))
@@ -663,6 +700,7 @@ async function exportShardBytes(
       'links',
       shardLinks,
       (link) => link.id,
+      mode?.nativeSchema2Presence,
     )
   }
   const linksJsonl = shardLinks.map((l) => JSON.stringify(l)).join('\n')

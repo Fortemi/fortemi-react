@@ -250,6 +250,12 @@ export interface ExportOptions {
    * skipped (its attachment stays reference-only) rather than failing export.
    */
   blobStore?: BlobStore
+  /** Optional Ed25519 publisher envelope for newly produced archives. */
+  signing?: {
+    keyId: string
+    privateKey: CryptoKey
+    publicKey: string
+  }
 }
 
 /** Conflict resolution strategy for shard import. */
