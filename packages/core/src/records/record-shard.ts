@@ -25,6 +25,7 @@ import type {
   RecordStore,
   RecordMutation,
   AttachmentRecord,
+  NoteRecord0,
 } from './types.js'
 import { VERSION } from '../index.js'
 import { packTarGz, unpackTarGz } from '../shard/shard-tar.js'
@@ -43,7 +44,12 @@ import {
 import type { BrowserNoteExport } from '../shard/field-mapper.js'
 import { generateId } from '../uuid.js'
 import { computeHash, computeBlobHash } from '../hash.js'
-import { compareShardVersions, CURRENT_SHARD_VERSION, SHARD_FORMAT } from '../shard/types.js'
+import {
+  compareShardVersions,
+  CURRENT_SHARD_VERSION,
+  MAX_SHARD_READER_VERSION,
+  SHARD_FORMAT,
+} from '../shard/types.js'
 import type {
   ExportOptions,
   ImportOptions,
@@ -73,6 +79,13 @@ import {
   createShardCapabilityReport,
   profileSupportError,
 } from '../shard/profile-registry.js'
+import {
+  capturePresence,
+  componentPresenceLosses,
+  presenceLosses,
+  presencePointers,
+  restoreStoredPresence,
+} from '../shard/presence.js'
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
@@ -111,6 +124,7 @@ export async function exportShardFromRecordsWithReport(
     backend: 'record-store',
     operation: 'export',
     requestedProfile: options.profile,
+    requestedSchemaVersion: options.schemaVersion ?? CURRENT_SHARD_VERSION,
   })
   const error = profileSupportError(capabilityReport)
   if (error) {
@@ -155,6 +169,7 @@ export async function exportShardFromRecordsWithReport(
       backend: 'record-store',
       operation: 'export',
       requestedProfile: options.profile,
+      requestedSchemaVersion: options.schemaVersion ?? CURRENT_SHARD_VERSION,
       declaredComponents: ['notes', 'collections', 'tags', 'links'],
       losses: result.losses,
     })
@@ -219,6 +234,9 @@ async function buildRecordShardArchive(
   const counts: ShardManifest['counts'] = {}
   const losses: ShardLossEntry[] = []
   const isRecordV1 = profile === 'record-v1'
+  const recordSchemaVersion = isRecordV1
+    ? (options?.schemaVersion ?? CURRENT_SHARD_VERSION)
+    : CURRENT_SHARD_VERSION
 
   const [allNotes, originals, revisedRows, tagRows, collections, memberships, attachments, blobs] =
     await Promise.all([
@@ -331,15 +349,27 @@ async function buildRecordShardArchive(
     (count, note) => count + (note.attachments?.length ?? 0),
     0,
   )
+  const sourceNoteById = new Map(notes.map((note) => [note.id, note]))
   const shardNotes = browserNotes.map((note) => {
     const mapped = noteToShard(note)
     if (!isRecordV1) return mapped
-    return {
+    const recordNote = {
       ...mapped,
       revised_content: mapped.revised_content ?? '',
       metadata: mapped.metadata ?? null,
       attachments: mapped.attachments ?? [],
     }
+    if (recordSchemaVersion !== '2.0.0') return recordNote
+    const storedPresence = sourceNoteById.get(note.id)?.__fortemi_presence
+      ?? Object.fromEntries(
+        presencePointers('record-v1', 'notes')
+          .filter((pointer) => pointer === '/deleted_at')
+          .map((pointer) => [pointer, 'legacy-indeterminate' as const]),
+      )
+    return restoreStoredPresence(
+      recordNote as unknown as Record<string, unknown>,
+      storedPresence,
+    ) as unknown as ShardNote
   })
 
   let layout: ShardLayout | undefined
@@ -485,7 +515,7 @@ async function buildRecordShardArchive(
 
   const manifest: ShardManifest = isRecordV1
     ? {
-        version: CURRENT_SHARD_VERSION,
+        version: recordSchemaVersion,
         profile: 'record-v1',
         producer: {
           name: 'fortemi-react-record-store',
@@ -506,7 +536,7 @@ async function buildRecordShardArchive(
           embedding_configs: 0,
         },
         checksums,
-        min_reader_version: CURRENT_SHARD_VERSION,
+        min_reader_version: recordSchemaVersion,
       }
     : {
         version: CURRENT_SHARD_VERSION,
@@ -655,6 +685,7 @@ export async function importShardToRecords(
     backend: 'record-store',
     operation: 'import',
     requestedProfile: manifest.profile ?? null,
+    requestedSchemaVersion: manifest.version,
     declaredComponents: manifest.components ?? [],
     losses: manifest.profile
       ? []
@@ -663,6 +694,26 @@ export async function importShardToRecords(
           message: 'The archive has no authority-owned portability profile and is not advertised as portable.',
         }],
   })
+  if (manifest.version === '2.0.0' && manifest.profile === 'record-v1') {
+    const filesByComponent: Partial<Record<ShardComponent, [string, 'json-array' | 'jsonl']>> = {
+      notes: ['notes.jsonl', 'jsonl'], collections: ['collections.json', 'json-array'],
+      tags: ['tags.json', 'json-array'], links: ['links.jsonl', 'jsonl'],
+    }
+    const presence = presenceLosses('record-v1', 'manifest', manifest as unknown as Record<string, unknown>)
+    for (const component of manifest.components ?? []) {
+      const spec = filesByComponent[component]
+      if (!spec) continue
+      try {
+        const records = spec[1] === 'json-array'
+          ? parseJsonArrayBytes<Record<string, unknown>>(files.get(spec[0]))
+          : parseJsonlBytes<Record<string, unknown>>(files.get(spec[0]))
+        presence.push(...componentPresenceLosses('record-v1', component, records))
+      } catch {
+        // Structural validation below owns parse diagnostics.
+      }
+    }
+    capabilityReport = { ...capabilityReport, losses: presence }
+  }
 
   if (manifest.profile === 'core-v1') {
     const validation = await validateCoreV1ShardArchive(files)
@@ -701,10 +752,10 @@ export async function importShardToRecords(
       capabilityReport,
     )
   }
-  if (manifest.min_reader_version && compareShardVersions(manifest.min_reader_version, CURRENT_SHARD_VERSION) > 0) {
+  if (manifest.min_reader_version && compareShardVersions(manifest.min_reader_version, MAX_SHARD_READER_VERSION) > 0) {
     return failure(counts, skipped, warnings,
       `Shard requires reader version ${manifest.min_reader_version}, ` +
-        `but this version supports up to ${CURRENT_SHARD_VERSION}`, start, capabilityReport)
+        `but this version supports up to ${MAX_SHARD_READER_VERSION}`, start, capabilityReport)
   }
 
   // ADR-014 verify-before-persist: identical gate to the PGlite importer.
@@ -901,7 +952,7 @@ export async function importShardToRecords(
       continue
     }
 
-    const noteRecord = {
+    const noteRecordBase = {
       id: note.id,
       archive_id: existing?.archive_id ?? null,
       title: note.title,
@@ -916,6 +967,21 @@ export async function importShardToRecords(
       updated_at: updatedAt,
       deleted_at: deletedAt,
     }
+    const notePresence = manifest.version === '2.0.0'
+      ? capturePresence(
+          shardNote,
+          presencePointers('record-v1', 'notes').filter((pointer) => pointer === '/deleted_at'),
+        )
+      : null
+    const noteRecord = (notePresence
+      ? {
+          ...restoreStoredPresence(
+            noteRecordBase as unknown as Record<string, unknown>,
+            notePresence,
+          ),
+          __fortemi_presence: notePresence,
+        }
+      : noteRecordBase) as unknown as NoteRecord0
     mutations.push({ op: 'put', collection: 'note', record: noteRecord })
     notesById.set(note.id, noteRecord)
     reconciledNoteIds.add(note.id)

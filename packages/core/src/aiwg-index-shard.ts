@@ -12,16 +12,19 @@ import {
   type ShardNote,
 } from './shard/types.js'
 import { v5 as uuidv5 } from 'uuid'
+import {
+  convertAiwgIndexToFullV1,
+  type AiwgFullV1ConversionResult,
+} from './aiwg-index-full-shard.js'
 
 export interface AiwgKnowledgeShardOptions {
   createdAt?: string
   matricVersion?: string
-  /**
-   * Reserved for a future full-v1 converter. Passing true currently fails
-   * closed because a partial rich-component inventory is not a valid profile.
-   */
+  /** Use the report-bearing entry point for rich conversion. */
   includeNativeRichComponents?: boolean
 }
+
+export type AiwgKnowledgeShardConversionResult = AiwgFullV1ConversionResult
 
 const AIWG_SHARD_UUID_NAMESPACE = '7ab5d1f8-29d2-5e35-9e2f-3a45de171a9e'
 const shardEncoder = new TextEncoder()
@@ -82,7 +85,7 @@ export async function aiwgFortemiIndexToKnowledgeShard(
 ): Promise<Uint8Array> {
   if (options.includeNativeRichComponents) {
     throw new Error(
-      'Native AIWG rich components require the complete full-v1 inventory; use core-v1 metadata preservation until full-v1 conversion is available',
+      'Native AIWG full-v1 conversion requires aiwgFortemiIndexToKnowledgeShardWithReport so semantic losses cannot be discarded',
     )
   }
   const validation = validateAiwgFortemiIndexExport(index)
@@ -202,6 +205,21 @@ export async function aiwgFortemiIndexToKnowledgeShard(
     )
   }
   return packTarGz(files)
+}
+
+/** Convert AIWG v2 into exact 2.0.0/full-v1 with mandatory loss evidence. */
+export async function aiwgFortemiIndexToKnowledgeShardWithReport(
+  index: AiwgFortemiIndexExport,
+  options: Omit<AiwgKnowledgeShardOptions, 'includeNativeRichComponents'> = {},
+): Promise<AiwgKnowledgeShardConversionResult> {
+  const validation = validateAiwgFortemiIndexExport(index)
+  if (!validation.valid) {
+    throw new Error(`Invalid AIWG Fortemi index export:\n${validation.errors.join('\n')}`)
+  }
+  if (index.schema_version !== 'aiwg.fortemi.index.export.v2') {
+    throw new Error('Full-v1 Knowledge Shard conversion requires aiwg.fortemi.index.export.v2')
+  }
+  return convertAiwgIndexToFullV1(index, options)
 }
 
 /**

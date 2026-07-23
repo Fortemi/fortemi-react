@@ -257,7 +257,7 @@ describe('AIWG Fortemi index adapter', () => {
   it('rejects partial rich projections instead of mislabeling them as full-v1', async () => {
     await expect(
       aiwgFortemiIndexToKnowledgeShard(index, { includeNativeRichComponents: true }),
-    ).rejects.toThrow('require the complete full-v1 inventory')
+    ).rejects.toThrow('requires aiwgFortemiIndexToKnowledgeShardWithReport')
   })
 
   it('validates the shared CRM fixture contract', () => {

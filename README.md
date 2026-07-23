@@ -128,7 +128,8 @@ All packages are versioned together — the npm badges above always show the cur
 - Virtual embedding-set selectors, cached similarity graphs, and graph/community artifact persistence
 - Dynamic and user-authored communities with React graph-controller hooks for source switching
 - Tags, collections, inter-note links, SKOS schemes, concepts, and relations
-- Knowledge Shard tar.gz import/export with checksums and JSON format parity
+- Knowledge Shard tar.gz import/export with checksums, exact schema/profile
+  negotiation, and receipt-backed component preservation
 - 10 manifest-backed Fortemi tools plus 11 exported direct tool helper functions
 - Optional embeddings, LLM, local-provider discovery, WebGPU detection, and fallback routing
 - React 19 hooks for common UI workflows and direct context access for lower-level integration

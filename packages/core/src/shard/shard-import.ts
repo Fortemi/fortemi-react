@@ -24,7 +24,7 @@ import {
 } from './field-mapper.js'
 import { generateId } from '../uuid.js'
 import { computeHash, computeBlobHash } from '../hash.js'
-import { compareShardVersions, CURRENT_SHARD_VERSION } from './types.js'
+import { compareShardVersions, MAX_SHARD_READER_VERSION } from './types.js'
 import type {
   ShardManifest,
   ImportOptions,
@@ -48,6 +48,7 @@ import type {
   ShardGraphEdge,
   ShardCommunitySet,
   ShardCommunityAssignment,
+  ShardComponent,
 } from './types.js'
 import { parseJsonArrayBytes, parseJsonlBytes } from './parse.js'
 import { validateCoreV1ShardArchive } from './schema-validator.js'
@@ -57,6 +58,9 @@ import {
   createShardCapabilityReport,
   profileSupportError,
 } from './profile-registry.js'
+import { capturePresence, componentPresenceLosses, presenceLosses, presencePointers } from './presence.js'
+import { replaceStoredPresence } from './presence-store.js'
+import { importFullV1Snapshot } from './full-v1-store.js'
 
 const decoder = new TextDecoder()
 const DEFAULT_BATCH_SIZE = 250
@@ -263,10 +267,26 @@ export async function importShard(
     }
   }
 
+  if (manifest.profile === 'full-v1') {
+    if (manifest.version !== '2.0.0') {
+      capabilityReport = createShardCapabilityReport({
+        backend: 'pglite', operation: 'import', requestedProfile: manifest.profile,
+        requestedSchemaVersion: manifest.version,
+      })
+      return {
+        success: false, counts, skipped, warnings,
+        errors: ['PGlite complete full-v1 persistence requires the exact 2.0.0/full-v1 authority tuple.'],
+        duration_ms: performance.now() - start, capability_report: capabilityReport,
+      }
+    }
+    return importFullV1Snapshot(db, inputData, options)
+  }
+
   capabilityReport = createShardCapabilityReport({
     backend: 'pglite',
     operation: 'import',
     requestedProfile: manifest.profile ?? null,
+    requestedSchemaVersion: manifest.version,
     declaredComponents: manifest.components ?? [],
     losses: manifest.profile
       ? []
@@ -275,6 +295,27 @@ export async function importShard(
           message: 'The archive has no authority-owned portability profile and is not advertised as portable.',
         }],
   })
+  if (manifest.version === '2.0.0' && manifest.profile === 'core-v1') {
+    const filesByComponent: Partial<Record<ShardComponent, [string, 'json-array' | 'jsonl']>> = {
+      notes: ['notes.jsonl', 'jsonl'], collections: ['collections.json', 'json-array'],
+      tags: ['tags.json', 'json-array'], templates: ['templates.json', 'json-array'],
+      links: ['links.jsonl', 'jsonl'],
+    }
+    const presence = presenceLosses('core-v1', 'manifest', manifest as unknown as Record<string, unknown>)
+    for (const component of manifest.components ?? []) {
+      const spec = filesByComponent[component]
+      if (!spec) continue
+      try {
+        const records = spec[1] === 'json-array'
+          ? parseJsonArrayBytes<Record<string, unknown>>(files.get(spec[0]))
+          : parseJsonlBytes<Record<string, unknown>>(files.get(spec[0]))
+        presence.push(...componentPresenceLosses('core-v1', component, records))
+      } catch {
+        // Structural validation below owns parse diagnostics.
+      }
+    }
+    capabilityReport = { ...capabilityReport, losses: presence }
+  }
   const unsupportedProfile = profileSupportError(capabilityReport)
   if (unsupportedProfile) {
     return {
@@ -304,7 +345,7 @@ export async function importShard(
   }
 
   // Version compatibility check
-  if (manifest.min_reader_version && compareShardVersions(manifest.min_reader_version, CURRENT_SHARD_VERSION) > 0) {
+  if (manifest.min_reader_version && compareShardVersions(manifest.min_reader_version, MAX_SHARD_READER_VERSION) > 0) {
     return {
       success: false,
       counts,
@@ -312,7 +353,7 @@ export async function importShard(
       warnings,
       errors: [
         `Shard requires reader version ${manifest.min_reader_version}, ` +
-        `but this version supports up to ${CURRENT_SHARD_VERSION}`,
+        `but this version supports up to ${MAX_SHARD_READER_VERSION}`,
       ],
       duration_ms: performance.now() - start,
       capability_report: capabilityReport,
@@ -564,6 +605,16 @@ export async function importShard(
         return true
       }
 
+      const storePresence = async (
+        component: ShardComponent,
+        recordId: string,
+        record: Record<string, unknown>,
+      ): Promise<void> => {
+        if (manifest.version !== '2.0.0' || manifest.profile !== 'core-v1') return
+        const presence = capturePresence(record, presencePointers('core-v1', component))
+        await replaceStoredPresence(tx, manifest.version, 'core-v1', component, recordId, presence)
+      }
+
       // Import collections first (notes may reference them)
       report?.({ phase: 'collections', done: 0, total: parsedCollections.length })
       for (const [index, shardCol] of parsedCollections.entries()) {
@@ -627,6 +678,7 @@ export async function importShard(
             ],
           )
         }
+        await storePresence('collections', shardCol.id, shardCol as unknown as Record<string, unknown>)
         counts.collections++
         report?.({ phase: 'collections', done: index + 1, total: parsedCollections.length })
         await maybeYield(index + 1, batchSize)
@@ -635,6 +687,11 @@ export async function importShard(
       // Import templates
       report?.({ phase: 'templates', done: 0, total: parsedTemplates.length })
       for (const [index, template] of parsedTemplates.entries()) {
+        if (await skipExisting('templates', 'SELECT 1 FROM template WHERE id = $1', [template.id])) {
+          report?.({ phase: 'templates', done: index + 1, total: parsedTemplates.length })
+          await maybeYield(index + 1, batchSize)
+          continue
+        }
         await tx.query(
           `INSERT INTO template (
              id, name, description, content, format, default_tags, collection_id, created_at, updated_at
@@ -655,6 +712,7 @@ export async function importShard(
             template.updated_at,
           ],
         )
+        await storePresence('templates', template.id, template as unknown as Record<string, unknown>)
         counts.templates++
         report?.({ phase: 'templates', done: index + 1, total: parsedTemplates.length })
         await maybeYield(index + 1, batchSize)
@@ -896,6 +954,7 @@ export async function importShard(
           }
         }
 
+        await storePresence('notes', shardNote.id, shardNote as unknown as Record<string, unknown>)
         counts.notes++
         report?.({ phase: 'notes', done: index + 1, total: parsedNotes.length })
         await maybeYield(index + 1, batchSize)
@@ -1007,6 +1066,7 @@ export async function importShard(
               link.deleted_at,
             ],
           )
+          await storePresence('links', shardLink.id, shardLink as unknown as Record<string, unknown>)
           counts.links++
           report?.({ phase: 'links', done: index + 1, total: parsedLinks.length })
           await maybeYield(index + 1, batchSize)
@@ -1072,6 +1132,7 @@ export async function importShard(
             ],
           )
         }
+        await storePresence('links', shardLink.id, shardLink as unknown as Record<string, unknown>)
         counts.links++
         report?.({ phase: 'links', done: index + 1, total: parsedLinks.length })
         await maybeYield(index + 1, batchSize)

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "status": "local-conformance-passed",
+  "tuple": {
+    "schemaVersion": "2.0.0",
+    "profile": "full-v1"
+  },
+  "authority": {
+    "repository": "https://git.integrolabs.net/Fortemi/fortemi",
+    "commit": "6343bd899958445bbc7e7e87b0dc92a8429d5a06",
+    "contractSha256": "5bf8d2fd8147d8df92599b1a3ce6b405ce022c83893f37547aefa7ca659f0783",
+    "schemaBundleSha256": "66dee80876c73fdc8756541c72e96ae189c098113a831c849d619381c4121c02"
+  },
+  "sourceFixture": {
+    "path": "src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-19.shard",
+    "sha256": "c2e06eaa9802efd25ed70f5fe7e339548bd0b561ae86fb1a0f2d2fdf45305659"
+  },
+  "archive": {
+    "path": "src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-19-v2.shard",
+    "bytes": 7088,
+    "sha256": "054da5528276806b9be69dcfff364a6969b72344045f05f9f6fcbeaca82a7a59"
+  },
+  "implementation": {
+    "scripts/generate-pglite-full-v1-receipt.mjs": "81c50d6d797866ba16ec93963bcb3d680a6174804efc4fb3adb1712276fb08ee",
+    "src/shard/full-v1-store.ts": "cc19742768a38f6966bdc3bdbfc352105d203ba0841036b9ce2b22ae11a5f320",
+    "src/shard/schema-validator.ts": "b45e349a43d472bfd0411adc4e87a2852ec43ad28f8a7ded64f0cca228c62c69",
+    "src/shard/shard-import.ts": "614869ea8730efe1676216f713d6b6e9ec2512c186d86d9543f34252cc444aa4",
+    "src/shard/shard-export.ts": "9db6fb668245d9084c3e2b5da18c94b8e210080cb8be55b1a288cb994e71a234",
+    "src/shard/profile-registry.ts": "8b59d8dfbae629b1be5402c1033e56d5992e3c40eca63ba188ca4c98ccac22a1",
+    "src/shard/shard-signature.ts": "fa3590f493e42edcf3a34fbdc62887eaf237f9e4563bbeb5b7fe7a8c57894070",
+    "src/shard/blob-staging.ts": "1108e578a92466452f731838fb13077183a7a60bd6e7881d2b25708fb5185f97",
+    "src/migrations/0020_full_v1_snapshot.ts": "54b5d47b521dc6fe44423b75f9032885e80f8e3fcbf04c11478baf98a9dc8841",
+    "src/migrations/index.ts": "40df2511dc92d7a0d355d108cf450f15c4b70b6d84ad184f91972d4bebbf7c77",
+    "src/__tests__/shard/full-v1-store.test.ts": "bee1444fbadb477ac9f6b1ab0a415855ef44cc12160c887687fd79e0e8be0440",
+    "schemas/knowledge-shard-v2.schema.receipt.json": "70657d6bcd501b684d0a143bcbf7c2a0d41fe909ef3aff32b1fb1f542506a53a"
+  },
+  "evidence": {
+    "command": "pnpm --filter @fortemi/core test:portable-contract",
+    "assertions": [
+      "all-33-components-persisted",
+      "mandatory-blobs-reference-counted",
+      "invalid-source-signature-removed-after-manifest-rewrite",
+      "valid-runtime-signature-retained",
+      "validate-before-mutation",
+      "repeat-import-converges",
+      "exact-logical-files-reexported"
+    ]
+  }
+}

@@ -126,18 +126,18 @@ Compatibility claims MUST name one of these profiles and the evidence version:
 
 | Profile | Required consumer behavior | Permitted scope |
 |---|---|---|
-| `full-v1` | PGlite and the server preserve every component declared by the profile, stable identities and relationships, null/tombstone/timestamp semantics, attachment references, and attachment bytes/sidecars | Lossless server/PGlite interchange only after both directions pass the same schema and golden-fixture gate |
+| `2.0.0/full-v1` | PGlite preserves all 33 declared component files, stable logical bytes, mandatory attachment bytes/refcounts, signatures when present, and direct-key presence semantics | Exact-tuple PGlite persistence and re-export; cross-repository lossless claims still require server and consumer receipts |
 | `core-v1` | Consumers preserve the explicitly declared core components and fail on undeclared required components; no silent component loss | Reduced interoperability for producers such as the AIWG converter |
 | `record-v1` | RecordStore preserves its declared canonical-record subset and returns an explicit loss/unsupported-component report for anything outside it | DB-free record-tier backup and interchange; never described as full parity |
 
-The pinned Fortemi receipt is normative for current availability, not this
-conceptual profile table. At receipt commit
-`e62ee6bb7eb30f2ef68c0be0a1207ee687222c56`, contract revision `18`, schema
-`1.1.0`, `core-v1`, `record-v1`, and `full-v1` are authority-supported. Backend
-advertisements remain narrower than authority availability: PGlite advertises
-`core-v1`, RecordStore advertises `record-v1`, and neither advertises `full-v1`
-until its complete producer and persistence path passes the required
-cross-repository receipts.
+The pinned Fortemi receipts are normative for current availability, not this
+conceptual profile table. Presence semantics and full inventory are pinned to
+Fortemi commit `6343bd899958445bbc7e7e87b0dc92a8429d5a06`, contract revision
+`20`, and schema `2.0.0`; schema 1.x roots remain immutable. The authority is
+still `specified-implementation-pending`, so no schema 2.0 profile is present
+in capability advertisements. Exact-tuple code paths are callable only for
+conformance and matrix receipts. The AIWG full converter returns `archive:
+null` whenever its loss report is non-empty.
 
 An importer must unpack into staging, validate the manifest, semantic version,
 checksums, profile, component records, counts, and required sidecars, and only

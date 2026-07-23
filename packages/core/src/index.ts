@@ -506,8 +506,12 @@ export {
 export {
   aiwgFortemiIndexFromKnowledgeShard,
   aiwgFortemiIndexToKnowledgeShard,
+  aiwgFortemiIndexToKnowledgeShardWithReport,
 } from './aiwg-index-shard.js'
-export type { AiwgKnowledgeShardOptions } from './aiwg-index-shard.js'
+export type {
+  AiwgKnowledgeShardConversionResult,
+  AiwgKnowledgeShardOptions,
+} from './aiwg-index-shard.js'
 export {
   getAiwgFortemiIndexExportSchema,
   validateAiwgFortemiIndexExportSchema,

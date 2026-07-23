@@ -14,6 +14,8 @@ import type { BlobStore } from '../blob-store.js'
 import type { ShardTrustStore } from './shard-signature.js'
 
 export const CURRENT_SHARD_VERSION = '1.2.0'
+/** Highest authority contract accepted by opt-in import paths. */
+export const MAX_SHARD_READER_VERSION = '2.0.0'
 export const SHARD_FORMAT = 'matric-shard'
 
 function parseVersion(value: string): number[] {
@@ -92,6 +94,12 @@ export interface ShardLossEntry {
   message: string
   component?: ShardComponent
   count?: number
+  record_id?: string
+  field_path?: string
+  source_state?: 'absent' | 'null' | 'empty' | 'value' | 'legacy-indeterminate'
+  destination_capability?: string
+  action?: 'reject' | 'omit' | 'default' | 'degrade'
+  reason?: string
 }
 
 export interface ShardCapabilityReport {
@@ -99,6 +107,7 @@ export interface ShardCapabilityReport {
   backend: ShardBackend
   operation: ShardOperation
   requested_profile: string | null
+  requested_schema_version: string | null
   authority_status: ShardAuthorityStatus
   backend_supported: boolean
   portable: boolean
@@ -209,6 +218,8 @@ export interface ExportOptions {
    * producer are accepted. Omit to retain the legacy unprofiled React archive.
    */
   profile?: string
+  /** Explicit authority schema tuple; 2.0.0 is opt-in until matrix receipts pass. */
+  schemaVersion?: '1.2.0' | '2.0.0'
   includeEmbeddings?: boolean
   /** Filter to specific collection (export only notes in this collection). */
   collectionId?: string
@@ -330,6 +341,8 @@ export interface ImportResult {
   errors: string[]
   duration_ms: number
   capability_report: ShardCapabilityReport
+  /** Complete manifest counts when a profile contains components outside legacy counters. */
+  component_counts?: ShardManifest['counts']
 }
 
 export interface ShardExportResult {

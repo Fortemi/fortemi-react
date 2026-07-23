@@ -359,6 +359,15 @@ export class NotesRepository {
         `UPDATE note SET ${setClauses.join(', ')} WHERE id = $${paramIdx}`,
         noteParams,
       )
+      if (input.title !== undefined) {
+        const titleState = input.title === null ? 'null' : input.title === '' ? 'empty' : 'value'
+        await tx.query(
+          `UPDATE shard_field_presence SET state = $1
+            WHERE schema_version = '2.0.0' AND profile = 'core-v1'
+              AND component = 'notes' AND record_id = $2 AND field_path = '/title'`,
+          [titleState, id],
+        )
+      }
 
       // When content changes, archive the current content as a revision
       if (input.content !== undefined) {
@@ -391,10 +400,18 @@ export class NotesRepository {
    * Soft-delete a note by setting deleted_at to the current timestamp.
    */
   async delete(id: string): Promise<void> {
-    await this.db.query(
-      `UPDATE note SET deleted_at = now(), updated_at = now() WHERE id = $1`,
-      [id],
-    )
+    await this.db.transaction(async (tx) => {
+      await tx.query(
+        `UPDATE note SET deleted_at = now(), updated_at = now() WHERE id = $1`,
+        [id],
+      )
+      await tx.query(
+        `UPDATE shard_field_presence SET state = 'value'
+          WHERE schema_version = '2.0.0' AND profile = 'core-v1'
+            AND component = 'notes' AND record_id = $1 AND field_path = '/deleted_at'`,
+        [id],
+      )
+    })
     this.events?.emit('note.deleted', { id })
   }
 
@@ -402,10 +419,18 @@ export class NotesRepository {
    * Restore a soft-deleted note by clearing deleted_at.
    */
   async restore(id: string): Promise<NoteFull> {
-    await this.db.query(
-      `UPDATE note SET deleted_at = NULL, updated_at = now() WHERE id = $1`,
-      [id],
-    )
+    await this.db.transaction(async (tx) => {
+      await tx.query(
+        `UPDATE note SET deleted_at = NULL, updated_at = now() WHERE id = $1`,
+        [id],
+      )
+      await tx.query(
+        `UPDATE shard_field_presence SET state = 'null'
+          WHERE schema_version = '2.0.0' AND profile = 'core-v1'
+            AND component = 'notes' AND record_id = $1 AND field_path = '/deleted_at'`,
+        [id],
+      )
+    })
     this.events?.emit('note.restored', { id })
     return this.get(id)
   }
