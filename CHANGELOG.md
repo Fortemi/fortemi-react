@@ -4,6 +4,35 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.7.13 - 2026-07-23
+
+### `@fortemi/core` - Schema 2 presence semantics and PGlite `full-v1` (#379, #380)
+
+- Vendored the immutable Fortemi Knowledge Shard schema `2.0.0` authority and
+  preserve absent, explicit `null`, empty, and value states through validation,
+  PGlite, MemoryRecordStore, IndexedDB, import, export, and re-export.
+- PGlite now produces and persists all 33 `full-v1` component families,
+  attachment sidecars, signatures, identities, relationships, timestamps,
+  tombstones, embeddings, SKOS, provenance, graph, and community data.
+- Unsupported presence and non-representable production states fail before
+  persistent mutation with typed, machine-readable losses.
+
+### `@fortemi/core/aiwg-index-shard` - Native AIWG `full-v1` conversion (#381)
+
+- The released AIWG v2 conversion boundary now emits deterministic schema
+  `2.0.0/full-v1` archives with native typed components and explicit loss
+  reports instead of opaque replacements or invented completeness.
+- Committed source, archive, authority, PGlite convergence, package-boundary,
+  and digest receipts provide the immutable inputs for downstream AIWG and
+  Fortemi consumer verification.
+
+### Claim scope
+
+- This release provides the producer and browser-persistence implementation
+  boundary. It does not claim unqualified full portability, complete backup,
+  or server parity; receipt-backed cross-repository advertisement remains
+  gated by React #382 and Fortemi #1084/#1087.
+
 ## v2026.7.12 - 2026-07-21
 
 ### `@fortemi/core` - Restore the vendorable static AIWG index boundary (#317)
