@@ -31,7 +31,7 @@ import {
   RECORD_STORE_CAPABILITIES,
 } from './types.js'
 
-const DB_VERSION = 1
+const DB_VERSION = 2
 const JOURNAL_STORE = 'journal'
 const META_STORE = 'meta'
 /** Logical record-schema version stored in `meta` (independent of DB_VERSION). */

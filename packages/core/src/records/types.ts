@@ -66,6 +66,8 @@ export interface LinkRecord0 extends PresenceTrackedRecord {
   link_type: string
   created_at: string
   deleted_at: string | null
+  /** Exact record-v1 shard metadata; internal projection state, not a domain field. */
+  __fortemi_shard_metadata?: unknown
 }
 
 export interface CollectionRecord extends PresenceTrackedRecord {
@@ -98,6 +100,10 @@ export interface AttachmentRecord extends PresenceTrackedRecord {
   position: number
   created_at: string
   deleted_at: string | null
+  /** Exact record-v1 extraction projection state. */
+  __fortemi_extraction_status?: 'extracted' | 'pending' | 'failed' | 'blocked' | 'deferred'
+  __fortemi_extraction_reason?: unknown
+  __fortemi_projection_presence?: ShardPresenceMap
 }
 
 export interface AttachmentBlobRecord extends PresenceTrackedRecord {
@@ -105,6 +111,11 @@ export interface AttachmentBlobRecord extends PresenceTrackedRecord {
   content_hash: string
   size_bytes: number
   created_at: string
+}
+
+export interface ShardManifestRecord extends PresenceTrackedRecord {
+  id: string
+  manifest: Record<string, unknown>
 }
 
 /** Collection name → record type. The store is generic over this map. */
@@ -118,6 +129,7 @@ export interface RecordCollections {
   collection_note: CollectionNoteRecord
   attachment: AttachmentRecord
   attachment_blob: AttachmentBlobRecord
+  shard_manifest: ShardManifestRecord
 }
 
 export type RecordCollectionName = keyof RecordCollections
@@ -132,6 +144,7 @@ export const RECORD_COLLECTIONS: readonly RecordCollectionName[] = [
   'collection_note',
   'attachment',
   'attachment_blob',
+  'shard_manifest',
 ] as const
 
 // ── Change journal ──────────────────────────────────────────────────────────

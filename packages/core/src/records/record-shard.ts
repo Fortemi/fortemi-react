@@ -238,7 +238,17 @@ async function buildRecordShardArchive(
     ? (options?.schemaVersion ?? CURRENT_SHARD_VERSION)
     : CURRENT_SHARD_VERSION
 
-  const [allNotes, originals, revisedRows, tagRows, collections, memberships, attachments, blobs] =
+  const [
+    allNotes,
+    originals,
+    revisedRows,
+    tagRows,
+    collections,
+    memberships,
+    attachments,
+    blobs,
+    storedManifests,
+  ] =
     await Promise.all([
       store.list('note'),
       store.list('note_original'),
@@ -248,6 +258,7 @@ async function buildRecordShardArchive(
       store.list('collection_note'),
       store.list('attachment'),
       store.list('attachment_blob'),
+      store.list('shard_manifest'),
     ])
 
   const originalByNote = new Map(originals.map((o) => [o.note_id, o]))
@@ -301,11 +312,14 @@ async function buildRecordShardArchive(
       checksum: blob.content_hash,
       bytes: blob.size_bytes,
     }
-    const projection: ShardAttachmentProjection = isRecordV1
+    let projection: ShardAttachmentProjection = isRecordV1
       ? {
           extracted_text: att.extracted_text,
-          extraction_status: att.extracted_text === null ? 'deferred' : 'extracted',
-          reason: att.extracted_text === null ? 'no_extracted_text' : null,
+          extraction_status: att.__fortemi_extraction_status
+            ?? (att.extracted_text === null ? 'deferred' : 'extracted'),
+          reason: Object.hasOwn(att, '__fortemi_extraction_reason')
+            ? att.__fortemi_extraction_reason as ShardAttachmentProjection['reason']
+            : (att.extracted_text === null ? 'no_extracted_text' : null),
           attachment,
         }
       : {
@@ -314,6 +328,16 @@ async function buildRecordShardArchive(
           deleted_at: att.deleted_at,
           attachment,
         }
+    if (isRecordV1 && recordSchemaVersion === '2.0.0') {
+      const storedPresence = att.__fortemi_projection_presence ?? {
+        '/extracted_text': 'legacy-indeterminate' as const,
+        '/reason': 'legacy-indeterminate' as const,
+      }
+      projection = restoreStoredPresence(
+        projection as unknown as Record<string, unknown>,
+        storedPresence,
+      ) as unknown as ShardAttachmentProjection
+    }
     const list = attachmentsByNote.get(att.note_id) ?? []
     list.push(projection)
     attachmentsByNote.set(att.note_id, list)
@@ -443,17 +467,23 @@ async function buildRecordShardArchive(
   const shardLinks = links
     .filter((l) => !isFiltered || (exportedNoteIds.has(l.source_note_id) && exportedNoteIds.has(l.target_note_id)))
     .sort((a, b) => a.created_at.localeCompare(b.created_at))
-    .map((l) => linkToShard({
-      id: l.id,
-      source_note_id: l.source_note_id,
-      target_note_id: l.target_note_id,
-      link_type: l.link_type,
-      // record-v1 requires a numeric score; canonical links carry no
-      // confidence column, so the profile's documented neutral default is 0.
-      confidence: isRecordV1 ? 0 : null,
-      created_at: l.created_at,
-      deleted_at: l.deleted_at,
-    }))
+    .map((l) => {
+      const shard = linkToShard({
+        id: l.id,
+        source_note_id: l.source_note_id,
+        target_note_id: l.target_note_id,
+        link_type: l.link_type,
+        // record-v1 requires a numeric score; canonical links carry no
+        // confidence column, so the profile's documented neutral default is 0.
+        confidence: isRecordV1 ? 0 : null,
+        created_at: l.created_at,
+        deleted_at: l.deleted_at,
+      })
+      if (isRecordV1 && Object.hasOwn(l, '__fortemi_shard_metadata')) {
+        shard.metadata = structuredClone(l.__fortemi_shard_metadata)
+      }
+      return shard
+    })
   files.set('links.jsonl', encoder.encode(shardLinks.map((l) => JSON.stringify(l)).join('\n')))
   components.push('links')
   counts.links = shardLinks.length
@@ -513,7 +543,7 @@ async function buildRecordShardArchive(
     }
   }
 
-  const manifest: ShardManifest = isRecordV1
+  let manifest: ShardManifest = isRecordV1
     ? {
         version: recordSchemaVersion,
         profile: 'record-v1',
@@ -551,6 +581,40 @@ async function buildRecordShardArchive(
         migration_history: [],
         ...(layout ? { layout } : {}),
       }
+  if (isRecordV1 && recordSchemaVersion === '2.0.0') {
+    const stored = storedManifests.find((record) =>
+      record.id === `${recordSchemaVersion}/record-v1`
+    )?.manifest
+    if (stored) {
+      const authorityFields = capturePresence(
+        stored,
+        presencePointers('record-v1', 'manifest'),
+      )
+      for (const field of ['matric_version', 'migrated_from', 'migration_history'] as const) {
+        if (Object.hasOwn(stored, field)) {
+          (manifest as unknown as Record<string, unknown>)[field] = structuredClone(stored[field])
+        }
+      }
+      if (
+        stored.producer
+        && typeof stored.producer === 'object'
+        && !Array.isArray(stored.producer)
+        && Object.hasOwn(stored.producer, 'revision')
+      ) {
+        manifest.producer = {
+          name: manifest.producer?.name ?? 'fortemi-react-record-store',
+          version: manifest.producer?.version ?? VERSION,
+          revision: structuredClone(
+            (stored.producer as Record<string, unknown>).revision,
+          ) as string,
+        }
+      }
+      manifest = restoreStoredPresence(
+        manifest as unknown as Record<string, unknown>,
+        authorityFields,
+      ) as unknown as ShardManifest
+    }
+  }
   files.set('manifest.json', encoder.encode(JSON.stringify(manifest, null, 2)))
 
   // Portable byte sidecar — self-verifying `blobs/<hex>` entries, one per
@@ -890,6 +954,16 @@ export async function importShardToRecords(
   }
 
   const mutations: RecordMutation[] = []
+  if (manifest.version === '2.0.0' && manifest.profile === 'record-v1') {
+    mutations.push({
+      op: 'put',
+      collection: 'shard_manifest',
+      record: {
+        id: `${manifest.version}/${manifest.profile}`,
+        manifest: structuredClone(manifest as unknown as Record<string, unknown>),
+      },
+    })
+  }
   const blobsToHydrate = new Map<string, Uint8Array>()
   const tagCreatedAt = new Map(parsedTags.map((tag) => [tag.name, tag.created_at]))
   const reconciledNoteIds = new Set<string>()
@@ -1101,6 +1175,16 @@ export async function importShardToRecords(
           position,
           created_at: projection.created_at ?? createdAt,
           deleted_at: projection.deleted_at ?? null,
+          ...(manifest.version === '2.0.0' && manifest.profile === 'record-v1'
+            ? {
+                __fortemi_extraction_status: projection.extraction_status,
+                __fortemi_extraction_reason: structuredClone(projection.reason),
+                __fortemi_projection_presence: capturePresence(
+                  projection as unknown as Record<string, unknown>,
+                  ['/extracted_text', '/reason'],
+                ),
+              }
+            : {}),
         }
         const existingAttachment = existingAttachments.find((record) => record.id === ref.id)
         if (
@@ -1166,6 +1250,9 @@ export async function importShardToRecords(
       link_type: link.link_type,
       created_at: link.created_at,
       deleted_at: link.deleted_at,
+      ...(manifest.version === '2.0.0' && manifest.profile === 'record-v1'
+        ? { __fortemi_shard_metadata: structuredClone(shardLink.metadata) }
+        : {}),
     }
     if (
       existing

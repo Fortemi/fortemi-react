@@ -79,6 +79,33 @@ async function seededStore() {
   return { store, blobStore, notes, attachments, a, b, link, collection, attachment }
 }
 
+async function markAttachmentsAsSchema2(
+  store: MemoryRecordStore,
+): Promise<void> {
+  for (const attachment of await store.list('attachment')) {
+    await store.put('attachment', {
+      ...attachment,
+      __fortemi_extraction_status: 'extracted',
+      __fortemi_extraction_reason: null,
+      __fortemi_projection_presence: {
+        '/extracted_text': attachment.extracted_text === null ? 'null' : 'value',
+        '/reason': 'null',
+      },
+    })
+  }
+}
+
+async function markNotesAsSchema2(store: MemoryRecordStore): Promise<void> {
+  for (const note of await store.list('note')) {
+    await store.put('note', {
+      ...note,
+      __fortemi_presence: {
+        '/deleted_at': note.deleted_at === null ? 'null' : 'value',
+      },
+    })
+  }
+}
+
 describe('record-shard (DB-free)', () => {
   it('exports, imports, and converges supported record-v1 bytes', async () => {
     const src = await seededStore()
@@ -179,6 +206,7 @@ describe('record-shard (DB-free)', () => {
 
   it('preserves schema-2.0 absent note fields through RecordStore round trips', async () => {
     const src = await seededStore()
+    await markAttachmentsAsSchema2(src.store)
     for (const sourceNote of await src.store.list('note')) {
       const trackedNote = {
         ...sourceNote,
@@ -253,6 +281,7 @@ describe('record-shard (DB-free)', () => {
 
   it('rejects schema-2.0 export when legacy RecordStore presence is indeterminate', async () => {
     const src = await seededStore()
+    await markAttachmentsAsSchema2(src.store)
     const exported = await exportShardFromRecordsWithReport(src.store, {
       profile: 'record-v1',
       schemaVersion: '2.0.0',
@@ -261,6 +290,92 @@ describe('record-shard (DB-free)', () => {
     expect(exported.errors.join('\n')).toContain(
       'Cannot emit schema 2.0 with legacy-indeterminate state at /deleted_at',
     )
+  })
+
+  it('preserves schema-2.0 attachment, link, and manifest presence through RecordStore', async () => {
+    const src = await seededStore()
+    await markNotesAsSchema2(src.store)
+    await markAttachmentsAsSchema2(src.store)
+    const exported = await exportShardFromRecordsWithReport(src.store, {
+      profile: 'record-v1',
+      schemaVersion: '2.0.0',
+    })
+    expect(exported.success, exported.errors.join('; ')).toBe(true)
+
+    const files = unpackTarGz(exported.archive!)
+    const notes = new TextDecoder().decode(files.get('notes.jsonl'))
+      .trim().split('\n').map((line) => JSON.parse(line) as Record<string, unknown>)
+    const noteWithAttachment = notes.find((note) =>
+      Array.isArray(note.attachments) && note.attachments.length > 0
+    )!
+    const attachment = (noteWithAttachment.attachments as Array<Record<string, unknown>>)[0]
+    attachment.extracted_text = ''
+    attachment.extraction_status = 'failed'
+    attachment.reason = 'extractor_failed'
+    files.set('notes.jsonl', bytes(notes.map((note) => JSON.stringify(note)).join('\n')))
+
+    const links = new TextDecoder().decode(files.get('links.jsonl'))
+      .trim().split('\n').filter(Boolean)
+      .map((line) => JSON.parse(line) as Record<string, unknown>)
+    links[0].metadata = ''
+    files.set('links.jsonl', bytes(links.map((link) => JSON.stringify(link)).join('\n')))
+
+    const manifest = JSON.parse(
+      new TextDecoder().decode(files.get('manifest.json')),
+    ) as Record<string, unknown> & {
+      producer: Record<string, unknown>
+      checksums: Record<string, string>
+    }
+    manifest.matric_version = '2026.7.12'
+    manifest.migrated_from = '1.2.0'
+    manifest.migration_history = []
+    manifest.producer.revision = 'presence-matrix'
+    for (const path of Object.keys(manifest.checksums)) {
+      manifest.checksums[path] = await sha256Hex(files.get(path)!)
+    }
+    files.set('manifest.json', bytes(JSON.stringify(manifest, null, 2)))
+    const archive = packTarGz(files)
+    await expect(validateRecordV1ShardArchive(archive)).resolves.toEqual({
+      valid: true,
+      errors: [],
+    })
+
+    const dst = new MemoryRecordStore()
+    const imported = await importShardToRecords(dst, archive, {
+      conflictStrategy: 'replace',
+    })
+    expect(imported.success, imported.errors.join('; ')).toBe(true)
+    const reexported = await exportShardFromRecordsWithReport(dst, {
+      profile: 'record-v1',
+      schemaVersion: '2.0.0',
+    })
+    expect(reexported.success, reexported.errors.join('; ')).toBe(true)
+
+    const returnedFiles = unpackTarGz(reexported.archive!)
+    const returnedNotes = new TextDecoder().decode(returnedFiles.get('notes.jsonl'))
+      .trim().split('\n').map((line) => JSON.parse(line) as Record<string, unknown>)
+    const returnedAttachment = (
+      returnedNotes.find((note) => note.id === noteWithAttachment.id)!
+        .attachments as Array<Record<string, unknown>>
+    )[0]
+    expect(returnedAttachment).toMatchObject({
+      extracted_text: '',
+      extraction_status: 'failed',
+      reason: 'extractor_failed',
+    })
+    const returnedLink = JSON.parse(
+      new TextDecoder().decode(returnedFiles.get('links.jsonl')).trim(),
+    ) as Record<string, unknown>
+    expect(returnedLink.metadata).toBe('')
+    const returnedManifest = JSON.parse(
+      new TextDecoder().decode(returnedFiles.get('manifest.json')),
+    ) as Record<string, unknown> & { producer: Record<string, unknown> }
+    expect(returnedManifest).toMatchObject({
+      matric_version: '2026.7.12',
+      migrated_from: '1.2.0',
+      migration_history: [],
+      producer: { revision: 'presence-matrix' },
+    })
   })
 
   it('preserves nested collections through record-v1 import and re-export', async () => {

@@ -360,7 +360,7 @@ export interface ShardNote {
   title: string | null
   original_content: string
   revised_content: string | null
-  metadata?: Record<string, unknown> | null
+  metadata?: unknown
   collection_id?: string | null
   attachments?: ShardAttachmentProjection[]
   /** @deprecated Legacy React shard field name. Use `attachments`. */
@@ -419,7 +419,7 @@ export interface ShardLink {
   score: number | null
   created_at: string
   /** Optional for legacy React shards exported before link metadata existed. */
-  metadata?: Record<string, unknown> | null
+  metadata?: unknown
 }
 
 /**

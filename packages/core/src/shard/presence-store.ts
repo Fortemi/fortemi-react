@@ -1,7 +1,7 @@
 import type { QueryExecutor } from '../storage-backend.js'
 import type { KnowledgeShardProfile, ShardComponent } from './types.js'
 import type { ShardPresenceMap, StoredPresenceState } from './presence.js'
-import { presencePointers } from './presence.js'
+import { concretePresencePointers, presencePointers } from './presence.js'
 
 export interface StoredShardPresence {
   schema_version: string
@@ -41,6 +41,7 @@ export async function readStoredPresence(
   profile: KnowledgeShardProfile,
   component: ShardComponent,
   recordId: string,
+  document?: Record<string, unknown>,
 ): Promise<ShardPresenceMap> {
   const result = await tx.query<{ field_path: string; state: StoredPresenceState }>(
     `SELECT field_path, state FROM shard_field_presence
@@ -50,8 +51,13 @@ export async function readStoredPresence(
   )
   const stored = Object.fromEntries(result.rows.map((row) => [row.field_path, row.state]))
   if (schemaVersion !== '2.0.0') return stored
-  for (const pointer of presencePointers(profile, component)) {
-    if (!pointer.includes('/*') && stored[pointer] === undefined) {
+  const expected = presencePointers(profile, component).flatMap((pointer) =>
+    document
+      ? concretePresencePointers(document, pointer)
+      : pointer.includes('/*') ? [] : [pointer],
+  )
+  for (const pointer of expected) {
+    if (stored[pointer] === undefined) {
       stored[pointer] = 'legacy-indeterminate'
     }
   }

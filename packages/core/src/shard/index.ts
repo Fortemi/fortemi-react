@@ -121,6 +121,7 @@ export type { BrowserNoteExport } from './field-mapper.js'
 export {
   assertStoredPresence,
   capturePresence,
+  concretePresencePointers,
   classifyOwnProperty,
   classifyPresenceValue,
   presenceLosses,

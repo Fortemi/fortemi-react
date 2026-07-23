@@ -238,7 +238,13 @@ export function aiwgFortemiIndexFromKnowledgeShard(bytes: Uint8Array): AiwgForte
   let envelope: Record<string, unknown> | undefined
   const items: AiwgFortemiRecord[] = []
   for (const note of notes) {
-    const metadata = note.metadata?.aiwg_fortemi_index
+    const metadata = (
+      note.metadata
+      && typeof note.metadata === 'object'
+      && !Array.isArray(note.metadata)
+    )
+      ? (note.metadata as Record<string, unknown>).aiwg_fortemi_index
+      : undefined
     if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
       throw new Error(`Knowledge Shard note ${note.id} has no AIWG index metadata`)
     }

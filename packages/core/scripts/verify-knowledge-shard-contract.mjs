@@ -13,6 +13,11 @@ const v2ImplementationReceiptPath = resolve(
   'schemas/knowledge-shard-v2.implementation.receipt.json',
 )
 const v2ImplementationReceipt = JSON.parse(readFileSync(v2ImplementationReceiptPath, 'utf8'))
+const v2PresenceReceiptPath = resolve(
+  packageRoot,
+  'schemas/knowledge-shard-v2.presence.receipt.json',
+)
+const v2PresenceReceipt = JSON.parse(readFileSync(v2PresenceReceiptPath, 'utf8'))
 
 function sha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex')
@@ -88,6 +93,35 @@ for (const [path, expected] of Object.entries(v2ImplementationReceipt.implementa
   const actual = sha256(readFileSync(resolve(packageRoot, path)))
   if (actual !== expected) {
     throw new Error(`Knowledge Shard 2.0 implementation drift: ${path}`)
+  }
+}
+if (v2PresenceReceipt.status !== 'local-conformance-passed') {
+  throw new Error('Knowledge Shard 2.0 presence receipt has not passed local conformance')
+}
+if (
+  v2PresenceReceipt.authority.commit !== v2Receipt.source.commit
+  || v2PresenceReceipt.authority.schemaBundleSha256 !== v2Receipt.schemaBundle.sha256
+  || v2PresenceReceipt.authority.fieldSemanticsSha256
+    !== v2Receipt.schemaBundle.files['field-semantics.json']
+) {
+  throw new Error('Knowledge Shard 2.0 presence receipt authority mismatch')
+}
+const fieldSemantics = JSON.parse(readFileSync(
+  resolve(packageRoot, 'schemas/knowledge-shard/2.0.0/field-semantics.json'),
+  'utf8',
+))
+if (
+  v2PresenceReceipt.matrix.fields !== fieldSemantics.fields.length
+  || v2PresenceReceipt.matrix.wildcardFields
+    !== fieldSemantics.fields.filter((field) => field.pointer.includes('/*')).length
+  || v2PresenceReceipt.matrix.semanticAssertions !== fieldSemantics.fields.length * 6
+) {
+  throw new Error('Knowledge Shard 2.0 presence receipt matrix mismatch')
+}
+for (const [path, expected] of Object.entries(v2PresenceReceipt.implementation)) {
+  const actual = sha256(readFileSync(resolve(packageRoot, path)))
+  if (actual !== expected) {
+    throw new Error(`Knowledge Shard 2.0 presence implementation drift: ${path}`)
   }
 }
 const implementationArchive = readFileSync(resolve(packageRoot, v2ImplementationReceipt.archive.path))
