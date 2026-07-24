@@ -115,22 +115,25 @@ describe('Knowledge Shard portability profiles (#355)', () => {
       advertised_profiles: ['record-v1'],
       supported_components: ['notes', 'collections', 'tags', 'links'],
     })
-    expect(createShardCapabilityReport({
-      backend: 'pglite', operation: 'export', requestedProfile: 'full-v1',
-      requestedSchemaVersion: '2.0.0',
-    })).toMatchObject({
-      requested_profile: 'full-v1',
-      requested_schema_version: '2.0.0',
-      authority_status: 'candidate',
-      backend_supported: false,
-      portable: false,
-      advertised_profiles: [],
-      authority: {
-        commit: '6343bd899958445bbc7e7e87b0dc92a8429d5a06',
-        contract_revision: '20',
-        schema_version: '2.0.0',
-      },
-    })
+    for (const operation of ['import', 'export'] as const) {
+      expect(createShardCapabilityReport({
+        backend: 'pglite', operation, requestedProfile: 'full-v1',
+        requestedSchemaVersion: '2.0.0',
+      })).toMatchObject({
+        operation,
+        requested_profile: 'full-v1',
+        requested_schema_version: '2.0.0',
+        authority_status: 'supported',
+        backend_supported: true,
+        portable: true,
+        advertised_profiles: ['full-v1'],
+        authority: {
+          commit: '6343bd899958445bbc7e7e87b0dc92a8429d5a06',
+          contract_revision: '20',
+          schema_version: '2.0.0',
+        },
+      })
+    }
   })
 
   it('emits a self-validating core-v1 archive and reports omitted extension data', async () => {

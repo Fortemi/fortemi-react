@@ -167,6 +167,16 @@ attachment byte, and can add an Ed25519 publisher signature. Live values that
 cannot satisfy the authority schema, including non-768-dimensional embedding
 vectors, return `archive: null` with a typed capability loss.
 
+PGlite advertises exact `2.0.0/full-v1` import and export only because
+`schemas/knowledge-shard-v2.cross-repository.receipt.json` binds the released
+PGlite and AIWG archives to clean repeated PGlite and Fortemi destinations,
+complete per-cell semantic/rejection coverage, immutable package and authority
+identities, and delivered CI. Advertisement is computed from that receipt at
+runtime; drifting any bound authority, archive, implementation, or Fortemi
+receipt disables the claim, while the verifier requires the packaged receipt
+bytes to match their declared digests. RecordStore remains `record-v1` only.
+This receipt does not establish suite-wide portability or complete backup.
+
 Knowledge Shard 2.0 treats absent, `null`, empty, and non-empty values as
 distinct authority states. PGlite persists `core-v1` field presence in a
 transactional sidecar, while RecordStore carries its `record-v1` projection and

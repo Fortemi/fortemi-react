@@ -1,22 +1,22 @@
 metadata:
   schema_version: "1.0.0"
-  created_at: "2026-07-18T05:31:02Z"
-  description: "Provenance for document schema 1.1 tombstone interoperability and live roundtrip evidence"
+  created_at: "2026-07-24T02:48:16Z"
+  description: "Provenance for record the exact schema-2 full-v1 advertisement decision and evidence"
 entity:
   id: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
   type: "document"
-  created_at: "2026-07-18T05:31:02Z"
-  checksum: "sha256:f444b5314ac010fb286ad06f9c2014ce36228033c4bd45115ea74b90348e82ef"
-  size_bytes: 11203
+  created_at: "2026-07-24T02:48:16Z"
+  checksum: "sha256:76c5538122e7e0c92ff9b75b3ac7c0f907d42934a6b030bb83dfe4bbe19b7ed7"
+  size_bytes: 12857
   attributes:
-    change_scope: "knowledge-shard-schema-1.1-tombstones"
-    base_revision: "6228db6c4132a2391ff492a7219403080af495cb"
+    change_scope: "knowledge-shard-schema-2-full-v1-cross-repository-advertisement"
+    base_revision: "45ee08e99dfb6fa0263aca2992aa6de91e2f1e98"
 activity:
-  id: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:355"
+  id: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:382"
   type: "modification"
-  started_at: "2026-07-18T05:31:01Z"
-  ended_at: "2026-07-18T05:31:02Z"
-  description: "Document schema 1.1 tombstone interoperability and live roundtrip evidence"
+  started_at: "2026-07-24T02:48:15Z"
+  ended_at: "2026-07-24T02:48:16Z"
+  description: "Record the receipt-backed exact full-v1 PGlite advertisement and bounded claims"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
   type: "ai_assistant"
@@ -26,19 +26,22 @@ agent:
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
-    activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:355"
-    time: "2026-07-18T05:31:02Z"
+    activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:382"
+    time: "2026-07-24T02:48:16Z"
   used:
-    - activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:355"
-      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:6228db6c4132a2391ff492a7219403080af495cb:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+    - activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:382"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:45ee08e99dfb6fa0263aca2992aa6de91e2f1e98:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
       role: "previous_revision"
+    - activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:382"
+      entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.cross-repository.receipt.json"
+      role: "conformance_receipt"
   wasDerivedFrom:
     - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
-      source: "urn:gitea:Fortemi/fortemi-react:issue:355"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:382"
       derivation_type: "documents"
-      activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:355"
+      activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:382"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:355"
+    activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:382"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:

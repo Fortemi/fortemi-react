@@ -4,6 +4,16 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+### `@fortemi/core` - Receipt-backed `2.0.0/full-v1` advertisement (#382)
+
+- Bind the released React and AIWG archives to clean repeated PGlite and
+  Fortemi destinations with complete per-cell semantics, skew, corruption,
+  signature, limit, and zero-mutation evidence.
+- Advertise exact `2.0.0/full-v1` PGlite import/export only when the delivered
+  cross-repository receipt matches every authority, archive, implementation,
+  and consumer digest. RecordStore remains `record-v1`, and the receipt does
+  not enable an unqualified suite claim.
+
 ## v2026.7.13 - 2026-07-23
 
 ### `@fortemi/core` - Schema 2 presence semantics and PGlite `full-v1` (#379, #380)

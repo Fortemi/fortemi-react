@@ -1,22 +1,22 @@
 metadata:
   schema_version: "1.0.0"
-  created_at: "2026-07-18T05:31:02Z"
-  description: "Provenance for pin the current schema 1.1 profile authority and tombstone boundary"
+  created_at: "2026-07-24T02:48:16Z"
+  description: "Provenance for document the receipt-backed exact 2.0.0/full-v1 PGlite boundary"
 entity:
   id: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
   type: "document"
-  created_at: "2026-07-18T05:31:02Z"
-  checksum: "sha256:609a3618efa90f16404073737a382290df65e19c5b0a6ce0b4bb18573036a3b3"
-  size_bytes: 26376
+  created_at: "2026-07-24T02:48:16Z"
+  checksum: "sha256:8f4a1dcf2016866ed9dc16f41a940ec269d92b1c05add152d03f0d28d32dbc56"
+  size_bytes: 26718
   attributes:
-    change_scope: "knowledge-shard-schema-1.1-tombstones"
-    base_revision: "6228db6c4132a2391ff492a7219403080af495cb"
+    change_scope: "knowledge-shard-schema-2-full-v1-cross-repository-advertisement"
+    base_revision: "45ee08e99dfb6fa0263aca2992aa6de91e2f1e98"
 activity:
-  id: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:355"
+  id: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:382"
   type: "modification"
-  started_at: "2026-07-18T05:31:01Z"
-  ended_at: "2026-07-18T05:31:02Z"
-  description: "Pin the current schema 1.1 profile authority and tombstone boundary"
+  started_at: "2026-07-24T02:48:15Z"
+  ended_at: "2026-07-24T02:48:16Z"
+  description: "Document exact full-v1 PGlite support without expanding RecordStore or suite-wide claims"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
   type: "ai_assistant"
@@ -26,23 +26,26 @@ agent:
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
-    activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:355"
-    time: "2026-07-18T05:31:02Z"
+    activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:382"
+    time: "2026-07-24T02:48:16Z"
   used:
-    - activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:355"
-      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:6228db6c4132a2391ff492a7219403080af495cb:.aiwg/architecture/SAD.md"
+    - activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:382"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:45ee08e99dfb6fa0263aca2992aa6de91e2f1e98:.aiwg/architecture/SAD.md"
       role: "previous_revision"
+    - activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:382"
+      entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.cross-repository.receipt.json"
+      role: "conformance_receipt"
   wasDerivedFrom:
     - entity: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
       source: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
       derivation_type: "derives_from"
-      activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:355"
+      activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:382"
     - entity: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
-      source: "urn:gitea:Fortemi/fortemi-react:issue:355"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:382"
       derivation_type: "documents"
-      activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:355"
+      activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:382"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:355"
+    activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:382"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:

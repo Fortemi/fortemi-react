@@ -27,7 +27,7 @@
     "src/shard/schema-validator.ts": "b45e349a43d472bfd0411adc4e87a2852ec43ad28f8a7ded64f0cca228c62c69",
     "src/shard/shard-import.ts": "71036913aa6d3b749bba1ef79ead1e5255026722fd5c2daf318efd3106cd5560",
     "src/shard/shard-export.ts": "f52a3ad1c012dcf633306fcef044ef7de97a18e658f78e30b3032df65a570b3f",
-    "src/shard/profile-registry.ts": "8b59d8dfbae629b1be5402c1033e56d5992e3c40eca63ba188ca4c98ccac22a1",
+    "src/shard/profile-registry.ts": "ea4cdb7a3c865e1be6340a48cb13aeeb8849f47b31a1983d473834168f9e3ba6",
     "src/shard/shard-signature.ts": "fa3590f493e42edcf3a34fbdc62887eaf237f9e4563bbeb5b7fe7a8c57894070",
     "src/shard/blob-staging.ts": "1108e578a92466452f731838fb13077183a7a60bd6e7881d2b25708fb5185f97",
     "src/migrations/0020_full_v1_snapshot.ts": "54b5d47b521dc6fe44423b75f9032885e80f8e3fcbf04c11478baf98a9dc8841",

@@ -35,12 +35,32 @@ not used as authority for `core-v1`. Profile selection and portable treatment
 of extensions remain tracked separately; no extension is implicitly part of
 the canonical profile.
 
+## Knowledge Shard `2.0.0` / `full-v1` receipts
+
+`knowledge-shard-v2.schema.receipt.json` pins the immutable authority and
+presence inventory. `knowledge-shard-v2.implementation.receipt.json` and
+`knowledge-shard-v2.presence.receipt.json` bind the local implementation.
+`knowledge-shard-v2.fortemi-runtime.receipt.json` is the byte-identical
+delivered Fortemi consumer receipt, and
+`knowledge-shard-v2.cross-repository.receipt.json` binds the exact four
+released producer/destination cells that permit PGlite advertisement. The
+blocking drift check above validates all five layers.
+
 ### Profile-aware APIs
 
 `getKnowledgeShardProfileRegistry()` exposes the pinned authority status.
-At contract revision 19, the authority supports all three profiles. React
-backends continue to advertise only the profiles proven by their own
-producer/consumer paths: PGlite `core-v1` and RecordStore `record-v1`.
+At contract revision 19, the schema `1.2.0` authority supports all three
+profiles. React backends advertise only exact tuples proven by their own
+producer/consumer paths: PGlite `1.2.0/core-v1` and receipt-backed
+`2.0.0/full-v1`, and RecordStore `1.2.0/record-v1`. The schema-2 advertisement
+is bound by `knowledge-shard-v2.cross-repository.receipt.json` to released
+React and AIWG archives plus clean PGlite and Fortemi destination evidence.
+It does not widen RecordStore or establish an unqualified suite claim.
+Traceability continues the profile and convergence work closed in
+[React #355](https://git.integrolabs.net/Fortemi/fortemi-react/issues/355)
+and [React #356](https://git.integrolabs.net/Fortemi/fortemi-react/issues/356),
+and pairs with the independent Fortemi destination gate in
+[Fortemi #1084](https://git.integrolabs.net/Fortemi/fortemi/issues/1084).
 
 Use `exportShardWithReport(db, { profile: 'core-v1' })` for a named PGlite
 export. It returns the archive with a versioned capability/loss report and

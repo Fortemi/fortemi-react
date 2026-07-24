@@ -60,9 +60,11 @@ The 2026-07-22 authority amendment defines identity as the exact tuple
 `(manifest.version, manifest.profile)`. Schema `2.0.0` retains the `core-v1`,
 `record-v1`, and `full-v1` profile names while adding direct JSON-key presence
 semantics; it does not mutate any 1.x tuple. Capability reports must include
-the requested schema version. No schema 2.0 profile may be advertised while
-the pinned authority remains `specified-implementation-pending`; local paths
-are callable only to generate the required matrix evidence.
+the requested schema version. A schema 2.0 profile may be advertised only when
+a later immutable implementation receipt binds the originally
+`specified-implementation-pending` authority to complete, independent
+producer/consumer evidence. Without that receipt, local paths are callable
+only to generate matrix evidence.
 
 **6. Validate before mutation and make import atomic.** Importers unpack into
 staging and validate archive structure, schema, semantic versions, profile,
@@ -107,7 +109,7 @@ insufficient release evidence.
 - On 2026-07-18, a schema `1.1.0` React archive containing an active note and a soft-deleted note (`sha256:c3605945c69893ba2e56091a4b1149b7ab598087d3fa2ee5c288acb506969f94`) passed isolated dry-run and repeated mutating imports through Fortemi commit `f39b01c995f10f8da4cad662ff8e86c6130ba2b0`. Dry-run left the clean destination at zero notes and zero tag rows. Fortemi re-exported the populated destination (`sha256:cac731d33f1183d73c5db958c454f22e9dfac09846e7e01c4c7486805c7b631a`); the React validator accepted that archive and a clean PGlite import restored both bodies, all three note-tag associations, active `deleted_at:null`, and tombstone instant `2026-07-18T04:30:00.000Z`. This receipt proves only the declared, byte-free `core-v1` surface.
 - @packages/core/src/records/types.ts, @packages/core/src/records/idb-record-store.ts, and @packages/core/src/records/memory-record-store.ts provide a multi-collection atomic batch with journal atomicity for RecordStore import.
 - @packages/core/src/shard/blob-staging.ts promotes verified sidecars before the logical transaction and removes only newly introduced hashes on synchronous failure.
-- @packages/core/src/shard/shard-import.ts and @packages/core/src/records/record-shard.ts preserve representable null, tombstone, and timestamp state and reconcile imported-note relationships for legacy unprofiled replace imports. Failure-injection and repeat-import tests cover PGlite and RecordStore. The delivered schema 2.0 implementation receipt enables the exact-tuple PGlite paths for producer and conformance use, while capability advertisements remain empty until the independent cross-repository receipt in #382 is delivered. Existing schema 1.2 defaults remain unchanged.
+- @packages/core/src/shard/shard-import.ts and @packages/core/src/records/record-shard.ts preserve representable null, tombstone, and timestamp state and reconcile imported-note relationships for legacy unprofiled replace imports. Failure-injection and repeat-import tests cover PGlite and RecordStore. The delivered schema 2.0 cross-repository receipt enables exact-tuple PGlite `full-v1` advertisement from receipt data after clean PGlite and Fortemi runs of the released React and AIWG archives. Existing schema 1.2 defaults remain unchanged, RecordStore remains `record-v1`, and suite-wide claims remain separately gated.
 
 ## Consequences
 

@@ -134,10 +134,13 @@ The pinned Fortemi receipts are normative for current availability, not this
 conceptual profile table. Presence semantics and full inventory are pinned to
 Fortemi commit `6343bd899958445bbc7e7e87b0dc92a8429d5a06`, contract revision
 `20`, and schema `2.0.0`; schema 1.x roots remain immutable. The authority is
-still `specified-implementation-pending`, so no schema 2.0 profile is present
-in capability advertisements. Exact-tuple code paths are callable only for
-conformance and matrix receipts. The AIWG full converter returns `archive:
-null` whenever its loss report is non-empty.
+recorded by its original descriptor as `specified-implementation-pending`.
+PGlite may nevertheless advertise exact `2.0.0/full-v1` because the later
+cross-repository receipt binds that authority to released React and AIWG
+producers plus clean PGlite and Fortemi destinations. The advertisement is
+computed from those delivered receipt bytes and fails closed on drift.
+RecordStore does not inherit this profile. The AIWG full converter returns
+`archive: null` whenever its loss report is non-empty.
 
 An importer must unpack into staging, validate the manifest, semantic version,
 checksums, profile, component records, counts, and required sidecars, and only

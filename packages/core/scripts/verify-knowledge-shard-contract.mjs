@@ -18,9 +18,22 @@ const v2PresenceReceiptPath = resolve(
   'schemas/knowledge-shard-v2.presence.receipt.json',
 )
 const v2PresenceReceipt = JSON.parse(readFileSync(v2PresenceReceiptPath, 'utf8'))
+const fortemiRuntimeReceiptPath = resolve(
+  packageRoot,
+  'schemas/knowledge-shard-v2.fortemi-runtime.receipt.json',
+)
+const fortemiRuntimeReceipt = JSON.parse(readFileSync(fortemiRuntimeReceiptPath, 'utf8'))
+const crossRepositoryReceipt = JSON.parse(readFileSync(
+  resolve(packageRoot, 'schemas/knowledge-shard-v2.cross-repository.receipt.json'),
+  'utf8',
+))
 
 function sha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex')
+}
+
+function requireReceipt(condition, message) {
+  if (!condition) throw new Error(`Knowledge Shard cross-repository receipt drift: ${message}`)
 }
 
 function verifyBundle(bundle, label) {
@@ -131,6 +144,137 @@ if (
 ) {
   throw new Error('Knowledge Shard 2.0 implementation archive drift')
 }
+
+const completeFullV1Coverage = [
+  'all-33-components',
+  'all-34-count-fields',
+  'attachment-bytes',
+  'signatures',
+  'identities',
+  'relationships',
+  'timestamps',
+  'tombstones',
+  'absent-null-empty-value',
+  '768-dimensional-embeddings',
+  'embedding-contract-lineage',
+  'skos',
+  'provenance',
+  'graph-community',
+  'current-minus-two',
+  'current',
+  'next-major-rejection',
+  'malformed-input',
+  'tampered-input',
+  'resource-limits',
+  'repeated-imports',
+  'zero-mutation-on-rejection',
+]
+const expectedCells = [
+  'pglite-full-v1-to-pglite',
+  'aiwg-full-v1-to-pglite',
+  'pglite-full-v1-to-fortemi',
+  'aiwg-full-v1-to-fortemi',
+]
+requireReceipt(
+  crossRepositoryReceipt.status === 'delivered-cross-repository-conformance-passed',
+  'status is not passed',
+)
+requireReceipt(
+  crossRepositoryReceipt.tuple.schemaVersion === '2.0.0'
+    && crossRepositoryReceipt.tuple.profile === 'full-v1',
+  'tuple is not exact 2.0.0/full-v1',
+)
+requireReceipt(
+  crossRepositoryReceipt.authority.commit === v2Receipt.source.commit
+    && crossRepositoryReceipt.authority.contractSha256 === v2Receipt.source.contractSha256
+    && crossRepositoryReceipt.authority.schemaBundleSha256 === v2Receipt.schemaBundle.sha256,
+  'authority binding does not match the pinned schema-2 receipt',
+)
+requireReceipt(
+  crossRepositoryReceipt.evidence.localImplementationReceiptSha256
+    === sha256(readFileSync(v2ImplementationReceiptPath))
+    && crossRepositoryReceipt.reactProducer.archive.sha256
+      === v2ImplementationReceipt.archive.sha256,
+  'released PGlite implementation/archive binding failed',
+)
+requireReceipt(
+  crossRepositoryReceipt.evidence.fortemiRuntimeReceiptSha256
+    === sha256(readFileSync(fortemiRuntimeReceiptPath))
+    && crossRepositoryReceipt.fortemiConsumer.implementationCommit
+      === fortemiRuntimeReceipt.implementation.commit
+    && /^[0-9a-f]{40}$/.test(crossRepositoryReceipt.fortemiConsumer.receipt.commit)
+    && !/^0+$/.test(crossRepositoryReceipt.fortemiConsumer.receipt.commit)
+    && crossRepositoryReceipt.fortemiConsumer.receipt.commit
+      === '2e812aa66ba108a824475a97b1ddba4d1412dec7'
+    && crossRepositoryReceipt.fortemiConsumer.receipt.sha256
+      === crossRepositoryReceipt.evidence.fortemiRuntimeReceiptSha256
+    && fortemiRuntimeReceipt.status === 'delivered-main-conformance-passed'
+    && fortemiRuntimeReceipt.implementation.deliveredMain.conclusion === 'success',
+  'Fortemi runtime receipt binding failed',
+)
+requireReceipt(
+  crossRepositoryReceipt.reactProducer.commit === '45ee08e99dfb6fa0263aca2992aa6de91e2f1e98'
+    && crossRepositoryReceipt.reactProducer.tag === 'v2026.7.13'
+    && crossRepositoryReceipt.reactProducer.package.name === '@fortemi/core'
+    && crossRepositoryReceipt.reactProducer.package.version === '2026.7.13'
+    && crossRepositoryReceipt.reactProducer.package.shasum
+      === 'd829b24cca7bf50689b936417ce607b6f75e9966'
+    && crossRepositoryReceipt.reactProducer.package.integrity
+      === 'sha512-bFf77/wQhJ9M9m/0M3TM1S13EkmfrBM/O5sVaTkXJaeo1uyCuvP46T9ZVm3pGae30AkpWI3fDxuwo2AvEOBKOw==',
+  'released React package identity drifted',
+)
+requireReceipt(
+  crossRepositoryReceipt.aiwgProducer.fixtureCommit
+    === fortemiRuntimeReceipt.aiwgProducer.fixtureCommit
+    && crossRepositoryReceipt.aiwgProducer.deliveredMainCommit
+      === fortemiRuntimeReceipt.aiwgProducer.deliveredMainCommit
+    && crossRepositoryReceipt.aiwgProducer.archive.sha256
+      === fortemiRuntimeReceipt.aiwgProducer.archive.sha256,
+  'delivered AIWG producer identity drifted',
+)
+for (const [producer, archive, expectedPath] of [
+  [
+    'reactProducer',
+    crossRepositoryReceipt.reactProducer.archive,
+    'src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-19-v2.shard',
+  ],
+  [
+    'aiwgProducer',
+    crossRepositoryReceipt.aiwgProducer.archive,
+    'src/__tests__/shard/fixtures/aiwg-full-v1/aiwg-full-v1.shard',
+  ],
+]) {
+  requireReceipt(archive.path === expectedPath, `${producer} archive path drifted`)
+  const bytes = readFileSync(resolve(packageRoot, archive.path))
+  requireReceipt(bytes.byteLength === archive.bytes, `${producer} archive byte length drifted`)
+  requireReceipt(sha256(bytes) === archive.sha256, `${producer} archive digest drifted`)
+}
+requireReceipt(
+  crossRepositoryReceipt.cells.length === 4
+    && JSON.stringify(crossRepositoryReceipt.cells.map((cell) => cell.id))
+      === JSON.stringify(expectedCells)
+    && crossRepositoryReceipt.cells.every((cell) =>
+      cell.status === 'passed'
+      && JSON.stringify(cell.coverage) === JSON.stringify(completeFullV1Coverage)),
+  'each independent producer/consumer cell must bind complete per-cell coverage',
+)
+requireReceipt(
+  crossRepositoryReceipt.advertisement.backend === 'pglite'
+    && crossRepositoryReceipt.advertisement.profile === 'full-v1'
+    && crossRepositoryReceipt.advertisement.schemaVersion === '2.0.0'
+    && crossRepositoryReceipt.advertisement.enabled === true
+    && crossRepositoryReceipt.claims.suiteWide === false,
+  'advertisement or suite-claim boundary drifted',
+)
+requireReceipt(
+  crossRepositoryReceipt.coordination.reactProfileIssue
+    === 'https://git.integrolabs.net/Fortemi/fortemi-react/issues/355'
+    && crossRepositoryReceipt.coordination.reactConvergenceIssue
+      === 'https://git.integrolabs.net/Fortemi/fortemi-react/issues/356'
+    && crossRepositoryReceipt.coordination.fortemiDestinationIssue
+      === 'https://git.integrolabs.net/Fortemi/fortemi/issues/1084',
+  'paired issue traceability drifted',
+)
 
 console.log(
   `Knowledge Shard ${receipt.knowledgeShard.schemaVersion}/${receipt.knowledgeShard.profile}: ` +

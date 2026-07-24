@@ -1,0 +1,253 @@
+{
+  "schemaVersion": "fortemi.knowledge-shard.cross-repository-receipt.v1",
+  "status": "delivered-cross-repository-conformance-passed",
+  "tuple": {
+    "schemaVersion": "2.0.0",
+    "profile": "full-v1"
+  },
+  "authority": {
+    "repository": "https://git.integrolabs.net/Fortemi/fortemi.git",
+    "commit": "6343bd899958445bbc7e7e87b0dc92a8429d5a06",
+    "contractRevision": "20",
+    "contractSha256": "5bf8d2fd8147d8df92599b1a3ce6b405ce022c83893f37547aefa7ca659f0783",
+    "schemaBundleSha256": "66dee80876c73fdc8756541c72e96ae189c098113a831c849d619381c4121c02",
+    "fieldSemanticsSha256": "43e5704bc8d805158aa67f33eef6d440fecfeb8385d4f622d79084be3424da09",
+    "fieldInventoryCount": 220
+  },
+  "reactProducer": {
+    "repository": "https://git.integrolabs.net/Fortemi/fortemi-react.git",
+    "commit": "45ee08e99dfb6fa0263aca2992aa6de91e2f1e98",
+    "tag": "v2026.7.13",
+    "releaseCiUrl": "https://git.integrolabs.net/Fortemi/fortemi-react/actions/runs/1024",
+    "package": {
+      "name": "@fortemi/core",
+      "version": "2026.7.13",
+      "shasum": "d829b24cca7bf50689b936417ce607b6f75e9966",
+      "integrity": "sha512-bFf77/wQhJ9M9m/0M3TM1S13EkmfrBM/O5sVaTkXJaeo1uyCuvP46T9ZVm3pGae30AkpWI3fDxuwo2AvEOBKOw==",
+      "releaseSigningFingerprint": "26CB074F65E89E5F4DFD7C71F410C8C763C90CC9"
+    },
+    "archive": {
+      "path": "src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-19-v2.shard",
+      "bytes": 7088,
+      "sha256": "054da5528276806b9be69dcfff364a6969b72344045f05f9f6fcbeaca82a7a59",
+      "componentCount": 33,
+      "countFieldCount": 34
+    }
+  },
+  "aiwgProducer": {
+    "repository": "https://git.integrolabs.net/roctinam/aiwg.git",
+    "fixtureCommit": "7ebc5c23929650e9cc762b9f5831be113fffbae8",
+    "deliveredMainCommit": "bebe053df4892d9ae5cced822aead3d9d7f19656",
+    "deliveredMainCiUrls": [
+      "https://git.integrolabs.net/roctinam/aiwg/actions/runs/4593",
+      "https://git.integrolabs.net/roctinam/aiwg/actions/runs/4594",
+      "https://git.integrolabs.net/roctinam/aiwg/actions/runs/4595",
+      "https://git.integrolabs.net/roctinam/aiwg/actions/runs/4596"
+    ],
+    "package": {
+      "name": "@fortemi/core",
+      "version": "2026.7.13",
+      "integrity": "sha512-bFf77/wQhJ9M9m/0M3TM1S13EkmfrBM/O5sVaTkXJaeo1uyCuvP46T9ZVm3pGae30AkpWI3fDxuwo2AvEOBKOw=="
+    },
+    "converterEntrypoint": "@fortemi/core/aiwg-index-shard",
+    "archive": {
+      "path": "src/__tests__/shard/fixtures/aiwg-full-v1/aiwg-full-v1.shard",
+      "bytes": 3941,
+      "sha256": "df87edc5725e3f0c8d95d8d4328c64a263e9b021520a127d9df5b7301c2afee5",
+      "receiptPath": "src/__tests__/shard/fixtures/aiwg-full-v1/aiwg-full-v1.shard.receipt.json",
+      "receiptSha256": "9b23aa6db841c76eb5898bbdc6c818cc5ac845d38b414de87acbde3466530a6c",
+      "componentCount": 33,
+      "countFieldCount": 34
+    }
+  },
+  "fortemiConsumer": {
+    "repository": "https://git.integrolabs.net/Fortemi/fortemi.git",
+    "implementationCommit": "c93742d7c75b481621b821f4584304289eb364d5",
+    "receipt": {
+      "commit": "2e812aa66ba108a824475a97b1ddba4d1412dec7",
+      "path": "tests/fixtures/shards/external/schema-2-runtime.implementation-receipt.json",
+      "sha256": "29f5e7cca66aec38baba0d7e58da1f5f6cc8520995f290831bc949bde1de1647"
+    },
+    "ciUrls": [
+      "https://git.integrolabs.net/Fortemi/fortemi/actions/runs/5427",
+      "https://git.integrolabs.net/Fortemi/fortemi/actions/runs/5430"
+    ]
+  },
+  "evidence": {
+    "localImplementationReceiptSha256": "93f410bb14f5f735913d2d3d1704ce44783a06a828bf46e898c07d551f190216",
+    "fortemiRuntimeReceiptSha256": "29f5e7cca66aec38baba0d7e58da1f5f6cc8520995f290831bc949bde1de1647",
+    "reactCommand": "pnpm --filter @fortemi/core test:portable-contract",
+    "fortemiCommands": [
+      "cargo test -p matric-api shard_ -- --nocapture",
+      "cargo test -p matric-core",
+      "python3 -m unittest tests/test_verify_knowledge_shard_presence.py tests/test_verify_knowledge_shard_matrix.py"
+    ]
+  },
+  "cells": [
+    {
+      "id": "pglite-full-v1-to-pglite",
+      "producer": "react-pglite",
+      "consumer": "react-pglite",
+      "status": "passed",
+      "tests": [
+        "full-v1-store: validates, persists all components and bytes, and converges on re-export",
+        "full-v1-store: produces and converges a complete full-v1 archive from live PGlite state",
+        "full-v1-store: rejects corrupt, incomplete, oversized, and transactional-failure inputs"
+      ],
+      "coverage": [
+        "all-33-components",
+        "all-34-count-fields",
+        "attachment-bytes",
+        "signatures",
+        "identities",
+        "relationships",
+        "timestamps",
+        "tombstones",
+        "absent-null-empty-value",
+        "768-dimensional-embeddings",
+        "embedding-contract-lineage",
+        "skos",
+        "provenance",
+        "graph-community",
+        "current-minus-two",
+        "current",
+        "next-major-rejection",
+        "malformed-input",
+        "tampered-input",
+        "resource-limits",
+        "repeated-imports",
+        "zero-mutation-on-rejection"
+      ]
+    },
+    {
+      "id": "aiwg-full-v1-to-pglite",
+      "producer": "aiwg-index-converter",
+      "consumer": "react-pglite",
+      "status": "passed",
+      "tests": [
+        "aiwg-index-full-shard: verifies the committed source, implementation, archive, and authority receipt",
+        "aiwg-index-full-shard: imports through PGlite and converges on exact logical files",
+        "portable-contract: validates rejection, presence, signature, limit, and mutation invariants"
+      ],
+      "coverage": [
+        "all-33-components",
+        "all-34-count-fields",
+        "attachment-bytes",
+        "signatures",
+        "identities",
+        "relationships",
+        "timestamps",
+        "tombstones",
+        "absent-null-empty-value",
+        "768-dimensional-embeddings",
+        "embedding-contract-lineage",
+        "skos",
+        "provenance",
+        "graph-community",
+        "current-minus-two",
+        "current",
+        "next-major-rejection",
+        "malformed-input",
+        "tampered-input",
+        "resource-limits",
+        "repeated-imports",
+        "zero-mutation-on-rejection"
+      ]
+    },
+    {
+      "id": "pglite-full-v1-to-fortemi",
+      "producer": "react-pglite",
+      "consumer": "fortemi-postgresql",
+      "status": "passed",
+      "tests": [
+        "tests::shard_schema_2_accepts_independent_react_and_aiwg_full_v1_archives",
+        "tests::shard_schema_2_clean_destinations_preserve_independent_full_v1_archives",
+        "tests::shard_schema_2_dispatch_covers_the_complete_authority_field_inventory"
+      ],
+      "coverage": [
+        "all-33-components",
+        "all-34-count-fields",
+        "attachment-bytes",
+        "signatures",
+        "identities",
+        "relationships",
+        "timestamps",
+        "tombstones",
+        "absent-null-empty-value",
+        "768-dimensional-embeddings",
+        "embedding-contract-lineage",
+        "skos",
+        "provenance",
+        "graph-community",
+        "current-minus-two",
+        "current",
+        "next-major-rejection",
+        "malformed-input",
+        "tampered-input",
+        "resource-limits",
+        "repeated-imports",
+        "zero-mutation-on-rejection"
+      ]
+    },
+    {
+      "id": "aiwg-full-v1-to-fortemi",
+      "producer": "aiwg-index-converter",
+      "consumer": "fortemi-postgresql",
+      "status": "passed",
+      "tests": [
+        "tests::shard_schema_2_accepts_independent_react_and_aiwg_full_v1_archives",
+        "tests::shard_schema_2_clean_destinations_preserve_independent_full_v1_archives",
+        "tests::shard_schema_2_dispatch_covers_the_complete_authority_field_inventory"
+      ],
+      "coverage": [
+        "all-33-components",
+        "all-34-count-fields",
+        "attachment-bytes",
+        "signatures",
+        "identities",
+        "relationships",
+        "timestamps",
+        "tombstones",
+        "absent-null-empty-value",
+        "768-dimensional-embeddings",
+        "embedding-contract-lineage",
+        "skos",
+        "provenance",
+        "graph-community",
+        "current-minus-two",
+        "current",
+        "next-major-rejection",
+        "malformed-input",
+        "tampered-input",
+        "resource-limits",
+        "repeated-imports",
+        "zero-mutation-on-rejection"
+      ]
+    }
+  ],
+  "advertisement": {
+    "backend": "pglite",
+    "schemaVersion": "2.0.0",
+    "profile": "full-v1",
+    "operations": [
+      "import",
+      "export"
+    ],
+    "enabled": true
+  },
+  "claims": {
+    "suiteWide": false,
+    "completeBackup": false,
+    "recordStoreFullV1": false,
+    "reason": "This receipt proves only the exact 2.0.0/full-v1 React PGlite tuple against the two named released producers and the two named destinations."
+  },
+  "coordination": {
+    "reactIssue": "https://git.integrolabs.net/Fortemi/fortemi-react/issues/382",
+    "reactProducerIssue": "https://git.integrolabs.net/Fortemi/fortemi-react/issues/381",
+    "reactProfileIssue": "https://git.integrolabs.net/Fortemi/fortemi-react/issues/355",
+    "reactConvergenceIssue": "https://git.integrolabs.net/Fortemi/fortemi-react/issues/356",
+    "fortemiRuntimeIssue": "https://git.integrolabs.net/Fortemi/fortemi/issues/1087",
+    "fortemiDestinationIssue": "https://git.integrolabs.net/Fortemi/fortemi/issues/1084",
+    "aiwgIssue": "https://git.integrolabs.net/roctinam/aiwg/issues/1870"
+  }
+}
