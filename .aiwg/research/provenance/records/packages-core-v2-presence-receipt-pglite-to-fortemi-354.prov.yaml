@@ -1,0 +1,49 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T16:47:48Z"
+  description: "Provenance for regenerated Knowledge Shard presence implementation digests"
+entity:
+  id: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json"
+  type: "test_evidence"
+  created_at: "2026-07-26T16:47:48Z"
+  checksum: "sha256:26c72ded9981fcc01623d22d188b3a34e8ef3d65fb247261b98421589115b81f"
+  size_bytes: 3189
+  attributes:
+    change_scope: "knowledge-shard-core-v1-pglite-to-fortemi"
+    base_revision: "1ba313d65cd92d5180c6dc563a4936a3a9582af5"
+activity:
+  id: "urn:aiwg:activity:generation:packages-core-v2-presence-receipt-pglite-to-fortemi:354"
+  type: "generation"
+  started_at: "2026-07-26T16:35:00Z"
+  ended_at: "2026-07-26T16:47:48Z"
+  description: "Regenerate the verifier implementation digest after adding the exact-cell receipt gate"
+  attributes:
+    verification:
+      - "pnpm --filter @fortemi/core shard:generate-presence-receipt"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json"
+    activity: "urn:aiwg:activity:generation:packages-core-v2-presence-receipt-pglite-to-fortemi:354"
+    time: "2026-07-26T16:47:48Z"
+  used:
+    - activity: "urn:aiwg:activity:generation:packages-core-v2-presence-receipt-pglite-to-fortemi:354"
+      entity: "urn:aiwg:artifact:packages/core/scripts/verify-knowledge-shard-contract.mjs"
+      role: "implementation_digest"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:354"
+      derivation_type: "records"
+      activity: "urn:aiwg:activity:generation:packages-core-v2-presence-receipt-pglite-to-fortemi:354"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:packages-core-v2-presence-receipt-pglite-to-fortemi:354"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json"
+    agent: "urn:aiwg:agent:codex-gpt-5"

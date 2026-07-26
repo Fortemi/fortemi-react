@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T16:47:48Z"
+  description: "Provenance for PGlite-to-Fortemi core-v1 receipt documentation"
+entity:
+  id: "urn:aiwg:artifact:packages/core/schemas/README.md"
+  type: "documentation"
+  created_at: "2026-07-26T16:47:48Z"
+  checksum: "sha256:c42831d0496ac9a10aa631ccbd894920e3a1d5ae332bc5f817678c0b3fbc6142"
+  size_bytes: 4947
+  attributes:
+    change_scope: "knowledge-shard-core-v1-pglite-to-fortemi"
+    base_revision: "1ba313d65cd92d5180c6dc563a4936a3a9582af5"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-schemas-readme-pglite-to-fortemi:354"
+  type: "modification"
+  started_at: "2026-07-26T16:35:00Z"
+  ended_at: "2026-07-26T16:47:48Z"
+  description: "Document the independent cross-repository cell and preserve its scoped claim boundary"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/schemas/README.md"
+    activity: "urn:aiwg:activity:modification:packages-core-schemas-readme-pglite-to-fortemi:354"
+    time: "2026-07-26T16:47:48Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-schemas-readme-pglite-to-fortemi:354"
+      entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-to-fortemi.receipt.json"
+      role: "documented_receipt"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/schemas/README.md"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:354"
+      derivation_type: "documents"
+      activity: "urn:aiwg:activity:modification:packages-core-schemas-readme-pglite-to-fortemi:354"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-schemas-readme-pglite-to-fortemi:354"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/schemas/README.md"
+    agent: "urn:aiwg:agent:codex-gpt-5"

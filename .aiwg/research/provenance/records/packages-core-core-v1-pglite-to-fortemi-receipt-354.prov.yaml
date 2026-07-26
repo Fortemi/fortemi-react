@@ -1,0 +1,58 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T16:47:48Z"
+  description: "Provenance for the PGlite core-v1 to Fortemi cross-repository cell receipt"
+entity:
+  id: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-to-fortemi.receipt.json"
+  type: "test_evidence"
+  created_at: "2026-07-26T16:47:48Z"
+  checksum: "sha256:e2fcefea2211734764f0bb1290b5901ae1ce9622ab3b09ac5182bf0c8342617a"
+  size_bytes: 3296
+  attributes:
+    change_scope: "knowledge-shard-core-v1-pglite-to-fortemi"
+    producer_issue: "Fortemi/fortemi-react#354"
+    consumer_issue: "Fortemi/fortemi#1059"
+    base_revision: "1ba313d65cd92d5180c6dc563a4936a3a9582af5"
+activity:
+  id: "urn:aiwg:activity:generation:packages-core-core-v1-pglite-to-fortemi-receipt:354"
+  type: "generation"
+  started_at: "2026-07-26T16:35:00Z"
+  ended_at: "2026-07-26T16:47:48Z"
+  description: "Bind the signed PGlite fixture to the delivered Fortemi consumer commit, CI result, and all nine coverage dimensions"
+  attributes:
+    verification:
+      - "pnpm --filter @fortemi/core test:portable-contract: 276 passed"
+      - "Fortemi Gitea run 6057 job 101007: 913 passed"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-to-fortemi.receipt.json"
+    activity: "urn:aiwg:activity:generation:packages-core-core-v1-pglite-to-fortemi-receipt:354"
+    time: "2026-07-26T16:47:48Z"
+  used:
+    - activity: "urn:aiwg:activity:generation:packages-core-core-v1-pglite-to-fortemi-receipt:354"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:9fdaa61a8da05c7d45ac7ff555d158cbe3dc1d2d:packages/core/src/__tests__/shard/fixtures/pglite-core-v1-2026.7.13.shard"
+      role: "producer_fixture"
+    - activity: "urn:aiwg:activity:generation:packages-core-core-v1-pglite-to-fortemi-receipt:354"
+      entity: "urn:gitea:commit:Fortemi/fortemi:11125eb9ac97494745a834efbc0a865117d5f2b6"
+      role: "consumer_implementation"
+    - activity: "urn:aiwg:activity:generation:packages-core-core-v1-pglite-to-fortemi-receipt:354"
+      entity: "urn:gitea:actions:Fortemi/fortemi:6057:101007"
+      role: "consumer_ci"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-to-fortemi.receipt.json"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:354"
+      derivation_type: "certifies"
+      activity: "urn:aiwg:activity:generation:packages-core-core-v1-pglite-to-fortemi-receipt:354"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:packages-core-core-v1-pglite-to-fortemi-receipt:354"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-to-fortemi.receipt.json"
+    agent: "urn:aiwg:agent:codex-gpt-5"

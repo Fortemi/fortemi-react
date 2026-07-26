@@ -1,0 +1,49 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T16:47:48Z"
+  description: "Provenance for fail-closed PGlite-to-Fortemi core-v1 receipt verification"
+entity:
+  id: "urn:aiwg:artifact:packages/core/scripts/verify-knowledge-shard-contract.mjs"
+  type: "source_code"
+  created_at: "2026-07-26T16:47:48Z"
+  checksum: "sha256:517ad876d3af8cf4330f3cb8c45997d19fdac2e0f24f52dbae805fad9a9b05f5"
+  size_bytes: 18150
+  attributes:
+    change_scope: "knowledge-shard-core-v1-pglite-to-fortemi"
+    base_revision: "1ba313d65cd92d5180c6dc563a4936a3a9582af5"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-verify-knowledge-shard-contract-pglite-to-fortemi:354"
+  type: "modification"
+  started_at: "2026-07-26T16:35:00Z"
+  ended_at: "2026-07-26T16:47:48Z"
+  description: "Fail closed on cross-repository status, identity, authority, fixture, CI, coverage, behavior, or claim-boundary drift"
+  attributes:
+    verification:
+      - "pnpm --filter @fortemi/core verify:knowledge-shard-contract"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/scripts/verify-knowledge-shard-contract.mjs"
+    activity: "urn:aiwg:activity:modification:packages-core-verify-knowledge-shard-contract-pglite-to-fortemi:354"
+    time: "2026-07-26T16:47:48Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-verify-knowledge-shard-contract-pglite-to-fortemi:354"
+      entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-to-fortemi.receipt.json"
+      role: "verified_receipt"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/scripts/verify-knowledge-shard-contract.mjs"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:354"
+      derivation_type: "enforces"
+      activity: "urn:aiwg:activity:modification:packages-core-verify-knowledge-shard-contract-pglite-to-fortemi:354"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-verify-knowledge-shard-contract-pglite-to-fortemi:354"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/scripts/verify-knowledge-shard-contract.mjs"
+    agent: "urn:aiwg:agent:codex-gpt-5"

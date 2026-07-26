@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Date**: 2026-07-05
 - **Accepted**: 2026-07-09
-- **Amended**: 2026-07-22
+- **Amended**: 2026-07-26
 - **Issue**: #235 (audit epic)
 - **Relates**: ADR-010 (source-of-truth principle), server ADR-028 (shard archive migration system), server issue `Fortemi/fortemi#1013`
 
@@ -103,6 +103,16 @@ insufficient release evidence.
   malformed and next-major rejection, the archive expansion cap, and zero
   mutation on each failure. This receipt does not satisfy any
   cross-repository cell.
+- @packages/core/schemas/knowledge-shard-core-v1-pglite-to-fortemi.receipt.json
+  binds that same signed producer fixture to delivered Fortemi commit
+  `11125eb9ac97494745a834efbc0a865117d5f2b6`. Fortemi run 6057 job 101007
+  passed both named consumer cases as part of 913 workspace tests. The
+  receipt directly covers hierarchy, object and explicit-null metadata,
+  tombstones, current-minus-two/current behavior, malformed and next-major
+  rejection, configured compressed-size enforcement, repeated import,
+  semantic re-export, and zero mutation after each rejection. It satisfies
+  only `pglite-core-v1-to-fortemi`; the reverse direction and the AIWG and
+  RecordStore cross-repository cells remain separately gated.
 - @packages/core/src/shard/full-v1-store.ts persists and re-emits every logical
   file in exact `2.0.0/full-v1`, stores all 33 validated component record sets,
   retains signatures when present, and reference-counts mandatory blob bytes.

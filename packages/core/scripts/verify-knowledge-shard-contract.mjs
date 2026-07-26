@@ -31,6 +31,10 @@ const coreV1PgliteSelfReceipt = JSON.parse(readFileSync(
   resolve(packageRoot, 'schemas/knowledge-shard-core-v1-pglite-self.receipt.json'),
   'utf8',
 ))
+const coreV1PgliteToFortemiReceipt = JSON.parse(readFileSync(
+  resolve(packageRoot, 'schemas/knowledge-shard-core-v1-pglite-to-fortemi.receipt.json'),
+  'utf8',
+))
 
 function sha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex')
@@ -139,6 +143,62 @@ requireReceipt(
     && coreV1PgliteSelfReceipt.claimBoundary.completeBackup === false
     && coreV1PgliteSelfReceipt.claimBoundary.crossRepository === false,
   'PGlite core-v1 self-cell claim boundary widened',
+)
+requireReceipt(
+  coreV1PgliteToFortemiReceipt.status === 'delivered-main-conformance-passed'
+    && coreV1PgliteToFortemiReceipt.cell === 'pglite-core-v1-to-fortemi'
+    && coreV1PgliteToFortemiReceipt.producer.commit
+      === coreV1PgliteSelfReceipt.producer.commit
+    && coreV1PgliteToFortemiReceipt.fixture.sha256
+      === coreV1PgliteSelfReceipt.fixture.sha256
+    && coreV1PgliteToFortemiReceipt.fixture.bytes
+      === coreV1PgliteSelfReceipt.fixture.bytes,
+  'PGlite-to-Fortemi core-v1 producer or fixture binding drifted',
+)
+requireReceipt(
+  coreV1PgliteToFortemiReceipt.authority.commit === receipt.source.commit
+    && coreV1PgliteToFortemiReceipt.authority.contractSha256
+      === receipt.source.contractSha256
+    && coreV1PgliteToFortemiReceipt.authority.schemaBundleSha256
+      === receipt.schemaBundle.sha256
+    && coreV1PgliteToFortemiReceipt.authority.schemaVersion
+      === receipt.knowledgeShard.schemaVersion,
+  'PGlite-to-Fortemi core-v1 authority binding drifted',
+)
+requireReceipt(
+  coreV1PgliteToFortemiReceipt.consumer.commit
+      === '11125eb9ac97494745a834efbc0a865117d5f2b6'
+    && coreV1PgliteToFortemiReceipt.tests.deliveredMain.commit
+      === coreV1PgliteToFortemiReceipt.consumer.commit
+    && coreV1PgliteToFortemiReceipt.tests.deliveredMain.conclusion === 'success'
+    && coreV1PgliteToFortemiReceipt.tests.focusedResult.passed === 2
+    && coreV1PgliteToFortemiReceipt.tests.focusedResult.failed === 0,
+  'PGlite-to-Fortemi core-v1 delivered consumer evidence drifted',
+)
+requireReceipt(
+  JSON.stringify(coreV1PgliteToFortemiReceipt.coverage)
+      === JSON.stringify(completeCoreV1Coverage)
+    && coreV1PgliteToFortemiReceipt.consumer.cleanDestination === true
+    && coreV1PgliteToFortemiReceipt.consumer.semanticReexport === true
+    && coreV1PgliteToFortemiReceipt.consumer.zeroMutationOnFailure === true
+    && coreV1PgliteToFortemiReceipt.consumer.hierarchyPreserved === true
+    && coreV1PgliteToFortemiReceipt.consumer.metadataValuePreserved === true
+    && coreV1PgliteToFortemiReceipt.consumer.explicitNullMetadataPreserved === true
+    && coreV1PgliteToFortemiReceipt.consumer.tombstonePreserved === true
+    && coreV1PgliteToFortemiReceipt.consumer.currentMinusTwo.accepted === true
+    && coreV1PgliteToFortemiReceipt.consumer.nextMajor.rejected === true
+    && coreV1PgliteToFortemiReceipt.consumer.malformedInputRejected === true
+    && coreV1PgliteToFortemiReceipt.consumer.resourceLimits.rejectedBeforeMutation === true
+    && coreV1PgliteToFortemiReceipt.consumer.persistentMutationAfterRejection === 0,
+  'PGlite-to-Fortemi core-v1 coverage or consumer evidence drifted',
+)
+requireReceipt(
+  coreV1PgliteToFortemiReceipt.claimBoundary.suiteWide === false
+    && coreV1PgliteToFortemiReceipt.claimBoundary.completeBackup === false
+    && coreV1PgliteToFortemiReceipt.claimBoundary.crossRepository === true
+    && coreV1PgliteToFortemiReceipt.claimBoundary.cell
+      === coreV1PgliteToFortemiReceipt.cell,
+  'PGlite-to-Fortemi core-v1 claim boundary widened',
 )
 
 const v2Contract = readFileSync(resolve(packageRoot, 'schemas/knowledge-shard/2.0.0/contract.json'))
