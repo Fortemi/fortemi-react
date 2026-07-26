@@ -1,6 +1,6 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-07-26T18:11:09Z"
+  updated_at: "2026-07-26T19:46:45Z"
   record_count: 48
 records:
   - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-to-fortemi.receipt.json"
@@ -55,6 +55,14 @@ records:
     record: "records/packages-core-src-tests-shard-shard-export.test.ts.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/shard-import.test.ts"
     record: "records/packages-core-src-tests-shard-shard-import.test.ts.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/src/aiwg-index.ts"
+    record: "records/packages-core-src-aiwg-index.ts.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/src/aiwg-index-shard.ts"
+    record: "records/packages-core-src-aiwg-index-shard.ts.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/aiwg-index.test.ts"
+    record: "records/packages-core-src-tests-aiwg-index.test.ts.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/aiwg-core-v1-projection.test.ts"
+    record: "records/packages-core-src-tests-shard-aiwg-core-v1-projection.test.ts.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/blob-store.ts"
     record: "records/packages-core-src-blob-store.ts.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/index.ts"

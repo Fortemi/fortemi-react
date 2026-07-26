@@ -1,22 +1,22 @@
 metadata:
   schema_version: "1.0.0"
-  created_at: "2026-07-26T17:27:26Z"
-  description: "Provenance for the ADR-011 Fortemi-to-PGlite core-v1 amendment"
+  created_at: "2026-07-26T19:46:45Z"
+  description: "Provenance for scoping the AIWG core-v1 consumer evidence"
 entity:
   id: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
-  type: "architecture_decision_record"
-  created_at: "2026-07-26T17:27:26Z"
-  checksum: "sha256:426e29d7eddb907ef02dd1e81123d210b66ae2db2371c06c538b6478ffedfc67"
-  size_bytes: 14876
+  type: "document"
+  created_at: "2026-07-26T19:46:45Z"
+  checksum: "sha256:30b16d5e680ecfeec572ec989de79eded4e1109cb1779fa58c12f8da92a0d02a"
+  size_bytes: 15346
   attributes:
-    change_scope: "knowledge-shard-core-v1-fortemi-to-pglite"
-    base_revision: "fb570b8503eb82bcb5509b652c234c9e8582a941"
+    change_scope: "aiwg-core-v1-lifecycle-hierarchy"
+    base_revision: "6a37716ee823c19e67b6eb8fc4dbca230a6d2037"
 activity:
-  id: "urn:aiwg:activity:modification:adr-011-fortemi-to-pglite:354"
+  id: "urn:aiwg:activity:modification:ADR-011-aiwg-core-v1:393"
   type: "modification"
-  started_at: "2026-07-26T17:25:00Z"
-  ended_at: "2026-07-26T17:27:26Z"
-  description: "Record the exact reverse core-v1 cell while keeping remaining cross-repository directions gated"
+  started_at: "2026-07-26T19:46:45Z"
+  ended_at: "2026-07-26T19:46:45Z"
+  description: "Record local PGlite evidence without claiming either cross-repository cell"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
   type: "ai_assistant"
@@ -26,21 +26,25 @@ agent:
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
-    activity: "urn:aiwg:activity:modification:adr-011-fortemi-to-pglite:354"
-    time: "2026-07-26T17:27:26Z"
+    activity: "urn:aiwg:activity:modification:ADR-011-aiwg-core-v1:393"
+    time: "2026-07-26T19:46:45Z"
   used:
-    - activity: "urn:aiwg:activity:modification:adr-011-fortemi-to-pglite:354"
-      entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-fortemi-to-pglite.receipt.json"
-      role: "implementation_evidence"
+    - activity: "urn:aiwg:activity:modification:ADR-011-aiwg-core-v1:393"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:6a37716ee823c19e67b6eb8fc4dbca230a6d2037:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+      role: "previous_revision"
   wasDerivedFrom:
     - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
-      source: "urn:gitea:Fortemi/fortemi:issue:1059"
+      source: "urn:aiwg:artifact:packages/core/src/__tests__/shard/aiwg-core-v1-projection.test.ts"
       derivation_type: "documents"
-      activity: "urn:aiwg:activity:modification:adr-011-fortemi-to-pglite:354"
+      activity: "urn:aiwg:activity:modification:ADR-011-aiwg-core-v1:393"
+    - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:393"
+      derivation_type: "documents"
+      activity: "urn:aiwg:activity:modification:ADR-011-aiwg-core-v1:393"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:adr-011-fortemi-to-pglite:354"
+    activity: "urn:aiwg:activity:modification:ADR-011-aiwg-core-v1:393"
     agent: "urn:aiwg:agent:codex-gpt-5"
-    role: "primary_implementer"
+    role: "primary_author"
   wasAttributedTo:
     entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
     agent: "urn:aiwg:agent:codex-gpt-5"

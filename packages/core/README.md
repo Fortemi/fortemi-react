@@ -204,8 +204,16 @@ can also read optional rich fields from full records:
 These fields are additive to `aiwg.fortemi.index.record.v1`. Version 2 records
 can also carry AIWG migration fields such as `search`, `chunks`, `embeddings`,
 `source.origin`, `source.generated`, `source.checksum`, `source.updated_at`,
-`privacy.locality`, and compatibility metadata. Query helpers use v2 `search`
-and `chunks` text when the old top-level `title`/`text` fields are absent.
+`privacy.locality`, `operational_state`, `state_transfer`, and compatibility
+metadata. Query helpers use v2 `search` and `chunks` text when the old top-level
+`title`/`text` fields are absent.
+
+The reduced `core-v1` converter maps directory prefixes from
+`source.repo_relative_path` to deterministic native collections and assigns
+each note to the leaf collection. A note tombstone is emitted only from an
+explicit `state_transfer.deleted_at`; `operational_state` remains provenance
+about an observed external system and never implies deletion. The full source
+record remains embedded in note metadata for reverse conversion.
 Existing consumers can ignore the v2 fields and continue querying the flat
 fields. Chunked indexes with a projection keep rich metadata in detail records;
 call `getRecord(id)` before rendering a metadata panel.

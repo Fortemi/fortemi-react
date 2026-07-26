@@ -1,0 +1,50 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T19:46:45Z"
+  description: "Provenance for AIWG core-v1 lifecycle and hierarchy projection"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/aiwg-index-shard.ts"
+  type: "source_code"
+  created_at: "2026-07-26T19:46:45Z"
+  checksum: "sha256:225fd3401d29966c0998f66ee7a85a44a805f563dda160bd5d17e7a1529153c2"
+  size_bytes: 11295
+  attributes:
+    language: "typescript"
+    change_scope: "aiwg-core-v1-lifecycle-hierarchy"
+    base_revision: "6a37716ee823c19e67b6eb8fc4dbca230a6d2037"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-src-aiwg-index-shard:393"
+  type: "modification"
+  started_at: "2026-07-26T19:46:45Z"
+  ended_at: "2026-07-26T19:46:45Z"
+  description: "Project source directories and explicit state transfer into core-v1"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/aiwg-index-shard.ts"
+    activity: "urn:aiwg:activity:modification:packages-core-src-aiwg-index-shard:393"
+    time: "2026-07-26T19:46:45Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-src-aiwg-index-shard:393"
+      entity: "urn:aiwg:artifact:packages/core/src/aiwg-index.ts"
+      role: "validated_source_contract"
+    - activity: "urn:aiwg:activity:modification:packages-core-src-aiwg-index-shard:393"
+      entity: "urn:aiwg:artifact:packages/core/src/shard/schema-validator.ts"
+      role: "output_contract"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/aiwg-index-shard.ts"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:393"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:modification:packages-core-src-aiwg-index-shard:393"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-src-aiwg-index-shard:393"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "software_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/aiwg-index-shard.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

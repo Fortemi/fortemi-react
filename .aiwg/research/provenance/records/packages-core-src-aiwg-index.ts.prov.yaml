@@ -1,0 +1,47 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T19:46:45Z"
+  description: "Provenance for the pinned AIWG lifecycle contract types and validation"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/aiwg-index.ts"
+  type: "source_code"
+  created_at: "2026-07-26T19:46:45Z"
+  checksum: "sha256:61137daa7c7027a2b31a038f896fb6b62de85d4f2fdf710928677361212c4c2e"
+  size_bytes: 109558
+  attributes:
+    language: "typescript"
+    change_scope: "aiwg-v2-state-transfer-validation"
+    base_revision: "6a37716ee823c19e67b6eb8fc4dbca230a6d2037"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-src-aiwg-index:393"
+  type: "modification"
+  started_at: "2026-07-26T19:46:45Z"
+  ended_at: "2026-07-26T19:46:45Z"
+  description: "Adopt the AIWG operational-state and state-transfer authority"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/aiwg-index.ts"
+    activity: "urn:aiwg:activity:modification:packages-core-src-aiwg-index:393"
+    time: "2026-07-26T19:46:45Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-src-aiwg-index:393"
+      entity: "urn:git:https://git.integrolabs.net/roctinam/aiwg.git:dbbfee78993365686f3c8283f93ba8ef7172e7d4:schemas/aiwg-fortemi-index-export.json"
+      role: "upstream_authority"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/aiwg-index.ts"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:393"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:modification:packages-core-src-aiwg-index:393"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-src-aiwg-index:393"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "software_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/aiwg-index.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

@@ -1,0 +1,49 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T19:46:45Z"
+  description: "Provenance for the clean PGlite AIWG core-v1 consumer proof"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/__tests__/shard/aiwg-core-v1-projection.test.ts"
+  type: "test_code"
+  created_at: "2026-07-26T19:46:45Z"
+  checksum: "sha256:2ef3069bc8041056033461e14371c1a7617f8c35e6ee1eb8393b5f52fa4921e0"
+  size_bytes: 5736
+  attributes:
+    language: "typescript"
+    change_scope: "aiwg-core-v1-clean-pglite"
+activity:
+  id: "urn:aiwg:activity:generation:packages-core-tests-aiwg-core-v1:393"
+  type: "generation"
+  started_at: "2026-07-26T19:46:45Z"
+  ended_at: "2026-07-26T19:46:45Z"
+  description: "Prove repeated clean PGlite import and semantic re-export"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/aiwg-core-v1-projection.test.ts"
+    activity: "urn:aiwg:activity:generation:packages-core-tests-aiwg-core-v1:393"
+    time: "2026-07-26T19:46:45Z"
+  used:
+    - activity: "urn:aiwg:activity:generation:packages-core-tests-aiwg-core-v1:393"
+      entity: "urn:aiwg:artifact:packages/core/src/aiwg-index-shard.ts"
+      role: "subject_under_test"
+    - activity: "urn:aiwg:activity:generation:packages-core-tests-aiwg-core-v1:393"
+      entity: "urn:aiwg:artifact:packages/core/src/shard/shard-import.ts"
+      role: "consumer_under_test"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/aiwg-core-v1-projection.test.ts"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:393"
+      derivation_type: "tests"
+      activity: "urn:aiwg:activity:generation:packages-core-tests-aiwg-core-v1:393"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:packages-core-tests-aiwg-core-v1:393"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "test_engineer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/aiwg-core-v1-projection.test.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

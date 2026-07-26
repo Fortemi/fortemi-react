@@ -1,0 +1,50 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T19:46:45Z"
+  description: "Provenance for AIWG v2 schema and converter unit coverage"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/__tests__/aiwg-index.test.ts"
+  type: "test_code"
+  created_at: "2026-07-26T19:46:45Z"
+  checksum: "sha256:bb4ddf20a421595fa804d58f16fd24ce388acfbd858ca3329696cf1ac309152a"
+  size_bytes: 87720
+  attributes:
+    language: "typescript"
+    change_scope: "aiwg-core-v1-lifecycle-hierarchy"
+    base_revision: "6a37716ee823c19e67b6eb8fc4dbca230a6d2037"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-tests-aiwg-index:393"
+  type: "modification"
+  started_at: "2026-07-26T19:46:45Z"
+  ended_at: "2026-07-26T19:46:45Z"
+  description: "Test v1 forbiddance, strict v2 lifecycle validation, hierarchy, and tombstones"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/aiwg-index.test.ts"
+    activity: "urn:aiwg:activity:modification:packages-core-tests-aiwg-index:393"
+    time: "2026-07-26T19:46:45Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-tests-aiwg-index:393"
+      entity: "urn:aiwg:artifact:packages/core/src/aiwg-index.ts"
+      role: "subject_under_test"
+    - activity: "urn:aiwg:activity:modification:packages-core-tests-aiwg-index:393"
+      entity: "urn:aiwg:artifact:packages/core/src/aiwg-index-shard.ts"
+      role: "subject_under_test"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/__tests__/aiwg-index.test.ts"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:393"
+      derivation_type: "tests"
+      activity: "urn:aiwg:activity:modification:packages-core-tests-aiwg-index:393"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-tests-aiwg-index:393"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "test_engineer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/aiwg-index.test.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

@@ -63,6 +63,20 @@ import gate. The MCP adapter is not part of that proof.
 - @packages/core/src/shard/schema-validator.ts consumes the pinned Fortemi schema receipt and validates `core-v1` archives.
 - @packages/core/src/__tests__/shard/schema-validator.test.ts verifies the receipt, authoritative corpus, strict formats, file/count coherence, references, and checksums.
 - @packages/core/schemas/knowledge-shard.schema.receipt.json records the immutable upstream revision and digests.
+- @packages/core/schemas/aiwg-fortemi-index-export.schema.receipt.json pins
+  the AIWG index authority revision used by the converter. The v2 contract
+  keeps observed `operational_state` separate from source-authored
+  `state_transfer`; only `state_transfer.deleted_at` projects into a shard
+  note tombstone.
+- @packages/core/src/aiwg-index-shard.ts deterministically projects every
+  directory prefix in `source.repo_relative_path` into a native `core-v1`
+  collection hierarchy and assigns the note to the leaf collection. It embeds
+  the complete source record for reverse conversion; this bridge does not make
+  the static index and Knowledge Shard a shared schema.
+- @packages/core/src/__tests__/shard/aiwg-core-v1-projection.test.ts proves
+  clean repeated PGlite import and semantic re-export of hierarchy and explicit
+  tombstones. Fortemi destination execution and an immutable released fixture
+  remain separate cross-repository gates.
 
 ## Alternatives considered
 

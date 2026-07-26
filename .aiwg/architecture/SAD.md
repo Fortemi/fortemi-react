@@ -115,7 +115,7 @@ Contract ownership:
 | Plane / contract | Hop | Authority | Enforcement |
 |---|---|---|---|
 | Static index | AIWG -> React | AIWG JSON Schema (`aiwg-fortemi-index-export`) | `validateAiwgFortemiIndexExport` plus portable-contract index conformance |
-| Index-to-shard conversion | AIWG v2 index -> Knowledge Shard | AIWG owns source-record semantics; `@fortemi/core` owns the converter; the server owns the shard envelope and profile schema | Converter fixture, pinned published-package smoke test, and destination-import proof |
+| Index-to-shard conversion | AIWG v2 index -> Knowledge Shard | AIWG owns source-record semantics; `@fortemi/core` owns the directory-to-collection and explicit state-transfer mapping; the server owns the shard envelope and profile schema | Pinned AIWG schema receipt, converter fixture, published-package smoke test, and clean PGlite and Fortemi destination proofs |
 | Knowledge Shard | PGlite / RecordStore <-> Server | Server-owned shard schema and server-produced golden fixtures, consumed through a commit-and-digest-pinned receipt | Schema/checksum/version validation before mutation, profile round trips, and server import/export fixtures |
 | Live MCP persistence | AIWG storage adapter -> Server | Server MCP tool contract | Live integration test; it is not evidence for static-index or shard compatibility |
 | DB table parity | Browser DB <-> server fixture shapes | Server database fixtures | `db-table-parity` suite; storage-shape guard only |
@@ -141,6 +141,14 @@ producers plus clean PGlite and Fortemi destinations. The advertisement is
 computed from those delivered receipt bytes and fails closed on drift.
 RecordStore does not inherit this profile. The AIWG full converter returns
 `archive: null` whenever its loss report is non-empty.
+
+For the reduced AIWG bridge, every directory prefix in
+`source.repo_relative_path` becomes a deterministic native collection and the
+record is assigned to its leaf collection. Only source-authored
+`state_transfer.deleted_at` becomes a note tombstone. `operational_state`
+describes observed external state and cannot be interpreted as deletion.
+These mappings do not close a cross-repository matrix cell without a released
+fixture, immutable receipt, and clean destination execution.
 
 An importer must unpack into staging, validate the manifest, semantic version,
 checksums, profile, component records, counts, and required sidecars, and only

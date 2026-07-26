@@ -1,22 +1,22 @@
 metadata:
   schema_version: "1.0.0"
-  created_at: "2026-07-24T02:48:16Z"
-  description: "Provenance for document the receipt-backed exact 2.0.0/full-v1 PGlite boundary"
+  created_at: "2026-07-26T19:46:45Z"
+  description: "Provenance for the AIWG core-v1 architecture mapping"
 entity:
   id: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
   type: "document"
-  created_at: "2026-07-24T02:48:16Z"
-  checksum: "sha256:8f4a1dcf2016866ed9dc16f41a940ec269d92b1c05add152d03f0d28d32dbc56"
-  size_bytes: 26718
+  created_at: "2026-07-26T19:46:45Z"
+  checksum: "sha256:4ff8e580358f6a3963e897ce1e84271eb1efe8440ab1cb4a50f5cd8849e00f77"
+  size_bytes: 27292
   attributes:
-    change_scope: "knowledge-shard-schema-2-full-v1-cross-repository-advertisement"
-    base_revision: "45ee08e99dfb6fa0263aca2992aa6de91e2f1e98"
+    change_scope: "aiwg-core-v1-lifecycle-hierarchy"
+    base_revision: "6a37716ee823c19e67b6eb8fc4dbca230a6d2037"
 activity:
-  id: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:382"
+  id: "urn:aiwg:activity:modification:SAD-aiwg-core-v1:393"
   type: "modification"
-  started_at: "2026-07-24T02:48:15Z"
-  ended_at: "2026-07-24T02:48:16Z"
-  description: "Document exact full-v1 PGlite support without expanding RecordStore or suite-wide claims"
+  started_at: "2026-07-26T19:46:45Z"
+  ended_at: "2026-07-26T19:46:45Z"
+  description: "Specify deterministic hierarchy and explicit state-transfer semantics"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
   type: "ai_assistant"
@@ -26,26 +26,23 @@ agent:
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
-    activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:382"
-    time: "2026-07-24T02:48:16Z"
+    activity: "urn:aiwg:activity:modification:SAD-aiwg-core-v1:393"
+    time: "2026-07-26T19:46:45Z"
   used:
-    - activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:382"
-      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:45ee08e99dfb6fa0263aca2992aa6de91e2f1e98:.aiwg/architecture/SAD.md"
+    - activity: "urn:aiwg:activity:modification:SAD-aiwg-core-v1:393"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:6a37716ee823c19e67b6eb8fc4dbca230a6d2037:.aiwg/architecture/SAD.md"
       role: "previous_revision"
-    - activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:382"
-      entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.cross-repository.receipt.json"
-      role: "conformance_receipt"
   wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
+      source: "urn:aiwg:artifact:.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md"
+      derivation_type: "derives_from"
+      activity: "urn:aiwg:activity:modification:SAD-aiwg-core-v1:393"
     - entity: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
       source: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
       derivation_type: "derives_from"
-      activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:382"
-    - entity: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
-      source: "urn:gitea:Fortemi/fortemi-react:issue:382"
-      derivation_type: "documents"
-      activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:382"
+      activity: "urn:aiwg:activity:modification:SAD-aiwg-core-v1:393"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:aiwg-architecture-SAD-md:382"
+    activity: "urn:aiwg:activity:modification:SAD-aiwg-core-v1:393"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:

@@ -132,6 +132,13 @@ insufficient release evidence.
   `2.0.0/full-v1` only when the conversion is lossless. Its report-bearing
   public API returns `archive: null` plus typed losses when source information
   would be defaulted or omitted.
+- @packages/core/src/aiwg-index-shard.ts maps AIWG v2 directory prefixes to
+  native `1.2.0/core-v1` collections and source-authored
+  `state_transfer.deleted_at` to note tombstones. Observed
+  `operational_state` never implies deletion. The clean PGlite import/re-export
+  test is local consumer evidence only; the AIWG-to-PGlite and
+  AIWG-to-Fortemi matrix cells remain open until a released producer fixture,
+  immutable receipt, and both exact consumer runs exist.
 - @packages/core/src/__tests__/shard/profile-registry.test.ts verifies authority status independently from backend advertisements, strict producer output, PGlite import, and RecordStore fail-closed behavior.
 - On 2026-07-17, a React-produced archive (`sha256:5444ca75a9a4d76dfff118e1a5afc05f0e33cbc66b6900d63513311608d6849c`) passed both dry-run and mutating multipart import through Fortemi commit `6f13e7ad86243f39666f8bbb0bb680b3cebab9e9`; Fortemi then re-exported the clean database (`sha256:ce42b96733fdbac18ca98a1d70afc97c6fdab92b04e87f77d56486fb2ce9df47`), and a clean PGlite import restored the note and tags. This is evidence for `core-v1` only.
 - @packages/core/src/shard/schema-validator.ts selects the immutable `1.0.0` or current `1.1.0` canonical bundle from the manifest version. Named PGlite exports use `1.1.0`, include active and soft-deleted notes, emit exact `deleted_at` state, and restore that state inside the existing import transaction.

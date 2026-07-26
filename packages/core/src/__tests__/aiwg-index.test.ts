@@ -165,8 +165,20 @@ describe('AIWG Fortemi index adapter', () => {
         v2Record('aiwg:agent:architect', 'aiwg.agent', {
           title: 'Architect',
           text: 'Architecture specialist.',
+          source: {
+            path: '.aiwg/agents/architect.md',
+            repo_relative_path: '.aiwg/agents/architect.md',
+            locator: 'aiwg:agent:architect',
+            origin: 'aiwg',
+            generated: true,
+            checksum: 'sha256:aiwg:agent:architect',
+            updated_at: '2026-07-02T00:00:00.000Z',
+          },
           tags: ['architecture'],
           concepts: ['concept:architecture'],
+          state_transfer: {
+            deleted_at: '2026-07-20T12:30:00.000Z',
+          },
           relationships: [{
             type: 'uses',
             target_id: 'aiwg:skill:design-review',
@@ -190,8 +202,23 @@ describe('AIWG Fortemi index adapter', () => {
         v2Record('aiwg:skill:design-review', 'aiwg.skill', {
           title: 'Design Review',
           text: 'Review an architecture design.',
+          source: {
+            path: '.aiwg/skills/reviews/design-review.md',
+            repo_relative_path: '.aiwg/skills/reviews/design-review.md',
+            locator: 'aiwg:skill:design-review',
+            origin: 'aiwg',
+            generated: true,
+            checksum: 'sha256:aiwg:skill:design-review',
+            updated_at: '2026-07-02T00:00:00.000Z',
+          },
           tags: ['review'],
           concepts: ['concept:architecture'],
+          operational_state: {
+            classification: 'historical',
+            source_repo: 'roctinam/aiwg',
+            source_kind: 'gitea-issue',
+            source_id: '17',
+          },
         }),
       ],
     }
@@ -210,7 +237,17 @@ describe('AIWG Fortemi index adapter', () => {
     }
     const notes = new TextDecoder().decode(files.get('notes.jsonl'))
       .split('\n')
-      .map((line) => JSON.parse(line) as { id: string; metadata: Record<string, unknown> })
+      .map((line) => JSON.parse(line) as {
+        id: string
+        collection_id: string | null
+        deleted_at: string | null
+        metadata: Record<string, unknown>
+      })
+    const collections = JSON.parse(new TextDecoder().decode(files.get('collections.json'))) as Array<{
+      id: string
+      name: string
+      parent_id: string | null
+    }>
     const links = new TextDecoder().decode(files.get('links.jsonl'))
       .split('\n')
       .map((line) => JSON.parse(line) as {
@@ -228,10 +265,10 @@ describe('AIWG Fortemi index adapter', () => {
         name: 'fortemi-core-aiwg-index',
         version: '2026.7.9',
       },
-      components: ['notes', 'tags', 'links'],
+      components: ['notes', 'collections', 'tags', 'links'],
       counts: {
         notes: 2,
-        collections: 0,
+        collections: 4,
         tags: 2,
         templates: 0,
         links: 1,
@@ -247,6 +284,16 @@ describe('AIWG Fortemi index adapter', () => {
     })
     expect(notes[0].id).toMatch(/^[0-9a-f-]{36}$/)
     expect(notes[0].metadata).toHaveProperty('aiwg_fortemi_index')
+    expect(notes.map(({ deleted_at }) => deleted_at)).toEqual([
+      '2026-07-20T12:30:00.000Z',
+      null,
+    ])
+    expect(notes.every(({ collection_id }) => collection_id !== null)).toBe(true)
+    expect(collections.map(({ name }) => name)).toEqual(['.aiwg', 'agents', 'skills', 'reviews'])
+    const collectionByName = new Map(collections.map((collection) => [collection.name, collection]))
+    expect(collectionByName.get('agents')?.parent_id).toBe(collectionByName.get('.aiwg')?.id)
+    expect(collectionByName.get('skills')?.parent_id).toBe(collectionByName.get('.aiwg')?.id)
+    expect(collectionByName.get('reviews')?.parent_id).toBe(collectionByName.get('skills')?.id)
     expect(links[0]).toMatchObject({
       from_note_id: notes[0].id,
       to_note_id: notes[1].id,
@@ -1789,6 +1836,8 @@ describe('#239 validator conformance — v1/v2 forbiddance, enums, source gating
       ['skos_concepts', { skos_concepts: [] }],
       ['skos_relations', { skos_relations: [] }],
       ['compatibility', { compatibility: {} }],
+      ['operational_state', { operational_state: { classification: 'fresh' } }],
+      ['state_transfer', { state_transfer: { deleted_at: null } }],
     ]
     for (const [field, extra] of cases) {
       const res = validateAiwgFortemiIndexExport(exportV1([record('r', 'aiwg.skill', 'R', 'body', extra)]))
@@ -1827,6 +1876,44 @@ describe('#239 validator conformance — v1/v2 forbiddance, enums, source gating
     })
     expect(res.errors).toEqual([])
     expect(res.valid).toBe(true)
+  })
+
+  it('validates v2 operational provenance and source-authored state transfer independently', () => {
+    const valid = v2Record('aiwg:memory:retired', 'aiwg.memory', {
+      operational_state: {
+        classification: 'historical',
+        source_repo: 'roctinam/aiwg',
+        source_kind: 'gitea-issue',
+        source_id: '17',
+      },
+      state_transfer: { deleted_at: '2026-07-20T12:30:00.000Z' },
+    })
+    const exportV2 = {
+      ...index,
+      schema_version: 'aiwg.fortemi.index.export.v2',
+      source: { repo: 'x/y', privacy: 'public', graph: 'project' },
+      compatibility: { previous_schema_version: 'aiwg.fortemi.index.export.v1', strategy: 'supported' },
+    } as const
+    expect(validateAiwgFortemiIndexExport({ ...exportV2, items: [valid] })).toMatchObject({
+      valid: true,
+      errors: [],
+    })
+
+    const malformed = {
+      ...valid,
+      operational_state: {
+        classification: 'deleted',
+        observed_at: 'not-a-date',
+        inferred_deleted: true,
+      },
+      state_transfer: { deleted_at: 'not-a-date', inferred: true },
+    }
+    const errors = validateAiwgFortemiIndexExport({ ...exportV2, items: [malformed] }).errors.join('\n')
+    expect(errors).toContain('operational_state.classification')
+    expect(errors).toContain('operational_state.observed_at')
+    expect(errors).toContain('operational_state contains unsupported fields')
+    expect(errors).toContain('state_transfer.deleted_at')
+    expect(errors).toContain('state_transfer contains unsupported fields')
   })
 
   it('A4 — rejects invalid privacy.classification and provenance shape/enum', () => {

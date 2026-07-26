@@ -1,11 +1,13 @@
 import type { AiwgFortemiIndexExport, AiwgFortemiRecord } from './aiwg-index.js'
 import { validateAiwgFortemiIndexExport } from './aiwg-index.js'
+import { validateAiwgFortemiIndexExportSchema } from './aiwg-index-schema.js'
 import { sha256Hex as shardSha256Hex } from './shard/checksum.js'
 import { validateCoreV1ShardArchive } from './shard/schema-validator.js'
 import { packTarGz, unpackTarGz } from './shard/shard-tar.js'
 import {
   CURRENT_SHARD_VERSION,
   SHARD_FORMAT,
+  type ShardCollection,
   type ShardComponent,
   type ShardLink,
   type ShardManifest,
@@ -53,6 +55,14 @@ function aiwgRecordContent(record: AiwgFortemiRecord): string {
   return record.search?.summary ?? ''
 }
 
+function aiwgRecordCollectionPaths(record: AiwgFortemiRecord): string[] {
+  const segments = record.source.repo_relative_path
+    .split('/')
+    .filter((segment) => segment.length > 0 && segment !== '.')
+  const directorySegments = segments.slice(0, -1)
+  return directorySegments.map((_, index) => directorySegments.slice(0, index + 1).join('/'))
+}
+
 function aiwgShardMetadata(
   index: AiwgFortemiIndexExport,
   record: AiwgFortemiRecord,
@@ -74,6 +84,15 @@ function encodeJsonLines(values: unknown[]): Uint8Array {
   return shardEncoder.encode(values.map((value) => JSON.stringify(value)).join('\n'))
 }
 
+function validateAiwgIndexForShard(index: AiwgFortemiIndexExport): void {
+  const contractValidation = validateAiwgFortemiIndexExportSchema(index)
+  const semanticValidation = validateAiwgFortemiIndexExport(index)
+  const errors = [...contractValidation.errors, ...semanticValidation.errors]
+  if (errors.length > 0) {
+    throw new Error(`Invalid AIWG Fortemi index export:\n${errors.join('\n')}`)
+  }
+}
+
 /**
  * Convert the static AIWG/Fortemi v2 index contract into a portable Knowledge
  * Shard. Every note retains the complete source envelope and record in metadata,
@@ -88,24 +107,46 @@ export async function aiwgFortemiIndexToKnowledgeShard(
       'Native AIWG full-v1 conversion requires aiwgFortemiIndexToKnowledgeShardWithReport so semantic losses cannot be discarded',
     )
   }
-  const validation = validateAiwgFortemiIndexExport(index)
-  if (!validation.valid) {
-    throw new Error(`Invalid AIWG Fortemi index export:\n${validation.errors.join('\n')}`)
-  }
+  validateAiwgIndexForShard(index)
   if (index.schema_version !== 'aiwg.fortemi.index.export.v2') {
     throw new Error('Knowledge Shard conversion requires aiwg.fortemi.index.export.v2')
   }
   const createdAt = aiwgShardTimestamp(options.createdAt ?? index.generated_at, new Date().toISOString())
   const noteIds = new Map(index.items.map((record) => [record.id, aiwgShardUuid('record', record.id)]))
+  const collectionPaths = [...new Set(index.items.flatMap(aiwgRecordCollectionPaths))].sort()
+  const collectionIds = new Map(
+    collectionPaths.map((path) => [path, aiwgShardUuid('collection', path)]),
+  )
+  const collectionNoteCounts = new Map<string, number>()
+  for (const record of index.items) {
+    const collectionPath = aiwgRecordCollectionPaths(record).at(-1)
+    if (collectionPath) {
+      collectionNoteCounts.set(collectionPath, (collectionNoteCounts.get(collectionPath) ?? 0) + 1)
+    }
+  }
+  const collections: ShardCollection[] = collectionPaths.map((path) => {
+    const segments = path.split('/')
+    const parentPath = segments.slice(0, -1).join('/')
+    return {
+      id: collectionIds.get(path)!,
+      name: segments.at(-1)!,
+      description: null,
+      parent_id: parentPath ? collectionIds.get(parentPath)! : null,
+      created_at: createdAt,
+      note_count: collectionNoteCounts.get(path) ?? 0,
+    }
+  })
   const notes: ShardNote[] = index.items.map((record) => {
     const content = aiwgRecordContent(record)
+    const recordCollectionPaths = aiwgRecordCollectionPaths(record)
+    const collectionPath = recordCollectionPaths.at(-1)
     return {
       id: noteIds.get(record.id)!,
       title: aiwgRecordTitle(record),
       original_content: content,
       revised_content: content,
       metadata: aiwgShardMetadata(index, record),
-      collection_id: null,
+      collection_id: collectionPath ? collectionIds.get(collectionPath)! : null,
       attachments: [],
       format: 'markdown',
       source: 'aiwg-index',
@@ -114,7 +155,7 @@ export async function aiwgFortemiIndexToKnowledgeShard(
       tags: [...new Set(record.tags)].sort(),
       created_at: aiwgShardTimestamp(record.source.updated_at ?? record.updated_at, createdAt),
       updated_at: aiwgShardTimestamp(record.updated_at, createdAt),
-      deleted_at: null,
+      deleted_at: record.state_transfer?.deleted_at ?? null,
     }
   })
 
@@ -145,17 +186,11 @@ export async function aiwgFortemiIndexToKnowledgeShard(
   }
 
   const files = new Map<string, Uint8Array>()
-  const components: ShardComponent[] = ['notes', 'tags']
+  const components: ShardComponent[] = ['notes']
   const counts: ShardManifest['counts'] = {
     notes: notes.length,
-    tags: [...new Set(notes.flatMap((note) => note.tags))].length,
   }
   files.set('notes.jsonl', encodeJsonLines(notes))
-  files.set('tags.json', shardEncoder.encode(JSON.stringify(
-    [...new Set(notes.flatMap((note) => note.tags))]
-      .sort()
-      .map((name) => ({ name, created_at: createdAt })),
-  )))
 
   const addComponent = (
     component: ShardComponent,
@@ -168,6 +203,13 @@ export async function aiwgFortemiIndexToKnowledgeShard(
     counts[component] = values.length
     files.set(filename, jsonLines ? encodeJsonLines(values) : shardEncoder.encode(JSON.stringify(values)))
   }
+  addComponent('collections', 'collections.json', collections, false)
+  const tags = [...new Set(notes.flatMap((note) => note.tags))]
+    .sort()
+    .map((name) => ({ name, created_at: createdAt }))
+  components.push('tags')
+  counts.tags = tags.length
+  files.set('tags.json', shardEncoder.encode(JSON.stringify(tags)))
   addComponent('links', 'links.jsonl', links)
 
   const checksums: Record<string, string> = {}
@@ -212,10 +254,7 @@ export async function aiwgFortemiIndexToKnowledgeShardWithReport(
   index: AiwgFortemiIndexExport,
   options: Omit<AiwgKnowledgeShardOptions, 'includeNativeRichComponents'> = {},
 ): Promise<AiwgKnowledgeShardConversionResult> {
-  const validation = validateAiwgFortemiIndexExport(index)
-  if (!validation.valid) {
-    throw new Error(`Invalid AIWG Fortemi index export:\n${validation.errors.join('\n')}`)
-  }
+  validateAiwgIndexForShard(index)
   if (index.schema_version !== 'aiwg.fortemi.index.export.v2') {
     throw new Error('Full-v1 Knowledge Shard conversion requires aiwg.fortemi.index.export.v2')
   }

@@ -6,6 +6,17 @@ export type AiwgPrivacyClassification = 'private' | 'sanitized' | 'public'
 export type AiwgProvenanceConfidence = 'source' | 'candidate' | 'reviewed' | 'rejected'
 export type AiwgReviewAction = 'accept' | 'reject' | 'defer'
 export type AiwgFortemiRelationshipDirection = 'upstream' | 'downstream' | 'related'
+export type AiwgOperationalStateClassification =
+  | 'fresh'
+  | 'historical'
+  | 'superseded'
+  | 'contradicted'
+  | 'needs-source'
+export type AiwgOperationalStateConfidence =
+  | 'source'
+  | 'candidate'
+  | 'reviewed'
+  | 'rejected'
 
 export interface AiwgFortemiRecordSource {
   path: string
@@ -129,6 +140,28 @@ export interface AiwgFortemiBinarySource {
   attachment: AiwgFortemiAttachmentReference
 }
 
+export interface AiwgOperationalState {
+  source_repo?: string
+  source_kind?: string
+  source_id?: string
+  observed_state?: string
+  observed_at?: string
+  source_updated_at?: string
+  evidence_url?: string
+  evidence_path?: string
+  observer?: string
+  supersedes?: string[]
+  contradicts?: string[]
+  stale_after?: string
+  classification: AiwgOperationalStateClassification
+  confidence?: AiwgOperationalStateConfidence
+  current_action_selector?: boolean
+}
+
+export interface AiwgStateTransfer {
+  deleted_at: string | null
+}
+
 export interface AiwgFortemiRecord {
   schema_version: AiwgFortemiRecordSchemaVersion
   id: string
@@ -152,6 +185,10 @@ export interface AiwgFortemiRecord {
   skos_relations?: AiwgFortemiSkosRelation[]
   /** Optional W3C PROV-style activity chain for this record. */
   provenance_events?: AiwgFortemiProvenanceEvent[]
+  /** Observed external state provenance. This is not a persistence tombstone. */
+  operational_state?: AiwgOperationalState
+  /** Source-authored state projected into portable persistence semantics. */
+  state_transfer?: AiwgStateTransfer
   privacy: {
     classification: AiwgPrivacyClassification
     pii: boolean
@@ -763,6 +800,95 @@ function validateOptionalRichMetadata(item: Partial<AiwgFortemiRecord>, index: n
   if (item.compatibility !== undefined && !isPlainRecord(item.compatibility)) {
     errors.push('items[' + index + '].compatibility must be an object')
   }
+  if (item.operational_state !== undefined) {
+    const at = 'items[' + index + '].operational_state'
+    if (!isPlainRecord(item.operational_state)) {
+      errors.push(at + ' must be an object')
+    } else {
+      const state = item.operational_state as Record<string, unknown>
+      const allowedClassifications = new Set([
+        'fresh',
+        'historical',
+        'superseded',
+        'contradicted',
+        'needs-source',
+      ])
+      const allowedConfidence = new Set(['source', 'candidate', 'reviewed', 'rejected'])
+      const stringFields = [
+        'source_repo',
+        'source_kind',
+        'source_id',
+        'observed_state',
+        'observed_at',
+        'source_updated_at',
+        'evidence_url',
+        'evidence_path',
+        'observer',
+        'stale_after',
+      ] as const
+      const arrayFields = ['supersedes', 'contradicts'] as const
+      const allowedFields = new Set([
+        ...stringFields,
+        ...arrayFields,
+        'classification',
+        'confidence',
+        'current_action_selector',
+      ])
+      if (!allowedClassifications.has(String(state.classification))) {
+        errors.push(at + '.classification must be fresh, historical, superseded, contradicted, or needs-source')
+      }
+      for (const field of stringFields) {
+        if (state[field] !== undefined && !hasString(state[field])) {
+          errors.push(at + '.' + field + ' must be a non-empty string')
+        }
+      }
+      for (const field of ['observed_at', 'source_updated_at', 'stale_after'] as const) {
+        if (
+          state[field] !== undefined
+          && (typeof state[field] !== 'string' || Number.isNaN(Date.parse(state[field])))
+        ) {
+          errors.push(at + '.' + field + ' must be a date-time string')
+        }
+      }
+      for (const field of arrayFields) {
+        if (!isOptionalStringArray(state[field])) {
+          errors.push(at + '.' + field + ' must be a string array')
+        }
+      }
+      if (state.confidence !== undefined && !allowedConfidence.has(String(state.confidence))) {
+        errors.push(at + '.confidence must be source, candidate, reviewed, or rejected')
+      }
+      if (
+        state.current_action_selector !== undefined
+        && typeof state.current_action_selector !== 'boolean'
+      ) {
+        errors.push(at + '.current_action_selector must be a boolean')
+      }
+      if (Object.keys(state).some((field) => !allowedFields.has(field))) {
+        errors.push(at + ' contains unsupported fields')
+      }
+    }
+  }
+  if (item.state_transfer !== undefined) {
+    const at = 'items[' + index + '].state_transfer'
+    if (!isPlainRecord(item.state_transfer)) {
+      errors.push(at + ' must be an object')
+    } else {
+      const stateTransfer = item.state_transfer as Record<string, unknown>
+      const deletedAt = stateTransfer.deleted_at
+      if (!Object.hasOwn(stateTransfer, 'deleted_at')) {
+        errors.push(at + '.deleted_at is required')
+      } else if (
+        deletedAt !== null
+        && (typeof deletedAt !== 'string' || Number.isNaN(Date.parse(deletedAt)))
+      ) {
+        errors.push(at + '.deleted_at must be a date-time string or null')
+      }
+      if (Object.keys(stateTransfer).some((field) => field !== 'deleted_at')) {
+        errors.push(at + ' contains unsupported fields')
+      }
+    }
+  }
 }
 
 function isPrivacyClassification(value: unknown): value is AiwgPrivacyClassification {
@@ -803,6 +929,8 @@ const V2_ONLY_RECORD_FIELDS = [
   'skos_relations',
   'provenance_events',
   'compatibility',
+  'operational_state',
+  'state_transfer',
 ] as const
 const V2_ONLY_SOURCE_FIELDS = ['origin', 'generated', 'checksum', 'updated_at'] as const
 const V2_ONLY_RELATIONSHIP_FIELDS = ['target_path', 'direction', 'metadata'] as const
