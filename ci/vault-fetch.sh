@@ -11,11 +11,11 @@
 set -euo pipefail
 
 VAULT_ADDR="${VAULT_ADDR:-}"
-VAULT_CACERT="${VAULT_CACERT:-}"
 SPEC_FILE=""
 ENV_FILE="${GITHUB_ENV:-}"
 CLEANUP=0
 DRY_RUN=0
+declare -a CURL_TLS_ARGS=()
 
 usage() {
   cat >&2 <<'EOF'
@@ -29,12 +29,17 @@ Required environment for fetch:
   VAULT_CI_ROLE_ID
   VAULT_CI_SECRET_ID
 
-Optional trust configuration:
-  VAULT_CACERT  PEM CA bundle for the OpenBao endpoint
+TLS environment:
+  VAULT_CACERT              CA bundle for the vault listener (recommended)
+  VAULT_CAPATH              CA directory for the vault listener (optional)
+  VAULT_SKIP_VERIFY=1       Explicit exceptional override; never the default
 
 Spec directives:
   env <ENV_NAME> <mount/path> <field>
   keyfile <ENV_NAME> <mount/data/path> <field>
+
+Path and field tokens may be injected from environment variables by using
+${VAR_NAME} or $VAR_NAME as the whole token.
 
 Example:
   env GHCR_TOKEN ${GHCR_TOKEN_VAULT_PATH} ${GHCR_TOKEN_VAULT_FIELD}
@@ -45,6 +50,23 @@ EOF
 die() {
   printf 'vault-fetch: %s\n' "$*" >&2
   exit 1
+}
+
+configure_tls() {
+  [[ -z "${VAULT_CACERT:-}" || -r "$VAULT_CACERT" ]] || die "VAULT_CACERT is not readable"
+  [[ -z "${VAULT_CAPATH:-}" || -d "$VAULT_CAPATH" ]] || die "VAULT_CAPATH is not a directory"
+  [[ "${VAULT_SKIP_VERIFY:-0}" == "0" || "${VAULT_SKIP_VERIFY:-0}" == "1" ]] ||
+    die "VAULT_SKIP_VERIFY must be 0 or 1"
+  [[ -z "${VAULT_CACERT:-}" ]] || CURL_TLS_ARGS+=(--cacert "$VAULT_CACERT")
+  [[ -z "${VAULT_CAPATH:-}" ]] || CURL_TLS_ARGS+=(--capath "$VAULT_CAPATH")
+  [[ "${VAULT_SKIP_VERIFY:-0}" != "1" ]] || CURL_TLS_ARGS+=(-k)
+}
+
+vault_api() {
+  local token_value="$1"
+  shift
+  curl -fsS "${CURL_TLS_ARGS[@]}" --config /dev/fd/3 "$@" \
+    3<<<"header = \"X-Vault-Token: $token_value\""
 }
 
 mask() {
@@ -92,6 +114,10 @@ resolve_spec_token() {
     name="${BASH_REMATCH[1]}"
     [[ -n "${!name:-}" ]] || die "$name is required"
     printf '%s\n' "${!name}"
+  elif [[ "$value" =~ ^\$([A-Z_][A-Z0-9_]*)$ ]]; then
+    name="${BASH_REMATCH[1]}"
+    [[ -n "${!name:-}" ]] || die "$name is required"
+    printf '%s\n' "${!name}"
   else
     printf '%s\n' "$value"
   fi
@@ -125,33 +151,25 @@ if [[ "$DRY_RUN" == 1 ]]; then
     $1 != "env" && $1 != "keyfile" { printf "invalid directive on line %d: %s\n", NR, $0; exit 2 }
     NF != 4 { printf "expected 4 fields on line %d: %s\n", NR, $0; exit 2 }
     $2 !~ /^[A-Z_][A-Z0-9_]*$/ { printf "invalid env var on line %d: %s\n", NR, $2; exit 2 }
-    $3 !~ /^(\$\{[A-Z_][A-Z0-9_]*\}|[A-Za-z0-9_.-]+\/.+)$/ { printf "invalid KV path on line %d: %s\n", NR, $3; exit 2 }
-    $4 !~ /^(\$\{[A-Z_][A-Z0-9_]*\}|[A-Za-z0-9_.-]+)$/ { printf "invalid field on line %d: %s\n", NR, $4; exit 2 }
+    $3 !~ /^[A-Za-z0-9_.-]+\/.+$/ && $3 !~ /^\$\{?[A-Z_][A-Z0-9_]*\}?$/ { printf "invalid KV path on line %d: %s\n", NR, $3; exit 2 }
+    $4 !~ /^[A-Za-z0-9_.-]+$/ && $4 !~ /^\$\{?[A-Z_][A-Z0-9_]*\}?$/ { printf "invalid field on line %d: %s\n", NR, $4; exit 2 }
   ' "$SPEC_FILE"
   printf 'vault-fetch: dry-run OK for %s\n' "$SPEC_FILE"
   exit 0
 fi
 
-# Dependency checks live below the dry-run branch on purpose: dry-run is pure
-# spec validation (awk only) and must work in containers without curl/jq.
 if ! command -v curl >/dev/null 2>&1; then die "curl is required"; fi
 if ! command -v jq >/dev/null 2>&1; then die "jq is required"; fi
+configure_tls
 
 [[ -n "${VAULT_CI_ROLE_ID:-}" ]] || die "VAULT_CI_ROLE_ID is required"
 [[ -n "${VAULT_CI_SECRET_ID:-}" ]] || die "VAULT_CI_SECRET_ID is required"
 [[ -n "$VAULT_ADDR" ]] || die "VAULT_ADDR is required"
 [[ -n "$ENV_FILE" ]] || die "GITHUB_ENV or --env-file is required; refusing to print secrets"
-if [[ -n "$VAULT_CACERT" && ! -r "$VAULT_CACERT" ]]; then
-  die "VAULT_CACERT is not readable: $VAULT_CACERT"
-fi
-CURL_TLS_ARGS=()
-if [[ -n "$VAULT_CACERT" ]]; then
-  CURL_TLS_ARGS=(--cacert "$VAULT_CACERT")
-fi
 
 token="$(
-  jq -n --arg role_id "$VAULT_CI_ROLE_ID" --arg secret_id "$VAULT_CI_SECRET_ID" \
-    '{role_id:$role_id, secret_id:$secret_id}' |
+  printf '%s\n%s\n' "$VAULT_CI_ROLE_ID" "$VAULT_CI_SECRET_ID" |
+  jq -Rn '{role_id:input, secret_id:input}' |
   curl -fsS "${CURL_TLS_ARGS[@]}" --max-time 20 -X POST --data @- \
     "$VAULT_ADDR/v1/auth/approle/login" |
   jq -er '.auth.client_token'
@@ -159,8 +177,7 @@ token="$(
 mask "$token"
 revoke_token() {
   [[ -n "${token:-}" ]] || return 0
-  curl -fsS "${CURL_TLS_ARGS[@]}" --max-time 10 \
-    -H "X-Vault-Token: $token" \
+  vault_api "$token" --max-time 10 \
     -X POST "$VAULT_ADDR/v1/auth/token/revoke-self" >/dev/null 2>&1 || true
   token=""
 }
@@ -183,8 +200,7 @@ while read -r kind name path field extra; do
   [[ "$path" == */* ]] || die "path must be mount/path: $path"
   api_path="$(kv_data_path "$path")"
   value="$(
-    curl -fsS "${CURL_TLS_ARGS[@]}" --max-time 20 \
-      -H "X-Vault-Token: $token" \
+    vault_api "$token" --max-time 20 \
       "$VAULT_ADDR/v1/$api_path" |
     jq -er --arg field "$field" '.data.data[$field]'
   )"
@@ -199,9 +215,6 @@ while read -r kind name path field extra; do
     printf 'vault-fetch: exported %s\n' "$name" >&2
   else
     file="$(mktemp "$tmp_dir/vault-${name}.XXXXXX")"
-    # Trailing newline is load-bearing: command substitution strips it from the
-    # fetched value, and OpenSSH rejects a private key file that does not end
-    # with one ("error in libcrypto").
     printf '%s\n' "$value" >"$file"
     chmod 600 "$file"
     printf '%s\n' "$file" >>"$cleanup_list"
