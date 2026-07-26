@@ -1,0 +1,55 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T17:11:08Z"
+  description: "Provenance for the current Fortemi core-v1 to PGlite consumer-cell suite"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fortemi-core-v1-consumer-cell.test.ts"
+  type: "test"
+  created_at: "2026-07-26T17:11:08Z"
+  checksum: "sha256:f03031293831741abe92b95d29681b62fcc732a654ee80e60390ed950d9300d7"
+  size_bytes: 8382
+  attributes:
+    change_scope: "knowledge-shard-core-v1-fortemi-to-pglite"
+    base_revision: "5a34956cd91beedc50adfea80d6ca8be624cb749"
+activity:
+  id: "urn:aiwg:activity:testing:packages-core-fortemi-core-v1-consumer:354"
+  type: "testing"
+  started_at: "2026-07-26T17:08:00Z"
+  ended_at: "2026-07-26T17:11:08Z"
+  description: "Prove clean repeat import, semantic re-export, metadata presence, attachment projections, version policy, resource bounds, and zero mutation"
+  attributes:
+    verification:
+      - "pnpm --filter @fortemi/core exec vitest run src/__tests__/shard/fortemi-core-v1-consumer-cell.test.ts: 5 passed"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fortemi-core-v1-consumer-cell.test.ts"
+    activity: "urn:aiwg:activity:testing:packages-core-fortemi-core-v1-consumer:354"
+    time: "2026-07-26T17:11:08Z"
+  used:
+    - activity: "urn:aiwg:activity:testing:packages-core-fortemi-core-v1-consumer:354"
+      entity: "urn:gitea:Fortemi/fortemi-react:issue:354"
+      role: "consumer_requirement"
+    - activity: "urn:aiwg:activity:testing:packages-core-fortemi-core-v1-consumer:354"
+      entity: "urn:gitea:Fortemi/fortemi:issue:1059"
+      role: "matrix_requirement"
+    - activity: "urn:aiwg:activity:testing:packages-core-fortemi-core-v1-consumer:354"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi.git:b53f1429e409ad02b6c9513218cb62adb9f19c71:tests/fixtures/shards/fortemi-core-v1-2026.7.12.shard"
+      role: "producer_fixture"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fortemi-core-v1-consumer-cell.test.ts"
+      source: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+      derivation_type: "tests"
+      activity: "urn:aiwg:activity:testing:packages-core-fortemi-core-v1-consumer:354"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:testing:packages-core-fortemi-core-v1-consumer:354"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "test_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fortemi-core-v1-consumer-cell.test.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T17:11:08Z"
+  description: "Provenance for registering the Fortemi-to-PGlite consumer cell in the portable contract gate"
+entity:
+  id: "urn:aiwg:artifact:packages/core/package.json"
+  type: "configuration"
+  created_at: "2026-07-26T17:11:08Z"
+  checksum: "sha256:28235b631f9843c0262320c5bebc0df4d7f161beae3619f4eb9c6a7da635b9c2"
+  size_bytes: 3787
+  attributes:
+    change_scope: "knowledge-shard-core-v1-fortemi-to-pglite"
+    base_revision: "5a34956cd91beedc50adfea80d6ca8be624cb749"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-package-json-fortemi-to-pglite:354"
+  type: "modification"
+  started_at: "2026-07-26T17:08:00Z"
+  ended_at: "2026-07-26T17:11:08Z"
+  description: "Add the independent Fortemi producer consumer-cell suite to the release-blocking portable contract command"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/package.json"
+    activity: "urn:aiwg:activity:modification:packages-core-package-json-fortemi-to-pglite:354"
+    time: "2026-07-26T17:11:08Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-package-json-fortemi-to-pglite:354"
+      entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fortemi-core-v1-consumer-cell.test.ts"
+      role: "registered_test"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/package.json"
+      source: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:modification:packages-core-package-json-fortemi-to-pglite:354"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-package-json-fortemi-to-pglite:354"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/package.json"
+    agent: "urn:aiwg:agent:codex-gpt-5"
