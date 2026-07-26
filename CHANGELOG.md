@@ -4,6 +4,8 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.7.14 - 2026-07-26
+
 ### `@fortemi/core` - Receipt-backed `2.0.0/full-v1` advertisement (#382)
 
 - Bind the released React and AIWG archives to clean repeated PGlite and
@@ -13,6 +15,43 @@ All notable changes to fortemi-react are documented here.
   cross-repository receipt matches every authority, archive, implementation,
   and consumer digest. RecordStore remains `record-v1`, and the receipt does
   not enable an unqualified suite claim.
+
+### `core-v1` and `record-v1` executable matrix coverage (#354, #355)
+
+- Added deterministic current producer fixtures and clean-destination receipts
+  for PGlite self-import, PGlite-to-Fortemi, Fortemi-to-PGlite, RecordStore
+  self-import, and RecordStore-to-Fortemi.
+- Each passed cell binds hierarchy, metadata, explicit nulls, tombstones,
+  current-minus-two/current/next-major behavior, malformed input, resource
+  limits, repeated import, semantic re-export, and zero mutation on rejection.
+- Historical receipt fixtures reproduce their pinned producer version even as
+  the current package release advances, preventing release metadata from
+  rewriting immutable evidence bytes.
+
+### AIWG `core-v1` lifecycle projection (#393)
+
+- Pinned AIWG authority commit
+  `dbbfee78993365686f3c8283f93ba8ef7172e7d4` and its exact v2 export schema.
+- AIWG source paths now project to deterministic native collection hierarchies.
+  Only explicit `state_transfer.deleted_at` projects a note tombstone;
+  operational issue/workflow state remains independent metadata.
+- Added repeated clean PGlite import and semantic re-export coverage for the
+  native hierarchy and lifecycle projection.
+
+### Supply-chain bootstrap (#394, #396)
+
+- Project commit signing and authoritative Gitea pushes now load the
+  least-privilege React runtime AppRole from encrypted systemd credentials into
+  tmpfs when an explicit development handoff is not configured.
+- The project commit and release keys remain separate; release publication
+  still requires the dedicated signed-tag gate.
+
+### Claim scope
+
+- This release publishes the current React/PGlite implementations and existing
+  receipt-backed cells. It does not by itself complete the two AIWG `core-v1`
+  cross-repository matrix cells or authorize unqualified suite portability,
+  parity, or complete-backup claims.
 
 ## v2026.7.13 - 2026-07-23
 

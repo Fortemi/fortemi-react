@@ -1,22 +1,22 @@
 metadata:
   schema_version: "1.0.0"
-  created_at: "2026-07-17T23:10:58Z"
-  description: "Provenance for named-profile public API exports"
+  created_at: "2026-07-26T20:19:56Z"
+  description: "Provenance for the Core v2026.7.14 public version export"
 entity:
   id: "urn:aiwg:artifact:packages/core/src/index.ts"
   type: code
-  created_at: "2026-07-17T23:10:58Z"
-  checksum: "sha256:57ad7ce2e84c02d6d228303389b5d8a09a49745d860fe054651344dda842dbfc"
-  size_bytes: 17670
+  created_at: "2026-07-26T20:19:56Z"
+  checksum: "sha256:6df2386f1c99c33418b51c87cb8af48291e7d1f49a388db0f0e52f8201fe4904"
+  size_bytes: 17902
   attributes:
-    change_scope: "named-portability-profiles"
-    base_revision: "2f30626922a7dfad4dec1f4673ec76349335bba9"
+    change_scope: "release-version-2026.7.14"
+    base_revision: "c8e32fc74a9332451d03f529c1d0f84a46be21d7"
 activity:
-  id: "urn:aiwg:activity:modification:packages-core-src-index-ts:002"
+  id: "urn:aiwg:activity:modification:packages-core-src-index-ts:2026.7.14"
   type: modification
-  started_at: "2026-07-17T23:10:58Z"
-  ended_at: "2026-07-17T23:10:58Z"
-  description: "Expose profile registry, report types, and profile-aware exporter"
+  started_at: "2026-07-26T20:19:56Z"
+  ended_at: "2026-07-26T20:19:56Z"
+  description: "Advance the public Core version constant to v2026.7.14"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
   type: ai_assistant
@@ -26,19 +26,19 @@ agent:
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:packages/core/src/index.ts"
-    activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:002"
-    time: "2026-07-17T23:10:58Z"
+    activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:2026.7.14"
+    time: "2026-07-26T20:19:56Z"
   used:
-    - activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:002"
-      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:2f30626922a7dfad4dec1f4673ec76349335bba9:packages/core/src/index.ts"
+    - activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:2026.7.14"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:c8e32fc74a9332451d03f529c1d0f84a46be21d7:packages/core/src/index.ts"
       role: "previous_revision"
   wasDerivedFrom:
     - entity: "urn:aiwg:artifact:packages/core/src/index.ts"
-      source: "urn:aiwg:artifact:packages/core/src/shard/profile-registry.ts"
+      source: "urn:aiwg:artifact:docs/content/releases/v2026.7.14.md"
       derivation_type: "depends"
-      activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:002"
+      activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:2026.7.14"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:002"
+    activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:2026.7.14"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:

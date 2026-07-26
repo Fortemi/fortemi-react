@@ -21,9 +21,18 @@ const output = new URL(
 const verify = process.argv.includes('--verify')
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
+const FIXTURE_PRODUCER_VERSION = '2026.7.13'
 
 function sha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex')
+}
+
+function pinFixtureProducerVersion(archive) {
+  const files = unpackTarGz(archive)
+  const manifest = JSON.parse(decoder.decode(files.get('manifest.json')))
+  manifest.producer.version = FIXTURE_PRODUCER_VERSION
+  files.set('manifest.json', encoder.encode(JSON.stringify(manifest, null, 2)))
+  return packTarGz(files)
 }
 
 async function seedStore() {
@@ -197,6 +206,7 @@ try {
   })
   assert.equal(exported.success, true, exported.errors.join('; '))
   assert.ok(exported.archive)
+  exported.archive = pinFixtureProducerVersion(exported.archive)
   assert.equal(exported.capability_report.portable, true)
   assert.deepEqual(
     exported.capability_report.losses.map((loss) => loss.code),
@@ -214,6 +224,9 @@ try {
   const repeated = await exportShardFromRecordsWithReport(source.store, {
     profile: 'record-v1',
   })
+  assert.equal(repeated.success, true, repeated.errors.join('; '))
+  assert.ok(repeated.archive)
+  repeated.archive = pinFixtureProducerVersion(repeated.archive)
   assert.equal(Buffer.compare(Buffer.from(exported.archive), Buffer.from(repeated.archive)), 0)
 
   const files = unpackTarGz(exported.archive)

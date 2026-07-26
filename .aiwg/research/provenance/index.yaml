@@ -1,8 +1,14 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-07-26T19:46:45Z"
-  record_count: 48
+  updated_at: "2026-07-26T20:19:56Z"
+  record_count: 51
 records:
+  - entity: "urn:aiwg:artifact:.aiwg/.last-doc-sync"
+    record: "records/last-doc-sync-release-2026.7.14.prov.yaml"
+  - entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-audit-2026-07-26.md"
+    record: "records/doc-sync-audit-2026-07-26.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/graph/src/index.ts"
+    record: "records/packages-graph-src-index-release-2026.7.14.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-to-fortemi.receipt.json"
     record: "records/packages-core-core-v1-pglite-to-fortemi-receipt-354.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-fortemi-to-pglite.receipt.json"

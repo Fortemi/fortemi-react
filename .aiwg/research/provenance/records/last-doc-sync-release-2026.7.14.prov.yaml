@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T20:19:56Z"
+  description: "Provenance for the v2026.7.14 documentation sync marker"
+entity:
+  id: "urn:aiwg:artifact:.aiwg/.last-doc-sync"
+  type: "document"
+  created_at: "2026-07-26T20:19:56Z"
+  checksum: "sha256:1379a843f92ee218d05e51c874f424d2968b780206e6f3696779a752c599d00a"
+  size_bytes: 21
+  attributes:
+    change_scope: "release-documentation-sync"
+    base_revision: "c8e32fc74a9332451d03f529c1d0f84a46be21d7"
+activity:
+  id: "urn:aiwg:activity:modification:last-doc-sync:2026.7.14"
+  type: "modification"
+  started_at: "2026-07-26T20:19:56Z"
+  ended_at: "2026-07-26T20:19:56Z"
+  description: "Record completion of the v2026.7.14 code-to-docs audit"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:.aiwg/.last-doc-sync"
+    activity: "urn:aiwg:activity:modification:last-doc-sync:2026.7.14"
+    time: "2026-07-26T20:19:56Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:last-doc-sync:2026.7.14"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:c8e32fc74a9332451d03f529c1d0f84a46be21d7:.aiwg/.last-doc-sync"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:.aiwg/.last-doc-sync"
+      source: "urn:aiwg:artifact:.aiwg/reports/doc-sync-audit-2026-07-26.md"
+      derivation_type: "depends"
+      activity: "urn:aiwg:activity:modification:last-doc-sync:2026.7.14"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:last-doc-sync:2026.7.14"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:.aiwg/.last-doc-sync"
+    agent: "urn:aiwg:agent:codex-gpt-5"

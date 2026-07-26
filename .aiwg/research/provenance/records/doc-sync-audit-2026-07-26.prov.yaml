@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T20:19:56Z"
+  description: "Provenance for the v2026.7.14 code-to-docs audit"
+entity:
+  id: "urn:aiwg:artifact:.aiwg/reports/doc-sync-audit-2026-07-26.md"
+  type: "document"
+  created_at: "2026-07-26T20:19:56Z"
+  checksum: "sha256:a3073d24b58c3e8ad52e1685805d4bc6aa01304ddc90edef85fe3672d96f3895"
+  size_bytes: 2348
+  attributes:
+    change_scope: "release-documentation-audit"
+    base_revision: "c8e32fc74a9332451d03f529c1d0f84a46be21d7"
+activity:
+  id: "urn:aiwg:activity:generation:doc-sync-audit:2026.7.14"
+  type: "generation"
+  started_at: "2026-07-26T20:19:56Z"
+  ended_at: "2026-07-26T20:19:56Z"
+  description: "Audit release claims, package versions, and documentation registration"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-audit-2026-07-26.md"
+    activity: "urn:aiwg:activity:generation:doc-sync-audit:2026.7.14"
+    time: "2026-07-26T20:19:56Z"
+  used:
+    - activity: "urn:aiwg:activity:generation:doc-sync-audit:2026.7.14"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:c8e32fc74a9332451d03f529c1d0f84a46be21d7"
+      role: "release_candidate"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-audit-2026-07-26.md"
+      source: "urn:aiwg:artifact:docs/content/releases/v2026.7.14.md"
+      derivation_type: "derives_from"
+      activity: "urn:aiwg:activity:generation:doc-sync-audit:2026.7.14"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:doc-sync-audit:2026.7.14"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-audit-2026-07-26.md"
+    agent: "urn:aiwg:agent:codex-gpt-5"

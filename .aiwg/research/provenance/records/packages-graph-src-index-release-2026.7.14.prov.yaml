@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T20:19:56Z"
+  description: "Provenance for the Graph v2026.7.14 public version export"
+entity:
+  id: "urn:aiwg:artifact:packages/graph/src/index.ts"
+  type: "code"
+  created_at: "2026-07-26T20:19:56Z"
+  checksum: "sha256:12bbf0409b44bac6f92dec3862b37353700c772d3321ef117efb8e3571db109c"
+  size_bytes: 2970
+  attributes:
+    change_scope: "release-version-2026.7.14"
+    base_revision: "c8e32fc74a9332451d03f529c1d0f84a46be21d7"
+activity:
+  id: "urn:aiwg:activity:modification:packages-graph-src-index-ts:2026.7.14"
+  type: "modification"
+  started_at: "2026-07-26T20:19:56Z"
+  ended_at: "2026-07-26T20:19:56Z"
+  description: "Advance the public Graph version constant to v2026.7.14"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/graph/src/index.ts"
+    activity: "urn:aiwg:activity:modification:packages-graph-src-index-ts:2026.7.14"
+    time: "2026-07-26T20:19:56Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-graph-src-index-ts:2026.7.14"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:c8e32fc74a9332451d03f529c1d0f84a46be21d7:packages/graph/src/index.ts"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/graph/src/index.ts"
+      source: "urn:aiwg:artifact:docs/content/releases/v2026.7.14.md"
+      derivation_type: "depends"
+      activity: "urn:aiwg:activity:modification:packages-graph-src-index-ts:2026.7.14"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-graph-src-index-ts:2026.7.14"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/graph/src/index.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"
