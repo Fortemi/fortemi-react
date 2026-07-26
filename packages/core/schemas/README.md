@@ -62,6 +62,16 @@ is normalized to the same RFC 3339 instant. The receipt is limited to the
 `fortemi-core-v1-to-pglite` cell and is not suite-wide or complete-backup
 evidence.
 
+`knowledge-shard-record-v1-recordstore-self.receipt.json` binds the current
+`@fortemi/core@2026.7.13` RecordStore producer and self-consumer to a
+deterministic `1.2.0/record-v1` fixture. The portable gate reproduces the
+fixture and proves hierarchy, metadata values, explicit nulls, tombstones,
+oldest-defined `1.1.0` acceptance, undefined `1.0.0` rejection, malformed and
+next-major rejection, resource limits, repeated import, exact component
+re-export, and zero mutation on rejection. The receipt preserves the mandatory
+loss report and remains a lossy, non-cross-repository self-cell; it is not
+complete-backup evidence.
+
 ## Knowledge Shard `2.0.0` / `full-v1` receipts
 
 `knowledge-shard-v2.schema.receipt.json` pins the immutable authority and

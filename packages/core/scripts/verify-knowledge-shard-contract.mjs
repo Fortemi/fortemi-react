@@ -39,6 +39,10 @@ const coreV1FortemiToPgliteReceipt = JSON.parse(readFileSync(
   resolve(packageRoot, 'schemas/knowledge-shard-core-v1-fortemi-to-pglite.receipt.json'),
   'utf8',
 ))
+const recordV1RecordStoreSelfReceipt = JSON.parse(readFileSync(
+  resolve(packageRoot, 'schemas/knowledge-shard-record-v1-recordstore-self.receipt.json'),
+  'utf8',
+))
 
 function sha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex')
@@ -104,6 +108,7 @@ const completeCoreV1Coverage = [
   'malformed-input',
   'resource-limits',
 ]
+const completeRecordV1Coverage = [...completeCoreV1Coverage]
 const coreV1SelfFixture = readFileSync(
   resolve(packageRoot, '..', '..', coreV1PgliteSelfReceipt.fixture.path),
 )
@@ -271,6 +276,66 @@ requireReceipt(
     && coreV1FortemiToPgliteReceipt.claimBoundary.cell
       === coreV1FortemiToPgliteReceipt.cell,
   'Fortemi-to-PGlite core-v1 claim boundary widened',
+)
+const recordV1SelfFixture = readFileSync(
+  resolve(packageRoot, '..', '..', recordV1RecordStoreSelfReceipt.fixture.path),
+)
+requireReceipt(
+  recordV1RecordStoreSelfReceipt.status === 'producer-self-conformance-passed'
+    && recordV1RecordStoreSelfReceipt.cell === 'recordstore-record-v1-to-recordstore'
+    && recordV1RecordStoreSelfReceipt.producer.commit
+      === '5b30af7394604ddb4832de9f61f8183e6169812e'
+    && recordV1RecordStoreSelfReceipt.producer.package.name === '@fortemi/core'
+    && recordV1RecordStoreSelfReceipt.producer.package.version === '2026.7.13'
+    && recordV1RecordStoreSelfReceipt.consumer.baseCommit
+      === recordV1RecordStoreSelfReceipt.producer.commit,
+  'RecordStore record-v1 self-cell producer identity drifted',
+)
+requireReceipt(
+  recordV1RecordStoreSelfReceipt.authority.commit === receipt.source.commit
+    && recordV1RecordStoreSelfReceipt.authority.contractSha256
+      === receipt.source.contractSha256
+    && recordV1RecordStoreSelfReceipt.authority.schemaBundleSha256
+      === receipt.schemaBundle.sha256
+    && recordV1RecordStoreSelfReceipt.authority.schemaVersion
+      === receipt.knowledgeShard.schemaVersion,
+  'RecordStore record-v1 self-cell authority binding drifted',
+)
+requireReceipt(
+  recordV1SelfFixture.byteLength === recordV1RecordStoreSelfReceipt.fixture.bytes
+    && sha256(recordV1SelfFixture) === recordV1RecordStoreSelfReceipt.fixture.sha256
+    && recordV1RecordStoreSelfReceipt.fixture.profile === 'record-v1',
+  'RecordStore record-v1 self-cell fixture drifted',
+)
+requireReceipt(
+  JSON.stringify(recordV1RecordStoreSelfReceipt.coverage)
+      === JSON.stringify(completeRecordV1Coverage)
+    && recordV1RecordStoreSelfReceipt.consumer.cleanDestination === true
+    && recordV1RecordStoreSelfReceipt.consumer.semanticReexport === true
+    && recordV1RecordStoreSelfReceipt.consumer.exactComponentReexport === true
+    && recordV1RecordStoreSelfReceipt.consumer.zeroMutationOnFailure === true
+    && recordV1RecordStoreSelfReceipt.consumer.hierarchyPreserved === true
+    && recordV1RecordStoreSelfReceipt.consumer.metadataValuePreserved === true
+    && recordV1RecordStoreSelfReceipt.consumer.explicitNullMetadataPreserved === true
+    && recordV1RecordStoreSelfReceipt.consumer.tombstonePreserved === true
+    && recordV1RecordStoreSelfReceipt.consumer.oldestDefined.accepted === true
+    && recordV1RecordStoreSelfReceipt.consumer.currentMinusTwo.profileDefined === false
+    && recordV1RecordStoreSelfReceipt.consumer.currentMinusTwo.rejectedBeforeMutation === true
+    && recordV1RecordStoreSelfReceipt.consumer.nextMajor.rejected === true
+    && recordV1RecordStoreSelfReceipt.consumer.malformedInputRejected === true
+    && recordV1RecordStoreSelfReceipt.consumer.resourceLimits.rejectedBeforeMutation === true
+    && recordV1RecordStoreSelfReceipt.consumer.persistentMutationAfterRejection === 0
+    && recordV1RecordStoreSelfReceipt.declaredLosses.length === 3,
+  'RecordStore record-v1 self-cell coverage or loss evidence drifted',
+)
+requireReceipt(
+  recordV1RecordStoreSelfReceipt.claimBoundary.lossy === true
+    && recordV1RecordStoreSelfReceipt.claimBoundary.suiteWide === false
+    && recordV1RecordStoreSelfReceipt.claimBoundary.completeBackup === false
+    && recordV1RecordStoreSelfReceipt.claimBoundary.crossRepository === false
+    && recordV1RecordStoreSelfReceipt.claimBoundary.cell
+      === recordV1RecordStoreSelfReceipt.cell,
+  'RecordStore record-v1 self-cell claim boundary widened',
 )
 
 const v2Contract = readFileSync(resolve(packageRoot, 'schemas/knowledge-shard/2.0.0/contract.json'))

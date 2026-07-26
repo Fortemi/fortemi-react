@@ -1,0 +1,41 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T18:11:09Z"
+  description: "Provenance for the current RecordStore record-v1 receipt boundary documentation"
+entity:
+  id: "urn:aiwg:artifact:packages/core/schemas/README.md"
+  type: "documentation"
+  created_at: "2026-07-26T18:11:09Z"
+  checksum: "sha256:b403753c39f7893c39dbcee9269a0930b316916e68cde9accb772a0432a3e773"
+  size_bytes: 6181
+  attributes:
+    change_scope: "knowledge-shard-record-v1-current-producer"
+    base_revision: "5b30af7394604ddb4832de9f61f8183e6169812e"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-schemas-readme-record-v1:355"
+  type: "modification"
+  started_at: "2026-07-26T18:07:00Z"
+  ended_at: "2026-07-26T18:11:09Z"
+  description: "Document the exact current RecordStore fixture, executable coverage, mandatory losses, and narrow claim boundary"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/schemas/README.md"
+    activity: "urn:aiwg:activity:modification:packages-core-schemas-readme-record-v1:355"
+    time: "2026-07-26T18:11:09Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-schemas-readme-record-v1:355"
+      entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-record-v1-recordstore-self.receipt.json"
+      role: "documented_receipt"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-schemas-readme-record-v1:355"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/schemas/README.md"
+    agent: "urn:aiwg:agent:codex-gpt-5"

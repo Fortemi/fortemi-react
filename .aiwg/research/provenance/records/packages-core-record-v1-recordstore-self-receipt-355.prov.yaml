@@ -1,0 +1,49 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T18:11:09Z"
+  description: "Provenance for the current RecordStore record-v1 self-cell receipt"
+entity:
+  id: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-record-v1-recordstore-self.receipt.json"
+  type: "test_evidence"
+  created_at: "2026-07-26T18:11:09Z"
+  checksum: "sha256:64526dca39fd3607157d7fc18e02b3becc46dea7dfd094f1908085bcd3f0117f"
+  size_bytes: 3298
+  attributes:
+    change_scope: "knowledge-shard-record-v1-current-producer"
+    base_revision: "5b30af7394604ddb4832de9f61f8183e6169812e"
+activity:
+  id: "urn:aiwg:activity:generation:packages-core-record-v1-recordstore-self-receipt:355"
+  type: "generation"
+  started_at: "2026-07-26T18:07:00Z"
+  ended_at: "2026-07-26T18:11:09Z"
+  description: "Bind all nine required record-v1 dimensions, declared losses, and claim controls to the signed current producer"
+  attributes:
+    verification:
+      - "pnpm --filter @fortemi/core test:portable-contract"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-record-v1-recordstore-self.receipt.json"
+    activity: "urn:aiwg:activity:generation:packages-core-record-v1-recordstore-self-receipt:355"
+    time: "2026-07-26T18:11:09Z"
+  used:
+    - activity: "urn:aiwg:activity:generation:packages-core-record-v1-recordstore-self-receipt:355"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:5b30af7394604ddb4832de9f61f8183e6169812e:packages/core/src/__tests__/shard/fixtures/recordstore-record-v1-2026.7.13.shard"
+      role: "evidence"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-record-v1-recordstore-self.receipt.json"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:355"
+      derivation_type: "certifies"
+      activity: "urn:aiwg:activity:generation:packages-core-record-v1-recordstore-self-receipt:355"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:packages-core-record-v1-recordstore-self-receipt:355"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-record-v1-recordstore-self.receipt.json"
+    agent: "urn:aiwg:agent:codex-gpt-5"

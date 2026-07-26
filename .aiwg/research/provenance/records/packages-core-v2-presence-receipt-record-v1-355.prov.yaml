@@ -1,0 +1,45 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T18:11:09Z"
+  description: "Provenance for regenerating the schema-2 presence receipt after verifier extension"
+entity:
+  id: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json"
+  type: "test_evidence"
+  created_at: "2026-07-26T18:11:09Z"
+  checksum: "sha256:f29e2f0aff090ba1cadb62b48d18fd86e957e4bcd75fad45ca0f6cd7d52fabcd"
+  size_bytes: 3189
+  attributes:
+    change_scope: "knowledge-shard-record-v1-current-producer"
+    base_revision: "5b30af7394604ddb4832de9f61f8183e6169812e"
+activity:
+  id: "urn:aiwg:activity:generation:packages-core-v2-presence-receipt-record-v1:355"
+  type: "generation"
+  started_at: "2026-07-26T18:10:00Z"
+  ended_at: "2026-07-26T18:11:09Z"
+  description: "Regenerate the dependent presence receipt with the current fail-closed verifier digest"
+  attributes:
+    verification:
+      - "pnpm --filter @fortemi/core shard:generate-presence-receipt"
+      - "pnpm --filter @fortemi/core verify:knowledge-shard-contract"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json"
+    activity: "urn:aiwg:activity:generation:packages-core-v2-presence-receipt-record-v1:355"
+    time: "2026-07-26T18:11:09Z"
+  used:
+    - activity: "urn:aiwg:activity:generation:packages-core-v2-presence-receipt-record-v1:355"
+      entity: "urn:aiwg:artifact:packages/core/scripts/verify-knowledge-shard-contract.mjs"
+      role: "implementation_digest"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:packages-core-v2-presence-receipt-record-v1:355"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json"
+    agent: "urn:aiwg:agent:codex-gpt-5"
