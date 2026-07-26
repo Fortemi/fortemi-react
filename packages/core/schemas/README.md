@@ -52,6 +52,16 @@ persistent mutation on rejection. The receipt is limited to the
 `pglite-core-v1-to-fortemi` cell and is not suite-wide or complete-backup
 evidence.
 
+`knowledge-shard-core-v1-fortemi-to-pglite.receipt.json` binds the current
+Fortemi producer fixture to an independent clean PGlite consumer at delivered
+commit `fb570b85`. It proves hierarchy, metadata values, explicit nulls,
+tombstones, attachment projections, current-minus-two/current behavior,
+malformed and next-major rejection, the archive expansion cap, repeated
+import, semantic re-export, and zero mutation on rejection. Timestamp spelling
+is normalized to the same RFC 3339 instant. The receipt is limited to the
+`fortemi-core-v1-to-pglite` cell and is not suite-wide or complete-backup
+evidence.
+
 ## Knowledge Shard `2.0.0` / `full-v1` receipts
 
 `knowledge-shard-v2.schema.receipt.json` pins the immutable authority and

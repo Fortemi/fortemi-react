@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T17:27:26Z"
+  description: "Provenance for regenerating the presence receipt after verifier binding"
+entity:
+  id: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json"
+  type: "test_evidence"
+  created_at: "2026-07-26T17:27:26Z"
+  checksum: "sha256:ae7f60717a6364a064d4c297181dd2147f9a608e2e2b2f48c2c87ee285e63374"
+  size_bytes: 3189
+  attributes:
+    change_scope: "knowledge-shard-core-v1-fortemi-to-pglite"
+    base_revision: "fb570b8503eb82bcb5509b652c234c9e8582a941"
+activity:
+  id: "urn:aiwg:activity:generation:packages-core-v2-presence-fortemi-to-pglite:354"
+  type: "generation"
+  started_at: "2026-07-26T17:25:00Z"
+  ended_at: "2026-07-26T17:27:26Z"
+  description: "Regenerate implementation digests after adding the fail-closed reverse-cell verifier"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json"
+    activity: "urn:aiwg:activity:generation:packages-core-v2-presence-fortemi-to-pglite:354"
+    time: "2026-07-26T17:27:26Z"
+  used:
+    - activity: "urn:aiwg:activity:generation:packages-core-v2-presence-fortemi-to-pglite:354"
+      entity: "urn:aiwg:artifact:packages/core/scripts/verify-knowledge-shard-contract.mjs"
+      role: "implementation_digest"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json"
+      source: "urn:aiwg:artifact:packages/core/scripts/generate-presence-receipt.mjs"
+      derivation_type: "generated_by"
+      activity: "urn:aiwg:activity:generation:packages-core-v2-presence-fortemi-to-pglite:354"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:packages-core-v2-presence-fortemi-to-pglite:354"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json"
+    agent: "urn:aiwg:agent:codex-gpt-5"

@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T17:27:26Z"
+  description: "Provenance for Fortemi-to-PGlite core-v1 receipt documentation"
+entity:
+  id: "urn:aiwg:artifact:packages/core/schemas/README.md"
+  type: "documentation"
+  created_at: "2026-07-26T17:27:26Z"
+  checksum: "sha256:fcd94ea2eb2c9fcaac05798080dd5fa1e88e09150ca25f31183fd1c2f644ea06"
+  size_bytes: 5555
+  attributes:
+    change_scope: "knowledge-shard-core-v1-fortemi-to-pglite"
+    base_revision: "fb570b8503eb82bcb5509b652c234c9e8582a941"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-schemas-readme-fortemi-to-pglite:354"
+  type: "modification"
+  started_at: "2026-07-26T17:25:00Z"
+  ended_at: "2026-07-26T17:27:26Z"
+  description: "Document the reverse cross-repository cell and preserve its scoped claim boundary"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/schemas/README.md"
+    activity: "urn:aiwg:activity:modification:packages-core-schemas-readme-fortemi-to-pglite:354"
+    time: "2026-07-26T17:27:26Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-schemas-readme-fortemi-to-pglite:354"
+      entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-fortemi-to-pglite.receipt.json"
+      role: "documented_receipt"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/schemas/README.md"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:354"
+      derivation_type: "documents"
+      activity: "urn:aiwg:activity:modification:packages-core-schemas-readme-fortemi-to-pglite:354"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-schemas-readme-fortemi-to-pglite:354"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/schemas/README.md"
+    agent: "urn:aiwg:agent:codex-gpt-5"

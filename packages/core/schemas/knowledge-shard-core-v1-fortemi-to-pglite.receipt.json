@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "fortemi.knowledge-shard.cell-receipt.v1",
+  "status": "delivered-main-conformance-passed",
+  "cell": "fortemi-core-v1-to-pglite",
+  "producer": {
+    "repository": "https://git.integrolabs.net/Fortemi/fortemi.git",
+    "commit": "b53f1429e409ad02b6c9513218cb62adb9f19c71",
+    "version": "2026.7.12",
+    "test": "tests::shard_core_v1_server_export_clean_import_preserves_semantic_state",
+    "cellReceipt": {
+      "commit": "6488cd890108b7eda20fa1366ec6bcebfd1e3684",
+      "path": "tests/fixtures/shards/fortemi-core-v1-2026.7.12.shard.cell-receipt.json",
+      "sha256": "64a9f71f9560940db1f379f145cca4e893bc3e644b5f6421fc68b79245b2f4a8"
+    }
+  },
+  "authority": {
+    "repository": "https://git.integrolabs.net/Fortemi/fortemi.git",
+    "commit": "81fbeaf065df3818edd046ed8a744f10eeb00e6f",
+    "contractRevision": "19",
+    "contractSha256": "5debc14e0bc7eef403a75e8e063a10f53019e1d74857485d6eda3abaec9397e2",
+    "schemaVersion": "1.2.0",
+    "schemaBundleSha256": "deec0cb66dc09865667256e29340d096c02dd9b0e55bdc1ae60b7effb68ac595"
+  },
+  "fixture": {
+    "path": "packages/core/src/__tests__/shard/fixtures/fortemi-core-v1-2026.7.12.shard",
+    "sha256": "154867e973ff104869c6320e2a6a39138e2a7e1c91f8fb8206cce4d479c0cd22",
+    "bytes": 1368,
+    "profile": "core-v1",
+    "createdAt": "2026-07-26T15:33:49.824506111Z",
+    "components": [
+      "notes",
+      "collections",
+      "tags",
+      "templates",
+      "links"
+    ],
+    "counts": {
+      "notes": 2,
+      "collections": 2,
+      "tags": 1,
+      "templates": 1,
+      "links": 1
+    }
+  },
+  "consumer": {
+    "id": "pglite",
+    "repository": "https://git.integrolabs.net/Fortemi/fortemi-react.git",
+    "commit": "fb570b8503eb82bcb5509b652c234c9e8582a941",
+    "package": {
+      "name": "@fortemi/core",
+      "version": "2026.7.13"
+    },
+    "cleanDestination": true,
+    "semanticReexport": true,
+    "zeroMutationOnFailure": true,
+    "repeatedImports": 2,
+    "hierarchyPreserved": true,
+    "metadataValuePreserved": true,
+    "explicitNullMetadataPreserved": true,
+    "tombstonePreserved": true,
+    "attachmentProjectionsPreserved": true,
+    "semanticTimestampNormalization": true,
+    "currentMinusTwo": {
+      "schemaVersion": "1.0.0",
+      "accepted": true,
+      "migratedTo": "1.2.0"
+    },
+    "nextMajor": {
+      "schemaVersion": "3.0.0",
+      "rejected": true
+    },
+    "malformedInputRejected": true,
+    "resourceLimits": {
+      "maximumExpandedBytes": 268435456,
+      "rejectedBeforeMutation": true
+    },
+    "persistentMutationAfterRejection": 0
+  },
+  "tests": {
+    "command": "pnpm --filter @fortemi/core test:portable-contract",
+    "suite": "packages/core/src/__tests__/shard/fortemi-core-v1-consumer-cell.test.ts",
+    "cases": [
+      "imports the exact Fortemi fixture twice and semantically re-exports every component",
+      "accepts the current-minus-two core-v1 authority into a clean destination",
+      "rejects malformed record before any PGlite mutation",
+      "rejects next major before any PGlite mutation",
+      "rejects resource limit before any PGlite mutation"
+    ],
+    "focusedResult": {
+      "passed": 5,
+      "failed": 0
+    },
+    "deliveredMain": {
+      "commit": "fb570b8503eb82bcb5509b652c234c9e8582a941",
+      "run": 1873,
+      "job": 101103,
+      "conclusion": "success",
+      "portableContract": {
+        "files": 15,
+        "passed": 281,
+        "failed": 0
+      },
+      "allJobs": {
+        "passed": 8,
+        "failed": 0
+      }
+    }
+  },
+  "coverage": [
+    "hierarchy",
+    "metadata",
+    "nulls",
+    "tombstones",
+    "current-minus-two",
+    "current",
+    "next-major-rejection",
+    "malformed-input",
+    "resource-limits"
+  ],
+  "claimBoundary": {
+    "profile": "core-v1",
+    "schemaVersion": "1.2.0",
+    "cell": "fortemi-core-v1-to-pglite",
+    "suiteWide": false,
+    "completeBackup": false,
+    "crossRepository": true
+  }
+}

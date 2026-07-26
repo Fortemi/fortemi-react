@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T17:27:26Z"
+  description: "Provenance for the ADR-011 Fortemi-to-PGlite core-v1 amendment"
+entity:
+  id: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+  type: "architecture_decision_record"
+  created_at: "2026-07-26T17:27:26Z"
+  checksum: "sha256:426e29d7eddb907ef02dd1e81123d210b66ae2db2371c06c538b6478ffedfc67"
+  size_bytes: 14876
+  attributes:
+    change_scope: "knowledge-shard-core-v1-fortemi-to-pglite"
+    base_revision: "fb570b8503eb82bcb5509b652c234c9e8582a941"
+activity:
+  id: "urn:aiwg:activity:modification:adr-011-fortemi-to-pglite:354"
+  type: "modification"
+  started_at: "2026-07-26T17:25:00Z"
+  ended_at: "2026-07-26T17:27:26Z"
+  description: "Record the exact reverse core-v1 cell while keeping remaining cross-repository directions gated"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+    activity: "urn:aiwg:activity:modification:adr-011-fortemi-to-pglite:354"
+    time: "2026-07-26T17:27:26Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:adr-011-fortemi-to-pglite:354"
+      entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-fortemi-to-pglite.receipt.json"
+      role: "implementation_evidence"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+      source: "urn:gitea:Fortemi/fortemi:issue:1059"
+      derivation_type: "documents"
+      activity: "urn:aiwg:activity:modification:adr-011-fortemi-to-pglite:354"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:adr-011-fortemi-to-pglite:354"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+    agent: "urn:aiwg:agent:codex-gpt-5"

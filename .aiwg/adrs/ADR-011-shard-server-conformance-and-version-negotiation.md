@@ -113,6 +113,17 @@ insufficient release evidence.
   semantic re-export, and zero mutation after each rejection. It satisfies
   only `pglite-core-v1-to-fortemi`; the reverse direction and the AIWG and
   RecordStore cross-repository cells remain separately gated.
+- @packages/core/schemas/knowledge-shard-core-v1-fortemi-to-pglite.receipt.json
+  binds the current Fortemi producer fixture at
+  `b53f1429e409ad02b6c9513218cb62adb9f19c71` to delivered PGlite consumer
+  commit `fb570b8503eb82bcb5509b652c234c9e8582a941`. React run 1873 job 101103
+  passed 281 portable-contract cases across 15 files. The dedicated consumer
+  suite proves hierarchy, metadata values, explicit nulls, tombstones,
+  attachment projections, current-minus-two/current behavior, malformed and
+  next-major rejection, configured expansion limits, repeated import,
+  semantic re-export, and zero mutation after rejection. It satisfies only
+  `fortemi-core-v1-to-pglite`; the AIWG and RecordStore cross-repository cells
+  remain separately gated.
 - @packages/core/src/shard/full-v1-store.ts persists and re-emits every logical
   file in exact `2.0.0/full-v1`, stores all 33 validated component record sets,
   retains signatures when present, and reference-counts mandatory blob bytes.
