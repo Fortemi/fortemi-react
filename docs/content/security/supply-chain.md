@@ -49,6 +49,10 @@ Pushes to authoritative Gitea `origin` use
 `tools/git/push-origin-as-roctinam.sh`; it hydrates the project SSH key from
 `kv_internal/gitea/fortemi-react-roctinam-ssh-key` into tmpfs, verifies that
 Gitea authenticates the key as `roctinam`, pushes, and removes the key.
+Both wrappers load the least-privilege project runtime AppRole from encrypted
+systemd credentials into tmpfs. An explicit mode-600
+`FORTEMI_GIT_HANDOFF` remains available for non-host development, but missing
+explicit handoffs fail closed and no plaintext default handoff is required.
 
 For the current `rca-g2.s9.internal` endpoint, set `VAULT_CACERT` to
 `ci/trust/integro-labs-root-ca-g2.crt`. This public root is copied from the

@@ -61,6 +61,8 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends jq
           tools/release/cut-tag.test.sh
+      - name: OpenBao Git credential bootstrap tests
+        run: tools/git/openbao-approle.test.sh
       - name: Shard + AIWG index conformance gate
         run: pnpm test:portable-contract
 

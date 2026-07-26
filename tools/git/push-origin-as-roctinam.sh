@@ -4,17 +4,6 @@
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
-HANDOFF="${FORTEMI_GIT_HANDOFF:-/home/roctinam/.config/openbao/handoff/fortemi-react-git-roctinam.env}"
-[[ -r "$HANDOFF" ]] || { echo "FAIL: OpenBao Git handoff is unavailable: $HANDOFF" >&2; exit 1; }
-
-set -a
-# shellcheck disable=SC1090
-. "$HANDOFF"
-set +a
-export VAULT_ADDR="${VAULT_ADDR:-https://rca.s9.internal:8200}"
-export VAULT_CACERT="${VAULT_CACERT:-$ROOT/ci/trust/integro-labs-root-ca-g2.crt}"
-export VAULT_CI_ROLE_ID="$VAULT_GIT_ROLE_ID"
-export VAULT_CI_SECRET_ID="$VAULT_GIT_SECRET_ID"
 
 for candidate in "${XDG_RUNTIME_DIR:-}" /dev/shm; do
   if [[ -n "$candidate" && -d "$candidate" && -w "$candidate" && "$(stat -f -c %T "$candidate" 2>/dev/null || true)" == tmpfs ]]; then
@@ -33,6 +22,9 @@ trap cleanup EXIT INT TERM
 chmod 700 "$TMP"
 touch "$TMP/fetched.env"
 chmod 600 "$TMP/fetched.env"
+# shellcheck source=tools/git/openbao-approle.sh
+. "$ROOT/tools/git/openbao-approle.sh"
+load_fortemi_git_approle "$TMP"
 RUNNER_TEMP="$TMP" bash "$ROOT/ci/vault-fetch.sh" \
   --spec "$ROOT/ci/vault-fetch.git-roctinam.spec" --env-file "$TMP/fetched.env"
 # shellcheck disable=SC1090
