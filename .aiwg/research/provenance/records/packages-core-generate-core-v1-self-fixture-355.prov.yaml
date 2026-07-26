@@ -1,0 +1,49 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T15:55:58Z"
+  description: "Provenance for the deterministic current PGlite core-v1 fixture generator"
+entity:
+  id: "urn:aiwg:artifact:packages/core/scripts/generate-core-v1-self-fixture.mjs"
+  type: "source_code"
+  created_at: "2026-07-26T15:55:58Z"
+  checksum: "sha256:055197cee9c3b698eca7c0093057f68ce130d04fa431fa2b5c24e3dc9e4faa9f"
+  size_bytes: 5217
+  attributes:
+    change_scope: "knowledge-shard-core-v1-pglite-self-cell"
+    base_revision: "1c0d5dba05c3e675c01cf53e93b6d082f2174b54"
+activity:
+  id: "urn:aiwg:activity:generation:packages-core-generate-core-v1-self-fixture:355"
+  type: "generation"
+  started_at: "2026-07-26T15:48:00Z"
+  ended_at: "2026-07-26T15:55:58Z"
+  description: "Generate a deterministic 2026.7.13 core-v1 archive from live PGlite state"
+  attributes:
+    verification:
+      - "pnpm --filter @fortemi/core exec node scripts/generate-core-v1-self-fixture.mjs --verify"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/scripts/generate-core-v1-self-fixture.mjs"
+    activity: "urn:aiwg:activity:generation:packages-core-generate-core-v1-self-fixture:355"
+    time: "2026-07-26T15:55:58Z"
+  used:
+    - activity: "urn:aiwg:activity:generation:packages-core-generate-core-v1-self-fixture:355"
+      entity: "urn:gitea:Fortemi/fortemi-react:issue:355"
+      role: "requirement"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/scripts/generate-core-v1-self-fixture.mjs"
+      source: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:generation:packages-core-generate-core-v1-self-fixture:355"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:packages-core-generate-core-v1-self-fixture:355"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/scripts/generate-core-v1-self-fixture.mjs"
+    agent: "urn:aiwg:agent:codex-gpt-5"

@@ -1,0 +1,47 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T15:55:58Z"
+  description: "Provenance for the immutable current PGlite core-v1 self-cell fixture"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/pglite-core-v1-2026.7.13.shard"
+  type: "test_fixture"
+  created_at: "2026-07-26T15:55:58Z"
+  checksum: "sha256:e9f7f52067646fc3f0c2921558d75e7bf686da760f2f6b665990775fa30ad06d"
+  size_bytes: 1271
+  attributes:
+    change_scope: "knowledge-shard-core-v1-pglite-self-cell"
+    producer_version: "2026.7.13"
+    profile: "core-v1"
+activity:
+  id: "urn:aiwg:activity:generation:packages-core-pglite-core-v1-2026-7-13-shard:355"
+  type: "generation"
+  started_at: "2026-07-26T15:51:00Z"
+  ended_at: "2026-07-26T15:55:58Z"
+  description: "Generate the current live PGlite core-v1 archive with hierarchy, metadata, nulls, and tombstones"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/pglite-core-v1-2026.7.13.shard"
+    activity: "urn:aiwg:activity:generation:packages-core-pglite-core-v1-2026-7-13-shard:355"
+    time: "2026-07-26T15:55:58Z"
+  used:
+    - activity: "urn:aiwg:activity:generation:packages-core-pglite-core-v1-2026-7-13-shard:355"
+      entity: "urn:aiwg:artifact:packages/core/scripts/generate-core-v1-self-fixture.mjs"
+      role: "generator"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/pglite-core-v1-2026.7.13.shard"
+      source: "urn:aiwg:artifact:packages/core/scripts/generate-core-v1-self-fixture.mjs"
+      derivation_type: "generated_by"
+      activity: "urn:aiwg:activity:generation:packages-core-pglite-core-v1-2026-7-13-shard:355"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:packages-core-pglite-core-v1-2026-7-13-shard:355"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/pglite-core-v1-2026.7.13.shard"
+    agent: "urn:aiwg:agent:codex-gpt-5"

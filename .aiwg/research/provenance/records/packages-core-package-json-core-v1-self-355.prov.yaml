@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T15:55:58Z"
+  description: "Provenance for registering the core-v1 self-cell generator and portable-contract test"
+entity:
+  id: "urn:aiwg:artifact:packages/core/package.json"
+  type: "configuration"
+  created_at: "2026-07-26T15:55:58Z"
+  checksum: "sha256:8cf3e954b41a762d73962cb08d98ccc012ef16668fac0d94183555ab455c2285"
+  size_bytes: 3729
+  attributes:
+    change_scope: "knowledge-shard-core-v1-pglite-self-cell"
+    base_revision: "1c0d5dba05c3e675c01cf53e93b6d082f2174b54"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-package-json-core-v1-self:355"
+  type: "modification"
+  started_at: "2026-07-26T15:48:00Z"
+  ended_at: "2026-07-26T15:55:58Z"
+  description: "Add reproducible fixture generation and gate the self-cell suite in portable-contract"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/package.json"
+    activity: "urn:aiwg:activity:modification:packages-core-package-json-core-v1-self:355"
+    time: "2026-07-26T15:55:58Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-package-json-core-v1-self:355"
+      entity: "urn:gitea:Fortemi/fortemi-react:issue:355"
+      role: "requirement"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/package.json"
+      source: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:1c0d5dba05c3e675c01cf53e93b6d082f2174b54:packages/core/package.json"
+      derivation_type: "modifies"
+      activity: "urn:aiwg:activity:modification:packages-core-package-json-core-v1-self:355"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-package-json-core-v1-self:355"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/package.json"
+    agent: "urn:aiwg:agent:codex-gpt-5"

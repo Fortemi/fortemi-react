@@ -1,0 +1,52 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T15:55:58Z"
+  description: "Provenance for current PGlite core-v1 self-cell conformance coverage"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/__tests__/shard/core-v1-self-cell.test.ts"
+  type: "test"
+  created_at: "2026-07-26T15:55:58Z"
+  checksum: "sha256:d687386a3006f50640a423cde04538aef51792adec9741579e9fb4ef232e7318"
+  size_bytes: 7931
+  attributes:
+    change_scope: "knowledge-shard-core-v1-pglite-self-cell"
+    base_revision: "1c0d5dba05c3e675c01cf53e93b6d082f2174b54"
+activity:
+  id: "urn:aiwg:activity:testing:packages-core-core-v1-self-cell:355"
+  type: "testing"
+  started_at: "2026-07-26T15:48:00Z"
+  ended_at: "2026-07-26T15:55:58Z"
+  description: "Prove clean repeat import, semantic re-export, version policy, malformed rejection, resource bounds, and zero mutation"
+  attributes:
+    verification:
+      - "pnpm --filter @fortemi/core test:portable-contract: 276 passed"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/core-v1-self-cell.test.ts"
+    activity: "urn:aiwg:activity:testing:packages-core-core-v1-self-cell:355"
+    time: "2026-07-26T15:55:58Z"
+  used:
+    - activity: "urn:aiwg:activity:testing:packages-core-core-v1-self-cell:355"
+      entity: "urn:gitea:Fortemi/fortemi-react:issue:354"
+      role: "validation_requirement"
+    - activity: "urn:aiwg:activity:testing:packages-core-core-v1-self-cell:355"
+      entity: "urn:gitea:Fortemi/fortemi-react:issue:355"
+      role: "profile_requirement"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/core-v1-self-cell.test.ts"
+      source: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+      derivation_type: "tests"
+      activity: "urn:aiwg:activity:testing:packages-core-core-v1-self-cell:355"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:testing:packages-core-core-v1-self-cell:355"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "test_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/core-v1-self-cell.test.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

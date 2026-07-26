@@ -1,8 +1,16 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-07-24T02:48:16Z"
-  record_count: 29
+  updated_at: "2026-07-26T15:55:58Z"
+  record_count: 33
 records:
+  - entity: "urn:aiwg:artifact:packages/core/package.json"
+    record: "records/packages-core-package-json-core-v1-self-355.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/scripts/generate-core-v1-self-fixture.mjs"
+    record: "records/packages-core-generate-core-v1-self-fixture-355.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/core-v1-self-cell.test.ts"
+    record: "records/packages-core-core-v1-self-cell-test-355.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/pglite-core-v1-2026.7.13.shard"
+    record: "records/packages-core-pglite-core-v1-2026.7.13-shard-355.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-006-public-api-first.md"
     record: "records/ADR-006-public-api-first.md.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md"
