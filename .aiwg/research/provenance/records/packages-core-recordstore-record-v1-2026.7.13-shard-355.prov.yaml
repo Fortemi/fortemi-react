@@ -1,0 +1,47 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T18:06:48Z"
+  description: "Provenance for the immutable current RecordStore record-v1 producer fixture"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/recordstore-record-v1-2026.7.13.shard"
+  type: "test_fixture"
+  created_at: "2026-07-26T18:06:48Z"
+  checksum: "sha256:7730873c7f43c1333e12915a3899a2a712321538fb1f2e41055b77cd40307285"
+  size_bytes: 1234
+  attributes:
+    change_scope: "knowledge-shard-record-v1-current-producer"
+    producer_version: "2026.7.13"
+    profile: "record-v1"
+activity:
+  id: "urn:aiwg:activity:generation:packages-core-recordstore-record-v1-2026-7-13-shard:355"
+  type: "generation"
+  started_at: "2026-07-26T18:03:00Z"
+  ended_at: "2026-07-26T18:06:48Z"
+  description: "Generate the current RecordStore record-v1 archive with hierarchy, metadata, nulls, tombstones, and declared losses"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/recordstore-record-v1-2026.7.13.shard"
+    activity: "urn:aiwg:activity:generation:packages-core-recordstore-record-v1-2026-7-13-shard:355"
+    time: "2026-07-26T18:06:48Z"
+  used:
+    - activity: "urn:aiwg:activity:generation:packages-core-recordstore-record-v1-2026-7-13-shard:355"
+      entity: "urn:aiwg:artifact:packages/core/scripts/generate-record-v1-self-fixture.mjs"
+      role: "generator"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/recordstore-record-v1-2026.7.13.shard"
+      source: "urn:aiwg:artifact:packages/core/scripts/generate-record-v1-self-fixture.mjs"
+      derivation_type: "generated_by"
+      activity: "urn:aiwg:activity:generation:packages-core-recordstore-record-v1-2026-7-13-shard:355"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:packages-core-recordstore-record-v1-2026-7-13-shard:355"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/recordstore-record-v1-2026.7.13.shard"
+    agent: "urn:aiwg:agent:codex-gpt-5"

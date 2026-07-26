@@ -1,0 +1,50 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T18:06:48Z"
+  description: "Provenance for the deterministic current RecordStore record-v1 fixture generator"
+entity:
+  id: "urn:aiwg:artifact:packages/core/scripts/generate-record-v1-self-fixture.mjs"
+  type: "source_code"
+  created_at: "2026-07-26T18:06:48Z"
+  checksum: "sha256:c58d227b0dbcb4da74b9d4ffac677f148e6c42677c2e819c63ffe2c51bfa8806"
+  size_bytes: 10855
+  attributes:
+    change_scope: "knowledge-shard-record-v1-current-producer"
+    base_revision: "8f76e630b3ebf0908630b221cc201d3fbbeaa236"
+activity:
+  id: "urn:aiwg:activity:generation:packages-core-generate-record-v1-self-fixture:355"
+  type: "generation"
+  started_at: "2026-07-26T18:03:00Z"
+  ended_at: "2026-07-26T18:06:48Z"
+  description: "Generate and verify a deterministic 2026.7.13 record-v1 archive from the live RecordStore implementation"
+  attributes:
+    verification:
+      - "pnpm --filter @fortemi/core shard:generate-record-v1-self"
+      - "pnpm --filter @fortemi/core test:portable-contract"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/scripts/generate-record-v1-self-fixture.mjs"
+    activity: "urn:aiwg:activity:generation:packages-core-generate-record-v1-self-fixture:355"
+    time: "2026-07-26T18:06:48Z"
+  used:
+    - activity: "urn:aiwg:activity:generation:packages-core-generate-record-v1-self-fixture:355"
+      entity: "urn:gitea:Fortemi/fortemi-react:issue:355"
+      role: "requirement"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/scripts/generate-record-v1-self-fixture.mjs"
+      source: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:generation:packages-core-generate-record-v1-self-fixture:355"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:packages-core-generate-record-v1-self-fixture:355"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/scripts/generate-record-v1-self-fixture.mjs"
+    agent: "urn:aiwg:agent:codex-gpt-5"

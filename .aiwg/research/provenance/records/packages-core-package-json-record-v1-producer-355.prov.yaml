@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T18:06:48Z"
+  description: "Provenance for registering record-v1 fixture reproduction in the portable contract"
+entity:
+  id: "urn:aiwg:artifact:packages/core/package.json"
+  type: "configuration"
+  created_at: "2026-07-26T18:06:48Z"
+  checksum: "sha256:5695f194be57cf2c94c3ea4a9cbe078887cb434034da7ea4e55c6887afd641b2"
+  size_bytes: 3965
+  attributes:
+    change_scope: "knowledge-shard-record-v1-current-producer"
+    base_revision: "8f76e630b3ebf0908630b221cc201d3fbbeaa236"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-package-json-record-v1-producer:355"
+  type: "modification"
+  started_at: "2026-07-26T18:03:00Z"
+  ended_at: "2026-07-26T18:06:48Z"
+  description: "Require deterministic current RecordStore fixture verification in the portable-contract gate"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/package.json"
+    activity: "urn:aiwg:activity:modification:packages-core-package-json-record-v1-producer:355"
+    time: "2026-07-26T18:06:48Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-package-json-record-v1-producer:355"
+      entity: "urn:gitea:Fortemi/fortemi-react:issue:355"
+      role: "requirement"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/package.json"
+      source: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:8f76e630b3ebf0908630b221cc201d3fbbeaa236:packages/core/package.json"
+      derivation_type: "modifies"
+      activity: "urn:aiwg:activity:modification:packages-core-package-json-record-v1-producer:355"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-package-json-record-v1-producer:355"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/package.json"
+    agent: "urn:aiwg:agent:codex-gpt-5"
