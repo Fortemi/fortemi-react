@@ -1,22 +1,24 @@
 metadata:
   schema_version: "1.0.0"
   created_at: "2026-07-24T02:48:16Z"
-  description: "Provenance for record the exact schema-2 full-v1 advertisement decision and evidence"
+  updated_at: "2026-07-26T16:02:01Z"
+  description: "Provenance for the receipt-backed PGlite core-v1 self-cell decision"
 entity:
   id: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
   type: "document"
   created_at: "2026-07-24T02:48:16Z"
-  checksum: "sha256:76c5538122e7e0c92ff9b75b3ac7c0f907d42934a6b030bb83dfe4bbe19b7ed7"
-  size_bytes: 12857
+  updated_at: "2026-07-26T16:02:01Z"
+  checksum: "sha256:332c38ba95393915fe92915010b624bdf79992f9d499add798d46252238e61ea"
+  size_bytes: 13396
   attributes:
-    change_scope: "knowledge-shard-schema-2-full-v1-cross-repository-advertisement"
-    base_revision: "45ee08e99dfb6fa0263aca2992aa6de91e2f1e98"
+    change_scope: "knowledge-shard-core-v1-pglite-self-cell"
+    base_revision: "9fdaa61a8da05c7d45ac7ff555d158cbe3dc1d2d"
 activity:
-  id: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:382"
+  id: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:355"
   type: "modification"
-  started_at: "2026-07-24T02:48:15Z"
-  ended_at: "2026-07-24T02:48:16Z"
-  description: "Record the receipt-backed exact full-v1 PGlite advertisement and bounded claims"
+  started_at: "2026-07-26T15:57:00Z"
+  ended_at: "2026-07-26T16:02:01Z"
+  description: "Record the current core-v1 self-cell evidence and retain cross-repository claim boundaries"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"
   type: "ai_assistant"
@@ -26,22 +28,22 @@ agent:
 relationships:
   wasGeneratedBy:
     entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
-    activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:382"
-    time: "2026-07-24T02:48:16Z"
+    activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:355"
+    time: "2026-07-26T16:02:01Z"
   used:
-    - activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:382"
-      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:45ee08e99dfb6fa0263aca2992aa6de91e2f1e98:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+    - activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:355"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:9fdaa61a8da05c7d45ac7ff555d158cbe3dc1d2d:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
       role: "previous_revision"
-    - activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:382"
-      entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.cross-repository.receipt.json"
+    - activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:355"
+      entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-self.receipt.json"
       role: "conformance_receipt"
   wasDerivedFrom:
     - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
-      source: "urn:gitea:Fortemi/fortemi-react:issue:382"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:355"
       derivation_type: "documents"
-      activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:382"
+      activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:355"
   wasAssociatedWith:
-    activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:382"
+    activity: "urn:aiwg:activity:modification:aiwg-adrs-adr-011-shard-server-conformance-and-version-negotiation-md:355"
     agent: "urn:aiwg:agent:codex-gpt-5"
     role: "primary_author"
   wasAttributedTo:

@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "fortemi.knowledge-shard.cell-receipt.v1",
+  "cell": "pglite-core-v1-to-pglite",
+  "producer": {
+    "repository": "https://git.integrolabs.net/Fortemi/fortemi-react.git",
+    "commit": "9fdaa61a8da05c7d45ac7ff555d158cbe3dc1d2d",
+    "package": {
+      "name": "@fortemi/core",
+      "version": "2026.7.13"
+    },
+    "generator": "packages/core/scripts/generate-core-v1-self-fixture.mjs"
+  },
+  "authority": {
+    "repository": "https://git.integrolabs.net/Fortemi/fortemi.git",
+    "commit": "81fbeaf065df3818edd046ed8a744f10eeb00e6f",
+    "contractRevision": "19",
+    "contractSha256": "5debc14e0bc7eef403a75e8e063a10f53019e1d74857485d6eda3abaec9397e2",
+    "schemaVersion": "1.2.0",
+    "schemaBundleSha256": "deec0cb66dc09865667256e29340d096c02dd9b0e55bdc1ae60b7effb68ac595"
+  },
+  "fixture": {
+    "path": "packages/core/src/__tests__/shard/fixtures/pglite-core-v1-2026.7.13.shard",
+    "sha256": "e9f7f52067646fc3f0c2921558d75e7bf686da760f2f6b665990775fa30ad06d",
+    "bytes": 1271,
+    "profile": "core-v1",
+    "createdAt": "2026-07-26T16:00:00.000Z",
+    "components": [
+      "notes",
+      "collections",
+      "tags",
+      "templates",
+      "links"
+    ],
+    "counts": {
+      "notes": 2,
+      "collections": 2,
+      "tags": 2,
+      "templates": 1,
+      "links": 1
+    }
+  },
+  "consumer": {
+    "id": "pglite",
+    "repository": "https://git.integrolabs.net/Fortemi/fortemi-react.git",
+    "baseCommit": "9fdaa61a8da05c7d45ac7ff555d158cbe3dc1d2d",
+    "cleanDestination": true,
+    "semanticReexport": true,
+    "allComponentsSemanticReexport": true,
+    "zeroMutationOnFailure": true,
+    "repeatedImports": 2,
+    "metadataValuePreserved": true,
+    "explicitNullMetadataPreserved": true,
+    "currentMinusTwo": {
+      "schemaVersion": "1.0.0",
+      "accepted": true
+    },
+    "nextMajor": {
+      "schemaVersion": "3.0.0",
+      "rejected": true
+    },
+    "malformedInputRejected": true,
+    "resourceLimits": {
+      "gzipDeclaredSizeCapBytes": 268435456,
+      "rejectedBeforeMutation": true
+    },
+    "persistentMutationAfterRejection": 0
+  },
+  "tests": {
+    "command": "pnpm --filter @fortemi/core test:portable-contract",
+    "suite": "packages/core/src/__tests__/shard/core-v1-self-cell.test.ts",
+    "focusedResult": {
+      "passed": 5,
+      "failed": 0
+    },
+    "portableContractResult": {
+      "passed": 276,
+      "failed": 0
+    },
+    "fixtureVerification": "pnpm --filter @fortemi/core exec node scripts/generate-core-v1-self-fixture.mjs --verify"
+  },
+  "coverage": [
+    "hierarchy",
+    "metadata",
+    "nulls",
+    "tombstones",
+    "current-minus-two",
+    "current",
+    "next-major-rejection",
+    "malformed-input",
+    "resource-limits"
+  ],
+  "claimBoundary": {
+    "profile": "core-v1",
+    "schemaVersion": "1.2.0",
+    "suiteWide": false,
+    "completeBackup": false,
+    "crossRepository": false
+  }
+}

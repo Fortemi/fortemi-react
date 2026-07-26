@@ -35,6 +35,14 @@ not used as authority for `core-v1`. Profile selection and portable treatment
 of extensions remain tracked separately; no extension is implicitly part of
 the canonical profile.
 
+`knowledge-shard-core-v1-pglite-self.receipt.json` binds the current
+`@fortemi/core@2026.7.13` PGlite `1.2.0/core-v1` self-cell to an immutable live
+fixture and signed producer commit. Its dedicated suite proves hierarchy,
+metadata, explicit nulls, tombstones, current-minus-two/current behavior,
+schema-next-major and malformed rejection, the gzip expansion cap, repeated
+clean import, semantic re-export, and zero persistent mutation on every
+rejection. This self-cell is not cross-repository or complete-backup evidence.
+
 ## Knowledge Shard `2.0.0` / `full-v1` receipts
 
 `knowledge-shard-v2.schema.receipt.json` pins the immutable authority and

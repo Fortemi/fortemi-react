@@ -29,7 +29,7 @@
   },
   "implementation": {
     "scripts/generate-presence-receipt.mjs": "9d3a46df5c6464389c964512d8a74422c9bcc48cb23919c3861a9b8b1c700777",
-    "scripts/verify-knowledge-shard-contract.mjs": "9b2f454086349529322553886766e900e868d2aa4398a9602aaa6c1f46c33023",
+    "scripts/verify-knowledge-shard-contract.mjs": "b6c9616c36381f9e20e2488a80301b5d3a782db31fde3bc5f5436ab3c0630eed",
     "src/shard/presence.ts": "77a36e4011b0de378d725467b5c670a0e0082e96346ed52d4755456aa7645985",
     "src/shard/presence-store.ts": "99163e2d3e60a97bffa5bb6fa73d456e81ca0d6113cf21317ea661d40f22d35c",
     "src/shard/shard-import.ts": "71036913aa6d3b749bba1ef79ead1e5255026722fd5c2daf318efd3106cd5560",

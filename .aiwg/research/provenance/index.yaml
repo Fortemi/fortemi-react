@@ -1,8 +1,16 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-07-26T15:55:58Z"
-  record_count: 33
+  updated_at: "2026-07-26T16:02:01Z"
+  record_count: 37
 records:
+  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-self.receipt.json"
+    record: "records/packages-core-core-v1-pglite-self-receipt-355.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/schemas/README.md"
+    record: "records/packages-core-schemas-readme-core-v1-self-355.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/scripts/verify-knowledge-shard-contract.mjs"
+    record: "records/packages-core-verify-knowledge-shard-contract-core-v1-self-355.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json"
+    record: "records/packages-core-v2-presence-receipt-core-v1-self-355.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/package.json"
     record: "records/packages-core-package-json-core-v1-self-355.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/scripts/generate-core-v1-self-fixture.mjs"

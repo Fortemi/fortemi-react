@@ -95,6 +95,14 @@ insufficient release evidence.
 - @packages/core/src/__tests__/shard/shard-import.test.ts and @packages/core/src/__tests__/records/record-shard.test.ts verify validation failures leave both destinations unchanged.
 - @packages/core/src/shard/profile-registry.ts derives authority status and backend advertisements from the pinned receipt.
 - @packages/core/src/shard/shard-export.ts emits and self-validates explicit PGlite `core-v1` archives with machine-readable capability/loss reports.
+- @packages/core/schemas/knowledge-shard-core-v1-pglite-self.receipt.json binds
+  the current `2026.7.13` PGlite `1.2.0/core-v1` self-cell to a deterministic
+  live fixture. Its portable-contract suite proves clean repeated import,
+  semantic re-export of every declared component, hierarchy, object and
+  explicit-null metadata, tombstones, current-minus-two/current behavior,
+  malformed and next-major rejection, the archive expansion cap, and zero
+  mutation on each failure. This receipt does not satisfy any
+  cross-repository cell.
 - @packages/core/src/shard/full-v1-store.ts persists and re-emits every logical
   file in exact `2.0.0/full-v1`, stores all 33 validated component record sets,
   retains signatures when present, and reference-counts mandatory blob bytes.

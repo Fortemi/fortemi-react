@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T16:02:01Z"
+  description: "Provenance for documenting the PGlite core-v1 self-cell receipt"
+entity:
+  id: "urn:aiwg:artifact:packages/core/schemas/README.md"
+  type: "documentation"
+  created_at: "2026-07-26T16:02:01Z"
+  checksum: "sha256:700498d4a98e5ce33a43033857eb1a8b00007998bf32e87e4f69e83753c06873"
+  size_bytes: 4423
+  attributes:
+    change_scope: "knowledge-shard-core-v1-pglite-self-cell"
+    base_revision: "9fdaa61a8da05c7d45ac7ff555d158cbe3dc1d2d"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-schemas-readme-core-v1-self:355"
+  type: "modification"
+  started_at: "2026-07-26T15:57:00Z"
+  ended_at: "2026-07-26T16:02:01Z"
+  description: "Document the exact receipt and retain bounded claim language"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/schemas/README.md"
+    activity: "urn:aiwg:activity:modification:packages-core-schemas-readme-core-v1-self:355"
+    time: "2026-07-26T16:02:01Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-schemas-readme-core-v1-self:355"
+      entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-self.receipt.json"
+      role: "source"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/schemas/README.md"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:355"
+      derivation_type: "documents"
+      activity: "urn:aiwg:activity:modification:packages-core-schemas-readme-core-v1-self:355"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-schemas-readme-core-v1-self:355"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/schemas/README.md"
+    agent: "urn:aiwg:agent:codex-gpt-5"

@@ -1,0 +1,49 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T16:02:01Z"
+  description: "Provenance for fail-closed PGlite core-v1 receipt verification"
+entity:
+  id: "urn:aiwg:artifact:packages/core/scripts/verify-knowledge-shard-contract.mjs"
+  type: "source_code"
+  created_at: "2026-07-26T16:02:01Z"
+  checksum: "sha256:b6c9616c36381f9e20e2488a80301b5d3a782db31fde3bc5f5436ab3c0630eed"
+  size_bytes: 14954
+  attributes:
+    change_scope: "knowledge-shard-core-v1-pglite-self-cell"
+    base_revision: "9fdaa61a8da05c7d45ac7ff555d158cbe3dc1d2d"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-verify-knowledge-shard-contract-core-v1-self:355"
+  type: "modification"
+  started_at: "2026-07-26T15:57:00Z"
+  ended_at: "2026-07-26T16:02:01Z"
+  description: "Fail closed on receipt identity, authority, fixture, coverage, behavior, or claim-boundary drift"
+  attributes:
+    verification:
+      - "pnpm --filter @fortemi/core verify:knowledge-shard-contract"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/scripts/verify-knowledge-shard-contract.mjs"
+    activity: "urn:aiwg:activity:modification:packages-core-verify-knowledge-shard-contract-core-v1-self:355"
+    time: "2026-07-26T16:02:01Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-verify-knowledge-shard-contract-core-v1-self:355"
+      entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-self.receipt.json"
+      role: "verified_receipt"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/scripts/verify-knowledge-shard-contract.mjs"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:354"
+      derivation_type: "enforces"
+      activity: "urn:aiwg:activity:modification:packages-core-verify-knowledge-shard-contract-core-v1-self:355"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-verify-knowledge-shard-contract-core-v1-self:355"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/scripts/verify-knowledge-shard-contract.mjs"
+    agent: "urn:aiwg:agent:codex-gpt-5"

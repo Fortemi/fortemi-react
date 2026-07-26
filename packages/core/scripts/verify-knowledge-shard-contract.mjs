@@ -27,6 +27,10 @@ const crossRepositoryReceipt = JSON.parse(readFileSync(
   resolve(packageRoot, 'schemas/knowledge-shard-v2.cross-repository.receipt.json'),
   'utf8',
 ))
+const coreV1PgliteSelfReceipt = JSON.parse(readFileSync(
+  resolve(packageRoot, 'schemas/knowledge-shard-core-v1-pglite-self.receipt.json'),
+  'utf8',
+))
 
 function sha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex')
@@ -80,6 +84,62 @@ for (const [release, historical] of Object.entries(receipt.historicalReleases ??
   verifyBundle(historical.schemaBundle, `${release} historical schema bundle`)
   verifyBundle(historical.goldenCorpus, `${release} historical golden corpus`)
 }
+
+const completeCoreV1Coverage = [
+  'hierarchy',
+  'metadata',
+  'nulls',
+  'tombstones',
+  'current-minus-two',
+  'current',
+  'next-major-rejection',
+  'malformed-input',
+  'resource-limits',
+]
+const coreV1SelfFixture = readFileSync(
+  resolve(packageRoot, '..', '..', coreV1PgliteSelfReceipt.fixture.path),
+)
+requireReceipt(
+  coreV1PgliteSelfReceipt.cell === 'pglite-core-v1-to-pglite'
+    && coreV1PgliteSelfReceipt.producer.commit
+      === '9fdaa61a8da05c7d45ac7ff555d158cbe3dc1d2d'
+    && coreV1PgliteSelfReceipt.producer.package.name === '@fortemi/core'
+    && coreV1PgliteSelfReceipt.producer.package.version === '2026.7.13',
+  'PGlite core-v1 self-cell producer identity drifted',
+)
+requireReceipt(
+  coreV1PgliteSelfReceipt.authority.commit === receipt.source.commit
+    && coreV1PgliteSelfReceipt.authority.contractSha256 === receipt.source.contractSha256
+    && coreV1PgliteSelfReceipt.authority.schemaBundleSha256 === receipt.schemaBundle.sha256
+    && coreV1PgliteSelfReceipt.authority.schemaVersion
+      === receipt.knowledgeShard.schemaVersion,
+  'PGlite core-v1 self-cell authority binding drifted',
+)
+requireReceipt(
+  coreV1SelfFixture.byteLength === coreV1PgliteSelfReceipt.fixture.bytes
+    && sha256(coreV1SelfFixture) === coreV1PgliteSelfReceipt.fixture.sha256
+    && coreV1PgliteSelfReceipt.fixture.profile === 'core-v1',
+  'PGlite core-v1 self-cell fixture drifted',
+)
+requireReceipt(
+  JSON.stringify(coreV1PgliteSelfReceipt.coverage)
+      === JSON.stringify(completeCoreV1Coverage)
+    && coreV1PgliteSelfReceipt.consumer.cleanDestination === true
+    && coreV1PgliteSelfReceipt.consumer.semanticReexport === true
+    && coreV1PgliteSelfReceipt.consumer.zeroMutationOnFailure === true
+    && coreV1PgliteSelfReceipt.consumer.currentMinusTwo.accepted === true
+    && coreV1PgliteSelfReceipt.consumer.nextMajor.rejected === true
+    && coreV1PgliteSelfReceipt.consumer.malformedInputRejected === true
+    && coreV1PgliteSelfReceipt.consumer.resourceLimits.rejectedBeforeMutation === true
+    && coreV1PgliteSelfReceipt.consumer.persistentMutationAfterRejection === 0,
+  'PGlite core-v1 self-cell coverage or consumer evidence drifted',
+)
+requireReceipt(
+  coreV1PgliteSelfReceipt.claimBoundary.suiteWide === false
+    && coreV1PgliteSelfReceipt.claimBoundary.completeBackup === false
+    && coreV1PgliteSelfReceipt.claimBoundary.crossRepository === false,
+  'PGlite core-v1 self-cell claim boundary widened',
+)
 
 const v2Contract = readFileSync(resolve(packageRoot, 'schemas/knowledge-shard/2.0.0/contract.json'))
 if (sha256(v2Contract) !== v2Receipt.source.contractSha256) {

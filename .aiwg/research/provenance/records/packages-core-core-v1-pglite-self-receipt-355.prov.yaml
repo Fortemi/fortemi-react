@@ -1,0 +1,49 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-26T16:02:01Z"
+  description: "Provenance for the PGlite core-v1 canonical self-cell receipt"
+entity:
+  id: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-self.receipt.json"
+  type: "test_evidence"
+  created_at: "2026-07-26T16:02:01Z"
+  checksum: "sha256:86f357350eb684415ceae88a910959618f471d30205d10f2dfb75d242c39b6a9"
+  size_bytes: 2887
+  attributes:
+    change_scope: "knowledge-shard-core-v1-pglite-self-cell"
+    base_revision: "9fdaa61a8da05c7d45ac7ff555d158cbe3dc1d2d"
+activity:
+  id: "urn:aiwg:activity:generation:packages-core-core-v1-pglite-self-receipt:355"
+  type: "generation"
+  started_at: "2026-07-26T15:57:00Z"
+  ended_at: "2026-07-26T16:02:01Z"
+  description: "Bind all nine required coverage dimensions to the signed producer commit and immutable fixture"
+  attributes:
+    verification:
+      - "pnpm --filter @fortemi/core test:portable-contract"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-self.receipt.json"
+    activity: "urn:aiwg:activity:generation:packages-core-core-v1-pglite-self-receipt:355"
+    time: "2026-07-26T16:02:01Z"
+  used:
+    - activity: "urn:aiwg:activity:generation:packages-core-core-v1-pglite-self-receipt:355"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:9fdaa61a8da05c7d45ac7ff555d158cbe3dc1d2d:packages/core/src/__tests__/shard/fixtures/pglite-core-v1-2026.7.13.shard"
+      role: "evidence"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-self.receipt.json"
+      source: "urn:gitea:Fortemi/fortemi-react:issue:355"
+      derivation_type: "certifies"
+      activity: "urn:aiwg:activity:generation:packages-core-core-v1-pglite-self-receipt:355"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:packages-core-core-v1-pglite-self-receipt:355"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_implementer"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-self.receipt.json"
+    agent: "urn:aiwg:agent:codex-gpt-5"
