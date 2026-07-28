@@ -74,14 +74,69 @@ complete-backup evidence.
 
 ## Knowledge Shard `2.0.0` / `full-v1` receipts
 
-`knowledge-shard-v2.schema.receipt.json` pins the immutable authority and
-presence inventory. `knowledge-shard-v2.implementation.receipt.json` and
-`knowledge-shard-v2.presence.receipt.json` bind the local implementation.
+`knowledge-shard-v2.advertisement.receipt.json` pins the current Fortemi
+revision 21 opt-in advertisement and schema bundle.
+`knowledge-shard-v2.schema.receipt.json`,
+`knowledge-shard-v2.implementation.receipt.json`, and
+`knowledge-shard-v2.presence.receipt.json` remain immutable revision 20
+implementation lineage; they are not relabelled as revision 21 evidence.
 `knowledge-shard-v2.fortemi-runtime.receipt.json` is the byte-identical
-delivered Fortemi consumer receipt, and
+delivered revision 20 Fortemi consumer receipt, and
 `knowledge-shard-v2.cross-repository.receipt.json` binds the exact four
-released producer/destination cells that permit PGlite advertisement. The
-blocking drift check above validates all five layers.
+released revision 20 producer/destination cells that permit the revision 21
+receipt-bound advertisement. The blocking drift check validates the current
+advertisement and its historical evidence lineage separately.
+
+Refresh the two changed vendored authority files and current advertisement
+receipt deterministically from the exact Fortemi commit:
+
+```bash
+pnpm shard:refresh-v2-authority --authority-root ../fortemi
+pnpm shard:refresh-v2-authority --authority-root ../fortemi --verify
+```
+
+## Platform contract receipts
+
+The Fortemi authority repository orchestrates the required Linux x86_64 and
+Darwin arm64 jobs. Each job runs the same reusable consumer command from the
+fortemi-react repository:
+
+```bash
+FORTEMI_PLATFORM_SERVER_URL=https://fortemi.example \
+FORTEMI_PLATFORM_SERVER_TOKEN="$FORTEMI_TOKEN" \
+  pnpm test:platform-contract --output artifacts/fortemi-react-platform.json
+```
+
+The command rejects every platform except Linux x86_64 and Darwin arm64. It
+requires the live Fortemi server origin and bearer token before doing any
+work. It runs `verify:knowledge-shard-contract` as a preflight before invoking
+the complete `pnpm test:portable-contract` behavioral suite. It then validates
+`/api/v1/system/compatibility`, requiring contract revision `21` and
+`auth.required: true`, downloads an authenticated
+`2.0.0/full-v1` server export, proves next-major rejection without database or
+blob mutation, imports into a clean migrated in-memory PGlite destination, and
+re-exports the exact logical files. The token is never recorded.
+
+The command emits a machine-readable receipt only after all three gates pass.
+The receipt binds the exact checkout and package version to the current Fortemi
+revision 21 advertisement, historical revision 20 implementation lineage,
+schema and profile digests, live server-to-core evidence, required profile
+cells, clean-destination/skew/zero-mutation evidence, and the RecordStore
+`record-v1` losses and claim boundary.
+
+Verify an emitted receipt without rerunning the large behavioral suite:
+
+```bash
+pnpm verify:platform-contract-receipt artifacts/fortemi-react-platform.json
+```
+
+Both commands reject dirty checkouts by default. `--allow-dirty` is available
+only for local diagnostics; such a receipt records its dirty state and is not
+eligible for the authority-owned platform matrix. These receipts prove only
+the named profile cells on Linux x86_64 or Darwin arm64. They do not establish
+universal portability, complete backup, RecordStore `full-v1`, or a shared
+schema between the AIWG static index, the AIWG-to-shard bridge, Knowledge Shard
+state transfer, and live persistence.
 
 ### Profile-aware APIs
 

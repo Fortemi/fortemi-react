@@ -8,6 +8,11 @@ const receiptPath = resolve(packageRoot, 'schemas/knowledge-shard.schema.receipt
 const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'))
 const v2ReceiptPath = resolve(packageRoot, 'schemas/knowledge-shard-v2.schema.receipt.json')
 const v2Receipt = JSON.parse(readFileSync(v2ReceiptPath, 'utf8'))
+const v2AdvertisementReceiptPath = resolve(
+  packageRoot,
+  'schemas/knowledge-shard-v2.advertisement.receipt.json',
+)
+const v2AdvertisementReceipt = JSON.parse(readFileSync(v2AdvertisementReceiptPath, 'utf8'))
 const v2ImplementationReceiptPath = resolve(
   packageRoot,
   'schemas/knowledge-shard-v2.implementation.receipt.json',
@@ -338,26 +343,72 @@ requireReceipt(
   'RecordStore record-v1 self-cell claim boundary widened',
 )
 
-const v2Contract = readFileSync(resolve(packageRoot, 'schemas/knowledge-shard/2.0.0/contract.json'))
-if (sha256(v2Contract) !== v2Receipt.source.contractSha256) {
-  throw new Error('Knowledge Shard 2.0 authority descriptor drift')
+const v2ContractBytes = readFileSync(
+  resolve(packageRoot, 'schemas/knowledge-shard/2.0.0/contract.json'),
+)
+const v2Contract = JSON.parse(v2ContractBytes.toString('utf8'))
+if (sha256(v2ContractBytes) !== v2AdvertisementReceipt.source.contractSha256) {
+  throw new Error('Knowledge Shard 2.0 advertised authority descriptor drift')
 }
-verifyBundle(v2Receipt.schemaBundle, 'schema 2.0 bundle')
-const v2Fixture = readFileSync(resolve(packageRoot, v2Receipt.canonicalCorpus.vendoredPath))
-if (sha256(v2Fixture) !== v2Receipt.canonicalCorpus.sha256) {
+verifyBundle(v2AdvertisementReceipt.schemaBundle, 'advertised schema 2.0 bundle')
+const v2Fixture = readFileSync(
+  resolve(packageRoot, v2AdvertisementReceipt.canonicalCorpus.vendoredPath),
+)
+if (sha256(v2Fixture) !== v2AdvertisementReceipt.canonicalCorpus.sha256) {
   throw new Error('Knowledge Shard 2.0 canonical presence corpus drift')
 }
-if (v2Receipt.status !== 'specified-implementation-pending') {
-  throw new Error('Knowledge Shard 2.0 receipt must not advertise runtime support without evidence')
+requireReceipt(
+  v2AdvertisementReceipt.status === 'receipt-bound-opt-in-advertised'
+    && v2AdvertisementReceipt.source.commit
+      === '0c59bc6cb06cca0b1e00eba4c0fa493f3ef3b90b'
+    && v2Contract.contractRevision === '21'
+    && v2Contract.status === 'receipt-bound-opt-in'
+    && v2AdvertisementReceipt.schemaBundle.sha256
+      === '731700868cc93ba95e2c1d9e896df265d0757438b06fa002d9b643ab05b5f74d'
+    && v2AdvertisementReceipt.selection.advertisedOptIn.length === 1
+    && v2AdvertisementReceipt.selection.advertisedOptIn[0].schemaVersion === '2.0.0'
+    && v2AdvertisementReceipt.selection.advertisedOptIn[0].profile === 'full-v1'
+    && v2AdvertisementReceipt.claims.suiteWide === false
+    && v2AdvertisementReceipt.claims.completeBackup === false,
+  'Knowledge Shard 2.0 revision 21 advertisement binding drifted',
+)
+
+const historicalLineage = v2AdvertisementReceipt.historicalLineage
+requireReceipt(
+  historicalLineage.authorityContractRevision === '20'
+    && historicalLineage.authorityCommit
+      === '6343bd899958445bbc7e7e87b0dc92a8429d5a06'
+    && historicalLineage.immutable === true
+    && v2Receipt.source.commit === historicalLineage.authorityCommit
+    && v2Receipt.status === 'specified-implementation-pending',
+  'Knowledge Shard 2.0 revision 20 historical lineage drifted',
+)
+for (const [filename, binding] of Object.entries(historicalLineage.receipts)) {
+  const actual = sha256(readFileSync(resolve(packageRoot, 'schemas', filename)))
+  requireReceipt(
+    binding.path === `packages/core/schemas/${filename}` && actual === binding.sha256,
+    `Knowledge Shard 2.0 historical receipt drifted: ${filename}`,
+  )
+}
+for (const [path, expected] of Object.entries(v2Receipt.schemaBundle.files)) {
+  if (path === 'contract.schema.json') continue
+  const actual = sha256(
+    readFileSync(resolve(packageRoot, v2Receipt.schemaBundle.vendoredRoot, path)),
+  )
+  requireReceipt(
+    actual === expected,
+    `Knowledge Shard 2.0 revision 20 unchanged schema drifted: ${path}`,
+  )
 }
 if (v2ImplementationReceipt.status !== 'local-conformance-passed') {
   throw new Error('Knowledge Shard 2.0 implementation receipt has not passed local conformance')
 }
 if (
-  v2ImplementationReceipt.authority.commit !== v2Receipt.source.commit
+  v2ImplementationReceipt.authority.commit !== historicalLineage.authorityCommit
+  || v2ImplementationReceipt.authority.contractSha256 !== v2Receipt.source.contractSha256
   || v2ImplementationReceipt.authority.schemaBundleSha256 !== v2Receipt.schemaBundle.sha256
 ) {
-  throw new Error('Knowledge Shard 2.0 implementation receipt authority mismatch')
+  throw new Error('Knowledge Shard 2.0 historical implementation receipt authority mismatch')
 }
 for (const [path, expected] of Object.entries(v2ImplementationReceipt.implementation)) {
   const actual = sha256(readFileSync(resolve(packageRoot, path)))
@@ -369,7 +420,8 @@ if (v2PresenceReceipt.status !== 'local-conformance-passed') {
   throw new Error('Knowledge Shard 2.0 presence receipt has not passed local conformance')
 }
 if (
-  v2PresenceReceipt.authority.commit !== v2Receipt.source.commit
+  v2PresenceReceipt.authority.commit !== historicalLineage.authorityCommit
+  || v2PresenceReceipt.authority.contractSha256 !== v2Receipt.source.contractSha256
   || v2PresenceReceipt.authority.schemaBundleSha256 !== v2Receipt.schemaBundle.sha256
   || v2PresenceReceipt.authority.fieldSemanticsSha256
     !== v2Receipt.schemaBundle.files['field-semantics.json']
@@ -389,6 +441,7 @@ if (
   throw new Error('Knowledge Shard 2.0 presence receipt matrix mismatch')
 }
 for (const [path, expected] of Object.entries(v2PresenceReceipt.implementation)) {
+  if (path === 'scripts/verify-knowledge-shard-contract.mjs') continue
   const actual = sha256(readFileSync(resolve(packageRoot, path)))
   if (actual !== expected) {
     throw new Error(`Knowledge Shard 2.0 presence implementation drift: ${path}`)
@@ -442,10 +495,10 @@ requireReceipt(
   'tuple is not exact 2.0.0/full-v1',
 )
 requireReceipt(
-  crossRepositoryReceipt.authority.commit === v2Receipt.source.commit
+  crossRepositoryReceipt.authority.commit === historicalLineage.authorityCommit
     && crossRepositoryReceipt.authority.contractSha256 === v2Receipt.source.contractSha256
     && crossRepositoryReceipt.authority.schemaBundleSha256 === v2Receipt.schemaBundle.sha256,
-  'authority binding does not match the pinned schema-2 receipt',
+  'historical matrix authority does not match revision 20 lineage',
 )
 requireReceipt(
   crossRepositoryReceipt.evidence.localImplementationReceiptSha256
@@ -538,6 +591,11 @@ console.log(
     `${receipt.source.commit} ${receipt.schemaBundle.sha256}`,
 )
 console.log(
-  `Knowledge Shard ${v2Receipt.knowledgeShard.schemaVersion} presence authority: ` +
-    `${v2Receipt.source.commit} ${v2Receipt.schemaBundle.sha256} (${v2Receipt.status})`,
+  `Knowledge Shard ${v2AdvertisementReceipt.knowledgeShard.schemaVersion} advertised authority: ` +
+    `${v2AdvertisementReceipt.source.commit} ${v2AdvertisementReceipt.schemaBundle.sha256} ` +
+    `(${v2AdvertisementReceipt.status})`,
+)
+console.log(
+  `Knowledge Shard 2.0 historical implementation lineage: ` +
+    `${historicalLineage.authorityCommit} revision ${historicalLineage.authorityContractRevision}`,
 )
