@@ -36,8 +36,13 @@ function parseArgs(args) {
 }
 
 function runPnpm(args, repositoryRoot) {
+  const {
+    FORTEMI_PLATFORM_SERVER_TOKEN: _serverToken,
+    ...childEnvironment
+  } = process.env
   const result = spawnSync('pnpm', args, {
     cwd: repositoryRoot,
+    env: childEnvironment,
     stdio: 'inherit',
   })
   if (result.error) throw result.error

@@ -39,6 +39,12 @@ function normalizedServerOrigin(serverUrl) {
     url.protocol === 'http:' || url.protocol === 'https:',
     'server URL must use http or https',
   )
+  if (url.protocol === 'http:') {
+    assertLive(
+      ['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname),
+      'plaintext HTTP is restricted to loopback servers',
+    )
+  }
   assertLive(url.username === '' && url.password === '', 'server URL must not contain credentials')
   assertLive(
     url.pathname === '/' && url.search === '' && url.hash === '',
@@ -103,6 +109,12 @@ function manifestFromFiles(files) {
       && typeof manifest.counts === 'object'
       && Object.keys(manifest.counts).length === 34,
     'export manifest does not declare all 34 full-v1 count fields',
+  )
+  assertLive(
+    Object.values(manifest.counts).every(
+      (count) => Number.isInteger(count) && count > 0,
+    ),
+    'export manifest must contain a nonempty authority fixture in every full-v1 component',
   )
   return manifest
 }
@@ -227,6 +239,12 @@ export async function runLiveServerContract({
       { conflictStrategy: 'replace', blobStore },
     )
     assertLive(rejected.success === false, 'next-major archive was not rejected')
+    assertLive(
+      rejected.errors.some(
+        (error) => /3\.0\.0\/full-v1|exact 2\.0\.0\/full-v1 authority tuple/i.test(error),
+      ),
+      `next-major rejection reason was not version-specific: ${rejected.errors.join('; ')}`,
+    )
     const databaseAfterRejection = await destinationSnapshot(db)
     const blobsAfterRejection = await blobSnapshot(blobStore)
     assertLive(
@@ -306,6 +324,9 @@ export async function runLiveServerContract({
             producer: manifest.producer,
             componentCount: manifest.components.length,
             countFieldCount: Object.keys(manifest.counts).length,
+            nonemptyCountFieldCount: Object.values(manifest.counts)
+              .filter((count) => Number.isInteger(count) && count > 0).length,
+            minimumCount: Math.min(...Object.values(manifest.counts)),
           },
         },
       },
@@ -324,6 +345,7 @@ export async function runLiveServerContract({
           case: 'next-major-3.0.0',
           rejected: true,
           errors: rejected.errors,
+          versionReasonBound: true,
           databaseAfter: databaseAfterRejection,
           blobsAfter: blobsAfterRejection,
           zeroMutation: true,
@@ -406,7 +428,9 @@ export function verifyLiveServerContractReceipt(receipt) {
       && receipt.server.export.manifest?.version === '2.0.0'
       && receipt.server.export.manifest.profile === 'full-v1'
       && receipt.server.export.manifest.componentCount === 33
-      && receipt.server.export.manifest.countFieldCount === 34,
+      && receipt.server.export.manifest.countFieldCount === 34
+      && receipt.server.export.manifest.nonemptyCountFieldCount === 34
+      && receipt.server.export.manifest.minimumCount >= 1,
     'live full-v1 export evidence is incomplete',
   )
   assertLive(
@@ -425,6 +449,7 @@ export function verifyLiveServerContractReceipt(receipt) {
   assertLive(
     receipt.coreConsumer.rejection?.case === 'next-major-3.0.0'
       && receipt.coreConsumer.rejection.rejected === true
+      && receipt.coreConsumer.rejection.versionReasonBound === true
       && receipt.coreConsumer.rejection.zeroMutation === true
       && Array.isArray(receipt.coreConsumer.rejection.errors)
       && receipt.coreConsumer.rejection.errors.length > 0,

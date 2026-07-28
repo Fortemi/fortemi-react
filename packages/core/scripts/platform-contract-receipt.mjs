@@ -359,6 +359,16 @@ function commandIdentity() {
   }
 }
 
+function claimsForPlatform(claims, platform) {
+  return {
+    ...claims,
+    supportedPlatforms: [platform.id],
+    reason:
+      'This receipt proves the declared profile cells and one live Fortemi '
+      + `server-to-core path on ${platform.id}.`,
+  }
+}
+
 export function sealReceipt(receipt) {
   const unsigned = { ...receipt }
   delete unsigned.receiptDigest
@@ -385,13 +395,14 @@ export function createPlatformContractReceipt({
 }) {
   verifyLiveServerContractReceipt(liveServer)
   const evidence = loadPinnedContractEvidence({ packageRoot })
+  const executedPlatform = platformIdentity(platform, arch)
   const receipt = {
     schemaVersion: RECEIPT_SCHEMA,
     status: 'passed',
     command: commandIdentity(),
     repository: git,
     package: evidence.package,
-    platform: platformIdentity(platform, arch),
+    platform: executedPlatform,
     authority: evidence.authority,
     coverage: evidence.coverage,
     recordStore: evidence.recordStore,
@@ -416,7 +427,7 @@ export function createPlatformContractReceipt({
         durationMs: liveServerDurationMs,
       },
     },
-    claims: evidence.claims,
+    claims: claimsForPlatform(evidence.claims, executedPlatform),
   }
   return sealReceipt(receipt)
 }
@@ -469,7 +480,11 @@ export function verifyPlatformContractReceipt(
   assertSame(receipt.coverage, evidence.coverage, 'required profile cells or advertisements')
   assertSame(receipt.recordStore, evidence.recordStore, 'RecordStore loss boundary')
   verifyLiveServerContractReceipt(receipt.liveServer)
-  assertSame(receipt.claims, evidence.claims, 'claim boundary')
+  assertSame(
+    receipt.claims,
+    claimsForPlatform(evidence.claims, receipt.platform),
+    'claim boundary',
+  )
   assertReceipt(receipt.claims.suiteWide === false, 'suite-wide claim is forbidden')
   assertReceipt(receipt.claims.completeBackup === false, 'complete-backup claim is forbidden')
   assertReceipt(

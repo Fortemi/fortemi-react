@@ -13,7 +13,7 @@ import {
 
 const components = Array.from({ length: 33 }, (_, index) => `component-${index + 1}`)
 const counts = Object.fromEntries(
-  Array.from({ length: 34 }, (_, index) => [`count_${index + 1}`, index]),
+  Array.from({ length: 34 }, (_, index) => [`count_${index + 1}`, index + 1]),
 )
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
@@ -102,7 +102,7 @@ function fakeEnvironment({ contractRevision = '21' } = {}) {
       if (parsed.version === '3.0.0') {
         return {
           success: false,
-          errors: ['unsupported exact authority tuple'],
+          errors: ['unsupported exact authority tuple 3.0.0/full-v1'],
           component_counts: {},
         }
       }
@@ -181,6 +181,8 @@ test('runs an authenticated live server export through a clean core consumer', a
   assert.equal(verifyLiveServerContractReceipt(receipt).status, 'passed')
   assert.equal(receipt.coreConsumer.cleanDestination.satisfied, true)
   assert.equal(receipt.coreConsumer.rejection.zeroMutation, true)
+  assert.equal(receipt.coreConsumer.rejection.versionReasonBound, true)
+  assert.equal(receipt.server.export.manifest.nonemptyCountFieldCount, 34)
   assert.equal(receipt.coreConsumer.reexport.logicalFilesExact, true)
   assert.deepEqual(
     environment.requests.map((request) => request.authorization),
@@ -191,6 +193,15 @@ test('runs an authenticated live server export through a clean core consumer', a
 
 test('rejects missing credentials, invalid origins, and tampered live evidence', async () => {
   const environment = fakeEnvironment()
+  await assert.rejects(
+    runLiveServerContract({
+      serverUrl: 'http://fortemi.example',
+      token: 'secret',
+      fetchImpl: environment.fetchImpl,
+      loadCore: async () => environment.core,
+    }),
+    /plaintext HTTP is restricted to loopback/,
+  )
   await assert.rejects(
     runLiveServerContract({
       serverUrl: 'https://fortemi.example',
