@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   FORTEMI_REQUIRED_COMPATIBILITY_CAPABILITIES,
+  FORTEMI_SERVER_COMPATIBILITY_REVISION,
   fetchAndValidateFortemiCompatibility,
   fortemiCompatibilityUrl,
   formatFortemiCompatibilitySummary,
@@ -10,7 +11,7 @@ import {
 function compatibilityFixture(overrides: Record<string, unknown> = {}) {
   return {
     schema_version: 1,
-    contract_revision: '2026-07-06',
+    contract_revision: FORTEMI_SERVER_COMPATIBILITY_REVISION,
     api: {
       name: 'fortemi',
       version: '2026.7.0',
@@ -53,6 +54,10 @@ function compatibilityFixture(overrides: Record<string, unknown> = {}) {
 }
 
 describe('Fortemi server compatibility validation', () => {
+  it('pins the server compatibility revision separately from data-contract revisions', () => {
+    expect(FORTEMI_SERVER_COMPATIBILITY_REVISION).toBe('2026-07-06')
+  })
+
   it('accepts the current local-sidecar compatibility response shape', () => {
     const result = validateFortemiCompatibilityResponse(compatibilityFixture())
 

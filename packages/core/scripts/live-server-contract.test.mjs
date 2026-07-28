@@ -5,6 +5,7 @@ import { once } from 'node:events'
 import test from 'node:test'
 import {
   COMPATIBILITY_PATH,
+  EXPECTED_SERVER_COMPATIBILITY_REVISION,
   SHARD_EXPORT_PATH,
   runLiveServerContract,
   sealLiveServerReceipt,
@@ -18,7 +19,10 @@ const counts = Object.fromEntries(
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
 
-function fakeEnvironment({ contractRevision = '21' } = {}) {
+function fakeEnvironment({
+  contractRevision = EXPECTED_SERVER_COMPATIBILITY_REVISION,
+  coreContractRevision = EXPECTED_SERVER_COMPATIBILITY_REVISION,
+} = {}) {
   const archives = new Map()
   let nextArchiveId = 1
   const registerArchive = (files) => {
@@ -65,6 +69,7 @@ function fakeEnvironment({ contractRevision = '21' } = {}) {
   }
 
   const core = {
+    FORTEMI_SERVER_COMPATIBILITY_REVISION: coreContractRevision,
     async fetchAndValidateFortemiCompatibility({ baseUrl, fetchImpl }) {
       const response = await fetchImpl(`${baseUrl}${COMPATIBILITY_PATH}`, {
         method: 'GET',
@@ -238,8 +243,8 @@ test('rejects missing credentials, invalid origins, and tampered live evidence',
   )
 })
 
-test('rejects a revision 20 live server before fetching its parseable archive', async () => {
-  const environment = fakeEnvironment({ contractRevision: '20' })
+test('rejects a mismatched live server revision before fetching its parseable archive', async () => {
+  const environment = fakeEnvironment({ contractRevision: '2026-07-05' })
   await assert.rejects(
     runLiveServerContract({
       serverUrl: 'https://fortemi.example',
@@ -247,11 +252,24 @@ test('rejects a revision 20 live server before fetching its parseable archive', 
       fetchImpl: environment.fetchImpl,
       loadCore: async () => environment.core,
     }),
-    /contract revision must be 21; got 20/,
+    /contract revision must be 2026-07-06; got 2026-07-05/,
   )
   assert.deepEqual(
     environment.requests.map((request) => request.url),
     [`https://fortemi.example${COMPATIBILITY_PATH}`],
+  )
+})
+
+test('rejects drift in the core server compatibility revision authority', async () => {
+  const environment = fakeEnvironment({ coreContractRevision: '2026-07-05' })
+  await assert.rejects(
+    runLiveServerContract({
+      serverUrl: 'https://fortemi.example',
+      token: 'secret',
+      fetchImpl: environment.fetchImpl,
+      loadCore: async () => environment.core,
+    }),
+    /core server compatibility revision authority drifted/,
   )
 })
 
@@ -275,7 +293,7 @@ test('uses the real core PGlite consumer against an authenticated HTTP server', 
   ]
   const realCompatibility = {
     schema_version: 1,
-    contract_revision: '21',
+    contract_revision: EXPECTED_SERVER_COMPATIBILITY_REVISION,
     api: {
       name: 'fortemi',
       version: '2026.7.28',
@@ -332,7 +350,10 @@ test('uses the real core PGlite consumer against an authenticated HTTP server', 
       token: 'integration-token',
     })
     assert.equal(verifyLiveServerContractReceipt(receipt).status, 'passed')
-    assert.equal(receipt.server.compatibility.contractRevision, '21')
+    assert.equal(
+      receipt.server.compatibility.contractRevision,
+      EXPECTED_SERVER_COMPATIBILITY_REVISION,
+    )
     assert.equal(receipt.coreConsumer.import.databaseAfter.snapshots, 1)
     assert.equal(receipt.coreConsumer.reexport.logicalFilesExact, true)
   } finally {

@@ -1,4 +1,5 @@
 export const FORTEMI_COMPATIBILITY_PATH = '/api/v1/system/compatibility'
+export const FORTEMI_SERVER_COMPATIBILITY_REVISION = '2026-07-06'
 
 export const FORTEMI_COMPATIBILITY_STATES = [
   'available',

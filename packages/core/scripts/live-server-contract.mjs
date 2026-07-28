@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto'
 export const LIVE_RECEIPT_SCHEMA = 'fortemi.live-server-core-contract-receipt.v1'
 export const LIVE_COMMAND_ID = 'fortemi-react.live-server-core.v1'
 export const COMPATIBILITY_PATH = '/api/v1/system/compatibility'
+export const EXPECTED_SERVER_COMPATIBILITY_REVISION = '2026-07-06'
 export const SHARD_EXPORT_PATH = '/api/v1/backup/knowledge-shard'
 export const SHARD_EXPORT_QUERY =
   'schema_version=2.0.0&profile=full-v1&include_blobs=true'
@@ -203,8 +204,14 @@ export async function runLiveServerContract({
     `compatibility validation failed: ${compatibility.errors.join('; ')}`,
   )
   assertLive(
-    compatibility.response.contract_revision === '21',
-    `compatibility contract revision must be 21; got ${compatibility.response.contract_revision}`,
+    core.FORTEMI_SERVER_COMPATIBILITY_REVISION
+      === EXPECTED_SERVER_COMPATIBILITY_REVISION,
+    'core server compatibility revision authority drifted',
+  )
+  assertLive(
+    compatibility.response.contract_revision
+      === EXPECTED_SERVER_COMPATIBILITY_REVISION,
+    `compatibility contract revision must be ${EXPECTED_SERVER_COMPATIBILITY_REVISION}; got ${compatibility.response.contract_revision}`,
   )
   assertLive(
     compatibility.response.auth.required === true,
@@ -412,7 +419,8 @@ export function verifyLiveServerContractReceipt(receipt) {
       && receipt.server.compatibility.httpStatus === 200
       && receipt.server.compatibility.validated === true
       && receipt.server.compatibility.schemaVersion === 1
-      && receipt.server.compatibility.contractRevision === '21'
+      && receipt.server.compatibility.contractRevision
+        === EXPECTED_SERVER_COMPATIBILITY_REVISION
       && receipt.server.compatibility.apiName === 'fortemi'
       && receipt.server.compatibility.authRequired === true,
     'compatibility evidence is incomplete',

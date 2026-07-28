@@ -11,6 +11,7 @@ import {
 } from './platform-contract-receipt.mjs'
 import {
   COMPATIBILITY_PATH,
+  EXPECTED_SERVER_COMPATIBILITY_REVISION,
   LIVE_COMMAND_ID,
   LIVE_RECEIPT_SCHEMA,
   SHARD_EXPORT_PATH,
@@ -56,7 +57,7 @@ function liveReceipt() {
         httpStatus: 200,
         validated: true,
         schemaVersion: 1,
-        contractRevision: '21',
+        contractRevision: EXPECTED_SERVER_COMPATIBILITY_REVISION,
         apiName: 'fortemi',
         apiVersion: '2026.7.28',
         authRequired: true,
@@ -202,11 +203,11 @@ test('rejects authority drift, missing cells, unsupported advertisements, and br
     /rejection evidence is incomplete/,
   )
 
-  const revision20Server = receipt()
-  revision20Server.liveServer.server.compatibility.contractRevision = '20'
-  revision20Server.liveServer = sealLiveServerReceipt(revision20Server.liveServer)
+  const mismatchedServer = receipt()
+  mismatchedServer.liveServer.server.compatibility.contractRevision = '2026-07-05'
+  mismatchedServer.liveServer = sealLiveServerReceipt(mismatchedServer.liveServer)
   assert.throws(
-    () => verifyPlatformContractReceipt(sealReceipt(revision20Server)),
+    () => verifyPlatformContractReceipt(sealReceipt(mismatchedServer)),
     /compatibility evidence is incomplete/,
   )
 })
