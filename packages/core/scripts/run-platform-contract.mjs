@@ -36,10 +36,8 @@ function parseArgs(args) {
 }
 
 function runPnpm(args, repositoryRoot) {
-  const {
-    FORTEMI_PLATFORM_SERVER_TOKEN: _serverToken,
-    ...childEnvironment
-  } = process.env
+  const childEnvironment = { ...process.env }
+  delete childEnvironment.FORTEMI_PLATFORM_SERVER_TOKEN
   const result = spawnSync('pnpm', args, {
     cwd: repositoryRoot,
     env: childEnvironment,
