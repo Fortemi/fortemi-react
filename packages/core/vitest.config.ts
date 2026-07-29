@@ -18,5 +18,6 @@ export default defineConfig({
     maxWorkers: Number(process.env.VITEST_MAX_WORKERS) || Math.min(Math.max(Math.floor(cpus().length / 2), 2), 4),
     minWorkers: 1,
     hookTimeout: 30_000,
+    teardownTimeout: 60_000,
   },
 })
