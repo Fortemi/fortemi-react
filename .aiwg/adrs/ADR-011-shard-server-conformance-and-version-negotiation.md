@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Date**: 2026-07-05
 - **Accepted**: 2026-07-09
-- **Amended**: 2026-07-26
+- **Amended**: 2026-07-26, 2026-07-29
 - **Issue**: #235 (audit epic)
 - **Relates**: ADR-010 (source-of-truth principle), server ADR-028 (shard archive migration system), server issue `Fortemi/fortemi#1013`
 
@@ -86,6 +86,13 @@ until all applicable cells in this matrix pass against pinned revisions:
 
 Local source tests, self-round trips, and schema validation alone are
 insufficient release evidence.
+
+The authority-owned supported-platform gate executes the same pinned consumer
+command on Linux x86_64, Linux arm64, and native macOS arm64. Windows is the
+only deferred operating system because no Windows execution authority is
+available. These cells prove only their receipt-bound `core-v1`, `record-v1`,
+and exact `2.0.0/full-v1` behaviors; they do not widen the profile claims or
+establish universal portability.
 
 ## Implementation
 

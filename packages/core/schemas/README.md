@@ -97,9 +97,9 @@ pnpm shard:refresh-v2-authority --authority-root ../fortemi --verify
 
 ## Platform contract receipts
 
-The Fortemi authority repository orchestrates the required Linux x86_64 and
-Darwin arm64 jobs. Each job runs the same reusable consumer command from the
-fortemi-react repository:
+The Fortemi authority repository orchestrates the required Linux x86_64,
+Linux arm64, and Darwin arm64 jobs. Each job runs the same reusable consumer
+command from the fortemi-react repository:
 
 ```bash
 FORTEMI_PLATFORM_SERVER_URL=https://fortemi.example \
@@ -107,10 +107,12 @@ FORTEMI_PLATFORM_SERVER_TOKEN="$FORTEMI_TOKEN" \
   pnpm test:platform-contract --output artifacts/fortemi-react-platform.json
 ```
 
-The command rejects every platform except Linux x86_64 and Darwin arm64. It
-requires the live Fortemi server origin and bearer token before doing any
-work. It runs `verify:knowledge-shard-contract` as a preflight before invoking
-the complete `pnpm test:portable-contract` behavioral suite. It then validates
+The command rejects every platform except Linux x86_64, Linux arm64, and
+Darwin arm64. Windows remains unsupported because no Windows execution
+authority is available. The command requires the live Fortemi server origin
+and bearer token before doing any work. It runs
+`verify:knowledge-shard-contract` as a preflight before invoking the complete
+`pnpm test:portable-contract` behavioral suite. It then validates
 `/api/v1/system/compatibility`, requiring contract revision `21` and
 `auth.required: true`, downloads an authenticated
 `2.0.0/full-v1` server export, proves next-major rejection without database or
@@ -133,10 +135,10 @@ pnpm verify:platform-contract-receipt artifacts/fortemi-react-platform.json
 Both commands reject dirty checkouts by default. `--allow-dirty` is available
 only for local diagnostics; such a receipt records its dirty state and is not
 eligible for the authority-owned platform matrix. These receipts prove only
-the named profile cells on Linux x86_64 or Darwin arm64. They do not establish
-universal portability, complete backup, RecordStore `full-v1`, or a shared
-schema between the AIWG static index, the AIWG-to-shard bridge, Knowledge Shard
-state transfer, and live persistence.
+the named profile cells on Linux x86_64, Linux arm64, or Darwin arm64. They do
+not establish universal portability, complete backup, RecordStore `full-v1`,
+or a shared schema between the AIWG static index, the AIWG-to-shard bridge,
+Knowledge Shard state transfer, and live persistence.
 
 ### Profile-aware APIs
 

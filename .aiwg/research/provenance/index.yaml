@@ -1,8 +1,16 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-07-26T20:19:56Z"
-  record_count: 51
+  updated_at: "2026-07-29T02:29:46Z"
+  record_count: 55
 records:
+  - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+    record: "records/ADR-011-linux-arm64-platform-399.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/schemas/README.md"
+    record: "records/packages-core-schemas-readme-linux-arm64-399.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/scripts/platform-contract-receipt.mjs"
+    record: "records/platform-contract-receipt-linux-arm64-399.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/scripts/platform-contract-receipt.test.mjs"
+    record: "records/platform-contract-receipt-test-linux-arm64-399.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/.last-doc-sync"
     record: "records/last-doc-sync-release-2026.7.14.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-audit-2026-07-26.md"

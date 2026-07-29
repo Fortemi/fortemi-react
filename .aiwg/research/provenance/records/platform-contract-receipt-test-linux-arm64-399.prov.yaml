@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-29T02:29:46Z"
+  updated_at: "2026-07-29T02:29:46Z"
+  description: "Provenance for Linux arm64 React/core receipt tests"
+entity:
+  id: "urn:aiwg:artifact:packages/core/scripts/platform-contract-receipt.test.mjs:sha256:844c275e6b10e6336432c9b75c59e119f033e049e032135b4c16c7332b267ce7"
+  type: test
+  created_at: "2026-07-29T02:29:46Z"
+  updated_at: "2026-07-29T02:29:46Z"
+  checksum: "sha256:844c275e6b10e6336432c9b75c59e119f033e049e032135b4c16c7332b267ce7"
+  size_bytes: 9247
+  attributes:
+    issue: "Fortemi/fortemi-react#399"
+    base_revision: "e415d3730386993c418344205344a094127200e6"
+activity:
+  id: "urn:aiwg:activity:modification:react-platform-receipt-test-linux-arm64-399:001"
+  type: test
+  started_at: "2026-07-29T02:29:46Z"
+  ended_at: "2026-07-29T02:29:46Z"
+  description: "Test Linux arm64 acceptance and both Windows architecture rejections"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: ai_assistant
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/scripts/platform-contract-receipt.test.mjs:sha256:844c275e6b10e6336432c9b75c59e119f033e049e032135b4c16c7332b267ce7"
+    activity: "urn:aiwg:activity:modification:react-platform-receipt-test-linux-arm64-399:001"
+    time: "2026-07-29T02:29:46Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:react-platform-receipt-test-linux-arm64-399:001"
+      entity: "urn:gitea:issue:Fortemi/fortemi-react:399"
+      role: requirement
+    - activity: "urn:aiwg:activity:modification:react-platform-receipt-test-linux-arm64-399:001"
+      entity: "urn:aiwg:artifact:packages/core/scripts/platform-contract-receipt.mjs:sha256:39af0f1b4c94915e56d65f4432d81897285dcb0e90f8e3645e0b40bffae5878c"
+      role: test_subject
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:react-platform-receipt-test-linux-arm64-399:001"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: primary_implementer
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/scripts/platform-contract-receipt.test.mjs:sha256:844c275e6b10e6336432c9b75c59e119f033e049e032135b4c16c7332b267ce7"
+    agent: "urn:aiwg:agent:codex-gpt-5"

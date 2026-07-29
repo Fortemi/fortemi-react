@@ -296,7 +296,7 @@ export function loadPinnedContractEvidence({ packageRoot = PACKAGE_ROOT } = {}) 
       universalPlatformPortability: false,
       recordStoreFullV1: false,
       sharedAiwgKnowledgeShardSchema: false,
-      supportedPlatforms: ['linux/x86_64', 'darwin/arm64'],
+      supportedPlatforms: ['linux/x86_64', 'linux/arm64', 'darwin/arm64'],
       reason:
         'This receipt proves the declared profile cells and one live Fortemi server-to-core path on one supported platform.',
     },
@@ -313,6 +313,15 @@ export function platformIdentity(platform, arch) {
       id: 'linux/x86_64',
     }
   }
+  if (platform === 'linux' && arch === 'arm64') {
+    return {
+      os: 'linux',
+      arch: 'arm64',
+      nodePlatform: platform,
+      nodeArch: arch,
+      id: 'linux/arm64',
+    }
+  }
   if (platform === 'darwin' && arch === 'arm64') {
     return {
       os: 'darwin',
@@ -323,7 +332,7 @@ export function platformIdentity(platform, arch) {
     }
   }
   throw new Error(
-    `Unsupported platform ${platform}/${arch}; supported platforms are linux/x64 and darwin/arm64`,
+    `Unsupported platform ${platform}/${arch}; supported platforms are linux/x64, linux/arm64, and darwin/arm64`,
   )
 }
 

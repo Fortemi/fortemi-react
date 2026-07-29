@@ -148,12 +148,13 @@ function receipt(overrides = {}) {
   })
 }
 
-test('accepts only Linux x86_64 and Darwin arm64', () => {
+test('accepts Linux x86_64, Linux arm64, and Darwin arm64', () => {
   assert.equal(platformIdentity('linux', 'x64').id, 'linux/x86_64')
+  assert.equal(platformIdentity('linux', 'arm64').id, 'linux/arm64')
   assert.equal(platformIdentity('darwin', 'arm64').id, 'darwin/arm64')
-  assert.throws(() => platformIdentity('linux', 'arm64'), /Unsupported platform/)
   assert.throws(() => platformIdentity('darwin', 'x64'), /Unsupported platform/)
   assert.throws(() => platformIdentity('win32', 'x64'), /Unsupported platform/)
+  assert.throws(() => platformIdentity('win32', 'arm64'), /Unsupported platform/)
 })
 
 test('verifies an untampered receipt against pinned authority evidence', () => {
