@@ -108,9 +108,11 @@ FORTEMI_PLATFORM_SERVER_TOKEN="$FORTEMI_TOKEN" \
 ```
 
 The command rejects every platform except Linux x86_64, Linux arm64, and
-Darwin arm64. Windows remains unsupported because no Windows execution
-authority is available. The command requires the live Fortemi server origin
-and bearer token before doing any work. It runs
+Darwin arm64. Windows remains deferred because no Windows execution authority
+is available; [Fortemi
+#1096](https://git.integrolabs.net/Fortemi/fortemi/issues/1096) owns that
+validation. The command requires the live Fortemi server origin and bearer
+token before doing any work. It runs
 `verify:knowledge-shard-contract` as a preflight before invoking the complete
 `pnpm test:portable-contract` behavioral suite. It then validates
 `/api/v1/system/compatibility`, requiring contract revision `21` and
@@ -125,6 +127,15 @@ revision 21 advertisement, historical revision 20 implementation lineage,
 schema and profile digests, live server-to-core evidence, required profile
 cells, clean-destination/skew/zero-mutation evidence, and the RecordStore
 `record-v1` losses and claim boundary.
+
+The authority aggregate passed in [Fortemi run
+6393](https://git.integrolabs.net/Fortemi/fortemi/actions/runs/6393). That run
+binds React/Core commit
+`ccf96fad6025025293e40e250c85f088c8999d86`,
+`@fortemi/core@2026.7.14`, tgz SHA-256
+`e282f504a842261c3f598a7f2ee0d6a85e03dc213ddf545a18daf5f603a742cc`,
+and tar payload SHA-256
+`47482320b543307c2d44f3a87a2268ead6faf265c6bd38cf33011e0ac7f8e77a`.
 
 Verify an emitted receipt without rerunning the large behavioral suite:
 

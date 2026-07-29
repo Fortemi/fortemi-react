@@ -177,6 +177,27 @@ receipt disables the claim, while the verifier requires the packaged receipt
 bytes to match their declared digests. RecordStore remains `record-v1` only.
 This receipt does not establish suite-wide portability or complete backup.
 
+### Supported-platform conformance
+
+The authority-owned suite matrix treats Fortemi as the schema/API/runtime
+authority, `@fortemi/core` as the reusable conformance consumer, and HotM as an
+application consumer. [Fortemi run
+6393](https://git.integrolabs.net/Fortemi/fortemi/actions/runs/6393) passed the
+same receipt-bound contract on Linux x86_64, Linux arm64, and macOS arm64. Its
+React/Core participant is commit
+`ccf96fad6025025293e40e250c85f088c8999d86`,
+`@fortemi/core@2026.7.14`, with tgz SHA-256
+`e282f504a842261c3f598a7f2ee0d6a85e03dc213ddf545a18daf5f603a742cc`
+and tar payload SHA-256
+`47482320b543307c2d44f3a87a2268ead6faf265c6bd38cf33011e0ac7f8e77a`.
+
+The supported claim is limited to the declared contract surface and exact
+Knowledge Shard `2.0.0/full-v1` tuple on those platform cells. Windows remains
+deferred to [Fortemi
+#1096](https://git.integrolabs.net/Fortemi/fortemi/issues/1096). This does not
+change the Fortemi #1081 `NO-GO` audit or prove complete backup, universal
+portability, launched GUI/native-dialog behavior, or RecordStore `full-v1`.
+
 Knowledge Shard 2.0 treats absent, `null`, empty, and non-empty values as
 distinct authority states. PGlite persists `core-v1` field presence in a
 transactional sidecar, while RecordStore carries its `record-v1` projection and

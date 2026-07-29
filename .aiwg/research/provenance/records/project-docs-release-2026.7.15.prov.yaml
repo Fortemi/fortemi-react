@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-29T17:43:27Z"
+  description: "Provenance for the embedded v2026.7.15 release documentation"
+entity:
+  id: "urn:aiwg:artifact:apps/standalone/src/data/project-docs.ts"
+  type: "code"
+  created_at: "2026-07-29T17:43:27Z"
+  checksum: "sha256:991b7520212bdddc2e99e7242d047dc77b6e9dddd8ca4a1fce8a1ed776de2e03"
+  size_bytes: 8188
+  attributes:
+    change_scope: "release-docs-2026.7.15"
+    base_revision: "ccf96fad6025025293e40e250c85f088c8999d86"
+activity:
+  id: "urn:aiwg:activity:modification:project-docs:2026.7.15"
+  type: "modification"
+  started_at: "2026-07-29T17:43:27Z"
+  ended_at: "2026-07-29T17:43:27Z"
+  description: "Embed the v2026.7.15 release note in the standalone documentation corpus"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:apps/standalone/src/data/project-docs.ts"
+    activity: "urn:aiwg:activity:modification:project-docs:2026.7.15"
+    time: "2026-07-29T17:43:27Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:project-docs:2026.7.15"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:ccf96fad6025025293e40e250c85f088c8999d86:apps/standalone/src/data/project-docs.ts"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:apps/standalone/src/data/project-docs.ts"
+      source: "urn:aiwg:artifact:docs/content/releases/v2026.7.15.md"
+      derivation_type: "depends"
+      activity: "urn:aiwg:activity:modification:project-docs:2026.7.15"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:project-docs:2026.7.15"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:apps/standalone/src/data/project-docs.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

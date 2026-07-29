@@ -4,6 +4,25 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.7.15 - 2026-07-29
+
+### Supported-platform contract evidence (#399)
+
+- Added the reusable React/Core platform-contract runner and receipt verifier
+  consumed by the Fortemi authority-owned suite matrix.
+- Fortemi run
+  [6393](https://git.integrolabs.net/Fortemi/fortemi/actions/runs/6393) passed
+  the declared server-authority -> React/Core -> HotM consumer surface on Linux
+  x86_64, Linux arm64, and macOS arm64. The matrix binds commit
+  `ccf96fad6025025293e40e250c85f088c8999d86` and
+  `@fortemi/core@2026.7.14` to exact packed-artifact digests.
+- Windows remains deferred to [Fortemi
+  #1096](https://git.integrolabs.net/Fortemi/fortemi/issues/1096). The evidence
+  is limited to the declared profile cells, including exact
+  `2.0.0/full-v1`; it does not change the parent #1081 `NO-GO` decision or
+  establish suite-wide portability, complete backup, or GUI/native-dialog
+  coverage.
+
 ## v2026.7.14 - 2026-07-26
 
 ### `@fortemi/core` - Receipt-backed `2.0.0/full-v1` advertisement (#382)

@@ -1,8 +1,22 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-07-29T02:29:46Z"
-  record_count: 55
+  updated_at: "2026-07-29T17:43:27Z"
+  record_count: 62
 records:
+  - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+    record: "records/ADR-011-doc-sync-release-2026.7.15.prov.yaml"
+  - entity: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
+    record: "records/SAD-doc-sync-release-2026.7.15.prov.yaml"
+  - entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-20260729-code-to-docs.md"
+    record: "records/doc-sync-20260729-code-to-docs.prov.yaml"
+  - entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-last-run.json"
+    record: "records/doc-sync-last-run-20260729.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/src/index.ts"
+    record: "records/packages-core-src-index-release-2026.7.15.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/graph/src/index.ts"
+    record: "records/packages-graph-src-index-release-2026.7.15.prov.yaml"
+  - entity: "urn:aiwg:artifact:apps/standalone/src/data/project-docs.ts"
+    record: "records/project-docs-release-2026.7.15.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
     record: "records/ADR-011-linux-arm64-platform-399.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/schemas/README.md"

@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-29T17:43:27Z"
+  description: "Provenance for the Core v2026.7.15 public version export"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/index.ts"
+  type: "code"
+  created_at: "2026-07-29T17:43:27Z"
+  checksum: "sha256:0f533feca68c78b8745fbb4830531c0bc58aea6344e28e02df98c062a7782e2a"
+  size_bytes: 17943
+  attributes:
+    change_scope: "release-version-2026.7.15"
+    base_revision: "ccf96fad6025025293e40e250c85f088c8999d86"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-src-index-ts:2026.7.15"
+  type: "modification"
+  started_at: "2026-07-29T17:43:27Z"
+  ended_at: "2026-07-29T17:43:27Z"
+  description: "Advance the public Core version constant to v2026.7.15"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/index.ts"
+    activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:2026.7.15"
+    time: "2026-07-29T17:43:27Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:2026.7.15"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:ccf96fad6025025293e40e250c85f088c8999d86:packages/core/src/index.ts"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/index.ts"
+      source: "urn:aiwg:artifact:docs/content/releases/v2026.7.15.md"
+      derivation_type: "depends"
+      activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:2026.7.15"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:2026.7.15"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/index.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

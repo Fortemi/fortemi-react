@@ -58,7 +58,7 @@
 const VERSION: string
 ```
 
-The current package version string. Value: `'2026.7.8'`.
+The current package version string. Value: `'2026.7.15'`.
 
 ---
 

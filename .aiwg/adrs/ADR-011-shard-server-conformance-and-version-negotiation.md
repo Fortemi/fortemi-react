@@ -94,6 +94,21 @@ available. These cells prove only their receipt-bound `core-v1`, `record-v1`,
 and exact `2.0.0/full-v1` behaviors; they do not widen the profile claims or
 establish universal portability.
 
+Fortemi authority run
+[6393](https://git.integrolabs.net/Fortemi/fortemi/actions/runs/6393) is the
+passing aggregate for these three cells. It binds schema authority
+`0c59bc6cb06cca0b1e00eba4c0fa493f3ef3b90b`, runtime authority
+`aac23805d0906a5f39a5fdcceb51d048c09cb9d8`, React/Core consumer
+`ccf96fad6025025293e40e250c85f088c8999d86` and
+`@fortemi/core@2026.7.14`, and HotM application consumer
+`1b220c1e1735314e70e610d84951db960742da35`. The Core package tgz SHA-256 is
+`e282f504a842261c3f598a7f2ee0d6a85e03dc213ddf545a18daf5f603a742cc`;
+its tar payload SHA-256 is
+`47482320b543307c2d44f3a87a2268ead6faf265c6bd38cf33011e0ac7f8e77a`.
+Windows validation is isolated in
+[Fortemi #1096](https://git.integrolabs.net/Fortemi/fortemi/issues/1096).
+The suite audit in Fortemi #1081 remains `NO-GO`.
+
 ## Implementation
 
 - @packages/core/src/shard/schema-validator.ts enforces the pinned `core-v1`, `record-v1`, and validation-only `full-v1` manifest and record schemas, archive topology, counts, references, checksums, and mandatory `full-v1` blob sidecars.

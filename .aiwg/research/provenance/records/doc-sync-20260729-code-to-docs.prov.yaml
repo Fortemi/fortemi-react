@@ -1,0 +1,41 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-29T17:43:27Z"
+  description: "Provenance for the 2026-07-29 code-to-docs synchronization report"
+entity:
+  id: "urn:aiwg:artifact:.aiwg/reports/doc-sync-20260729-code-to-docs.md"
+  type: "document"
+  created_at: "2026-07-29T17:43:27Z"
+  checksum: "sha256:9b51ce3801ebd0c0f962f4865b36a04462722c88657c186a8c5dcb2699f58ff0"
+  size_bytes: 3866
+  attributes:
+    change_scope: "code-to-docs"
+    base_revision: "ccf96fad6025025293e40e250c85f088c8999d86"
+activity:
+  id: "urn:aiwg:activity:generation:doc-sync-code-to-docs:2026-07-29"
+  type: "generation"
+  started_at: "2026-07-29T17:43:27Z"
+  ended_at: "2026-07-29T17:43:27Z"
+  description: "Audit and synchronize documentation against the current implementation"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-20260729-code-to-docs.md"
+    activity: "urn:aiwg:activity:generation:doc-sync-code-to-docs:2026-07-29"
+    time: "2026-07-29T17:43:27Z"
+  used:
+    - activity: "urn:aiwg:activity:generation:doc-sync-code-to-docs:2026-07-29"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:ccf96fad6025025293e40e250c85f088c8999d86"
+      role: "implementation_revision"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:doc-sync-code-to-docs:2026-07-29"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-20260729-code-to-docs.md"
+    agent: "urn:aiwg:agent:codex-gpt-5"

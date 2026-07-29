@@ -4,7 +4,7 @@ summary: The browser edition of the Fortémi intelligent-database stack — a no
 hero:
   eyebrow: Fortémi React
   title: The Fortémi Intelligent Database, in the Browser
-  subtitle: The browser edition of the Fortémi intelligent-database stack — a PGlite (PostgreSQL WASM) data layer running the same normalized schema, hybrid semantic search, W3C SKOS tagging, and graph tooling. No server required. Local-first, private-by-default.
+  subtitle: The browser edition of the Fortémi intelligent-database stack — a PGlite (PostgreSQL WASM) data layer with profile-scoped interchange, hybrid semantic search, W3C SKOS tagging, and graph tooling. No server required. Local-first, private-by-default.
   fullBleed: true
   align: center
   cta:
@@ -23,9 +23,19 @@ banner:
 
 ## What is fortemi-react?
 
-Fortémi is an intelligent database for AI-ready applications: a normalized data schema plus data-science and processing tooling that turns messy organizational data into searchable, linkable, provenance-aware structures. The same schema runs across the server, browser edition, and HotM sidecar, giving teams a common substrate for complex, data-rich, compute-heavy applications while keeping deployment affordable on local, edge, or hosted infrastructure.
+Fortémi is an intelligent database for AI-ready applications: normalized data
+contracts plus data-science and processing tooling that turn messy
+organizational data into searchable, linkable, provenance-aware structures.
+The Fortemi server owns the live APIs and Knowledge Shard authority;
+`@fortemi/core` consumes declared browser profiles, and HotM consumes the
+server and Core contracts as an application.
 
-fortemi-react is the **browser edition of that stack**. It runs the same normalized schema with **no separate server** — the data lives in the browser on the user's device, search runs locally, and any cloud or AI provider is strictly opt-in. Keeping notes for an AI agent and searching them by *meaning*, not just exact words, is a use case built on that substrate — not the whole product.
+fortemi-react is the **browser edition of that stack**. It runs a normalized
+PGlite data layer with **no separate server** and exchanges state through
+named, receipt-bound profiles. The data lives in the browser on the user's
+device, search runs locally, and any cloud or AI provider is strictly opt-in.
+Keeping notes for an AI agent and searching them by *meaning*, not just exact
+words, is a use case built on that substrate — not the whole product.
 
 It is the stack *in the browser*. (HotM, a separate project, is a desktop client that bundles the Rust server; fortemi-react is the stack itself, ported to run in-page.) Knowledge Shard exchange is governed by named compatibility profiles and cross-repository conformance tests; repository and API shapes outside a selected profile are not implied to be identical.
 
@@ -40,6 +50,19 @@ It is the stack *in the browser*. (HotM, a separate project, is a desktop client
 - **Three ways to load notes** — an in-browser database, plain files with no database, or a ready-made snapshot that starts fast. One shared design picks the best source for what you asked.
 - **Local-first, private-by-default** — your notes stay on the device; nothing leaves it unless you choose a remote or cloud provider.
 - **Profile-scoped portability** — Knowledge Shards validate before import and move between supported consumers only for their declared, conformance-tested profile.
+
+## Supported contract evidence
+
+[Fortemi run 6393](https://git.integrolabs.net/Fortemi/fortemi/actions/runs/6393)
+passed the declared authority -> React/Core -> HotM consumer surface on Linux
+x86_64, Linux arm64, and macOS arm64 with
+`@fortemi/core@2026.7.14` at commit
+`ccf96fad6025025293e40e250c85f088c8999d86`. The Knowledge Shard claim is
+exactly `2.0.0/full-v1`. Windows is a separate deferred authority story in
+[Fortemi #1096](https://git.integrolabs.net/Fortemi/fortemi/issues/1096).
+The parent audit remains `NO-GO`; the run does not establish suite-wide
+portability, complete backup, GUI/native-dialog coverage, or every platform
+and architecture.
 
 ## Three ways to load your notes
 

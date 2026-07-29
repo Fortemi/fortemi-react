@@ -1,0 +1,41 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-29T17:43:27Z"
+  description: "Provenance for the 2026-07-29 doc-sync execution receipt"
+entity:
+  id: "urn:aiwg:artifact:.aiwg/reports/doc-sync-last-run.json"
+  type: "data"
+  created_at: "2026-07-29T17:43:27Z"
+  checksum: "sha256:463d9ff3c328733f06099cc523f2d52dc6ecef790fc5ff11aced76bde4c0a8d4"
+  size_bytes: 3547
+  attributes:
+    change_scope: "code-to-docs"
+    base_revision: "ccf96fad6025025293e40e250c85f088c8999d86"
+activity:
+  id: "urn:aiwg:activity:generation:doc-sync-last-run:2026-07-29"
+  type: "generation"
+  started_at: "2026-07-29T17:43:27Z"
+  ended_at: "2026-07-29T17:43:27Z"
+  description: "Capture the machine-readable code-to-docs synchronization result"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-last-run.json"
+    activity: "urn:aiwg:activity:generation:doc-sync-last-run:2026-07-29"
+    time: "2026-07-29T17:43:27Z"
+  used:
+    - activity: "urn:aiwg:activity:generation:doc-sync-last-run:2026-07-29"
+      entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-20260729-code-to-docs.md"
+      role: "human_readable_report"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:doc-sync-last-run:2026-07-29"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-last-run.json"
+    agent: "urn:aiwg:agent:codex-gpt-5"

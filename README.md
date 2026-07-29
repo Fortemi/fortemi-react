@@ -2,7 +2,7 @@
 
 # fortemi-react
 
-**The browser edition of the Fortémi intelligent-database stack — the same normalized data model, client-side, local-first, private by default.**
+**The browser edition of the Fortémi intelligent-database stack — profile-scoped interchange, client-side, local-first, private by default.**
 
 Run the Fortémi schema entirely in the browser: real PostgreSQL (PGlite +
 pgvector), typed React 19 hooks, and profile-scoped Knowledge Shard archives.
@@ -31,7 +31,13 @@ pnpm dev
 
 ## What Fortémi Is
 
-Fortémi is an intelligent database for AI-ready applications: a normalized data schema plus data-science and processing tooling that turns messy organizational data into searchable, linkable, provenance-aware structures. The same schema runs across the server, browser edition, and HotM sidecar, giving teams a common substrate for complex, data-rich, compute-heavy applications while keeping deployment affordable on local, edge, or hosted infrastructure.
+Fortémi is an intelligent database for AI-ready applications: normalized data
+contracts plus data-science and processing tooling that turn messy
+organizational data into searchable, linkable, provenance-aware structures.
+The Fortemi server owns the live APIs and Knowledge Shard authority;
+`@fortemi/core` consumes the declared browser profiles, and HotM consumes the
+server and Core contracts as an application. Receipt-bound profiles provide a
+common interchange surface without implying one schema across every plane.
 
 **fortemi-react is the browser edition of that stack.** It runs the normalized
 schema in PGlite/pgvector with profile-scoped interchange — the browser
@@ -117,6 +123,26 @@ function Notebook() {
 | `@fortemi/standalone` | workspace app | Vite application for local development and static deployment |
 
 All packages are versioned together — the npm badges above always show the current release.
+
+## Contract Evidence
+
+[Fortemi authority run 6393](https://git.integrolabs.net/Fortemi/fortemi/actions/runs/6393)
+passed the same pinned authority-to-consumer contract on Linux x86_64, Linux
+arm64, and macOS arm64. The matrix binds React/Core commit
+`ccf96fad6025025293e40e250c85f088c8999d86` to
+`@fortemi/core@2026.7.14` (tgz SHA-256
+`e282f504a842261c3f598a7f2ee0d6a85e03dc213ddf545a18daf5f603a742cc`;
+tar payload SHA-256
+`47482320b543307c2d44f3a87a2268ead6faf265c6bd38cf33011e0ac7f8e77a`).
+
+This evidence covers the declared Fortemi authority -> React/Core -> HotM
+consumer surface and exact Knowledge Shard `2.0.0/full-v1` behavior on those
+three platform cells. Windows remains deferred to
+[Fortemi #1096](https://git.integrolabs.net/Fortemi/fortemi/issues/1096).
+The suite audit in Fortemi #1081 remains `NO-GO`; this evidence does not prove
+suite-wide portability, complete backup, every architecture, launched
+GUI/native-dialog behavior, or one shared schema across the static-index,
+state-transfer, and live-persistence planes.
 
 ## What You Get
 

@@ -1,10 +1,10 @@
 # Software Architecture Document — fortemi-react
 
-**Version**: 2026.7.8 contract amendment
+**Version**: 2026.7.14 platform-contract amendment
 **Author**: roctinam
 **Reviewers**: Architecture Designer (agent), Database Optimizer (agent)
 **Status**: Baselined (updated for C3)
-**Last Updated**: 2026-07-17
+**Last Updated**: 2026-07-29
 
 ---
 
@@ -131,16 +131,27 @@ Compatibility claims MUST name one of these profiles and the evidence version:
 | `record-v1` | RecordStore preserves its declared canonical-record subset and returns an explicit loss/unsupported-component report for anything outside it | DB-free record-tier backup and interchange; never described as full parity |
 
 The pinned Fortemi receipts are normative for current availability, not this
-conceptual profile table. Presence semantics and full inventory are pinned to
-Fortemi commit `6343bd899958445bbc7e7e87b0dc92a8429d5a06`, contract revision
-`20`, and schema `2.0.0`; schema 1.x roots remain immutable. The authority is
-recorded by its original descriptor as `specified-implementation-pending`.
-PGlite may nevertheless advertise exact `2.0.0/full-v1` because the later
-cross-repository receipt binds that authority to released React and AIWG
-producers plus clean PGlite and Fortemi destinations. The advertisement is
-computed from those delivered receipt bytes and fails closed on drift.
+conceptual profile table. The current opt-in advertisement is pinned to Fortemi
+schema-authority commit `0c59bc6cb06cca0b1e00eba4c0fa493f3ef3b90b`,
+contract revision `21`, and schema `2.0.0`; schema 1.x roots remain immutable.
+Its implementation lineage remains the immutable revision 20 evidence whose
+original descriptor records `specified-implementation-pending`. PGlite may
+advertise exact `2.0.0/full-v1` because the later cross-repository receipt
+binds that authority to released React and AIWG producers plus clean PGlite
+and Fortemi destinations. The advertisement is computed from those delivered
+receipt bytes and fails closed on drift.
 RecordStore does not inherit this profile. The AIWG full converter returns
 `archive: null` whenever its loss report is non-empty.
+
+The supported-platform aggregate in Fortemi run 6393 additionally binds
+runtime-authority commit `aac23805d0906a5f39a5fdcceb51d048c09cb9d8`,
+React/Core commit `ccf96fad6025025293e40e250c85f088c8999d86`,
+`@fortemi/core@2026.7.14`, and HotM consumer commit
+`1b220c1e1735314e70e610d84951db960742da35` on Linux x86_64, Linux arm64,
+and macOS arm64. Windows remains deferred under `Fortemi/fortemi#1096`. This
+does not change the parent `Fortemi/fortemi#1081` `NO-GO` decision or establish
+suite-wide portability, complete backup, launched GUI/native-dialog coverage,
+or one schema across all three data planes.
 
 For the reduced AIWG bridge, every directory prefix in
 `source.repo_relative_path` becomes a deterministic native collection and the

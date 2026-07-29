@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "aiwg.doc-sync-last-run.v1",
+  "runDate": "2026-07-29",
+  "direction": "code-to-docs",
+  "mode": "incremental",
+  "dryRunFirst": true,
+  "repository": "/home/roctinam/dev/fortemi-suite/fortemi-react",
+  "baselineTag": "v2026.7.14",
+  "baselineCommit": "a08df8a6ece098d8bd5b2d27f3fbb7734b39e331",
+  "auditedHead": "ccf96fad6025025293e40e250c85f088c8999d86",
+  "scope": [
+    "changed files since v2026.7.14",
+    "README and package documentation",
+    "changelog and v2026.7.14 release notes",
+    "SAD and ADR-010/011",
+    "Knowledge Shard receipt documentation",
+    "suite platform authority evidence"
+  ],
+  "findingCount": 7,
+  "changedFiles": [
+    ".aiwg/architecture/SAD.md",
+    ".aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md",
+    ".aiwg/reports/doc-sync-20260729-code-to-docs.md",
+    ".aiwg/reports/doc-sync-last-run.json",
+    "CHANGELOG.md",
+    "README.md",
+    "docs/content/overview.md",
+    "docs/content/releases/v2026.7.14.md",
+    "packages/core/README.md",
+    "packages/core/schemas/README.md"
+  ],
+  "authorityEvidence": {
+    "runUrl": "https://git.integrolabs.net/Fortemi/fortemi/actions/runs/6393",
+    "runConclusion": "success",
+    "schemaAuthorityCommit": "0c59bc6cb06cca0b1e00eba4c0fa493f3ef3b90b",
+    "runtimeAuthorityCommit": "aac23805d0906a5f39a5fdcceb51d048c09cb9d8",
+    "reactCoreCommit": "ccf96fad6025025293e40e250c85f088c8999d86",
+    "corePackage": "@fortemi/core@2026.7.14",
+    "corePackageTarballSha256": "e282f504a842261c3f598a7f2ee0d6a85e03dc213ddf545a18daf5f603a742cc",
+    "corePackageTarSha256": "47482320b543307c2d44f3a87a2268ead6faf265c6bd38cf33011e0ac7f8e77a",
+    "hotmCommit": "1b220c1e1735314e70e610d84951db960742da35",
+    "profile": "2.0.0/full-v1",
+    "requiredPlatforms": [
+      "linux-x86_64",
+      "linux-arm64",
+      "macos-arm64"
+    ],
+    "deferredAuthorityIssue": "https://git.integrolabs.net/Fortemi/fortemi/issues/1096",
+    "parentAuditDecision": "NO-GO"
+  },
+  "validation": {
+    "status": "passed",
+    "commands": [
+      "pnpm --filter @fortemi/core verify:knowledge-shard-contract",
+      "pnpm test:platform-contract-tools",
+      "python3 <targeted doc-sync identity and claim-boundary validator>",
+      "jq empty .aiwg/reports/doc-sync-last-run.json",
+      "test report word count <= 600 and finding count <= 10",
+      "git diff --check"
+    ],
+    "results": [
+      {
+        "check": "knowledge-shard-contract",
+        "status": "passed",
+        "detail": "Revision 21 advertised authority and immutable revision 20 implementation lineage verified."
+      },
+      {
+        "check": "platform-contract-tools",
+        "status": "passed",
+        "detail": "12 tests passed."
+      },
+      {
+        "check": "doc-identity-and-claim-boundary",
+        "status": "passed",
+        "detail": "Authority matrix, package identity, digests, platform set, deferred Windows issue, claim boundary, and release manifest matched."
+      },
+      {
+        "check": "report-json-and-bounds",
+        "status": "passed",
+        "detail": "JSON parsed, 7 findings remained within the 10-finding limit, and the report remained below 600 words."
+      },
+      {
+        "check": "git-diff-check",
+        "status": "passed",
+        "detail": "No whitespace errors."
+      }
+    ]
+  },
+  "humanReview": [
+    "Decide whether the next release should carry the post-v2026.7.14 evidence into a dedicated release note.",
+    "Independent audit acceptance for Fortemi/fortemi#1081 remains pending and outside doc-sync."
+  ]
+}

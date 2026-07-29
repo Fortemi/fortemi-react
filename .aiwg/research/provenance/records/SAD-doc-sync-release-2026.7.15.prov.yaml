@@ -1,0 +1,41 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-29T17:43:27Z"
+  description: "Provenance for the SAD authority and consumer boundary sync"
+entity:
+  id: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
+  type: "document"
+  created_at: "2026-07-29T17:43:27Z"
+  checksum: "sha256:9496be8ef8c0ae29e9acfa06a591f484f6c098c30a35662cae72d2c204dc6ca7"
+  size_bytes: 27956
+  attributes:
+    change_scope: "doc-sync-release-2026.7.15"
+    base_revision: "ccf96fad6025025293e40e250c85f088c8999d86"
+activity:
+  id: "urn:aiwg:activity:modification:SAD-doc-sync:2026.7.15"
+  type: "modification"
+  started_at: "2026-07-29T17:43:27Z"
+  ended_at: "2026-07-29T17:43:27Z"
+  description: "Align architecture claims with executable profile and platform evidence"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
+    activity: "urn:aiwg:activity:modification:SAD-doc-sync:2026.7.15"
+    time: "2026-07-29T17:43:27Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:SAD-doc-sync:2026.7.15"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:ccf96fad6025025293e40e250c85f088c8999d86:.aiwg/architecture/SAD.md"
+      role: "previous_revision"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:SAD-doc-sync:2026.7.15"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
+    agent: "urn:aiwg:agent:codex-gpt-5"

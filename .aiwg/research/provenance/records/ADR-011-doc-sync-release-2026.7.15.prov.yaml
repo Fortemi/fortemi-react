@@ -1,0 +1,41 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-07-29T17:43:27Z"
+  description: "Provenance for the ADR-011 supported-platform evidence sync"
+entity:
+  id: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+  type: "document"
+  created_at: "2026-07-29T17:43:27Z"
+  checksum: "sha256:98ecb95706b0effef3948df6bb13c1fb234cbb786c820f55762acd22ba9d3427"
+  size_bytes: 16569
+  attributes:
+    change_scope: "doc-sync-release-2026.7.15"
+    base_revision: "ccf96fad6025025293e40e250c85f088c8999d86"
+activity:
+  id: "urn:aiwg:activity:modification:ADR-011-doc-sync:2026.7.15"
+  type: "modification"
+  started_at: "2026-07-29T17:43:27Z"
+  ended_at: "2026-07-29T17:43:27Z"
+  description: "Record the exact three-platform authority aggregate and bounded claims"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+    activity: "urn:aiwg:activity:modification:ADR-011-doc-sync:2026.7.15"
+    time: "2026-07-29T17:43:27Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:ADR-011-doc-sync:2026.7.15"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:ccf96fad6025025293e40e250c85f088c8999d86:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+      role: "previous_revision"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:ADR-011-doc-sync:2026.7.15"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
+    agent: "urn:aiwg:agent:codex-gpt-5"
