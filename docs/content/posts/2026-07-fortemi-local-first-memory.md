@@ -3,12 +3,11 @@ template: post
 title: "Start with local memory before you buy team memory"
 slug: "2026-07-fortemi-local-first-memory"
 date: 2026-07-30
-publish_at: "2026-07-30T13:00:00Z"
-scheduled_assets: ["images/posts/2026-07/fortemi-local-first-memory-1600x900.png", "images/posts/2026-07/fortemi-local-first-memory-load-path.svg"]
 author: Fortémi Team
 summary: "Choose among load paths, not labels: start with browser-local memory, use static packs when read-only is enough, and graduate to a server when the workload earns it."
 hero: "https://docs.fortemi.com/react/assets/images/posts/2026-07/fortemi-local-first-memory-1600x900.png"
 tags: [fortemi-react, agent-memory, local-first, browser]
+status: published
 ---
 
 # Start with local memory before you buy team memory
