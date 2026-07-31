@@ -6,11 +6,10 @@ date: 2026-07-30
 author: Fortémi Team
 summary: "Choose among load paths, not labels: start with browser-local memory, use static packs when read-only is enough, and graduate to a server when the workload earns it."
 hero: "https://docs.fortemi.com/react/assets/images/posts/2026-07/fortemi-local-first-memory-1600x900.png"
+heroAlt: "Illustration of browser-local memory load paths for database, static pack, snapshot, and server options."
 tags: [fortemi-react, agent-memory, local-first, browser]
 status: published
 ---
-
-# Start with local memory before you buy team memory
 
 Teams often ask the first memory question too late.
 
