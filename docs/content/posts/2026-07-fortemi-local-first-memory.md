@@ -121,7 +121,3 @@ Examples:
 That sentence is more useful than a generic local-versus-cloud debate. It ties the architecture to an observable change.
 
 If local is enough, stop there. If the workload already needs shared ingest and operations, inspect the [Fortemi server](https://github.com/Fortemi/fortemi). For browser-side exploration, inspect [fortemi-react](https://github.com/Fortemi/fortemi-react).
-
-## Tools & transparency
-
-This article was drafted with AI assistance, then edited for voice, claims, and publication fit. Product behavior should be verified against the fortemi-react repository and docs on the day this post is promoted. The hero image is AI-generated. The supporting diagram is illustrative, not a live product screenshot or benchmark result.
