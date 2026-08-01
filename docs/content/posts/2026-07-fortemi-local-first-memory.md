@@ -3,15 +3,13 @@ template: post
 title: "Start with local memory before you buy team memory"
 slug: "2026-07-fortemi-local-first-memory"
 date: 2026-07-30
-publish_at: "2026-07-30T13:00:00Z"
-scheduled_assets: ["images/posts/2026-07/fortemi-local-first-memory-1600x900.png", "images/posts/2026-07/fortemi-local-first-memory-load-path.svg"]
 author: Fortémi Team
 summary: "Choose among load paths, not labels: start with browser-local memory, use static packs when read-only is enough, and graduate to a server when the workload earns it."
 hero: "https://docs.fortemi.com/react/assets/images/posts/2026-07/fortemi-local-first-memory-1600x900.png"
+heroAlt: "Illustration of browser-local memory load paths for database, static pack, snapshot, and server options."
 tags: [fortemi-react, agent-memory, local-first, browser]
+status: published
 ---
-
-# Start with local memory before you buy team memory
 
 Teams often ask the first memory question too late.
 
@@ -122,7 +120,3 @@ Examples:
 That sentence is more useful than a generic local-versus-cloud debate. It ties the architecture to an observable change.
 
 If local is enough, stop there. If the workload already needs shared ingest and operations, inspect the [Fortemi server](https://github.com/Fortemi/fortemi). For browser-side exploration, inspect [fortemi-react](https://github.com/Fortemi/fortemi-react).
-
-## Tools & transparency
-
-This article was drafted with AI assistance, then edited for voice, claims, and publication fit. Product behavior should be verified against the fortemi-react repository and docs on the day this post is promoted. The hero image is AI-generated. The supporting diagram is illustrative, not a live product screenshot or benchmark result.
