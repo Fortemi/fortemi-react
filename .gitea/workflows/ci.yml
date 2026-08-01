@@ -13,7 +13,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Enable pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.6.5 --activate
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
 
@@ -23,7 +26,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Enable pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.6.5 --activate
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
 
@@ -33,7 +39,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Enable pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.6.5 --activate
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @fortemi/core exec vitest run --coverage
         env:
@@ -54,7 +63,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Enable pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.6.5 --activate
       - run: pnpm install --frozen-lockfile
       - name: OpenBao release-signing wrapper tests
         run: |
@@ -72,7 +84,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Enable pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.6.5 --activate
       - run: pnpm install --frozen-lockfile
       # Examples import the library packages by their published dist entry
       # points, so build core → graph → react (dependency order) first.
@@ -90,7 +105,10 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Enable pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.6.5 --activate
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -112,7 +130,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Enable pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.6.5 --activate
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -130,7 +151,10 @@ jobs:
     needs: [typecheck, lint, unit-test, portable-contract]
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Enable pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.6.5 --activate
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - name: Verify clean-installed Core package
