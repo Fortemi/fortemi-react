@@ -4,6 +4,29 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.8.0 - 2026-08-23
+
+### `@fortemi/core` - source-addressed import, scoped search, and purge receipts (#404, #405, #406)
+
+- Added source-addressed batch upsert for PGlite and RecordStore. Importers can
+  key records by tenant, archive, source namespace, and external id; exact
+  replays return `unchanged` without duplicating notes, revisions, jobs,
+  journal entries, or source import runs, while changed content is explicit
+  `version`, `replace`, or `conflict`.
+- Search now accepts bounded typed metadata predicates for indexed provider,
+  model, role, event kind, sensitivity, and import-run fields. Tenant, archive,
+  source, deletion, and metadata filters are applied before text, semantic, or
+  hybrid ranking, and result locators carry safe source hashes rather than raw
+  external keys.
+- Added terminal graph/content purge APIs with preview counts and idempotent,
+  content-free deletion receipts. Purge removes relational graph/search state,
+  embeddings, source identities, provenance edges, attachments, and note rows
+  atomically, while receipt replay converges on the same receipt.
+- Knowledge Shard profile export reports source identity mappings as typed
+  `source-identity-outside-profile` loss when `core-v1` or `record-v1` cannot
+  preserve them. This preserves the AIWG static index, Knowledge Shard transfer,
+  and live Fortemi persistence planes as distinct surfaces.
+
 ## v2026.7.15 - 2026-07-29
 
 ### Supported-platform contract evidence (#399)

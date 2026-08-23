@@ -4,7 +4,7 @@
  * @created 2026-07-17
  * @agent Codex
  */
-export const VERSION = '2026.7.15'
+export const VERSION = '2026.8.0'
 
 export { generateId } from './uuid.js'
 
@@ -142,11 +142,15 @@ export { PGliteWorkerClient, TransactionProxy } from './worker/worker-client.js'
 
 export { NotesRepository } from './repositories/notes-repository.js'
 export { SearchRepository } from './repositories/search-repository.js'
+export { SourceUpsertRepository } from './repositories/source-upsert-repository.js'
+export { LifecyclePurgeRepository } from './repositories/lifecycle-purge-repository.js'
 export { EmbeddingSetsRepository } from './repositories/embedding-sets-repository.js'
 export { GraphRepository, detectCommunities } from './repositories/graph-repository.js'
 export { CommunitiesRepository } from './repositories/communities-repository.js'
 export { buildNoteConditions } from './repositories/condition-builder.js'
 export type { ConditionResult } from './repositories/condition-builder.js'
+export { buildMetadataPredicateConditions, REGISTERED_METADATA_PATHS } from './repositories/metadata-predicates.js'
+export type { EvidenceLocator, MetadataPredicate, RegisteredMetadataPath } from './repositories/metadata-predicates.js'
 export type {
   NoteSummary,
   NoteFull,
@@ -160,6 +164,21 @@ export type {
   SearchOptions,
   NoteRevision,
 } from './repositories/types.js'
+export type {
+  SourceIdentityInput,
+  SourceUpsertBatchResult,
+  SourceUpsertItem,
+  SourceUpsertItemResult,
+  SourceUpsertOptions,
+  SourceUpsertOutcome,
+  SourceUpsertPolicy,
+} from './repositories/source-upsert-repository.js'
+export type {
+  DeletionReceipt,
+  PurgeCounts,
+  PurgePreview,
+  PurgeSelector,
+} from './repositories/lifecycle-purge-repository.js'
 export type {
   EmbeddingSetRow,
   EmbeddingSetCreateInput,

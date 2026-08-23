@@ -18,6 +18,8 @@ export interface EventMap {
   'note.deleted': { id: string }
   'note.restored': { id: string }
   'note.revised': { id: string; revisionNumber: number }
+  'source.upserted': { importRunId: string; counts: Record<string, number> }
+  'purge.completed': { receiptId: string; counts: Record<string, number> }
   'search.reindexed': Record<string, never>
   'embedding.ready': { noteId: string }
   'capability.ready': { name: string }

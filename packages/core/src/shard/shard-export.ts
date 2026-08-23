@@ -223,6 +223,18 @@ async function collectCoreV1Losses(
     }
   }
 
+  const sourceIdentities = await rowCount(db, 'SELECT COUNT(*) AS count FROM source_identity')
+  if (sourceIdentities > 0) {
+    losses.push({
+      code: 'source-identity-outside-profile',
+      count: sourceIdentities,
+      field_path: 'source_identity',
+      action: 'omit',
+      destination_capability: 'core-v1 does not declare source-addressed identity mappings',
+      message: `${sourceIdentities} source identity mapping(s) are outside core-v1 and were omitted.`,
+    })
+  }
+
   const nullRevisions = await rowCount(
     db,
     `SELECT COUNT(*) AS count

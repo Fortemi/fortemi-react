@@ -21,6 +21,7 @@ import { migration0019 } from './0019_shard_field_presence.js'
 import { migration0020 } from './0020_full_v1_snapshot.js'
 import { migration0021 } from './0021_attachment_extraction_projection.js'
 import { migration0022 } from './0022_embedding_config_timestamps.js'
+import { migration0023 } from './0023_source_metadata_purge.js'
 
 export const allMigrations: Migration[] = [
   migration0001,
@@ -45,4 +46,5 @@ export const allMigrations: Migration[] = [
   migration0020,
   migration0021,
   migration0022,
+  migration0023,
 ]

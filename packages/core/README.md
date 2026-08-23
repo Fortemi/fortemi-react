@@ -39,7 +39,8 @@ Most browser note and knowledge apps choose between a thin IndexedDB wrapper, a 
 | Queryable knowledge | SQL-backed repositories for notes, links, tags, collections, SKOS concepts, jobs, and search |
 | Retrieval quality | Full-text search, pgvector-backed semantic search, hybrid ranking, snippets, facets, and filters |
 | AI-ready workflows | Optional embeddings, local LLM capability discovery, job provenance, and fallback routing |
-| Portable archives | Knowledge Shard tar.gz import/export with set-scoped exports, chunked imports, checksums, BLAKE3-addressed blob sidecars, and profile-scoped conformance |
+| Portable archives | Knowledge Shard tar.gz import/export with set-scoped exports, chunked imports, checksums, BLAKE3-addressed blob sidecars, profile-scoped conformance, and typed loss reports for omitted source identities |
+| Source-addressed ingest | Atomic batch upsert keyed by tenant, archive, namespace, and external id, with replay-safe outcomes for PGlite and RecordStore |
 | Agent integration | Manifest-backed tools and direct helper functions for bridge adapters and automation |
 | UI freedom | A headless package you can use from React, another framework, a browser extension, or a custom host |
 
@@ -352,6 +353,7 @@ bytes.
 | Capability system | Embeddings, local LLM, GPU detection, local-provider discovery, fallback routing |
 | Job queue | Server-compatible background workflow for revisions, titles, embeddings, concepts, and links |
 | Knowledge Shards | Tar.gz import/export with checksums, BLAKE3-addressed blob sidecars, progress callbacks, yielding imports, set-scoped embedding exports, and profile-scoped conformance |
+| Lifecycle controls | Source-addressed import, metadata-scoped search locators, and terminal purge receipts that omit raw external ids and content |
 | Service-worker helpers | Route registration primitives for standalone browser integration |
 
 ## Search and Knowledge Model

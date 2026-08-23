@@ -118,6 +118,45 @@ export interface ShardManifestRecord extends PresenceTrackedRecord {
   manifest: Record<string, unknown>
 }
 
+export interface SourceIdentityRecord extends PresenceTrackedRecord {
+  id: string
+  tenant_id: string
+  archive_id: string | null
+  namespace: string
+  external_id: string
+  external_id_hash: string
+  source_schema_version: string
+  content_digest: string
+  import_run_id: string
+  caller_stable_id: string | null
+  note_id: string
+  created_at: string
+  updated_at: string
+}
+
+export interface SourceImportRunRecord extends PresenceTrackedRecord {
+  id: string
+  tenant_id: string
+  archive_id: string | null
+  namespace: string
+  started_at: string
+  completed_at: string | null
+  checkpoint: Record<string, unknown>
+  receipt: Record<string, unknown>
+}
+
+export interface DeletionReceiptRecord extends PresenceTrackedRecord {
+  id: string
+  operation_key: string
+  tenant_id: string
+  archive_id: string | null
+  selector_hash: string
+  outcome: string
+  counts: Record<string, number>
+  completed_at: string
+  policy: Record<string, unknown>
+}
+
 /** Collection name → record type. The store is generic over this map. */
 export interface RecordCollections {
   note: NoteRecord0
@@ -130,6 +169,9 @@ export interface RecordCollections {
   attachment: AttachmentRecord
   attachment_blob: AttachmentBlobRecord
   shard_manifest: ShardManifestRecord
+  source_identity: SourceIdentityRecord
+  source_import_run: SourceImportRunRecord
+  deletion_receipt: DeletionReceiptRecord
 }
 
 export type RecordCollectionName = keyof RecordCollections
@@ -145,6 +187,9 @@ export const RECORD_COLLECTIONS: readonly RecordCollectionName[] = [
   'attachment',
   'attachment_blob',
   'shard_manifest',
+  'source_identity',
+  'source_import_run',
+  'deletion_receipt',
 ] as const
 
 // ── Change journal ──────────────────────────────────────────────────────────
@@ -180,6 +225,10 @@ export interface RecordStoreCapabilities {
   atomicBatch?: true
   /** Bounded substring scan over titles/content — not ranked FTS. */
   boundedTextScan: true
+  sourceAddressedUpsert?: true
+  deletionReceipts?: true
+  typedMetadataPredicates?: false
+  evidenceLocators?: true
   fullTextSearch: false
   vectorSearch: false
   sqlJoins: false
@@ -190,6 +239,10 @@ export const RECORD_STORE_CAPABILITIES: RecordStoreCapabilities = {
   journal: true,
   atomicBatch: true,
   boundedTextScan: true,
+  sourceAddressedUpsert: true,
+  deletionReceipts: true,
+  typedMetadataPredicates: false,
+  evidenceLocators: true,
   fullTextSearch: false,
   vectorSearch: false,
   sqlJoins: false,

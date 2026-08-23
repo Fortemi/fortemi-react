@@ -149,13 +149,15 @@ state-transfer, and live-persistence planes.
 - Full note CRUD with revision history, soft delete, starring, pinning, and archiving
 - PGlite-backed local storage with `opfs`, `idb`, and `memory` persistence modes
 - Writable canonical record tier that runs without PGlite — journaled IndexedDB records, Bytecask attachment bytes, DB-free shard import/export, and a rebuildable PGlite projection
-- Full-text search with PostgreSQL `tsvector` / `tsquery`, phrase search, filters, facets, and snippets
+- Full-text search with PostgreSQL `tsvector` / `tsquery`, phrase search, filters, facets, snippets, bounded metadata predicates, and safe source evidence locators
 - Hybrid semantic search with pgvector HNSW and BM25 reciprocal-rank fusion
 - Virtual embedding-set selectors, cached similarity graphs, and graph/community artifact persistence
 - Dynamic and user-authored communities with React graph-controller hooks for source switching
 - Tags, collections, inter-note links, SKOS schemes, concepts, and relations
 - Knowledge Shard tar.gz import/export with checksums, exact schema/profile
   negotiation, and receipt-backed component preservation
+- Source-addressed import and terminal purge workflows with replay-safe
+  outcomes, preview counts, and content-free deletion receipts
 - 10 manifest-backed Fortemi tools plus 11 exported direct tool helper functions
 - Optional embeddings, LLM, local-provider discovery, WebGPU detection, and fallback routing
 - React 19 hooks for common UI workflows and direct context access for lower-level integration

@@ -18,6 +18,7 @@ const implementationPaths = [
   'src/shard/blob-staging.ts',
   'src/migrations/0020_full_v1_snapshot.ts',
   'src/migrations/0022_embedding_config_timestamps.ts',
+  'src/migrations/0023_source_metadata_purge.ts',
   'src/migrations/index.ts',
   'src/__tests__/shard/full-v1-store.test.ts',
   'schemas/knowledge-shard-v2.schema.receipt.json',

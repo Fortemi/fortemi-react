@@ -1,7 +1,7 @@
 # API Reference
 
 **Packages:** `@fortemi/core` · `@fortemi/graph` · `@fortemi/react`
-**Version:** 2026.7.8
+**Version:** 2026.8.0
 
 ---
 
@@ -58,7 +58,7 @@
 const VERSION: string
 ```
 
-The current package version string. Value: `'2026.7.15'`.
+The current package version string. Value: `'2026.8.0'`.
 
 ---
 
@@ -397,6 +397,11 @@ class SearchRepository {
 | `search(query, options?, queryEmbedding?)` | Main entry point. Dispatches to text, semantic, or hybrid based on inputs. Empty query returns recent notes. Quoted phrases use `phraseto_tsquery`. |
 | `semanticSearch(queryEmbedding, options?)` | Pure vector similarity search via pgvector cosine distance. |
 | `hybridSearch(query, queryEmbedding, options?)` | Combines BM25 text ranking and vector similarity using Reciprocal Rank Fusion (k=60). |
+
+Tenant, archive, deletion, and metadata predicates are applied before ranking
+for text, semantic, hybrid, and recent-note modes. Result locators expose
+source namespace, schema/import-run metadata, and an external-id hash; they do
+not return raw external source keys.
 
 The `search()` method routing logic:
 - Query text + embedding = **hybrid** (RRF fusion)
@@ -798,12 +803,53 @@ interface SearchOptions {
   format?: string          // filter: 'markdown' | 'plain' | 'html'
   source?: string          // filter: 'user' | 'mcp' | 'import' | 'api'
   visibility?: string      // filter: 'private' | 'shared' | 'public'
+  tenant_id?: string       // source-identity tenant scope
+  archive_id?: string | null // source-identity archive scope
+  metadataPredicates?: MetadataPredicate[] // indexed metadata filters
   include_facets?: boolean // include tag/collection aggregate counts (default: false)
   mode?: 'text' | 'semantic' | 'hybrid' | 'auto'  // override search mode (default: 'auto')
 }
 ```
 
-All filters apply uniformly across text, semantic, and hybrid search modes.
+All filters apply uniformly across text, semantic, hybrid, and recent-note
+search modes. Metadata predicates are bounded and allowlisted to indexed fields:
+`provider`, `model`, `role`, `event_kind`, `sensitivity`, and `import_run_id`.
+Unsupported paths fail clearly rather than running unbounded scans.
+
+#### `SourceUpsertRepository`
+
+```typescript
+class SourceUpsertRepository {
+  constructor(db: DatabaseClient, events?: TypedEventBus)
+  upsertBatch(items: SourceUpsertItem[], options?: SourceUpsertOptions): Promise<SourceUpsertBatchResult>
+}
+
+type SourceUpsertPolicy = 'replace' | 'version' | 'conflict'
+type SourceUpsertOutcome = 'inserted' | 'unchanged' | 'versioned' | 'replaced' | 'conflict' | 'rejected'
+```
+
+Atomically imports source-addressed notes by tenant, archive, source namespace,
+and external id. Exact replays return `unchanged` without duplicating notes,
+revisions, jobs, source identities, or import runs. Changed content follows the
+per-item `policy`: replace current content, create a versioned revision, or
+report a conflict without mutation. Results include source-key hashes and
+content digests, not raw external ids.
+
+#### `LifecyclePurgeRepository`
+
+```typescript
+class LifecyclePurgeRepository {
+  constructor(db: DatabaseClient, events?: TypedEventBus)
+  preview(selector: PurgeSelector): Promise<PurgePreview>
+  purge(selector: PurgeSelector, operationKey: string): Promise<DeletionReceipt>
+}
+```
+
+Provides terminal purge for note ids or source-identity selectors. Preview
+counts match terminal receipt counts; purge removes note rows, revisions,
+links, tags, embeddings, graph edges, provenance edges, attachments, and source
+identity rows atomically. Re-running the same `operationKey` returns the same
+content-free deletion receipt.
 
 ---
 
@@ -1466,11 +1512,19 @@ interface RecordStore {
 }
 ```
 
-The store contract plus the durable IndexedDB implementation (`createRecordStore` → `IdbRecordStore`, with schema versioning and a newer-schema guard) and the in-memory test double. Collections: `note`, `note_original`, `note_revised_current`, `note_tag`, `link`, `collection`, `collection_note`, `attachment`, `attachment_blob`. The built-in stores implement the optional `applyBatch` capability, committing mutations across collections and their journal entries in one transaction, and report `atomicBatch: true`. Custom stores without that capability can continue to implement the public interface but shard import fails before mutation. Query capabilities remain explicit (`boundedTextScan: true`, `fullTextSearch: false`, `vectorSearch: false`, `sqlJoins: false`).
+The store contract plus the durable IndexedDB implementation (`createRecordStore` → `IdbRecordStore`, with schema versioning and a newer-schema guard) and the in-memory test double. Collections: `note`, `note_original`, `note_revised_current`, `note_tag`, `link`, `collection`, `collection_note`, `attachment`, `attachment_blob`, `source_identity`, `source_import_run`, and `deletion_receipt`. The built-in stores implement the optional `applyBatch` capability, committing mutations across collections and their journal entries in one transaction, and report `atomicBatch: true`. Custom stores without that capability can continue to implement the public interface but shard import fails before mutation. Query capabilities remain explicit (`boundedTextScan: true`, `fullTextSearch: false`, `vectorSearch: false`, `sqlJoins: false`).
 
 #### `CanonicalNotesRepository` / `CanonicalAttachmentsRepository`
 
 DB-free note workflows (CRUD, soft-delete/restore, tags, links, nested collections, recent/by-tag queries, bounded text scan) and attachment workflows (bytes-first attach through the Bytecask `BlobStore`, dedupe, reference-only reads, manifest-derived `reconcileBlobs`/`gcBlobs`). `createCollection(name, description?, parentId?)` validates the optional parent before writing.
+
+#### `upsertRecordStoreSources(store, items, options?)` / `previewRecordStorePurge(store, selector)` / `purgeRecordStoreGraph(store, selector, operationKey)`
+
+RecordStore equivalents for source-addressed import and terminal purge. They
+use `applyBatch` for atomic multi-collection mutation, preserve replay
+idempotence, and emit deletion receipts that omit content and raw external
+source ids. RecordStore Knowledge Shard export reports source identity mappings
+as typed loss because `record-v1` does not declare that operational mapping.
 
 #### `createRecordBackend(store, options?)`
 

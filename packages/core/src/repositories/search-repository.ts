@@ -7,6 +7,7 @@ import type { DatabaseClient } from '../storage-backend.js'
 import type { SearchResponse, SearchOptions, SearchFacets, SearchResult } from './types.js'
 import { buildNoteConditions } from './condition-builder.js'
 import { EmbeddingSetsRepository, type EmbeddingSetSelector, type ResolvedEmbeddingSet } from './embedding-sets-repository.js'
+import { buildMetadataPredicateConditions, type EvidenceLocator, type RegisteredMetadataPath } from './metadata-predicates.js'
 
 const ATTACHMENT_TEXT_JOIN = `
        LEFT JOIN (
@@ -102,6 +103,52 @@ export class SearchRepository {
     return results.map((r) => ({ ...r, has_embedding: embeddingSet.has(r.id) }))
   }
 
+  private async fetchLocatorMap(
+    noteIds: string[],
+    metadataPaths: readonly RegisteredMetadataPath[] = [],
+  ): Promise<Map<string, EvidenceLocator[]>> {
+    const locators = new Map<string, EvidenceLocator[]>()
+    if (noteIds.length === 0) return locators
+    const result = await this.db.query<{
+      note_id: string
+      namespace: string
+      external_id_hash: string
+      import_run_id: string
+      source_schema_version: string
+    }>(
+      `SELECT note_id, namespace, external_id_hash, import_run_id, source_schema_version
+       FROM source_identity
+       WHERE note_id = ANY($1)
+       ORDER BY created_at ASC`,
+      [noteIds],
+    )
+    for (const row of result.rows) {
+      const existing = locators.get(row.note_id) ?? []
+      existing.push({
+        note_id: row.note_id,
+        chunk: { kind: 'current', index: 0 },
+        source: {
+          namespace: row.namespace,
+          external_id_hash: row.external_id_hash,
+          import_run_id: row.import_run_id,
+          schema_version: row.source_schema_version,
+        },
+        metadata_paths: [...metadataPaths],
+      })
+      locators.set(row.note_id, existing)
+    }
+    for (const noteId of noteIds) {
+      if (!locators.has(noteId)) {
+        locators.set(noteId, [{ note_id: noteId, chunk: { kind: 'current', index: 0 }, metadata_paths: [...metadataPaths] }])
+      }
+    }
+    return locators
+  }
+
+  private metadataPaths(options: SearchOptions): RegisteredMetadataPath[] {
+    return [...new Set((options.metadataPredicates ?? []).map((predicate) => predicate.path))]
+  }
+
   async search(
     query: string,
     options: SearchOptions = {},
@@ -135,11 +182,14 @@ export class SearchRepository {
     const resolvedEmbeddingSet = await this.resolveEmbeddingSet(options)
     const tsqFn = this.tsqueryFn(query)
     const { conditions, params, nextIdx } = buildNoteConditions(options, 2)
+    const metadata = buildMetadataPredicateConditions(options, nextIdx)
+    conditions.push(...metadata.conditions)
+    params.push(...metadata.params)
     conditions.unshift(
       `(n.tsv @@ ${tsqFn}('english', $1) OR
         ${COMBINED_TEXT_VECTOR_SQL} @@ ${tsqFn}('english', $1))`,
     )
-    let paramIdx = this.scopeToResolvedEmbeddingSet(conditions, params, nextIdx, resolvedEmbeddingSet)
+    let paramIdx = this.scopeToResolvedEmbeddingSet(conditions, params, metadata.nextIdx, resolvedEmbeddingSet)
     const allParams = [query, ...params]
     const where = conditions.join(' AND ')
 
@@ -147,6 +197,7 @@ export class SearchRepository {
       `SELECT COUNT(*) as count
        FROM note n
        LEFT JOIN note_revised_current c ON c.note_id = n.id
+       ${metadata.joins.join('\n')}
        ${ATTACHMENT_TEXT_JOIN}
        WHERE ${where}`,
       allParams,
@@ -175,6 +226,7 @@ export class SearchRepository {
               ) as snippet
        FROM note n
        LEFT JOIN note_revised_current c ON c.note_id = n.id
+       ${metadata.joins.join('\n')}
        ${ATTACHMENT_TEXT_JOIN}
        WHERE ${where}
        ORDER BY rank DESC, n.created_at DESC
@@ -193,6 +245,7 @@ export class SearchRepository {
       const idsResult = await this.db.query<{ id: string }>(
         `SELECT n.id FROM note n
          LEFT JOIN note_revised_current c ON c.note_id = n.id
+         ${metadata.joins.join('\n')}
          ${ATTACHMENT_TEXT_JOIN}
          WHERE ${where}`,
         allParams,
@@ -200,6 +253,7 @@ export class SearchRepository {
       facets = await this.fetchFacets(idsResult.rows.map((r) => r.id))
     }
 
+    const locatorMap = await this.fetchLocatorMap(resultIds, this.metadataPaths(options))
     const baseResults = result.rows.map((r) => ({
       id: r.id,
       title: r.title,
@@ -208,6 +262,7 @@ export class SearchRepository {
       created_at: r.created_at,
       updated_at: r.updated_at,
       tags: tagMap.get(r.id) ?? [],
+      locators: locatorMap.get(r.id) ?? [],
     }))
 
     return {
@@ -227,13 +282,18 @@ export class SearchRepository {
     const vectorStr = `[${queryEmbedding.join(',')}]`
     const resolvedEmbeddingSet = await this.resolveEmbeddingSet(options)
     const { conditions, params, nextIdx } = buildNoteConditions(options, 1)
-    let paramIdx = this.scopeToResolvedEmbeddingRows(conditions, params, nextIdx, resolvedEmbeddingSet)
+    const metadata = buildMetadataPredicateConditions(options, nextIdx)
+    conditions.push(...metadata.conditions)
+    params.push(...metadata.params)
+    let paramIdx = this.scopeToResolvedEmbeddingRows(conditions, params, metadata.nextIdx, resolvedEmbeddingSet)
     const where = conditions.join(' AND ')
 
     const countResult = await this.db.query<{ count: string }>(
       `SELECT COUNT(*) as count
        FROM embedding e
        JOIN note n ON n.id = e.note_id
+       LEFT JOIN note_revised_current c ON c.note_id = n.id
+       ${metadata.joins.join('\n')}
        WHERE ${where}`,
       params,
     )
@@ -256,6 +316,7 @@ export class SearchRepository {
        FROM embedding e
        JOIN note n ON n.id = e.note_id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
+       ${metadata.joins.join('\n')}
        ${ATTACHMENT_TEXT_JOIN}
        WHERE ${where}
        ORDER BY e.vector <=> $${vecIdx}::vector ASC
@@ -266,10 +327,16 @@ export class SearchRepository {
     const tagMap = await this.fetchTagMap(result.rows.map((r) => r.id))
     const facets = options.include_facets
       ? await this.fetchFacets((await this.db.query<{ id: string }>(
-          `SELECT n.id FROM embedding e JOIN note n ON n.id = e.note_id WHERE ${where}`,
+          `SELECT n.id
+           FROM embedding e
+           JOIN note n ON n.id = e.note_id
+           LEFT JOIN note_revised_current c ON c.note_id = n.id
+           ${metadata.joins.join('\n')}
+           WHERE ${where}`,
           params,
         )).rows.map((r) => r.id))
       : undefined
+    const locatorMap = await this.fetchLocatorMap(result.rows.map((r) => r.id), this.metadataPaths(options))
 
     return {
       results: result.rows.map((r) => ({
@@ -281,6 +348,7 @@ export class SearchRepository {
         updated_at: r.updated_at,
         tags: tagMap.get(r.id) ?? [],
         has_embedding: true,
+        locators: locatorMap.get(r.id) ?? [],
       })),
       total,
       query: '',
@@ -304,12 +372,15 @@ export class SearchRepository {
     const resolvedEmbeddingSet = await this.resolveEmbeddingSet(options)
 
     const textCond = buildNoteConditions(options, 2)
+    const textMeta = buildMetadataPredicateConditions(options, textCond.nextIdx)
     const textConditions = [
       ...textCond.conditions,
+      ...textMeta.conditions,
       `(n.tsv @@ ${tsqFn}('english', $1) OR
         ${COMBINED_TEXT_VECTOR_SQL} @@ ${tsqFn}('english', $1))`,
     ]
-    this.scopeToResolvedEmbeddingSet(textConditions, textCond.params, textCond.nextIdx, resolvedEmbeddingSet)
+    textCond.params.push(...textMeta.params)
+    this.scopeToResolvedEmbeddingSet(textConditions, textCond.params, textMeta.nextIdx, resolvedEmbeddingSet)
     const textWhere = textConditions.join(' AND ')
     const textParams = [query, ...textCond.params]
 
@@ -321,6 +392,7 @@ export class SearchRepository {
               ) as rank
        FROM note n
        LEFT JOIN note_revised_current c ON c.note_id = n.id
+       ${textMeta.joins.join('\n')}
        ${ATTACHMENT_TEXT_JOIN}
        WHERE ${textWhere}
        ORDER BY rank DESC
@@ -329,7 +401,10 @@ export class SearchRepository {
     )
 
     const vecCond = buildNoteConditions(options, 1)
-    vecCond.nextIdx = this.scopeToResolvedEmbeddingRows(vecCond.conditions, vecCond.params, vecCond.nextIdx, resolvedEmbeddingSet)
+    const vecMeta = buildMetadataPredicateConditions(options, vecCond.nextIdx)
+    vecCond.conditions.push(...vecMeta.conditions)
+    vecCond.params.push(...vecMeta.params)
+    vecCond.nextIdx = this.scopeToResolvedEmbeddingRows(vecCond.conditions, vecCond.params, vecMeta.nextIdx, resolvedEmbeddingSet)
     const vecWhere = vecCond.conditions.join(' AND ')
     const vecVecIdx = vecCond.nextIdx
 
@@ -337,6 +412,8 @@ export class SearchRepository {
       `SELECT n.id, (e.vector <=> $${vecVecIdx}::vector) as distance
        FROM embedding e
        JOIN note n ON n.id = e.note_id
+       LEFT JOIN note_revised_current c ON c.note_id = n.id
+       ${vecMeta.joins.join('\n')}
        WHERE ${vecWhere}
        ORDER BY e.vector <=> $${vecVecIdx}::vector ASC
        LIMIT 100`,
@@ -380,6 +457,7 @@ export class SearchRepository {
       this.fetchTagMap(pageIds),
       this.fetchEmbeddingStatus(pageIds, resolvedEmbeddingSet, options.embeddingSetId),
     ])
+    const locatorMap = await this.fetchLocatorMap(pageIds, this.metadataPaths(options))
     const facets = options.include_facets ? await this.fetchFacets(sortedIds) : undefined
 
     return {
@@ -396,6 +474,7 @@ export class SearchRepository {
             updated_at: r.updated_at,
             tags: tagMap.get(id) ?? [],
             has_embedding: embeddingSet.has(id),
+            locators: locatorMap.get(id) ?? [],
           }
         })
         .filter((r): r is NonNullable<typeof r> => r !== null),
@@ -413,11 +492,18 @@ export class SearchRepository {
     const { limit = 20, offset = 0 } = options
     const resolvedEmbeddingSet = await this.resolveEmbeddingSet(options)
     const { conditions, params, nextIdx } = buildNoteConditions(options, 1)
-    let paramIdx = this.scopeToResolvedEmbeddingSet(conditions, params, nextIdx, resolvedEmbeddingSet)
+    const metadata = buildMetadataPredicateConditions(options, nextIdx)
+    conditions.push(...metadata.conditions)
+    params.push(...metadata.params)
+    let paramIdx = this.scopeToResolvedEmbeddingSet(conditions, params, metadata.nextIdx, resolvedEmbeddingSet)
     const where = conditions.join(' AND ')
 
     const countResult = await this.db.query<{ count: string }>(
-      `SELECT COUNT(*) as count FROM note n WHERE ${where}`,
+      `SELECT COUNT(*) as count
+       FROM note n
+       LEFT JOIN note_revised_current c ON c.note_id = n.id
+       ${metadata.joins.join('\n')}
+       WHERE ${where}`,
       params,
     )
     const total = parseInt(countResult.rows[0].count, 10)
@@ -434,6 +520,7 @@ export class SearchRepository {
               LEFT(${COMBINED_TEXT_SQL}, 200) as snippet
        FROM note n
        LEFT JOIN note_revised_current c ON c.note_id = n.id
+       ${metadata.joins.join('\n')}
        ${ATTACHMENT_TEXT_JOIN}
        WHERE ${where}
        ORDER BY n.created_at DESC
@@ -443,6 +530,7 @@ export class SearchRepository {
 
     const resultIds = result.rows.map((r) => r.id)
     const embeddingSet = await this.fetchEmbeddingStatus(resultIds, resolvedEmbeddingSet, options.embeddingSetId)
+    const locatorMap = await this.fetchLocatorMap(resultIds, this.metadataPaths(options))
 
     return {
       results: result.rows.map((r) => ({
@@ -454,6 +542,7 @@ export class SearchRepository {
         updated_at: r.updated_at,
         tags: [],
         has_embedding: embeddingSet.has(r.id),
+        locators: locatorMap.get(r.id) ?? [],
       })),
       total,
       query: '',

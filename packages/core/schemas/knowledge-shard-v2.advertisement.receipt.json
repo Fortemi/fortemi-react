@@ -137,7 +137,7 @@
       },
       "knowledge-shard-v2.implementation.receipt.json": {
         "path": "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
-        "sha256": "93f410bb14f5f735913d2d3d1704ce44783a06a828bf46e898c07d551f190216",
+        "sha256": "d64a0705582c426424720730cc21cedc464fbd7bc87168bae8dcbdc39e073d62",
         "authority": {
           "repository": "https://git.integrolabs.net/Fortemi/fortemi",
           "commit": "6343bd899958445bbc7e7e87b0dc92a8429d5a06",
@@ -147,7 +147,7 @@
       },
       "knowledge-shard-v2.presence.receipt.json": {
         "path": "packages/core/schemas/knowledge-shard-v2.presence.receipt.json",
-        "sha256": "f29e2f0aff090ba1cadb62b48d18fd86e957e4bcd75fad45ca0f6cd7d52fabcd",
+        "sha256": "a04c73586db94403b331187794f402f7870f84dea9bcec1e7b88e82542302ff1",
         "authority": {
           "repository": "https://git.integrolabs.net/Fortemi/fortemi",
           "commit": "6343bd899958445bbc7e7e87b0dc92a8429d5a06",
@@ -171,7 +171,7 @@
       },
       "knowledge-shard-v2.cross-repository.receipt.json": {
         "path": "packages/core/schemas/knowledge-shard-v2.cross-repository.receipt.json",
-        "sha256": "f9be3191bf0d7ce232cc2ea54e181d783e775111affb4f85f64873113b1ded5e",
+        "sha256": "816b28ffa95b28cc0391d0498f0ccce5478a97d8e9115dce57907464426b3e7e",
         "authority": {
           "repository": "https://git.integrolabs.net/Fortemi/fortemi.git",
           "commit": "6343bd899958445bbc7e7e87b0dc92a8429d5a06",

@@ -541,6 +541,17 @@ async function buildRecordShardArchive(
         message: `${collectionStateLosses} collection lifecycle state(s) are outside record-v1 and were omitted.`,
       })
     }
+    const sourceIdentities = await store.list('source_identity')
+    if (sourceIdentities.length > 0) {
+      losses.push({
+        code: 'source-identity-outside-profile',
+        count: sourceIdentities.length,
+        field_path: 'source_identity',
+        action: 'omit',
+        destination_capability: 'record-v1 does not declare source-addressed identity mappings',
+        message: `${sourceIdentities.length} source identity mapping(s) are outside record-v1 and were omitted.`,
+      })
+    }
   }
 
   let manifest: ShardManifest = isRecordV1
