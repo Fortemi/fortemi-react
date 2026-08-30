@@ -8,7 +8,7 @@ project: "fortemi-react"
 type: report
 tags: [report, "2026-08", "fortemi-react"]
 summary: "August was a focused Core release for fortemi-react: safer repeat imports, scoped search fields, final-delete receipts, and clearer Knowledge Shard limits."
-hero: "https://docs.fortemi.com/react/assets/images/posts/2026-08/fortemi-react-august-2026-hero.png"
+hero: "https://docs.fortemi.com/react/assets/images/posts/2026-08/fortemi-react-august-2026-hero.png?v=2026-08-30"
 heroAlt: "Sunlit glacier-blue glass forms rising from water, representing portable browser memory with clear provenance."
 status: published
 ---
