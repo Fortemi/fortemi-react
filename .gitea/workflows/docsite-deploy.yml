@@ -68,6 +68,7 @@ jobs:
         run: |
           test -d docsite/dist/fortemi-react || { echo "Missing build output directory"; exit 1; }
           test -f docsite/dist/fortemi-react/index.html || { echo "Missing index.html"; exit 1; }
+          test -f docsite/dist/fortemi-react/assets/images/posts/2026-08/fortemi-react-august-2026-hero.png || { echo "Missing August report hero"; exit 1; }
           echo "Build verification passed"
           ls -lah docsite/dist/fortemi-react/
 
