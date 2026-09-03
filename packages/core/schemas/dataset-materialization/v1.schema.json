@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.fortemi.dev/dataset-materialization/v1.schema.json",
+  "title": "Fortemi dataset materialization profiles and evidence",
+  "oneOf": [
+    { "$ref": "#/$defs/profile" },
+    { "$ref": "#/$defs/receipt" },
+    { "$ref": "#/$defs/retrievalResponse" },
+    { "$ref": "#/$defs/benchmarkEvidence" }
+  ],
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "semver": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$" },
+    "implementation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "digest"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/digest" },
+        "model": {
+          "type": "object", "additionalProperties": false,
+          "required": ["id", "version", "digest"],
+          "properties": { "id": { "type": "string", "minLength": 1 }, "version": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" } }
+        }
+      }
+    },
+    "capabilityRequirement": {
+      "type": "object", "additionalProperties": false, "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "minimumVersion": { "$ref": "#/$defs/semver" },
+        "minimumLimits": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "maxInputBytes": { "type": "integer", "minimum": 0 }, "maxRecordBytes": { "type": "integer", "minimum": 0 },
+            "maxBatchRecords": { "type": "integer", "minimum": 0 }, "maxConcurrency": { "type": "integer", "minimum": 0 },
+            "maxPageSize": { "type": "integer", "minimum": 0 }, "maxTraversalDepth": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "fallback": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract", "schemaVersion", "id", "version", "kind", "status", "operations", "inputTypes", "implementation", "configurationSchema", "requiredRuntimeCapabilities", "determinism", "privacy", "resourceLimits", "output"],
+      "properties": {
+        "contract": { "const": "fortemi.dataset-materialization-profile/v1" },
+        "schemaVersion": { "$ref": "#/$defs/semver" },
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._/-]*$" },
+        "version": { "$ref": "#/$defs/semver" },
+        "kind": { "enum": ["chunking", "lexical", "vector", "hybrid", "rerank", "entity-relationship-extraction", "graph-retrieval", "community"] },
+        "status": { "enum": ["supported", "experimental", "unsupported"] },
+        "operations": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["build", "query"] } },
+        "inputTypes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "implementation": { "$ref": "#/$defs/implementation" },
+        "configurationSchema": { "type": "object" },
+        "requiredRuntimeCapabilities": { "type": "array", "items": { "$ref": "#/$defs/capabilityRequirement" } },
+        "optionalRuntimeCapabilities": { "type": "array", "items": { "$ref": "#/$defs/capabilityRequirement" } },
+        "determinism": {
+          "type": "object", "additionalProperties": false, "required": ["class"],
+          "properties": { "class": { "enum": ["deterministic", "seeded", "nondeterministic"] }, "seedRequired": { "type": "boolean" } },
+          "if": { "properties": { "class": { "const": "seeded" } } }, "then": { "required": ["seedRequired"], "properties": { "seedRequired": { "const": true } } }
+        },
+        "privacy": {
+          "type": "object", "additionalProperties": false, "required": ["behavior", "authorizationRequired", "filtersBefore"],
+          "properties": {
+            "behavior": { "enum": ["local-only", "policy-filtered-external"] }, "authorizationRequired": { "const": true },
+            "filtersBefore": { "type": "array", "uniqueItems": true, "allOf": [
+              { "contains": { "const": "chunking" } }, { "contains": { "const": "model-invocation" } }, { "contains": { "const": "index-persistence" } }
+            ], "items": { "enum": ["chunking", "model-invocation", "index-persistence"] } }
+          }
+        },
+        "resourceLimits": {
+          "type": "object", "additionalProperties": false, "required": ["maxInputBytes", "maxRecords", "maxConcurrency"],
+          "properties": {
+            "maxInputBytes": { "type": "integer", "minimum": 0 }, "maxRecords": { "type": "integer", "minimum": 0 },
+            "maxConcurrency": { "type": "integer", "minimum": 1 }, "maxMemoryBytes": { "type": "integer", "minimum": 0 }, "timeoutMs": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "output": {
+          "type": "object", "additionalProperties": false, "required": ["dataClass", "canonicalMutation"],
+          "properties": { "dataClass": { "const": "regenerable-index" }, "canonicalMutation": { "const": false } }
+        }
+      }
+    },
+    "degradation": {
+      "type": "object", "additionalProperties": false, "required": ["requested", "reason", "changedGuarantees"],
+      "properties": {
+        "requested": { "type": "string" }, "selected": { "type": "string" },
+        "reason": { "enum": ["unsupported", "version-insufficient", "limit-insufficient"] },
+        "changedGuarantees": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "runtime": {
+      "type": "object", "additionalProperties": false, "required": ["id", "version", "plane", "dataClass", "maturity"],
+      "properties": {
+        "id": { "type": "string" }, "version": { "type": "string" },
+        "plane": { "enum": ["browser-local-archive", "static-cache", "portable-shard", "server-process", "live-remote-persistence"] },
+        "dataClass": { "enum": ["canonical", "regenerable-index", "static-cache", "portable-projection", "remote-persistence"] },
+        "maturity": { "enum": ["experimental", "alpha", "beta", "stable"] }
+      }
+    },
+    "privacyDecision": {
+      "type": "object", "additionalProperties": false, "required": ["policyId", "policyVersion", "policyDigest", "allowedRecordDigests", "deniedRecordDigests", "evaluatedAt"],
+      "properties": {
+        "policyId": { "type": "string" }, "policyVersion": { "type": "string" }, "policyDigest": { "$ref": "#/$defs/digest" },
+        "allowedRecordDigests": { "type": "array", "items": { "$ref": "#/$defs/digest" } }, "deniedRecordDigests": { "type": "array", "items": { "$ref": "#/$defs/digest" } },
+        "evaluatedAt": { "type": "string", "minLength": 1 }
+      }
+    },
+    "artifact": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "logicalId", "sourceRecordDigests", "digest"],
+      "properties": {
+        "kind": { "enum": ["chunk", "lexical-entry", "vector", "reranked-hit", "entity", "relationship", "graph-result", "community"] },
+        "logicalId": { "type": "string" }, "sourceRecordDigests": { "type": "array", "items": { "$ref": "#/$defs/digest" } },
+        "digest": { "$ref": "#/$defs/digest" }, "payload": {}, "score": { "type": "number" }
+      }
+    },
+    "receipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["contract", "schemaVersion", "receiptId", "runId", "processingRunId", "source", "schema", "profile", "runtime", "negotiation", "mode", "affected", "output", "privacy", "resources", "createdAt"],
+      "properties": {
+        "contract": { "const": "fortemi.dataset-materialization-profile/v1" }, "schemaVersion": { "$ref": "#/$defs/semver" }, "receiptId": { "$ref": "#/$defs/digest" },
+        "runId": { "type": "string" }, "processingRunId": { "type": "string" },
+        "source": { "type": "object", "additionalProperties": false, "required": ["datasetId", "revision", "digests"], "properties": { "datasetId": { "type": "string" }, "revision": { "type": "string" }, "digests": { "type": "array", "items": { "$ref": "#/$defs/digest" } } } },
+        "schema": { "type": "object", "additionalProperties": false, "required": ["id", "version", "digest"], "properties": { "id": { "type": "string" }, "version": { "type": "string" }, "digest": { "$ref": "#/$defs/digest" } } },
+        "profile": { "type": "object", "additionalProperties": false, "required": ["id", "version", "digest", "configurationDigest", "implementation"], "properties": { "id": { "type": "string" }, "version": { "type": "string" }, "digest": { "$ref": "#/$defs/digest" }, "configurationDigest": { "$ref": "#/$defs/digest" }, "implementation": { "$ref": "#/$defs/implementation" } } },
+        "runtime": { "$ref": "#/$defs/runtime" },
+        "negotiation": { "type": "object", "additionalProperties": false, "required": ["requestedProfile", "selectedProfile", "degraded", "degradations"], "properties": { "requestedProfile": { "type": "string" }, "selectedProfile": { "type": "string" }, "degraded": { "type": "boolean" }, "degradations": { "type": "array", "items": { "$ref": "#/$defs/degradation" } } } },
+        "mode": { "enum": ["full", "incremental"] },
+        "affected": { "type": "object", "additionalProperties": false, "required": ["sourceRevisions", "recordDigests", "chunkDigests"], "properties": { "sourceRevisions": { "type": "array", "items": { "type": "string" } }, "recordDigests": { "type": "array", "items": { "$ref": "#/$defs/digest" } }, "chunkDigests": { "type": "array", "items": { "$ref": "#/$defs/digest" } } } },
+        "output": { "type": "object", "additionalProperties": false, "required": ["counts", "digests", "aggregateDigest"], "properties": { "counts": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } }, "digests": { "type": "array", "items": { "$ref": "#/$defs/digest" } }, "aggregateDigest": { "$ref": "#/$defs/digest" } } },
+        "privacy": { "$ref": "#/$defs/privacyDecision" },
+        "resources": { "type": "object", "additionalProperties": false, "required": ["elapsedMs", "inputBytes", "modelInvocations", "persistedBytes"], "properties": { "elapsedMs": { "type": "number", "minimum": 0 }, "inputBytes": { "type": "integer", "minimum": 0 }, "peakMemoryBytes": { "type": "integer", "minimum": 0 }, "modelInvocations": { "type": "integer", "minimum": 0 }, "persistedBytes": { "type": "integer", "minimum": 0 } } },
+        "createdAt": { "type": "string", "minLength": 1 }
+      }
+    },
+    "retrievalResponse": {
+      "type": "object", "additionalProperties": false,
+      "required": ["contract", "schemaVersion", "queryId", "requestedProfile", "actualProfile", "actualBackend", "degraded", "scoreSemantics", "results", "receiptId"],
+      "properties": {
+        "contract": { "const": "fortemi.dataset-materialization-profile/v1" }, "schemaVersion": { "$ref": "#/$defs/semver" }, "queryId": { "type": "string" },
+        "requestedProfile": { "type": "string" }, "actualProfile": { "type": "string" },
+        "actualBackend": { "type": "object", "additionalProperties": false, "required": ["id", "version", "plane"], "properties": { "id": { "type": "string" }, "version": { "type": "string" }, "plane": { "enum": ["browser-local-archive", "static-cache", "portable-shard", "server-process", "live-remote-persistence"] } } },
+        "degraded": { "type": "boolean" }, "fallbackReason": { "type": "string" },
+        "scoreSemantics": { "type": "object", "additionalProperties": false, "required": ["implementationScoped", "comparableAcrossImplementations"], "properties": { "implementationScoped": { "const": true }, "comparableAcrossImplementations": { "const": false } } },
+        "results": { "type": "array", "items": { "$ref": "#/$defs/artifact" } }, "receiptId": { "type": "string", "minLength": 1 }
+      }
+    },
+    "benchmarkEvidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["contract", "schemaVersion", "evidenceType", "benchmarkId", "corpus", "hardware", "implementation", "profile", "correctness", "freshness", "measurements", "claims"],
+      "properties": {
+        "contract": { "const": "fortemi.dataset-materialization-profile/v1" }, "schemaVersion": { "$ref": "#/$defs/semver" }, "evidenceType": { "const": "benchmark" }, "benchmarkId": { "type": "string" },
+        "corpus": { "type": "object", "additionalProperties": false, "required": ["id", "revision", "digest", "records", "bytes"], "properties": { "id": { "type": "string" }, "revision": { "type": "string" }, "digest": { "$ref": "#/$defs/digest" }, "records": { "type": "integer", "minimum": 0 }, "bytes": { "type": "integer", "minimum": 0 } } },
+        "hardware": { "type": "object", "additionalProperties": false, "required": ["runtime", "cpu", "memoryBytes"], "properties": { "runtime": { "type": "string" }, "cpu": { "type": "string" }, "memoryBytes": { "type": "integer", "minimum": 0 }, "accelerator": { "type": "string" } } },
+        "implementation": { "$ref": "#/$defs/implementation" },
+        "profile": { "type": "object", "additionalProperties": false, "required": ["id", "version", "digest", "configurationDigest"], "properties": { "id": { "type": "string" }, "version": { "type": "string" }, "digest": { "$ref": "#/$defs/digest" }, "configurationDigest": { "$ref": "#/$defs/digest" } } },
+        "correctness": { "type": "object", "additionalProperties": false, "required": ["passed", "suite", "receiptDigest"], "properties": { "passed": { "type": "boolean" }, "suite": { "type": "string" }, "receiptDigest": { "$ref": "#/$defs/digest" } } },
+        "freshness": { "type": "object", "additionalProperties": false, "required": ["measuredAt", "sourceRevision"], "properties": { "measuredAt": { "type": "string" }, "sourceRevision": { "type": "string" } } },
+        "measurements": { "type": "array", "minItems": 1, "items": { "type": "object", "additionalProperties": false, "required": ["name", "value", "unit"], "properties": { "name": { "type": "string" }, "value": { "type": "number", "minimum": 0 }, "unit": { "enum": ["ms", "bytes", "records/s", "queries/s"] } } } },
+        "claims": { "type": "object", "additionalProperties": false, "required": ["corpusScoped", "universalScaleLimit"], "properties": { "corpusScoped": { "const": true }, "universalScaleLimit": { "const": false } } }
+      }
+    }
+  }
+}

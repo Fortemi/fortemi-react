@@ -1,0 +1,12 @@
+{
+  "contract": "fortemi.dataset-materialization-profile/v1", "schemaVersion": "1.0.0", "evidenceType": "benchmark",
+  "benchmarkId": "fortemi-core-small-lexical-2026-09-03",
+  "corpus": { "id": "fortemi-materialization-fixture", "revision": "fixture-v1", "digest": "sha256:1010101010101010101010101010101010101010101010101010101010101010", "records": 100, "bytes": 65536 },
+  "hardware": { "runtime": "node-22-linux-x64", "cpu": "generic-ci-2-vcpu", "memoryBytes": 4294967296 },
+  "implementation": { "id": "fortemi-core-lexical", "version": "2026.8.0", "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111" },
+  "profile": { "id": "fortemi.lexical.default", "version": "1.0.0", "digest": "sha256:1212121212121212121212121212121212121212121212121212121212121212", "configurationDigest": "sha256:1313131313131313131313131313131313131313131313131313131313131313" },
+  "correctness": { "passed": true, "suite": "dataset-materialization-profiles.test.ts", "receiptDigest": "sha256:1414141414141414141414141414141414141414141414141414141414141414" },
+  "freshness": { "measuredAt": "2026-09-03T00:00:00Z", "sourceRevision": "fixture-v1" },
+  "measurements": [{ "name": "full-build", "value": 12.4, "unit": "ms" }, { "name": "throughput", "value": 8064.5, "unit": "records/s" }],
+  "claims": { "corpusScoped": true, "universalScaleLimit": false }
+}

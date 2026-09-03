@@ -1,0 +1,11 @@
+{
+  "contract": "fortemi.dataset-materialization-profile/v1", "schemaVersion": "1.0.0",
+  "id": "fortemi.vector.unavailable", "version": "1.0.0", "kind": "vector", "status": "unsupported",
+  "operations": ["build", "query"], "inputTypes": ["text/plain"],
+  "implementation": { "id": "none", "version": "0", "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222" },
+  "configurationSchema": { "type": "object" }, "requiredRuntimeCapabilities": [{ "id": "index.vector" }],
+  "determinism": { "class": "deterministic" },
+  "privacy": { "behavior": "local-only", "authorizationRequired": true, "filtersBefore": ["chunking", "model-invocation", "index-persistence"] },
+  "resourceLimits": { "maxInputBytes": 0, "maxRecords": 0, "maxConcurrency": 1 },
+  "output": { "dataClass": "regenerable-index", "canonicalMutation": false }
+}

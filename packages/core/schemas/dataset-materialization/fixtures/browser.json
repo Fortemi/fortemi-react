@@ -1,0 +1,11 @@
+{
+  "contract": "fortemi.dataset-materialization-profile/v1", "schemaVersion": "1.0.0",
+  "id": "fortemi.browser.vector", "version": "1.0.0", "kind": "vector", "status": "supported",
+  "operations": ["build", "query"], "inputTypes": ["text/plain"],
+  "implementation": { "id": "transformers-js", "version": "3.0.0", "digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666", "model": { "id": "local-mini", "version": "1", "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" } },
+  "configurationSchema": { "type": "object" }, "requiredRuntimeCapabilities": [{ "id": "index.vector" }],
+  "determinism": { "class": "deterministic" },
+  "privacy": { "behavior": "local-only", "authorizationRequired": true, "filtersBefore": ["chunking", "model-invocation", "index-persistence"] },
+  "resourceLimits": { "maxInputBytes": 1048576, "maxRecords": 500, "maxConcurrency": 1, "maxMemoryBytes": 536870912 },
+  "output": { "dataClass": "regenerable-index", "canonicalMutation": false }
+}

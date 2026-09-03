@@ -1,0 +1,11 @@
+{
+  "contract": "fortemi.dataset-materialization-profile/v1", "schemaVersion": "1.0.0",
+  "id": "fortemi.external.graphrag-rs", "version": "1.0.0", "kind": "graph-retrieval", "status": "experimental",
+  "operations": ["build", "query"], "inputTypes": ["application/fortemi-derived-graph"],
+  "implementation": { "id": "graphrag-rs-adapter", "version": "0.1.0", "digest": "sha256:8888888888888888888888888888888888888888888888888888888888888888" },
+  "configurationSchema": { "type": "object", "additionalProperties": false }, "requiredRuntimeCapabilities": [{ "id": "index.graph" }, { "id": "lineage.relationship-evidence" }],
+  "determinism": { "class": "deterministic" },
+  "privacy": { "behavior": "policy-filtered-external", "authorizationRequired": true, "filtersBefore": ["chunking", "model-invocation", "index-persistence"] },
+  "resourceLimits": { "maxInputBytes": 10485760, "maxRecords": 10000, "maxConcurrency": 2 },
+  "output": { "dataClass": "regenerable-index", "canonicalMutation": false }
+}

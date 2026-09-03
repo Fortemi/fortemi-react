@@ -1,0 +1,11 @@
+{
+  "contract": "fortemi.dataset-materialization-profile/v1", "schemaVersion": "1.0.0",
+  "id": "fortemi.server.community", "version": "1.0.0", "kind": "community", "status": "supported",
+  "operations": ["build", "query"], "inputTypes": ["application/fortemi-graph"],
+  "implementation": { "id": "fortemi-server-community", "version": "2026.8.0", "digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777" },
+  "configurationSchema": { "type": "object" }, "requiredRuntimeCapabilities": [{ "id": "index.community" }, { "id": "privacy.pre-materialization-filter" }],
+  "determinism": { "class": "seeded", "seedRequired": true },
+  "privacy": { "behavior": "policy-filtered-external", "authorizationRequired": true, "filtersBefore": ["chunking", "model-invocation", "index-persistence"] },
+  "resourceLimits": { "maxInputBytes": 1073741824, "maxRecords": 1000000, "maxConcurrency": 8, "maxMemoryBytes": 8589934592 },
+  "output": { "dataClass": "regenerable-index", "canonicalMutation": false }
+}

@@ -55,6 +55,7 @@
     "./schemas/dataset-execution-capabilities/v1": "./schemas/dataset-execution-capabilities/v1.schema.json",
     "./schemas/dataset-ingest/v1": "./schemas/dataset-ingest/v1.schema.json",
     "./schemas/dataset-lineage/v1": "./schemas/dataset-lineage/v1.schema.json",
+    "./schemas/dataset-materialization/v1": "./schemas/dataset-materialization/v1.schema.json",
     "./worker/pglite-worker": "./dist/worker/pglite-worker.js",
     "./service-worker/sw": "./dist/service-worker/sw.js",
     "./package.json": "./package.json"
@@ -64,6 +65,8 @@
     "schemas/dataset-execution-capabilities",
     "schemas/dataset-ingest",
     "schemas/dataset-lineage",
+    "schemas/dataset-materialization",
+    "benchmarks/dataset-materialization",
     "tools",
     "README.md",
     "LICENSE"

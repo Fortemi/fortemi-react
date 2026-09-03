@@ -1,0 +1,12 @@
+{
+  "contract": "fortemi.dataset-materialization-profile/v1", "schemaVersion": "1.0.0",
+  "id": "fortemi.hybrid.preferred", "version": "1.0.0", "kind": "hybrid", "status": "supported",
+  "operations": ["query"], "inputTypes": ["application/fortemi-index"],
+  "implementation": { "id": "fortemi-hybrid", "version": "2026.8.0", "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333" },
+  "configurationSchema": { "type": "object" }, "requiredRuntimeCapabilities": [{ "id": "index.hybrid" }],
+  "optionalRuntimeCapabilities": [{ "id": "index.rerank", "fallback": ["index.lexical"] }],
+  "determinism": { "class": "deterministic" },
+  "privacy": { "behavior": "local-only", "authorizationRequired": true, "filtersBefore": ["chunking", "model-invocation", "index-persistence"] },
+  "resourceLimits": { "maxInputBytes": 1048576, "maxRecords": 1000, "maxConcurrency": 1 },
+  "output": { "dataClass": "regenerable-index", "canonicalMutation": false }
+}

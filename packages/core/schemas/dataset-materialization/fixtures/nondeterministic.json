@@ -1,0 +1,11 @@
+{
+  "contract": "fortemi.dataset-materialization-profile/v1", "schemaVersion": "1.0.0",
+  "id": "fortemi.extract.generative", "version": "1.0.0", "kind": "entity-relationship-extraction", "status": "experimental",
+  "operations": ["build"], "inputTypes": ["text/plain"],
+  "implementation": { "id": "remote-extractor", "version": "2.1.0", "digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555", "model": { "id": "example-model", "version": "2026-08", "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" } },
+  "configurationSchema": { "type": "object" }, "requiredRuntimeCapabilities": [{ "id": "index.graph" }],
+  "determinism": { "class": "nondeterministic" },
+  "privacy": { "behavior": "policy-filtered-external", "authorizationRequired": true, "filtersBefore": ["chunking", "model-invocation", "index-persistence"] },
+  "resourceLimits": { "maxInputBytes": 262144, "maxRecords": 100, "maxConcurrency": 2, "timeoutMs": 30000 },
+  "output": { "dataClass": "regenerable-index", "canonicalMutation": false }
+}

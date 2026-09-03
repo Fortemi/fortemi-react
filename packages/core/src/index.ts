@@ -106,6 +106,44 @@ export {
   FORTEMI_PORTABLE_SHARD_DATASET_EXECUTION_DESCRIPTOR,
 } from './dataset-execution-descriptors.js'
 
+export {
+  DATASET_MATERIALIZATION_CONTRACT,
+  DATASET_MATERIALIZATION_SCHEMA_VERSION,
+  DATASET_MATERIALIZATION_KINDS,
+  DatasetMaterializationError,
+  digestDatasetMaterializationValue,
+  negotiateDatasetMaterializationProfile,
+  executeDatasetMaterialization,
+  executeDatasetRetrieval,
+  compareDatasetIncrementalParity,
+  validateDatasetBenchmarkEvidence,
+} from './dataset-materialization-profiles.js'
+export type {
+  DatasetMaterializationKind,
+  DatasetMaterializationOperation,
+  DatasetDeterminismClass,
+  DatasetPrivacyBoundary,
+  DatasetProfileStatus,
+  DatasetDigest,
+  DatasetImplementationIdentity,
+  DatasetMaterializationProfile,
+  DatasetProfileNegotiationRequest,
+  DatasetProfileNegotiationResult,
+  DatasetSourceRecord,
+  DatasetSourceSnapshot,
+  DatasetPrivacyDecision,
+  DatasetMaterializationArtifact,
+  DatasetMeasuredResources,
+  DatasetMaterializationRequest,
+  DatasetMaterializationReceipt,
+  DatasetRetrievalRequest,
+  DatasetRetrievalResponse,
+  DatasetBenchmarkEvidence,
+  DatasetMaterializationAdapter,
+  DatasetRecordAuthorizer,
+  DatasetIncrementalParityResult,
+} from './dataset-materialization-profiles.js'
+
 export { TypedEventBus } from './event-bus.js'
 export type { EventMap, IDisposable } from './event-bus.js'
 
