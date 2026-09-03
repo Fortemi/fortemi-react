@@ -107,7 +107,7 @@ describe('source-note-upsert contract 1.0.0', () => {
       }
       const rejected = await repository.upsertRequest(collision, { tenant_id: fixture.scope.tenant_id })
       expect(rejected).toMatchObject({ outcome: 'rejected', counts: { rejected: 2 } })
-      expect(await pgliteCounts(db)).toMatchObject({ notes: '0', batches: '0' })
+      expect(await pgliteCounts(db)).toMatchObject({ notes: 0, batches: 0 })
 
       const base = { ...fixture.source, import_run_id: 'memory-public', batch_id: 'memory-public', items: [{ external_id: 'same', content: 'public' }] }
       const other = { ...base, import_run_id: 'memory-other', batch_id: 'memory-other', items: [{ external_id: 'same', content: 'other' }] }

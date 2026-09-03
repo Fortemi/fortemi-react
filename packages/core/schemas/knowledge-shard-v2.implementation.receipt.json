@@ -33,7 +33,7 @@
     "src/migrations/0020_full_v1_snapshot.ts": "54b5d47b521dc6fe44423b75f9032885e80f8e3fcbf04c11478baf98a9dc8841",
     "src/migrations/0022_embedding_config_timestamps.ts": "9e1de11f047cd1e071cc49d1ab231e5e4e01d5e80dda1ec63cb950e11adea0e0",
     "src/migrations/0023_source_metadata_purge.ts": "3afa0abb3ddb2d99a167102c9eb5d79eec98d638c03e9bead8ddb73a3ab812f4",
-    "src/migrations/index.ts": "7d2dd6ddae84965c4e32039618f2fead9cf8c39d119823add3d2479d04615926",
+    "src/migrations/index.ts": "277471c2efeb534b3f76f7eafb7f0ed934e9752c82a56366362de8d2335fd415",
     "src/__tests__/shard/full-v1-store.test.ts": "2ab75adcc64db605211e3b72d1288be0f77d137c1fbc876551cda73409396b84",
     "schemas/knowledge-shard-v2.schema.receipt.json": "70657d6bcd501b684d0a143bcbf7c2a0d41fe909ef3aff32b1fb1f542506a53a"
   },

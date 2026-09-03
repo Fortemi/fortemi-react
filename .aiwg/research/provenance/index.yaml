@@ -1,6 +1,6 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-09-03T20:31:05Z"
+  updated_at: "2026-09-03T20:56:02Z"
   record_count: 78
 records:
   - entity: "urn:aiwg:artifact:packages/core/schemas/source-note-upsert/v1.conformance.json"
@@ -10,6 +10,14 @@ records:
   - entity: "urn:aiwg:artifact:packages/core/src/records/source-upsert.ts"
     record: "records/source-note-upsert-consumer-404.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/__tests__/source-upsert-contract.test.ts"
+    record: "records/source-note-upsert-consumer-404.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json"
+    record: "records/source-note-upsert-consumer-404.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json"
+    record: "records/source-note-upsert-consumer-404.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.advertisement.receipt.json"
+    record: "records/source-note-upsert-consumer-404.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.cross-repository.receipt.json"
     record: "records/source-note-upsert-consumer-404.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/migrations/0024_source_upsert_contract.ts"
     record: "records/source-note-upsert-consumer-404.prov.yaml"

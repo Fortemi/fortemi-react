@@ -74,7 +74,7 @@
     ]
   },
   "evidence": {
-    "localImplementationReceiptSha256": "d64a0705582c426424720730cc21cedc464fbd7bc87168bae8dcbdc39e073d62",
+    "localImplementationReceiptSha256": "4018f6d1ac2640604377d34a1d0e36461e7d9a0382beca342164459cd236c6f1",
     "fortemiRuntimeReceiptSha256": "29f5e7cca66aec38baba0d7e58da1f5f6cc8520995f290831bc949bde1de1647",
     "reactCommand": "pnpm --filter @fortemi/core test:portable-contract",
     "fortemiCommands": [
