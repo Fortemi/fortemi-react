@@ -1,0 +1,10 @@
+{
+  "contract": "fortemi.dataset-execution-capabilities/v1",
+  "schemaVersion": "1.0.0",
+  "runtime": { "id": "invalid-lineage", "version": "1.0.0", "plane": "portable-shard", "dataClass": "portable-projection", "maturity": "experimental" },
+  "guarantees": { "transaction": "none", "isolation": "snapshot", "durability": "filesystem", "availability": "local-process", "ordering": "stable-identity" },
+  "capabilities": [
+    { "id": "lineage.field", "version": "1.0.0", "status": "supported", "evidence": ["synthetic"] }
+  ],
+  "evidence": [{ "id": "synthetic", "kind": "fixture", "uri": "fixture://invalid-lineage" }]
+}

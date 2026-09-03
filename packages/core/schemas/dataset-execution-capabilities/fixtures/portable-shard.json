@@ -1,0 +1,12 @@
+{
+  "contract": "fortemi.dataset-execution-capabilities/v1",
+  "schemaVersion": "1.0.0",
+  "runtime": { "id": "fortemi-shard", "version": "2026.8.0", "plane": "portable-shard", "dataClass": "portable-projection", "maturity": "stable" },
+  "guarantees": { "transaction": "none", "isolation": "snapshot", "durability": "filesystem", "availability": "local-process", "ordering": "stable-identity" },
+  "capabilities": [
+    { "id": "schema.inspect", "version": "1.0.0", "status": "supported", "evidence": ["shard-fixture"] },
+    { "id": "lineage.dataset", "version": "1.0.0", "status": "experimental", "evidence": ["shard-fixture"] },
+    { "id": "ordering.deterministic", "version": "1.0.0", "status": "supported", "evidence": ["shard-fixture"] }
+  ],
+  "evidence": [{ "id": "shard-fixture", "kind": "fixture", "uri": "fixture://portable-shard" }]
+}

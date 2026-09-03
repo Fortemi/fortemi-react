@@ -1,0 +1,14 @@
+{
+  "contract": "fortemi.dataset-execution-capabilities/v1",
+  "schemaVersion": "1.0.0",
+  "runtime": { "id": "fortemi-browser", "version": "2026.8.0", "plane": "browser-local-archive", "dataClass": "canonical", "maturity": "stable" },
+  "guarantees": { "transaction": "atomic-batch", "isolation": "serializable", "durability": "wal", "availability": "local-process", "ordering": "backend-cursor" },
+  "capabilities": [
+    { "id": "ingest.full", "version": "1.0.0", "status": "supported", "limits": { "maxBatchRecords": 1000, "maxConcurrency": 1 }, "evidence": ["browser-conformance"] },
+    { "id": "identity.record", "version": "1.0.0", "status": "supported", "evidence": ["browser-conformance"] },
+    { "id": "mutation.upsert", "version": "1.0.0", "status": "supported", "evidence": ["browser-conformance"] },
+    { "id": "transaction.atomic-batch", "version": "1.0.0", "status": "supported", "evidence": ["browser-conformance"] },
+    { "id": "ordering.deterministic", "version": "1.0.0", "status": "supported", "evidence": ["browser-conformance"] }
+  ],
+  "evidence": [{ "id": "browser-conformance", "kind": "conformance-report", "uri": "fixture://browser-local" }]
+}

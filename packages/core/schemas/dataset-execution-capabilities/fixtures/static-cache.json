@@ -1,0 +1,12 @@
+{
+  "contract": "fortemi.dataset-execution-capabilities/v1",
+  "schemaVersion": "1.0.0",
+  "runtime": { "id": "fortemi-static", "version": "2026.8.0", "plane": "static-cache", "dataClass": "static-cache", "maturity": "stable" },
+  "guarantees": { "transaction": "none", "isolation": "snapshot", "durability": "filesystem", "availability": "local-process", "ordering": "stable-identity" },
+  "capabilities": [
+    { "id": "index.lexical", "version": "1.0.0", "status": "supported", "limits": { "maxPageSize": 1000 }, "evidence": ["static-fixture"] },
+    { "id": "pagination.cursor", "version": "1.0.0", "status": "supported", "evidence": ["static-fixture"] },
+    { "id": "ordering.deterministic", "version": "1.0.0", "status": "supported", "evidence": ["static-fixture"] }
+  ],
+  "evidence": [{ "id": "static-fixture", "kind": "fixture", "uri": "fixture://static-cache" }]
+}

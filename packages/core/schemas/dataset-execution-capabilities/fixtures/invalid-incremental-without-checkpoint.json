@@ -1,0 +1,10 @@
+{
+  "contract": "fortemi.dataset-execution-capabilities/v1",
+  "schemaVersion": "1.0.0",
+  "runtime": { "id": "invalid-incremental", "version": "1.0.0", "plane": "server-process", "dataClass": "regenerable-index", "maturity": "experimental" },
+  "guarantees": { "transaction": "none", "isolation": "none", "durability": "process", "availability": "single-host", "ordering": "unspecified" },
+  "capabilities": [
+    { "id": "ingest.incremental", "version": "1.0.0", "status": "supported", "evidence": ["synthetic"] }
+  ],
+  "evidence": [{ "id": "synthetic", "kind": "fixture", "uri": "fixture://invalid-incremental" }]
+}

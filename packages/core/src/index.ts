@@ -8,6 +8,37 @@ export const VERSION = '2026.8.0'
 
 export { generateId } from './uuid.js'
 
+export {
+  DATASET_EXECUTION_CONTRACT,
+  DATASET_EXECUTION_SCHEMA_VERSION,
+  DATASET_EXECUTION_CAPABILITY_IDS,
+  validateDatasetExecutionDescriptor,
+  negotiateDatasetExecutionCapabilities,
+} from './dataset-execution-capabilities.js'
+export type {
+  DatasetExecutionCapabilityId,
+  DatasetExecutionPlane,
+  DatasetExecutionDataClass,
+  DatasetExecutionMaturity,
+  DatasetCapabilityStatus,
+  DatasetCapabilityEvidence,
+  DatasetCapabilityLimits,
+  DatasetCapabilityDeclaration,
+  DatasetExecutionCapabilityDescriptor,
+  DatasetCapabilityRequirement,
+  DatasetOptionalCapabilityRequirement,
+  DatasetCapabilityNegotiationRequest,
+  DatasetCapabilityDiagnosticCode,
+  DatasetCapabilityDiagnostic,
+  DatasetCapabilityDegradation,
+  DatasetCapabilityNegotiationResult,
+} from './dataset-execution-capabilities.js'
+export {
+  FORTEMI_BROWSER_LOCAL_DATASET_EXECUTION_DESCRIPTOR,
+  FORTEMI_STATIC_CACHE_DATASET_EXECUTION_DESCRIPTOR,
+  FORTEMI_PORTABLE_SHARD_DATASET_EXECUTION_DESCRIPTOR,
+} from './dataset-execution-descriptors.js'
+
 export { TypedEventBus } from './event-bus.js'
 export type { EventMap, IDisposable } from './event-bus.js'
 
