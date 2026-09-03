@@ -303,11 +303,21 @@ export type {
 export type {
   SourceIdentityInput,
   SourceUpsertBatchResult,
+  SourceUpsertBatchOutcome,
   SourceUpsertItem,
   SourceUpsertItemResult,
   SourceUpsertOptions,
   SourceUpsertOutcome,
   SourceUpsertPolicy,
+  SourceUpsertReasonCode,
+  SourceUpsertRequest,
+  SourceUpsertRequestItem,
+  SourceUpsertResponse,
+  SourceUpsertScope,
+} from './repositories/source-upsert-repository.js'
+export {
+  SOURCE_UPSERT_CONTRACT_VERSION,
+  SOURCE_UPSERT_MAX_ITEMS,
 } from './repositories/source-upsert-repository.js'
 export type {
   DeletionReceipt,

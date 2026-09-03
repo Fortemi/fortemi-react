@@ -353,7 +353,15 @@ bytes.
 | Capability system | Embeddings, local LLM, GPU detection, local-provider discovery, fallback routing |
 | Job queue | Server-compatible background workflow for revisions, titles, embeddings, concepts, and links |
 | Knowledge Shards | Tar.gz import/export with checksums, BLAKE3-addressed blob sidecars, progress callbacks, yielding imports, set-scoped embedding exports, and profile-scoped conformance |
-| Lifecycle controls | Source-addressed import, metadata-scoped search locators, and terminal purge receipts that omit raw external ids and content |
+| Lifecycle controls | Fortemi `source-note-upsert/1.0.0` on PGlite and RecordStore, metadata-scoped search locators, and terminal purge receipts that omit raw external ids and content |
+
+Source-addressed import is a live-persistence contract, separate from Knowledge
+Shard state transfer. `SourceUpsertRepository.upsertRequest()` and
+`upsertRecordStoreRequest()` consume the same server-owned `1.0.0` fixture with
+bounded atomic batches, dry-run, checkpoints, exact replay, and
+`replace`/`version`/`conflict` policies. Current shard profiles omit source
+identity and report `source-identity-outside-profile`; they do not provide a
+source-identity backup.
 | Service-worker helpers | Route registration primitives for standalone browser integration |
 
 ## Search and Knowledge Model

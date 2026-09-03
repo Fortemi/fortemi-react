@@ -107,6 +107,7 @@ flowchart LR
     server_schema[Server-owned schema + golden fixtures] -->|pinned receipt| react_shard
 
     aiwg_mcp[AIWG Fortemi MCP storage adapter] -->|live persistence calls| server
+    server_contract[Server source-note-upsert 1.0.0] -->|pinned fixture + receipt| react_live[PGlite + RecordStore source upsert]
     aiwg_mcp -. separate from static index and shard conversion .- react_index
 ```
 
@@ -118,6 +119,7 @@ Contract ownership:
 | Index-to-shard conversion | AIWG v2 index -> Knowledge Shard | AIWG owns source-record semantics; `@fortemi/core` owns the directory-to-collection and explicit state-transfer mapping; the server owns the shard envelope and profile schema | Pinned AIWG schema receipt, converter fixture, published-package smoke test, and clean PGlite and Fortemi destination proofs |
 | Knowledge Shard | PGlite / RecordStore <-> Server | Server-owned shard schema and server-produced golden fixtures, consumed through a commit-and-digest-pinned receipt | Schema/checksum/version validation before mutation, profile round trips, and server import/export fixtures |
 | Live MCP persistence | AIWG storage adapter -> Server | Server MCP tool contract | Live integration test; it is not evidence for static-index or shard compatibility |
+| Source-addressed live persistence | Server -> PGlite / RecordStore | Fortemi `source-note-upsert/1.0.0` | Commit-and-digest-pinned receipt plus the same clean-destination fixture in both browser stores; source identity remains outside shard profiles |
 | DB table parity | Browser DB <-> server fixture shapes | Server database fixtures | `db-table-parity` suite; storage-shape guard only |
 
 ### 3.2 Portability Profiles

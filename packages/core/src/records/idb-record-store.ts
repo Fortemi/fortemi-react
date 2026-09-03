@@ -31,11 +31,11 @@ import {
   RECORD_STORE_CAPABILITIES,
 } from './types.js'
 
-const DB_VERSION = 2
+const DB_VERSION = 3
 const JOURNAL_STORE = 'journal'
 const META_STORE = 'meta'
 /** Logical record-schema version stored in `meta` (independent of DB_VERSION). */
-export const RECORD_SCHEMA_VERSION = 2
+export const RECORD_SCHEMA_VERSION = 3
 
 function requestToPromise<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {

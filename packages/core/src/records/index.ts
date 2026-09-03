@@ -19,6 +19,7 @@ export type {
   NoteOriginalRecord,
   NoteRecord0,
   NoteRevisedCurrentRecord,
+  NoteRevisionRecord,
   NoteTagRecord,
   DeletionReceiptRecord,
   RecordCollectionName,
@@ -30,6 +31,7 @@ export type {
   PresenceTrackedRecord,
   SourceIdentityRecord,
   SourceImportRunRecord,
+  SourceImportBatchRecord,
 } from './types.js'
 export { RECORD_COLLECTIONS, RECORD_STORE_CAPABILITIES } from './types.js'
 
@@ -66,5 +68,5 @@ export {
   importShardToRecords,
 } from './record-shard.js'
 
-export { upsertRecordStoreSources } from './source-upsert.js'
+export { upsertRecordStoreRequest, upsertRecordStoreSources } from './source-upsert.js'
 export { previewRecordStorePurge, purgeRecordStoreGraph } from './lifecycle-purge.js'

@@ -1,0 +1,65 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-09-03T20:31:05Z"
+  description: "Provenance for the PGlite and RecordStore source-note-upsert 1.0.0 consumer implementation"
+entity:
+  id: "urn:aiwg:artifact:packages/core/schemas/source-note-upsert/v1.conformance.json:sha256:181b64c819c7d8d5492edbab187d71750de86c4e4bc74a2888ed5da163cb6266"
+  type: conformance_fixture
+  created_at: "2026-09-03T20:31:05Z"
+  checksum: "sha256:181b64c819c7d8d5492edbab187d71750de86c4e4bc74a2888ed5da163cb6266"
+  size_bytes: 3440
+  attributes:
+    issue: "Fortemi/fortemi-react#404"
+    producer_issue: "Fortemi/fortemi#1090"
+    authority_commit: "d073159911e629583fd518062f2d8d247aa160e6"
+    contract: source-note-upsert/1.0.0
+    plane: live-persistence
+    implementations: [fortemi-react-pglite, fortemi-react-recordstore]
+    artifacts:
+      .aiwg/architecture/SAD.md: "sha256:a4db6c970131f8e98e15d8c8748c4fedfada5c965d5dde85991ca11ee1a04ff3"
+      .aiwg/adrs/ADR-015-source-addressed-live-persistence.md: "sha256:9cdeea3b3b102275cd07b62cf92ab77f4b494ad3a36b02b17a6963a1946e0d17"
+      packages/core/src/repositories/source-upsert-repository.ts: "sha256:54972d58dbd20d9beb02a379e6ba40b5bafd397e8f5385c34412d4d05785951b"
+      packages/core/src/records/source-upsert.ts: "sha256:a5f00c3a092a13601e72b2977e3418647bc05398f0c80cf9e849c4c4f48ce458"
+      packages/core/src/__tests__/source-upsert-contract.test.ts: "sha256:22923e70581a7dd1fcf861a0a4809d86ab9657a4adaa9191aac098dc963bd1dd"
+      packages/core/src/migrations/0024_source_upsert_contract.ts: "sha256:ca2129a58eb510085b1c8ee63cfd81bdd741aaecba7e3e0e9b60336d84aa6e09"
+      packages/core/src/records/types.ts: "sha256:82b8d014ec8f91376bcf459fb08d8ecd5668ecaf273bce2df821f4bf8e196a31"
+      packages/core/src/records/record-projection.ts: "sha256:cdc6224bbc016a4ada3f109c33e26a26f9667a1ed4534478641455c74865ef98"
+activity:
+  id: "urn:aiwg:activity:implementation:source-note-upsert-consumer-404:001"
+  type: implementation
+  started_at: "2026-09-03T20:00:00Z"
+  ended_at: "2026-09-03T20:31:05Z"
+  description: "Align PGlite and RecordStore identity, batch replay, revision, receipt, and loss-boundary behavior to the Fortemi authority fixture"
+  attributes:
+    verification:
+      - "pnpm --filter @fortemi/core typecheck: passed"
+      - "targeted eslint: passed"
+      - "byte comparison against Fortemi fixture: passed"
+      - "clean in-memory PGlite authority fixture: passed"
+      - "clean MemoryRecordStore authority fixture: passed"
+    claim_boundary: "Only source-note-upsert/1.0.0 live persistence; current shard profiles omit source identity with typed loss"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: ai_assistant
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/schemas/source-note-upsert/v1.conformance.json:sha256:181b64c819c7d8d5492edbab187d71750de86c4e4bc74a2888ed5da163cb6266"
+    activity: "urn:aiwg:activity:implementation:source-note-upsert-consumer-404:001"
+    time: "2026-09-03T20:31:05Z"
+  used:
+    - activity: "urn:aiwg:activity:implementation:source-note-upsert-consumer-404:001"
+      entity: "urn:gitea:commit:Fortemi/fortemi:d073159911e629583fd518062f2d8d247aa160e6"
+      role: contract_authority
+    - activity: "urn:aiwg:activity:implementation:source-note-upsert-consumer-404:001"
+      entity: "urn:gitea:issue:Fortemi/fortemi-react:404"
+      role: requirement
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:implementation:source-note-upsert-consumer-404:001"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: primary_implementer
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/schemas/source-note-upsert/v1.conformance.json:sha256:181b64c819c7d8d5492edbab187d71750de86c4e4bc74a2888ed5da163cb6266"
+    agent: "urn:aiwg:agent:codex-gpt-5"

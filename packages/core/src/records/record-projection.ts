@@ -23,6 +23,7 @@ import type { AttachmentProjectionResult } from './attachment-projection.js'
 
 export interface NoteProjectionResult {
   notes: number
+  revisions: number
   tags: number
   links: number
   collections: number
@@ -74,10 +75,11 @@ export async function projectNotes(
   db: DatabaseClient,
   store: RecordStore,
 ): Promise<NoteProjectionResult> {
-  const [noteRows, originals, revised, tags, links, collections, memberships] = await Promise.all([
+  const [noteRows, originals, revised, revisions, tags, links, collections, memberships] = await Promise.all([
     store.list('note'),
     store.list('note_original'),
     store.list('note_revised_current'),
+    store.list('note_revision'),
     store.list('note_tag'),
     store.list('link'),
     store.list('collection'),
@@ -160,6 +162,24 @@ export async function projectNotes(
     )
   }
 
+  for (const r of revisions) {
+    await db.query(
+      `INSERT INTO note_revision (id, note_id, revision_number, type, content, ai_metadata, model, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)
+       ON CONFLICT (id) DO UPDATE SET
+         revision_number = EXCLUDED.revision_number,
+         type = EXCLUDED.type,
+         content = EXCLUDED.content,
+         ai_metadata = EXCLUDED.ai_metadata,
+         model = EXCLUDED.model`,
+      [
+        r.id, r.note_id, r.revision_number, r.type, r.content,
+        r.ai_metadata == null ? null : JSON.stringify(r.ai_metadata),
+        r.model, r.created_at,
+      ],
+    )
+  }
+
   // note_tag rows are hard-removed canonically — upsert live rows, then
   // reconcile away projected rows the canon no longer holds.
   for (const t of tags) {
@@ -203,6 +223,7 @@ export async function projectNotes(
 
   return {
     notes: noteRows.length,
+    revisions: revisions.length,
     tags: tags.length,
     links: links.length,
     collections: collections.length,

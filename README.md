@@ -156,8 +156,9 @@ state-transfer, and live-persistence planes.
 - Tags, collections, inter-note links, SKOS schemes, concepts, and relations
 - Knowledge Shard tar.gz import/export with checksums, exact schema/profile
   negotiation, and receipt-backed component preservation
-- Source-addressed import and terminal purge workflows with replay-safe
-  outcomes, preview counts, and content-free deletion receipts
+- Fortemi `source-note-upsert/1.0.0` live persistence in PGlite and RecordStore,
+  with bounded atomic batches, checkpoints, replay-safe outcomes, and typed
+  shard loss because source identities are outside current profiles
 - 10 manifest-backed Fortemi tools plus 11 exported direct tool helper functions
 - Optional embeddings, LLM, local-provider discovery, WebGPU detection, and fallback routing
 - React 19 hooks for common UI workflows and direct context access for lower-level integration

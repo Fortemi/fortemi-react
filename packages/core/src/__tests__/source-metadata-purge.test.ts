@@ -88,7 +88,7 @@ describe('source-addressed upsert, metadata locators, and purge receipts', () =>
       identities: 1,
       import_runs: 1,
       jobs: 0,
-      revisions: 1,
+      revisions: 2,
     })
     expect(upsertEvents).toBe(2)
 

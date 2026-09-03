@@ -56,6 +56,7 @@
     "./schemas/dataset-ingest/v1": "./schemas/dataset-ingest/v1.schema.json",
     "./schemas/dataset-lineage/v1": "./schemas/dataset-lineage/v1.schema.json",
     "./schemas/dataset-materialization/v1": "./schemas/dataset-materialization/v1.schema.json",
+    "./schemas/source-note-upsert/v1-conformance": "./schemas/source-note-upsert/v1.conformance.json",
     "./worker/pglite-worker": "./dist/worker/pglite-worker.js",
     "./service-worker/sw": "./dist/service-worker/sw.js",
     "./package.json": "./package.json"
@@ -66,6 +67,7 @@
     "schemas/dataset-ingest",
     "schemas/dataset-lineage",
     "schemas/dataset-materialization",
+    "schemas/source-note-upsert",
     "benchmarks/dataset-materialization",
     "tools",
     "README.md",
@@ -78,6 +80,7 @@
     "test:db-table-parity": "vitest run src/__tests__/db-table-parity",
     "test:portable-contract": "pnpm build && node scripts/generate-record-v1-self-fixture.mjs --verify && pnpm verify:knowledge-shard-contract && vitest run --maxWorkers=2 src/__tests__/aiwg-index.test.ts src/__tests__/aiwg-index-full-shard.test.ts src/__tests__/shard/aiwg-core-v1-projection.test.ts src/__tests__/shard/shard-conformance.spike.test.ts src/__tests__/shard/schema-validator.test.ts src/__tests__/shard/profile-registry.test.ts src/__tests__/shard/presence.test.ts src/__tests__/shard/full-v1-store.test.ts src/__tests__/shard/shard-import.test.ts src/__tests__/shard/core-v1-self-cell.test.ts src/__tests__/shard/fortemi-core-v1-consumer-cell.test.ts src/__tests__/shard/shard-signature.test.ts src/__tests__/shard/shard-tar.test.ts src/__tests__/records/record-store.test.ts src/__tests__/records/record-shard.test.ts src/__tests__/shard/bundled-example-shards.test.ts",
     "test:platform-contract": "node scripts/run-platform-contract.mjs",
+    "test:source-upsert-contract": "vitest run src/__tests__/source-upsert-contract.test.ts",
     "verify:platform-contract-receipt": "node scripts/verify-platform-contract-receipt.mjs",
     "test:platform-contract-tools": "pnpm build && node --test scripts/canonicalize-declarations.test.mjs scripts/platform-contract-receipt.test.mjs scripts/live-server-contract.test.mjs",
     "verify:knowledge-shard-contract": "node scripts/verify-knowledge-shard-contract.mjs",

@@ -52,6 +52,17 @@ export interface NoteRevisedCurrentRecord extends PresenceTrackedRecord {
   updated_at: string
 }
 
+export interface NoteRevisionRecord extends PresenceTrackedRecord {
+  id: string
+  note_id: string
+  revision_number: number
+  type: string
+  content: string | null
+  ai_metadata: unknown | null
+  model: string | null
+  created_at: string
+}
+
 export interface NoteTagRecord extends PresenceTrackedRecord {
   id: string
   note_id: string
@@ -125,6 +136,7 @@ export interface SourceIdentityRecord extends PresenceTrackedRecord {
   namespace: string
   external_id: string
   external_id_hash: string
+  source_id: string | null
   source_schema_version: string
   content_digest: string
   import_run_id: string
@@ -136,6 +148,10 @@ export interface SourceIdentityRecord extends PresenceTrackedRecord {
 
 export interface SourceImportRunRecord extends PresenceTrackedRecord {
   id: string
+  external_run_id: string
+  source_id: string | null
+  source_schema_version: string
+  workspace_id: string | null
   tenant_id: string
   archive_id: string | null
   namespace: string
@@ -143,6 +159,20 @@ export interface SourceImportRunRecord extends PresenceTrackedRecord {
   completed_at: string | null
   checkpoint: Record<string, unknown>
   receipt: Record<string, unknown>
+}
+
+export interface SourceImportBatchRecord extends PresenceTrackedRecord {
+  id: string
+  tenant_id: string
+  archive_id: string | null
+  namespace: string
+  batch_id: string
+  request_digest: string
+  import_run_id: string
+  outcome: 'committed'
+  checkpoint: Record<string, unknown>
+  receipt: Record<string, unknown>
+  created_at: string
 }
 
 export interface DeletionReceiptRecord extends PresenceTrackedRecord {
@@ -162,6 +192,7 @@ export interface RecordCollections {
   note: NoteRecord0
   note_original: NoteOriginalRecord
   note_revised_current: NoteRevisedCurrentRecord
+  note_revision: NoteRevisionRecord
   note_tag: NoteTagRecord
   link: LinkRecord0
   collection: CollectionRecord
@@ -171,6 +202,7 @@ export interface RecordCollections {
   shard_manifest: ShardManifestRecord
   source_identity: SourceIdentityRecord
   source_import_run: SourceImportRunRecord
+  source_import_batch: SourceImportBatchRecord
   deletion_receipt: DeletionReceiptRecord
 }
 
@@ -180,6 +212,7 @@ export const RECORD_COLLECTIONS: readonly RecordCollectionName[] = [
   'note',
   'note_original',
   'note_revised_current',
+  'note_revision',
   'note_tag',
   'link',
   'collection',
@@ -189,6 +222,7 @@ export const RECORD_COLLECTIONS: readonly RecordCollectionName[] = [
   'shard_manifest',
   'source_identity',
   'source_import_run',
+  'source_import_batch',
   'deletion_receipt',
 ] as const
 
