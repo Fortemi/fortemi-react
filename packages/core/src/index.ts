@@ -41,6 +41,41 @@ export type {
 } from './dataset-ingest.js'
 
 export {
+  DATASET_LINEAGE_CONTRACT,
+  DATASET_LINEAGE_SCHEMA_VERSION,
+  LINEAGE_ENTITY_KINDS,
+  LINEAGE_RELATIONSHIP_KINDS,
+  LineageValidationError,
+  DatasetLineageLedger,
+  computeLineageDigest,
+} from './dataset-lineage.js'
+export type {
+  LineageEntityKind,
+  LineageRelationshipKind,
+  LineageAssertionKind,
+  LineagePrivacy,
+  LineageEntity,
+  LineageAgent,
+  LineageActivity,
+  LineageEvidence,
+  LineageEvidenceReference,
+  LineageAssertion,
+  LineageCorrection,
+  LineageLedgerArchive,
+  LineageAuthorizationPolicy,
+  LineageTraversalRequest,
+  LineageTraversalNode,
+  LineageTraversalEdge,
+  LineageTraversalResult,
+  LineageValidationCode,
+  LineageProjectionCapabilities,
+  LineageLossItem,
+  LineageLossReceipt,
+  LineageProjection,
+  DatasetLineageLedgerOptions,
+} from './dataset-lineage.js'
+
+export {
   DATASET_EXECUTION_CONTRACT,
   DATASET_EXECUTION_SCHEMA_VERSION,
   DATASET_EXECUTION_CAPABILITY_IDS,

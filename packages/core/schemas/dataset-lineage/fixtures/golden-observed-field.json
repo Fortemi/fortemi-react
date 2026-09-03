@@ -1,0 +1,20 @@
+{
+  "contract": "fortemi.dataset-lineage/v1",
+  "schemaVersion": "1.0.0",
+  "snapshot": 6,
+  "entities": [
+    { "id": "field:source", "kind": "field", "schemaId": "urn:example:customer", "schemaVersion": "1.0.0", "createdAt": "2026-09-03T12:00:00.000Z" },
+    { "id": "field:target", "kind": "field", "schemaId": "urn:example:customer", "schemaVersion": "1.0.0", "createdAt": "2026-09-03T12:00:00.000Z" }
+  ],
+  "agents": [{ "id": "agent:fortemi", "kind": "software", "name": "Fortemi", "version": "2026.8.0" }],
+  "activities": [{ "id": "activity:run-1", "kind": "transform", "runId": "run:1", "startedAt": "2026-09-03T12:00:00.000Z", "endedAt": "2026-09-03T12:00:00.000Z", "agentIds": ["agent:fortemi"] }],
+  "evidence": [{ "id": "evidence:query", "revision": "1", "locator": "shard://runs/run-1/query.json", "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "privacy": "internal", "capturedAt": "2026-09-03T12:00:00.000Z" }],
+  "assertions": [{
+    "id": "assertion:field", "revision": "1", "relationship": "field-derived-from", "assertionKind": "observed",
+    "sourceEntityId": "field:source", "targetEntityId": "field:target", "issuerAgentId": "agent:fortemi", "producingActivityId": "activity:run-1",
+    "method": "sql-expression", "evidence": [{ "evidenceId": "evidence:query", "revision": "1", "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000" }],
+    "confidence": 1, "privacy": "internal", "schemaId": "urn:fortemi:lineage-assertion", "schemaVersion": "1.0.0", "assertedAt": "2026-09-03T12:00:00.000Z"
+  }],
+  "corrections": [],
+  "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+}

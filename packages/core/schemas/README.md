@@ -1,5 +1,13 @@
 # Schemas
 
+## Dataset lineage
+
+`dataset-lineage/v1.schema.json` is the strict Draft 2020-12 contract for the
+canonical evidence-bearing lineage archive, bounded traversal response,
+regenerable projection, and explicit loss receipt. The public package export is
+`@fortemi/core/schemas/dataset-lineage/v1`; see
+`docs/architecture/dataset-lineage-ledger.md` for semantics and privacy rules.
+
 ## `aiwg-fortemi-index-export.schema.json` (vendored)
 
 Pinned from the AIWG repository.
