@@ -9,6 +9,38 @@ export const VERSION = '2026.8.0'
 export { generateId } from './uuid.js'
 
 export {
+  DATASET_INGEST_CONTRACT,
+  DATASET_INGEST_SCHEMA_VERSION,
+  DatasetIngestError,
+  MemoryDatasetIngestStore,
+  DatasetIngestExecutor,
+  datasetDestinationScopeKey,
+  deriveDatasetIngestIdempotencyKey,
+} from './dataset-ingest.js'
+export type {
+  DatasetIngestMode,
+  DatasetRunState,
+  DatasetVerificationState,
+  DatasetDestinationScope,
+  DatasetProcessingPlan,
+  DatasetCheckpoint,
+  DatasetUpsertMutation,
+  DatasetTombstoneMutation,
+  DatasetMutation,
+  DatasetMutationBatch,
+  DatasetRecordRejection,
+  DatasetRunReceipt,
+  DatasetRunAttempt,
+  DatasetRunStatus,
+  DatasetIngestErrorCode,
+  DatasetStoredRecord,
+  DatasetIngestTransaction,
+  DatasetIngestStore,
+  DatasetIngestHooks,
+  ExecuteDatasetBatchOptions,
+} from './dataset-ingest.js'
+
+export {
   DATASET_EXECUTION_CONTRACT,
   DATASET_EXECUTION_SCHEMA_VERSION,
   DATASET_EXECUTION_CAPABILITY_IDS,

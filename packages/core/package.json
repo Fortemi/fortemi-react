@@ -53,6 +53,7 @@
       "import": "./dist/aiwg-index-shard.js"
     },
     "./schemas/dataset-execution-capabilities/v1": "./schemas/dataset-execution-capabilities/v1.schema.json",
+    "./schemas/dataset-ingest/v1": "./schemas/dataset-ingest/v1.schema.json",
     "./worker/pglite-worker": "./dist/worker/pglite-worker.js",
     "./service-worker/sw": "./dist/service-worker/sw.js",
     "./package.json": "./package.json"
@@ -60,6 +61,7 @@
   "files": [
     "dist",
     "schemas/dataset-execution-capabilities",
+    "schemas/dataset-ingest",
     "tools",
     "README.md",
     "LICENSE"
