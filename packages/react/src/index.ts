@@ -48,3 +48,5 @@ export { useRemote } from './hooks/useRemote.js'
 export type { UseRemoteReturn } from './hooks/useRemote.js'
 export { GraphView } from './components/GraphView.js'
 export type { GraphViewFilters, GraphViewProps } from './components/GraphView.js'
+
+export * from './dataset/index.js'

@@ -2,6 +2,43 @@
 
 # @fortemi/react
 
+## Dataset intelligence workflows
+
+The package exposes headless dataset workflow primitives and accessible,
+unstyled React components. `DatasetWorkflowMachine` and `useDatasetWorkflow`
+coordinate schema-driven setup, staged connection checks, bounded previews,
+immutable plan approval, run cancellation/retry, freshness, redacted rejection
+diagnostics, and bounded lineage traversal. The machine delegates all I/O and
+execution to a `DatasetWorkflowApi`; it does not implement a second ingest or
+lineage backend.
+
+```tsx
+import { DatasetConnectorForm, useDatasetWorkflow } from '@fortemi/react/dataset'
+
+const workflow = useDatasetWorkflow(connectorSchema, datasetApi)
+
+<DatasetConnectorForm
+  schema={connectorSchema}
+  configuration={workflow.configuration}
+  validation={workflow.validation}
+  onChange={(key, value) => workflow.machine.setField(key, value)}
+/>
+```
+
+Credential references and password-shaped schema properties render as empty,
+write-only inputs on every render. Applications must provide opaque credential
+references, never resolved secret values. Before approval, the machine asks the
+adapter to verify the frozen plan digest again. Destructive reconciliation at
+or above its declared threshold also requires the operator to type the plan ID.
+
+The components use native controls, landmarks, labels, tables, visible textual
+state, and polite live regions. They add no motion and do not suppress browser
+focus indicators, allowing consumer themes to honor reduced-motion and
+high-contrast settings. Layouts wrap and use document flow rather than fixed
+viewport dimensions. `datasetStatusStoryFixtures` provides distinct canonical,
+derived, cache, stale, degraded, unverifiable, offline-cold, and offline-warm
+states; `datasetTerminalRunStories` adds rejected, cancelled, and failed runs.
+
 **React 19 provider and hooks for local-first Fortemi knowledge archives**
 
 Build React knowledge apps that keep user data in the browser on the device — private by default, no backend required — with browser-local PostgreSQL storage, typed hooks, hybrid search, SKOS concepts, job queues, bring-your-own AI providers, graph views, and Knowledge Shard import/export.

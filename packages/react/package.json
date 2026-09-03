@@ -1,7 +1,7 @@
 {
   "name": "@fortemi/react",
   "version": "2026.8.0",
-  "description": "React 19 hooks and FortemiProvider for the @fortemi/core browser-only knowledge management system. 30 hooks covering notes, hybrid search, tags, collections, SKOS concepts, job queue, capability setup, embeddings, Knowledge Shards, and remote backends.",
+  "description": "React 19 hooks, accessible dataset workflows, and FortemiProvider for the @fortemi/core browser-only knowledge management system.",
   "keywords": [
     "fortemi",
     "react",
@@ -35,6 +35,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./dataset": {
+      "types": "./dist/dataset.d.ts",
+      "import": "./dist/dataset.js"
     },
     "./graph": {
       "types": "./dist/graph.d.ts",
@@ -93,9 +97,11 @@
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "graphology": "^0.26.0",
     "graphology-layout-forceatlas2": "^0.10.1",
     "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "react-force-graph-3d": "^1.29.1",
     "sigma": "^3.0.3",
     "three": "^0.185.1",

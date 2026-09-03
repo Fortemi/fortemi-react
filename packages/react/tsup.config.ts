@@ -13,6 +13,7 @@ export default defineConfig({
   // optional peers, dynamically imported, so they stay external.
   entry: {
     index: 'src/index.ts',
+    dataset: 'src/dataset/index.ts',
     graph: 'src/graph.ts',
     'graph-2d': 'src/graph-2d.ts',
     'graph-3d': 'src/graph-3d.ts',
