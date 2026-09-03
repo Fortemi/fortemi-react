@@ -20,7 +20,7 @@ entity:
       .aiwg/adrs/ADR-015-source-addressed-live-persistence.md: "sha256:9cdeea3b3b102275cd07b62cf92ab77f4b494ad3a36b02b17a6963a1946e0d17"
       packages/core/src/repositories/source-upsert-repository.ts: "sha256:54972d58dbd20d9beb02a379e6ba40b5bafd397e8f5385c34412d4d05785951b"
       packages/core/src/records/source-upsert.ts: "sha256:a5f00c3a092a13601e72b2977e3418647bc05398f0c80cf9e849c4c4f48ce458"
-      packages/core/src/__tests__/source-upsert-contract.test.ts: "sha256:bd5904c454fd65426bbcb95ae584ec0d15905f591a0e46f4f5c440ab69a4a129"
+      packages/core/src/__tests__/source-upsert-contract.test.ts: "sha256:aa0bceeb7a779984f80b084d3143a45b4016509b1620fbcc7e83f16fc3f0b8da"
       packages/core/src/migrations/0024_source_upsert_contract.ts: "sha256:ca2129a58eb510085b1c8ee63cfd81bdd741aaecba7e3e0e9b60336d84aa6e09"
       packages/core/src/records/types.ts: "sha256:82b8d014ec8f91376bcf459fb08d8ecd5668ecaf273bce2df821f4bf8e196a31"
       packages/core/src/records/record-projection.ts: "sha256:cdc6224bbc016a4ada3f109c33e26a26f9667a1ed4534478641455c74865ef98"
@@ -32,7 +32,7 @@ activity:
   id: "urn:aiwg:activity:implementation:source-note-upsert-consumer-404:001"
   type: implementation
   started_at: "2026-09-03T20:00:00Z"
-  ended_at: "2026-09-03T20:56:02Z"
+  ended_at: "2026-09-03T21:11:38Z"
   description: "Align PGlite and RecordStore identity, batch replay, revision, receipt, and loss-boundary behavior to the Fortemi authority fixture"
   attributes:
     verification:
@@ -44,6 +44,7 @@ activity:
       - "hosted run 51922 executed 1,341 core tests; its two deterministic receipt/type mismatches were corrected"
       - "Knowledge Shard implementation and presence receipt hashes refreshed without profile changes"
       - "pnpm --filter @fortemi/core verify:knowledge-shard-contract: passed with advertisement and cross-repository bindings refreshed"
+      - "hosted run 51936 passed 1,340 of 1,341 core tests plus all six other gates; the remaining numeric COUNT assertion was corrected"
     claim_boundary: "Only source-note-upsert/1.0.0 live persistence; current shard profiles omit source identity with typed loss"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"

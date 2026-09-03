@@ -113,7 +113,7 @@ describe('source-note-upsert contract 1.0.0', () => {
       const other = { ...base, import_run_id: 'memory-other', batch_id: 'memory-other', items: [{ external_id: 'same', content: 'other' }] }
       expect((await repository.upsertRequest(base, { tenant_id: fixture.scope.tenant_id })).outcome).toBe('committed')
       expect((await repository.upsertRequest(other, { tenant_id: fixture.scope.tenant_id, archive_id: 'archive-other' })).outcome).toBe('committed')
-      expect((await db.query<{ count: string }>('SELECT COUNT(*) AS count FROM source_identity')).rows[0].count).toBe('2')
+      expect((await db.query<{ count: number }>('SELECT COUNT(*) AS count FROM source_identity')).rows[0].count).toBe(2)
     })
   })
 
