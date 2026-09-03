@@ -28,11 +28,12 @@ entity:
       packages/core/schemas/knowledge-shard-v2.presence.receipt.json: "sha256:573fc5eb0c580f90e5e7312647967af333f31c7e6986ab0f5ebc3be103b72a8b"
       packages/core/schemas/knowledge-shard-v2.advertisement.receipt.json: "sha256:36dbcf206de7b9a5b514e9d1eba8d44de448b61a2fefe08248c13bba99dd122f"
       packages/core/schemas/knowledge-shard-v2.cross-repository.receipt.json: "sha256:3e1baf728037486e3461f0b5491d7699d8ac50fd844ee7ed1982b5730c1c46ec"
+      packages/core/schemas/source-note-upsert/contract.receipt.json: "sha256:dd3619ef851d87a308ba00ee575b8acd95c61eb94c390c9b52f3cc9c788ef090"
 activity:
   id: "urn:aiwg:activity:implementation:source-note-upsert-consumer-404:001"
   type: implementation
   started_at: "2026-09-03T20:00:00Z"
-  ended_at: "2026-09-03T21:11:38Z"
+  ended_at: "2026-09-03T21:54:11Z"
   description: "Align PGlite and RecordStore identity, batch replay, revision, receipt, and loss-boundary behavior to the Fortemi authority fixture"
   attributes:
     verification:
@@ -45,6 +46,8 @@ activity:
       - "Knowledge Shard implementation and presence receipt hashes refreshed without profile changes"
       - "pnpm --filter @fortemi/core verify:knowledge-shard-contract: passed with advertisement and cross-repository bindings refreshed"
       - "hosted run 51936 passed 1,340 of 1,341 core tests plus all six other gates; the remaining numeric COUNT assertion was corrected"
+      - "hosted Fortemi producer run 51944: passed, including PostgreSQL 18.4 shared-fixture conformance"
+      - "hosted fortemi-react consumer run 51949: 80 core files and 1,341 tests passed; all seven workflow gates passed"
     claim_boundary: "Only source-note-upsert/1.0.0 live persistence; current shard profiles omit source identity with typed loss"
 agent:
   id: "urn:aiwg:agent:codex-gpt-5"

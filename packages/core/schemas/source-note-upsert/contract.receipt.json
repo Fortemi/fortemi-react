@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "fortemi.source-note-upsert.consumer-receipt.v1",
+  "status": "consumer-conformance-passed",
+  "generatedAt": "2026-09-03T21:54:11Z",
+  "contract": {
+    "name": "source-note-upsert",
+    "version": "1.0.0",
+    "plane": "live-persistence",
+    "authorityRepository": "https://git.integrolabs.net/Fortemi/fortemi.git",
+    "authorityCommit": "d073159911e629583fd518062f2d8d247aa160e6",
+    "producerImplementationCommit": "54f5e64470291b06630549f5157af754ee388b7b",
+    "contractRevision": "1",
+    "requestSchemaSha256": "2461758debe121f06d78705e67f14426ea441b09ea53115fa7a168e79c83b017",
+    "responseSchemaSha256": "5eabe8c9974a720a943c6b5144dfae0882ff9894851a80e8742dc4fa3ef751da",
+    "fixture": {
+      "authorityPath": "contracts/source-note-upsert/conformance/v1.json",
+      "consumerPath": "packages/core/schemas/source-note-upsert/v1.conformance.json",
+      "sha256": "181b64c819c7d8d5492edbab187d71750de86c4e4bc74a2888ed5da163cb6266",
+      "bytes": 3440,
+      "cases": 7,
+      "byteIdentical": true
+    }
+  },
+  "producerEvidence": {
+    "repository": "Fortemi/fortemi",
+    "issue": "https://git.integrolabs.net/Fortemi/fortemi/issues/1090",
+    "commit": "54f5e64470291b06630549f5157af754ee388b7b",
+    "ciRun": "https://git.integrolabs.net/Fortemi/fortemi/actions/runs/51944",
+    "conclusion": "success",
+    "postgresVersion": "18.4",
+    "freshDestinationMigrationsPassed": true,
+    "sharedFixturePassed": true
+  },
+  "consumerEvidence": {
+    "repository": "Fortemi/fortemi-react",
+    "issue": "https://git.integrolabs.net/Fortemi/fortemi-react/issues/404",
+    "pullRequest": "https://git.integrolabs.net/Fortemi/fortemi-react/pulls/416",
+    "implementationCommit": "90f3341b4f4cc2463cfcd5e33bc144194fd55b0e",
+    "ciRun": "https://git.integrolabs.net/Fortemi/fortemi-react/actions/runs/51949",
+    "conclusion": "success",
+    "coreTestResult": {
+      "filesPassed": 80,
+      "testsPassed": 1341,
+      "failed": 0
+    },
+    "implementations": [
+      {
+        "id": "fortemi-react-pglite",
+        "cleanDestination": true,
+        "sharedFixturePassed": true,
+        "atomicRollbackPassed": true,
+        "memoryScopeIsolationPassed": true
+      },
+      {
+        "id": "fortemi-react-recordstore",
+        "cleanDestination": true,
+        "sharedFixturePassed": true,
+        "atomicCommitPassed": true,
+        "replayJournalStable": true
+      }
+    ]
+  },
+  "knowledgeShardBoundary": {
+    "profilesChanged": false,
+    "profiles": ["core-v1", "full-v1", "record-v1"],
+    "sourceIdentityPortable": false,
+    "typedLossCode": "source-identity-outside-profile",
+    "implementationReceiptSha256": "4018f6d1ac2640604377d34a1d0e36461e7d9a0382beca342164459cd236c6f1",
+    "presenceReceiptSha256": "573fc5eb0c580f90e5e7312647967af333f31c7e6986ab0f5ebc3be103b72a8b"
+  },
+  "claimBoundary": {
+    "exactContractOnly": true,
+    "fullSuiteParity": false,
+    "completeBackup": false,
+    "portableSourceIdentity": false,
+    "suiteAudit": "NO-GO"
+  }
+}
