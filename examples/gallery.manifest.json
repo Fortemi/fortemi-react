@@ -48,7 +48,7 @@
       "examples": [
         { "id": "knowledge-garden", "ex": "EX-16", "title": "knowledge-garden", "teaser": "Notes CRUD + search + tag-graph + detail sharing one selection over one PGlite database." },
         { "id": "docs-atlas", "ex": "EX-17", "title": "docs-atlas", "teaser": "Build-time markdown → tag-similarity graph → baked snapshot; runtime PGlite-free graph + reader. Deployable static.", "prebuild": "atlas" },
-        { "id": "research-workbench", "ex": "EX-18", "title": "research-workbench", "teaser": "Papers with attachments (extracted text), SKOS concepts, citations, and revision provenance over one PGlite database." },
+        { "id": "research-workbench", "ex": "EX-18", "title": "research-workbench", "teaser": "Papers with attachments, SKOS concepts, citations, and W3C PROV-style source and derivation metadata over one PGlite database." },
         { "id": "dual-instance-sync", "ex": "EX-19", "title": "dual-instance-sync", "teaser": "Two divergent instances converge by exchanging shards both ways — idempotent, server-less sync." }
       ]
     }

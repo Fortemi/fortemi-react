@@ -19,7 +19,10 @@ import { chunkText } from '../capabilities/chunking.js'
 import {
   setEmbedFunction,
   getEmbedFunction,
+  getEmbeddingTaskSelectionOptions,
   embeddingGenerationHandler,
+  selectEmbeddingTask,
+  setEmbeddingTaskSelectionOptions,
 } from '../capabilities/embedding-handler.js'
 import { SearchRepository } from '../repositories/search-repository.js'
 import { cosineSimilarity, suggestTags } from '../capabilities/auto-tag.js'
@@ -175,10 +178,12 @@ describe('embeddingGenerationHandler', () => {
   beforeEach(async () => {
     db = await setupDb()
     setEmbedFunction(mockEmbed)
+    setEmbeddingTaskSelectionOptions()
   })
 
   afterEach(async () => {
     setEmbedFunction(null)
+    setEmbeddingTaskSelectionOptions()
     setLlmFunction(null)
     await db.close()
   })
@@ -234,6 +239,46 @@ describe('embeddingGenerationHandler', () => {
       [noteId],
     )
     expect(embResult.rows.length).toBe(1)
+  })
+
+  it('selects document and large-document embedding tasks by size', async () => {
+    const capturedTasks: Array<string | undefined> = []
+    setEmbedFunction(async (texts, options) => {
+      capturedTasks.push(options?.task)
+      return mockEmbed(texts)
+    })
+
+    const shortNoteId = await insertNote(db, 'Short note body')
+    const longNoteId = await insertNote(db, 'x'.repeat(12_000))
+
+    await expect(embeddingGenerationHandler(makeJob(shortNoteId), db))
+      .resolves.toMatchObject({ task: 'embedding.document' })
+    await expect(embeddingGenerationHandler(makeJob(longNoteId), db))
+      .resolves.toMatchObject({ task: 'embedding.large-document' })
+    expect(capturedTasks).toEqual(['embedding.document', 'embedding.large-document'])
+  })
+
+  it('exports deterministic embedding task selection thresholds', () => {
+    expect(selectEmbeddingTask('short', ['short'])).toBe('embedding.document')
+    expect(selectEmbeddingTask('x'.repeat(20), ['a', 'b'], {
+      largeDocumentChars: 100,
+      largeDocumentChunks: 2,
+    })).toBe('embedding.large-document')
+  })
+
+  it('uses configured embedding task selection thresholds', async () => {
+    const capturedTasks: Array<string | undefined> = []
+    setEmbeddingTaskSelectionOptions({ largeDocumentChars: 20, largeDocumentChunks: 99 })
+    setEmbedFunction(async (texts, options) => {
+      capturedTasks.push(options?.task)
+      return mockEmbed(texts)
+    })
+    const noteId = await insertNote(db, 'This note crosses a low configured threshold.')
+
+    await expect(embeddingGenerationHandler(makeJob(noteId), db))
+      .resolves.toMatchObject({ task: 'embedding.large-document' })
+    expect(capturedTasks).toEqual(['embedding.large-document'])
+    expect(getEmbeddingTaskSelectionOptions()).toEqual({ largeDocumentChars: 20, largeDocumentChunks: 99 })
   })
 
   it('embeds extracted attachment text without embedding raw blob bytes', async () => {
@@ -618,6 +663,11 @@ describe('titleGenerationHandler — with LLM', () => {
     const result = await titleGenerationHandler(job, db) as { title: string; model: string }
 
     expect(mockLlm).toHaveBeenCalledOnce()
+    expect(mockLlm).toHaveBeenCalledWith(expect.any(String), {
+      maxTokens: 60,
+      temperature: 0.3,
+      task: 'chat.general',
+    })
     expect(result.title).toBe('An AI Generated Title')
     expect(result.model).toBe('llm')
   })

@@ -289,11 +289,12 @@ Render snippets with `dangerouslySetInnerHTML` or sanitize the `<mark>` tags.
 ### How It Works
 
 1. Note content is chunked via `chunkText()` (overlapping windows)
-2. Each chunk is embedded to a 384-dimensional vector via transformers.js
-3. Chunk embeddings are averaged and normalized into one vector per note
-4. Stored in the `embedding` table with HNSW index for fast cosine search
-5. At query time, the search query is embedded with the same model
-6. pgvector's `<=>` operator finds nearest neighbors by cosine distance
+2. The embedding task is selected as `embedding.document` or `embedding.large-document` from content length and chunk count
+3. Each chunk is embedded to a 384-dimensional vector via transformers.js, or by the routed provider configured for that task
+4. Chunk embeddings are averaged and normalized into one vector per note
+5. Stored in the `embedding` table with HNSW index for fast cosine search
+6. At query time, the search query is embedded with the `embedding.query` task
+7. pgvector's `<=>` operator finds nearest neighbors by cosine distance
 
 ### Embedding Model
 

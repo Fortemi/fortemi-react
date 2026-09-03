@@ -4,12 +4,15 @@ import {
   CapabilityManager,
   PGliteStorageBackend,
   PGliteWorkerStorageBackendFactory,
+  ProviderRegistry,
   TypedEventBus,
+  configureInferenceRuntime,
   createLazyBlobStore,
   restoreDbSnapshot,
   type PersistenceMode,
   type BlobStore,
   type DbSnapshotExpectations,
+  type InferenceRuntimeConfig,
 } from '@fortemi/core'
 
 type PGliteInstance = Awaited<ReturnType<ArchiveManager['open']>>
@@ -19,6 +22,7 @@ export interface FortemiContextValue {
   events: TypedEventBus
   archiveManager: ArchiveManager
   capabilityManager: CapabilityManager
+  providerRegistry: ProviderRegistry
   blobStore: BlobStore
 }
 
@@ -41,6 +45,8 @@ export interface FortemiProviderProps {
   snapshotUrl?: string
   /** Optional override of the snapshot version-compatibility expectations. */
   snapshotExpectations?: DbSnapshotExpectations
+  /** Optional configured inference providers and task routes for this deployment. */
+  inference?: InferenceRuntimeConfig
   children: ReactNode
 }
 
@@ -48,7 +54,18 @@ export interface FortemiProviderProps {
 // PGlite WASM can only be instantiated once per Response — a second call
 // to WebAssembly.instantiateStreaming() with the same cached Response fails
 // with "Response already consumed".
-const globalInitPromises = new Map<string, Promise<{ db: PGliteInstance; events: TypedEventBus; manager: ArchiveManager; capManager: CapabilityManager; blobStore: BlobStore }>>()
+const globalInitPromises = new Map<string, Promise<{ db: PGliteInstance; events: TypedEventBus; manager: ArchiveManager; capManager: CapabilityManager; providerRegistry: ProviderRegistry; blobStore: BlobStore }>>()
+const inferenceConfigIds = new WeakMap<InferenceRuntimeConfig, number>()
+let nextInferenceConfigId = 1
+
+function getInferenceConfigKey(config: InferenceRuntimeConfig | undefined): string {
+  if (!config) return 'default-inference'
+  const existing = inferenceConfigIds.get(config)
+  if (existing) return `inference:${existing}`
+  const id = nextInferenceConfigId++
+  inferenceConfigIds.set(config, id)
+  return `inference:${id}`
+}
 
 function defaultCreateWorker(): Worker {
   return new Worker(new URL('@fortemi/core/worker/pglite-worker', import.meta.url), {
@@ -63,16 +80,24 @@ interface InitFortemiOptions {
   createWorker?: () => Worker
   snapshotUrl?: string
   snapshotExpectations?: DbSnapshotExpectations
+  inference?: InferenceRuntimeConfig
 }
 
 function initFortemi(options: InitFortemiOptions) {
-  const { persistence, archiveName, executionMode, createWorker, snapshotUrl, snapshotExpectations } = options
-  const key = `${executionMode}:${persistence}:${archiveName}:${snapshotUrl ?? ''}`
+  const { persistence, archiveName, executionMode, createWorker, snapshotUrl, snapshotExpectations, inference } = options
+  const key = `${executionMode}:${persistence}:${archiveName}:${snapshotUrl ?? ''}:${getInferenceConfigKey(inference)}`
   let promise = globalInitPromises.get(key)
   if (!promise) {
     promise = (async () => {
       const events = new TypedEventBus()
       const capManager = new CapabilityManager(events)
+      const providerRegistry = new ProviderRegistry(events)
+      await configureInferenceRuntime({
+        ...inference,
+        registry: providerRegistry,
+        events,
+        capabilityManager: capManager,
+      })
       // Lazy facade: the bytecask substrate loads on the first byte
       // operation, so hosts that never touch attachment bytes never pay for
       // it (ADR-012 D6).
@@ -92,7 +117,7 @@ function initFortemi(options: InitFortemiOptions) {
         })
         const backend = new PGliteStorageBackend(`pglite:snapshot:${persistence}:${archiveName}`, pglite)
         const db = await manager.adopt(backend, archiveName)
-        return { db, events, manager, capManager, blobStore }
+        return { db, events, manager, capManager, providerRegistry, blobStore }
       }
 
       const manager = executionMode === 'worker'
@@ -105,7 +130,7 @@ function initFortemi(options: InitFortemiOptions) {
           )
         : new ArchiveManager(persistence, events)
       const db = await manager.open(archiveName)
-      return { db, events, manager, capManager, blobStore }
+      return { db, events, manager, capManager, providerRegistry, blobStore }
     })()
     globalInitPromises.set(key, promise)
   }
@@ -119,6 +144,7 @@ export function FortemiProvider({
   createWorker,
   snapshotUrl,
   snapshotExpectations,
+  inference,
   children,
 }: FortemiProviderProps) {
   const [ctx, setCtx] = useState<FortemiContextValue | null>(null)
@@ -130,12 +156,12 @@ export function FortemiProvider({
     if (initRef.current) return
     initRef.current = true
 
-    initFortemi({ persistence, archiveName, executionMode, createWorker, snapshotUrl, snapshotExpectations }).then(({ db, events, manager, capManager, blobStore }) => {
-      setCtx({ db, events, archiveManager: manager, capabilityManager: capManager, blobStore })
+    initFortemi({ persistence, archiveName, executionMode, createWorker, snapshotUrl, snapshotExpectations, inference }).then(({ db, events, manager, capManager, providerRegistry, blobStore }) => {
+      setCtx({ db, events, archiveManager: manager, capabilityManager: capManager, providerRegistry, blobStore })
     }).catch((err) => {
       setError(err instanceof Error ? err.message : String(err))
     })
-  }, [persistence, archiveName, executionMode, createWorker, snapshotUrl, snapshotExpectations])
+  }, [persistence, archiveName, executionMode, createWorker, snapshotUrl, snapshotExpectations, inference])
 
   if (error) throw new Error(`FortemiProvider init failed: ${error}`)
   if (!ctx) return null // Loading state handled by parent Suspense or loading screen
@@ -240,6 +266,7 @@ const _NO_HOST_FORTEMI: FortemiContextValue = {
   events: makeNoHostStub<TypedEventBus>('events'),
   archiveManager: makeNoHostStub<ArchiveManager>('archiveManager'),
   capabilityManager: makeNoHostStub<CapabilityManager>('capabilityManager'),
+  providerRegistry: makeNoHostStub<ProviderRegistry>('providerRegistry'),
   blobStore: makeNoHostStub<BlobStore>('blobStore'),
 }
 

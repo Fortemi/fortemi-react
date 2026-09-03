@@ -353,7 +353,7 @@ export function titleGenerationHandler(job: Job, db: DatabaseClient): Promise<un
         `Generate a concise title (under 100 characters) for this note. ` +
         `Respond with ONLY the title text, no quotes, no explanation.\n\nNote content:\n${content.slice(0, 1000)}`
 
-      const llmTitle = (await llmFn(prompt, { maxTokens: 60, temperature: 0.3 })).trim()
+      const llmTitle = (await llmFn(prompt, { maxTokens: 60, temperature: 0.3, task: 'chat.general' })).trim()
       if (llmTitle) {
         const title = llmTitle.length > 200 ? llmTitle.slice(0, 197) + '...' : llmTitle
         await db.query(
@@ -408,7 +408,7 @@ export function aiRevisionHandler(job: Job, db: DatabaseClient): Promise<unknown
       `Respond with ONLY the enhanced note content, no explanation.\n\n` +
       `Original note:\n${content}`
 
-    const revised = (await llmFn(prompt, { maxTokens: 2000, temperature: 0.4 })).trim()
+    const revised = (await llmFn(prompt, { maxTokens: 2000, temperature: 0.4, task: 'chat.revision' })).trim()
     if (!revised || revised === content) return { skipped: true, reason: 'no changes from LLM' }
 
     // Get next revision number
@@ -461,7 +461,7 @@ export function conceptTaggingHandler(job: Job, db: DatabaseClient): Promise<unk
       `- Example output: machine learning, web development, database design\n\n` +
       `Text:\n${content.slice(0, 1500)}\n\nTags:`
 
-    const response = (await llmFn(prompt, { maxTokens: 60, temperature: 0.1 })).trim()
+    const response = (await llmFn(prompt, { maxTokens: 60, temperature: 0.1, task: 'chat.tagging' })).trim()
 
     // Parse and validate tags aggressively
     const tags = response

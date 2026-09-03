@@ -4,7 +4,7 @@
  * @created 2026-07-17
  * @agent Codex
  */
-export const VERSION = '2026.8.0'
+export const VERSION = '2026.9.0'
 
 export { generateId } from './uuid.js'
 
@@ -410,12 +410,21 @@ export { chunkText } from './capabilities/chunking.js'
 export {
   setEmbedFunction,
   getEmbedFunction,
+  getEmbeddingTaskSelectionOptions,
   embeddingGenerationHandler,
+  selectEmbeddingTask,
+  setEmbeddingTaskSelectionOptions,
+  DEFAULT_LARGE_DOCUMENT_CHARS,
+  DEFAULT_LARGE_DOCUMENT_CHUNKS,
 } from './capabilities/embedding-handler.js'
-export type { EmbedFunction } from './capabilities/embedding-handler.js'
+export type {
+  EmbedFunction,
+  EmbedFunctionOptions,
+  EmbeddingTaskSelectionOptions,
+} from './capabilities/embedding-handler.js'
 
 export { setLlmFunction, getLlmFunction } from './capabilities/llm-handler.js'
-export type { LlmCompleteFn } from './capabilities/llm-handler.js'
+export type { LlmCompleteFn, LlmCompleteOptions } from './capabilities/llm-handler.js'
 
 export { cosineSimilarity, suggestTags } from './capabilities/auto-tag.js'
 
@@ -439,13 +448,48 @@ export type {
 export { registerLlmCapability, unregisterLlmCapability } from './capabilities/llm-loader.js'
 export type { LlmCapabilityOptions } from './capabilities/llm-loader.js'
 
-export { ProviderRegistry, createLegacyProvider } from './capabilities/provider-registry.js'
+export {
+  ProviderRegistry,
+  createLegacyProvider,
+  getProviderRouteRequirementIssue,
+  inferInferenceTaskCapability,
+  providerSatisfiesRouteRequirements,
+  validateProviderRoute,
+} from './capabilities/provider-registry.js'
+export type {
+  ProviderRoutePolicy,
+  ProviderRouteProbeResult,
+  ProviderRouteRequirements,
+  ProviderRouteSelection,
+  ProviderRouteValidation,
+  ProviderRouteValidationIssue,
+  ProviderRouteValidationSeverity,
+} from './capabilities/provider-registry.js'
 export { OpenAICompatibleProvider } from './capabilities/openai-provider.js'
 export type { OpenAIProviderConfig } from './capabilities/openai-provider.js'
+export { BridgeInferenceProvider, createBridgeInferenceProviders } from './capabilities/bridge-provider.js'
+export {
+  configureInferenceRuntime,
+  defineInferenceProvider,
+  defineInferenceRuntime,
+  defineLegacyInferenceProvider,
+  defineOpenAICompatibleProvider,
+  getConfiguredInferenceProviderId,
+  mergeInferenceRuntimeConfigs,
+} from './capabilities/inference-runtime.js'
+export type {
+  ConfiguredInferenceProvider,
+  ConfiguredInferenceRuntime,
+  ConfigureInferenceRuntimeOptions,
+  InferenceRuntimeConfig,
+  LegacyInferenceProviderConfig,
+} from './capabilities/inference-runtime.js'
 
 export {
   discoverLocalProviders,
   classifyModel,
+  createLocalProviderProfile,
+  inferLocalEmbeddingDimensions,
   LOCAL_ENDPOINTS,
 } from './capabilities/local-discovery.js'
 export { FallbackRouter, classifyError } from './capabilities/fallback-router.js'
@@ -481,6 +525,10 @@ export type {
 export type {
   InferenceProvider,
   ProviderCapabilities,
+  ProviderCostTier,
+  ProviderDataClass,
+  ProviderPrivacyTier,
+  ProviderProfile,
   ProviderTier,
   EmbedRequest,
   EmbedResponse,
@@ -490,6 +538,7 @@ export type {
   ModelInfo,
   ProbeResult,
   ProbeStatus,
+  InferenceTask,
 } from './capabilities/inference-provider.js'
 
 export {

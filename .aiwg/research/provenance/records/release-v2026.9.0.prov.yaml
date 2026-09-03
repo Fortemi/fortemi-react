@@ -1,0 +1,58 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-09-03T17:26:11Z"
+  description: "Document the v2026.9.0 dataset, inference-routing, and provenance-example release"
+entity:
+  id: "urn:aiwg:artifact:docs/content/releases/v2026.9.0.md"
+  type: "document"
+  created_at: "2026-09-03T17:26:11Z"
+  checksum: "sha256:bc7f28ef4a7e9a5bb4dc30621646a3c0436534a9c8fe13ce06cce7a40157fd4c"
+  size_bytes: 4259
+  attributes:
+    change_scope: "release-2026.9.0"
+    base_revision: "e528fbf889f5844dfeaa170eed6e33b67906b54b"
+activity:
+  id: "urn:aiwg:activity:generation:docs-content-releases-v2026-9-0-md:2026-09-03"
+  type: "generation"
+  started_at: "2026-09-03T17:26:10Z"
+  ended_at: "2026-09-03T17:26:11Z"
+  description: "Document the v2026.9.0 dataset, inference-routing, and provenance-example release"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:docs/content/releases/v2026.9.0.md"
+    activity: "urn:aiwg:activity:generation:docs-content-releases-v2026-9-0-md:2026-09-03"
+    time: "2026-09-03T17:26:11Z"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:docs/content/releases/v2026.9.0.md"
+      source: "urn:aiwg:artifact:.aiwg/architecture/impact/inference-provider-routing-2026-09-03.md"
+      derivation_type: "derives_from"
+      activity: "urn:aiwg:activity:generation:docs-content-releases-v2026-9-0-md:2026-09-03"
+    - entity: "urn:aiwg:artifact:docs/content/releases/v2026.9.0.md"
+      source: "urn:aiwg:artifact:docs/architecture/dataset-execution-capability-contract.md"
+      derivation_type: "derives_from"
+      activity: "urn:aiwg:activity:generation:docs-content-releases-v2026-9-0-md:2026-09-03"
+    - entity: "urn:aiwg:artifact:docs/content/releases/v2026.9.0.md"
+      source: "urn:aiwg:artifact:docs/architecture/dataset-ingest-runs.md"
+      derivation_type: "derives_from"
+      activity: "urn:aiwg:activity:generation:docs-content-releases-v2026-9-0-md:2026-09-03"
+    - entity: "urn:aiwg:artifact:docs/content/releases/v2026.9.0.md"
+      source: "urn:aiwg:artifact:docs/architecture/dataset-lineage-ledger.md"
+      derivation_type: "derives_from"
+      activity: "urn:aiwg:activity:generation:docs-content-releases-v2026-9-0-md:2026-09-03"
+    - entity: "urn:aiwg:artifact:docs/content/releases/v2026.9.0.md"
+      source: "urn:aiwg:artifact:docs/architecture/dataset-materialization-profiles.md"
+      derivation_type: "derives_from"
+      activity: "urn:aiwg:activity:generation:docs-content-releases-v2026-9-0-md:2026-09-03"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:docs-content-releases-v2026-9-0-md:2026-09-03"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:docs/content/releases/v2026.9.0.md"
+    agent: "urn:aiwg:agent:codex-gpt-5"

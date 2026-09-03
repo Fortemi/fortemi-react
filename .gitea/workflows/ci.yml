@@ -96,6 +96,8 @@ jobs:
       - run: pnpm --filter @fortemi/react build
       - name: Typecheck all examples
         run: pnpm -r --filter './examples/**' typecheck
+      - name: Test examples with unit suites
+        run: pnpm -r --filter './examples/**' --if-present test
       - name: Build all examples
         run: pnpm -r --filter './examples/**' build
 

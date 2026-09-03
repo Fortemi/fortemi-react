@@ -227,16 +227,23 @@ describe('OpenAICompatibleProvider', () => {
         data: [
           { id: 'gpt-4', owned_by: 'openai' },
           { id: 'text-embedding-3-small', owned_by: 'openai' },
+          { id: 'gte-large', owned_by: 'local' },
+          { id: 'llava:13b', owned_by: 'local' },
         ],
       }))
 
       const models = await p.listModels()
-      expect(models).toHaveLength(2)
+      expect(models).toHaveLength(4)
       expect(models[0].id).toBe('gpt-4')
       expect(models[0].capabilities.chat).toBe(true)
       expect(models[0].capabilities.embeddings).toBe(false)
       expect(models[1].id).toBe('text-embedding-3-small')
       expect(models[1].capabilities.embeddings).toBe(true)
+      expect(models[2].id).toBe('gte-large')
+      expect(models[2].capabilities.embeddings).toBe(true)
+      expect(models[3].id).toBe('llava:13b')
+      expect(models[3].capabilities.chat).toBe(true)
+      expect(models[3].capabilities.vision).toBe(true)
     })
 
     it('returns empty array on error', async () => {

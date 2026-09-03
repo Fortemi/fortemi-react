@@ -4,6 +4,68 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.9.0 - 2026-09-03
+
+### Dataset execution contracts and workflows
+
+- Added the versioned `fortemi.dataset-execution-capabilities/v1` descriptor,
+  semantic validation, and pure required/optional capability negotiation. The
+  browser-local archive, static cache, and portable-shard descriptors name
+  their execution plane, data class, maturity, limits, and supporting evidence
+  instead of inferring support from backend presence.
+- Added storage-neutral `fortemi.dataset-ingest/v1` processing plans,
+  transaction-bound batch receipts, scoped idempotency, checkpoint validation,
+  cancellation, bounded rejection handling, reconciliation approval, and a
+  deterministic in-memory reference store.
+- Added the append-only `fortemi.dataset-lineage/v1` ledger for entities,
+  agents, activities, evidence revisions, assertions, and corrections. Bounded
+  privacy-first traversal, deterministic archives, and explicit projection loss
+  receipts keep canonical lineage distinct from regenerable graph views and
+  interchange projections.
+- Added eight negotiated dataset materialization profiles spanning canonical
+  storage, lexical/vector/hybrid indexes, embeddings, graph retrieval, and
+  community materialization. Execution and retrieval receipts bind source and
+  configuration digests, implementation/model identity, freshness, degradation,
+  privacy decisions, and measured resources.
+- Added the accessible, headless `@fortemi/react/dataset` workflow. Its state
+  machine and components cover schema-driven configuration, staged checks,
+  bounded previews, immutable plan approval, cancellation/retry, status,
+  redacted rejections, and evidence-aware lineage without introducing a second
+  execution backend.
+
+### Configured inference routing
+
+- Added one runtime configuration surface for browser OpenAI-compatible,
+  host-bridge service, and discovered local inference providers. Deployments
+  can register only the providers they configure and expose the resulting
+  registry through `FortemiProvider`.
+- Added task-aware provider chains, requirement filters, route previews,
+  probes, fallback events, and provider privacy/cost/data profiles. Embedding
+  queries, documents, and large documents can select different configured
+  providers and models without changing the calling pipeline.
+- Added standalone provider controls for browser, bridge, and local modes,
+  including model refresh, task route ordering, route validation, and
+  suggestions. Existing single-provider integrations remain supported.
+
+### React provenance and examples
+
+- `useNoteProvenance` now combines stored `provenance_edge` rows with note,
+  job, and revision history, retaining PROV activity, agent, and attributes.
+- EX-18 seeds W3C PROV-shaped source metadata for every paper and derivation
+  metadata for every citation, then renders entities, agents, and derivation
+  sources in the shared provenance timeline.
+- Added direct loader tests, a real-PGlite seed integration suite, and a
+  built-gallery browser smoke test. Local and CI release gates now include
+  React and example tests in addition to Core coverage.
+
+### Claim scope
+
+- This release does not change Fortemi #1081's suite-level `NO-GO` audit or
+  establish unqualified portability, parity, or complete backup. The AIWG
+  static index, Knowledge Shard state transfer, and live Fortemi persistence
+  remain separate planes; Knowledge Shard evidence remains scoped to the
+  named `core-v1`, `record-v1`, or `full-v1` profile and its receipts.
+
 ## v2026.8.0 - 2026-08-23
 
 ### `@fortemi/core` - source-addressed import, scoped search, and purge receipts (#404, #405, #406)

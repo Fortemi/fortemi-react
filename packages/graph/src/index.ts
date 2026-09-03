@@ -14,7 +14,7 @@
 // this package only renders/projects graphs it is given and orchestrates which
 // source to load.
 
-export const VERSION = '2026.8.0'
+export const VERSION = '2026.9.0'
 
 export type {
   GraphNode,

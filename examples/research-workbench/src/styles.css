@@ -153,11 +153,29 @@ code { background: var(--panel-2); padding: 0.05rem 0.35rem; border-radius: 4px;
 .ghost:disabled { opacity: 0.5; cursor: default; }
 
 .timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
-.ev { display: flex; justify-content: space-between; gap: 0.5rem; padding: 0.35rem 0.5rem; border-radius: 6px; background: var(--panel-2); border-left: 3px solid var(--border); font-size: 0.82rem; }
+.ev { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0.6rem; border-radius: 6px; background: var(--panel-2); border-left: 3px solid var(--border); font-size: 0.82rem; }
 .ev.created { border-left-color: var(--retrieval); }
 .ev.revision { border-left-color: var(--reasoning); }
 .ev.job { border-left-color: var(--agents); }
+.ev.provenance { border-left-color: var(--accent); }
+.ev-main { min-width: 0; display: flex; flex-direction: column; gap: 0.18rem; }
+.ev-label { font-weight: 650; }
+.ev-detail { color: var(--muted); font-size: 0.78rem; }
 .ev-time { color: var(--muted); white-space: nowrap; }
+.prov-fields {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.15rem 0.45rem;
+  margin: 0.25rem 0 0;
+  font-size: 0.74rem;
+}
+.prov-fields div { display: contents; }
+.prov-fields dt { color: var(--muted); text-transform: uppercase; font-size: 0.66rem; }
+.prov-fields dd { margin: 0; min-width: 0; overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+@media (max-width: 520px) {
+  .ev { flex-direction: column; }
+  .ev-time { white-space: normal; }
+}
 
 .muted { color: var(--muted); }
 .selected { color: var(--muted); padding: 1rem 0; }

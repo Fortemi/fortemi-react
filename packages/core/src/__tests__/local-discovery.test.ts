@@ -7,6 +7,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   discoverLocalProviders,
   classifyModel,
+  createLocalProviderProfile,
+  inferLocalEmbeddingDimensions,
   LOCAL_ENDPOINTS,
 } from '../capabilities/local-discovery.js'
 
@@ -55,6 +57,31 @@ describe('LOCAL_ENDPOINTS', () => {
     expect(ids).toContain('vllm')
     expect(ids).toContain('jan')
     expect(ids).toContain('localai')
+  })
+})
+
+describe('local provider profiles', () => {
+  it('infers known embedding dimensions for local embedding models', () => {
+    expect(inferLocalEmbeddingDimensions([{
+      id: 'nomic-embed-text',
+      capabilities: { embeddings: true, chat: false, vision: false },
+    }])).toEqual([768])
+    expect(inferLocalEmbeddingDimensions([{
+      id: 'BAAI/bge-large-en-v1.5',
+      capabilities: { embeddings: true, chat: false, vision: false },
+    }])).toEqual([1024])
+  })
+
+  it('creates local free profiles that allow private and sensitive data', () => {
+    expect(createLocalProviderProfile([{
+      id: 'nomic-embed-text',
+      capabilities: { embeddings: true, chat: false, vision: false },
+    }])).toEqual({
+      privacyTier: 'local',
+      costTier: 'free',
+      embeddingDimensions: [768],
+      dataClasses: ['public', 'private', 'sensitive'],
+    })
   })
 })
 

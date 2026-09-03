@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-09-03T17:26:11Z"
+  description: "Expose and test stored W3C PROV edges through the React provenance hook"
+entity:
+  id: "urn:aiwg:artifact:packages/react/src/hooks/useNoteProvenance.ts"
+  type: code
+  created_at: "2026-09-03T17:26:11Z"
+  checksum: "sha256:832691b2f8f9875a6a880bd9a6293a902f5e4f81d4c33d17608d7475cd0c3870"
+  size_bytes: 6446
+  attributes:
+    change_scope: "release-2026.9.0"
+    base_revision: "e528fbf889f5844dfeaa170eed6e33b67906b54b"
+activity:
+  id: "urn:aiwg:activity:modification:packages-react-src-hooks-useNoteProvenance-ts:2026-09-03"
+  type: modification
+  started_at: "2026-09-03T17:26:10Z"
+  ended_at: "2026-09-03T17:26:11Z"
+  description: "Extract the provenance event loader and expose activity, agent, and attributes in useNoteProvenance"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: ai_assistant
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/react/src/hooks/useNoteProvenance.ts"
+    activity: "urn:aiwg:activity:modification:packages-react-src-hooks-useNoteProvenance-ts:2026-09-03"
+    time: "2026-09-03T17:26:11Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-react-src-hooks-useNoteProvenance-ts:2026-09-03"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e528fbf889f5844dfeaa170eed6e33b67906b54b:packages/react/src/hooks/useNoteProvenance.ts"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/react/src/hooks/useNoteProvenance.ts"
+      source: "urn:aiwg:artifact:packages/react/src/__tests__/useNoteProvenance.test.ts"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:modification:packages-react-src-hooks-useNoteProvenance-ts:2026-09-03"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-react-src-hooks-useNoteProvenance-ts:2026-09-03"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/react/src/hooks/useNoteProvenance.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

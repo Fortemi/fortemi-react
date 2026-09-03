@@ -1,7 +1,7 @@
 # API Reference
 
 **Packages:** `@fortemi/core` · `@fortemi/graph` · `@fortemi/react`
-**Version:** 2026.8.0
+**Version:** 2026.9.0
 
 ---
 
@@ -10,6 +10,7 @@
 - [@fortemi/core](#fortemicore)
   - [Core Utilities](#core-utilities)
   - [Types](#types)
+  - [Dataset Execution](#dataset-execution)
   - [Event Bus](#event-bus)
   - [Capability Manager](#capability-manager)
   - [Repositories](#repositories)
@@ -41,6 +42,7 @@
   - [SVG Renderer](#svg-renderer)
   - [GraphController](#graphcontroller)
 - [@fortemi/react](#fortemireact)
+  - [Dataset Workflow](#dataset-workflow)
   - [Provider](#provider)
   - [Hooks](#hooks)
     - [Graph and community hooks](#graph-and-community-hooks)
@@ -58,7 +60,7 @@
 const VERSION: string
 ```
 
-The current package version string. Value: `'2026.8.0'`.
+The current package version string. Value: `'2026.9.0'`.
 
 ---
 
@@ -223,6 +225,124 @@ interface FortemiCore {
 ```
 
 The runtime shell returned by `createFortemi`. React apps usually get the richer `{ db, events, archiveManager, capabilityManager, blobStore }` surface from `FortemiProvider` instead.
+
+---
+
+### Dataset Execution
+
+The dataset APIs are versioned, storage-neutral contracts. Their descriptors,
+plans, receipts, and lineage records must be bound to the concrete runtime and
+evidence that produced them; method presence or a successful cache query is not
+a capability claim.
+
+#### Capability negotiation
+
+```typescript
+function validateDatasetExecutionDescriptor(
+  descriptor: DatasetExecutionCapabilityDescriptor,
+): DatasetCapabilityDiagnostic[]
+
+function negotiateDatasetExecutionCapabilities(
+  descriptor: DatasetExecutionCapabilityDescriptor,
+  request: DatasetCapabilityNegotiationRequest,
+): DatasetCapabilityNegotiationResult
+```
+
+`fortemi.dataset-execution-capabilities/v1` distinguishes browser-local
+archives, static caches, portable shards, server processes, and remote
+persistence. Required capability/version/limit mismatches return
+`accepted: false`; optional mismatches return explicit degradation and fallback
+details. Negotiation is pure and performs no probe, network request, mutation,
+or fallback execution.
+
+#### Ingest runs
+
+```typescript
+class DatasetIngestExecutor {
+  constructor(store: DatasetIngestStore)
+  executeBatch(
+    plan: DatasetProcessingPlan,
+    batch: DatasetMutationBatch,
+    options?: ExecuteDatasetBatchOptions,
+  ): Promise<DatasetRunReceipt>
+  resolveAmbiguousCommit(
+    plan: DatasetProcessingPlan,
+    batch: DatasetMutationBatch,
+  ): Promise<DatasetRunReceipt | undefined>
+}
+
+class MemoryDatasetIngestStore implements DatasetIngestStore {}
+```
+
+`fortemi.dataset-ingest/v1` binds processing plans to source revisions,
+normalized configuration, transformation profiles, destination scope,
+rejection policy, and reconciliation limits. Each transaction commits record
+effects, redacted rejection accounting, checkpoint advancement, and its receipt
+together. Exact replay returns the stored receipt; an idempotency key reused for
+different canonical request content fails.
+
+#### Evidence-bearing lineage
+
+```typescript
+class DatasetLineageLedger {
+  constructor(options?: DatasetLineageLedgerOptions)
+  traverse(
+    request: LineageTraversalRequest,
+    policy: LineageAuthorizationPolicy,
+  ): LineageTraversalResult
+  exportArchive(snapshot?: number): LineageLedgerArchive
+  project(
+    capabilities: LineageProjectionCapabilities,
+    snapshot?: number,
+  ): LineageProjection
+}
+```
+
+`fortemi.dataset-lineage/v1` is an append-only authority for entities, agents,
+activities, evidence revisions, assertions, and corrections. Traversal applies
+authorization before graph expansion, requires explicit depth/result/page
+bounds, and returns snapshot-bound cursors. External projections are
+regenerable and include explicit loss receipts; W3C PROV and OpenLineage are
+adapter targets rather than the native storage schema.
+
+#### Materialization and retrieval
+
+```typescript
+function negotiateDatasetMaterializationProfile(
+  request: DatasetProfileNegotiationRequest,
+): DatasetProfileNegotiationResult
+
+function executeDatasetMaterialization(
+  request: DatasetMaterializationRequest,
+  runtime: DatasetExecutionCapabilityDescriptor,
+  adapter: DatasetMaterializationAdapter,
+  authorize: DatasetRecordAuthorizer,
+  options?: {
+    fallbackProfiles?: DatasetMaterializationProfile[]
+    now?: () => string
+  },
+): Promise<{
+  artifacts: DatasetMaterializationArtifact[]
+  receipt: DatasetMaterializationReceipt
+}>
+
+function executeDatasetRetrieval(
+  request: DatasetRetrievalRequest,
+  runtime: DatasetExecutionCapabilityDescriptor,
+  adapter: DatasetMaterializationAdapter,
+  receiptId: string,
+  fallbackProfiles?: DatasetMaterializationProfile[],
+): Promise<DatasetRetrievalResponse>
+```
+
+`fortemi.dataset-materialization-profile/v1` defines composable canonical,
+lexical, vector, hybrid, embedding, graph, and community profiles. Receipts bind
+source/configuration digests, processing run, profile, implementation/model,
+freshness, privacy decisions, degradation, and measurements. This contract does
+not alter Knowledge Shard profiles or establish live-server parity.
+
+See the architecture notes in `docs/architecture/dataset-*.md` and the schemas
+published from the package's `schemas` exports for the complete wire contracts.
 
 ---
 
@@ -1322,8 +1442,10 @@ Returns the recommended model identifier for the given hardware tier.
 #### `setEmbedFunction(fn)` / `getEmbedFunction()`
 
 ```typescript
-function setEmbedFunction(fn: (text: string) => Promise<number[]>): void
-function getEmbedFunction(): ((text: string) => Promise<number[]>) | null
+function setEmbedFunction(
+  fn: ((texts: string[], options?: { task?: InferenceTask; model?: string }) => Promise<number[][]>) | null,
+): void
+function getEmbedFunction(): ((texts: string[], options?: { task?: InferenceTask; model?: string }) => Promise<number[][]>) | null
 ```
 
 Register or retrieve the active embedding function. The embedding function is called by `embeddingGenerationHandler` and `semanticSearch`. Must be set before semantic features are used.
@@ -1333,8 +1455,10 @@ Register or retrieve the active embedding function. The embedding function is ca
 #### `setLlmFunction(fn)` / `getLlmFunction()`
 
 ```typescript
-function setLlmFunction(fn: (prompt: string) => Promise<string>): void
-function getLlmFunction(): ((prompt: string) => Promise<string>) | null
+function setLlmFunction(
+  fn: ((prompt: string, options?: { maxTokens?: number; temperature?: number; task?: InferenceTask; model?: string }) => Promise<string>) | null,
+): void
+function getLlmFunction(): ((prompt: string, options?: { maxTokens?: number; temperature?: number; task?: InferenceTask; model?: string }) => Promise<string>) | null
 ```
 
 Register or retrieve the active LLM inference function. Called by title generation, tagging, and revision handlers.
@@ -1366,6 +1490,151 @@ Register the semantic capability backed by an off-main-thread transport, so embe
 
 ---
 
+#### `configureInferenceRuntime(options?)`
+
+```typescript
+function configureInferenceRuntime(options?: {
+  providers?: ConfiguredInferenceProvider[]
+  routes?: Partial<Record<InferenceTask, ProviderRoutePolicy>>
+  activeProviderId?: string
+  bridgeHost?: FortemiBridgeHost
+  includeBridgeProviders?: boolean
+  discoverLocal?: boolean | DiscoveryOptions
+  embeddingTaskSelection?: {
+    largeDocumentChars?: number
+    largeDocumentChunks?: number
+  }
+  registry?: ProviderRegistry
+  events?: TypedEventBus
+  capabilityManager?: CapabilityManager
+}): Promise<{
+  registry: ProviderRegistry
+  providers: InferenceProvider[]
+  routeValidation: ProviderRouteValidation[]
+  routeIssues: ProviderRouteValidationIssue[]
+}>
+```
+
+Registers configured inference providers, adapts host bridge providers, optionally discovers local OpenAI-compatible servers, applies task routes, validates the configured routes, and wires `semantic`/`llm` capability loaders when a `CapabilityManager` is provided.
+
+Supported task hints are `embedding.query`, `embedding.document`, `embedding.large-document`, `chat.general`, `chat.revision`, `chat.tagging`, `chat.linking`, and `vision.general`.
+
+OpenAI-compatible `/models` listings and local discovery use the same lightweight model-name classifier for chat, embedding, and vision capability hints.
+
+`embeddingTaskSelection` configures the built-in document embedding pipeline's threshold for switching from `embedding.document` to `embedding.large-document`.
+
+`routeValidation` and `routeIssues` summarize configuration problems immediately after route application. They do not probe providers and do not include prompt, note, embedding, generated text, or key material.
+
+Use the additive definition helpers when a deployment wants to compose provider packs, route presets, and environment-specific overrides:
+
+```typescript
+function defineInferenceRuntime(config: InferenceRuntimeConfig): InferenceRuntimeConfig
+function defineInferenceProvider(provider: InferenceProvider): ConfiguredInferenceProvider
+function defineOpenAICompatibleProvider(config: OpenAIProviderConfig): ConfiguredInferenceProvider
+function defineLegacyInferenceProvider(config: LegacyInferenceProviderConfig): ConfiguredInferenceProvider
+function getConfiguredInferenceProviderId(config: ConfiguredInferenceProvider): string
+function mergeInferenceRuntimeConfigs(
+  ...configs: Array<InferenceRuntimeConfig | null | undefined>
+): InferenceRuntimeConfig
+```
+
+`mergeInferenceRuntimeConfigs()` merges providers by configured provider ID with later fragments overriding earlier ones, merges route maps by task, merges `embeddingTaskSelection`, and lets later scalar options such as `activeProviderId`, `discoverLocal`, and `includeBridgeProviders` override earlier fragments.
+
+---
+
+#### `ProviderRegistry`
+
+```typescript
+class ProviderRegistry {
+  add(provider: InferenceProvider): void
+  remove(id: string): void
+  setActive(id: string): void
+  setRoute(task: InferenceTask, policy: ProviderRoutePolicy): void
+  getRoute(task: InferenceTask): ProviderRoutePolicy | undefined
+  clearRoute(task: InferenceTask): void
+  clearRoutes(): void
+  previewRoute(
+    task: InferenceTask | undefined,
+    capability: keyof ProviderCapabilities,
+    requestModel?: string,
+  ): ProviderRouteSelection
+  probeRoute(
+    task: InferenceTask | undefined,
+    capability: keyof ProviderCapabilities,
+    requestModel?: string,
+  ): Promise<ProviderRouteProbeResult>
+  validateRoute(task: InferenceTask): ProviderRouteValidation
+  validateRoutes(): ProviderRouteValidation[]
+  embed(request: EmbedRequest): Promise<EmbedResponse>
+  complete(request: CompletionRequest): Promise<CompletionResponse>
+  stream(request: CompletionRequest): AsyncIterable<StreamChunk>
+}
+```
+
+`ProviderRegistry` keeps the legacy `setEmbedFunction` and `setLlmFunction` bridges in sync while allowing task-specific provider/model selection.
+
+`setRoute()` and `getRoute()` copy route policy arrays and nested requirement arrays at the registry boundary. Hosts can reuse or mutate their own config objects after applying routes without mutating the active registry route.
+
+```typescript
+interface ProviderRoutePolicy {
+  providerIds?: string[]
+  tiers?: ProviderTier[]
+  model?: string
+  fallback?: boolean
+  requirements?: ProviderRouteRequirements
+}
+
+interface ProviderRouteRequirements {
+  privacyTiers?: Array<'local' | 'host-managed' | 'external'>
+  maxCostTier?: 'free' | 'low' | 'medium' | 'high'
+  minContextTokens?: number
+  minEmbeddingDimensions?: number
+  dataClass?: 'public' | 'private' | 'sensitive' | 'regulated'
+  maxInputChars?: number
+}
+```
+
+Providers can expose optional runtime profile metadata:
+
+```typescript
+interface ProviderProfile {
+  privacyTier?: 'local' | 'host-managed' | 'external'
+  costTier?: 'free' | 'low' | 'medium' | 'high'
+  maxInputChars?: number
+  embeddingDimensions?: number[]
+  dataClasses?: Array<'public' | 'private' | 'sensitive' | 'regulated'>
+}
+```
+
+Route requirements are enforced before capability dispatch. If no configured provider satisfies the route, capability, and requirement set, the request rejects instead of falling back across that boundary.
+
+Use `validateRoute()` or `validateRoutes()` to check configured routes without probing providers or sending inference payloads. Validation reports missing providers, unsupported capabilities, missing handlers, profile requirement failures, empty explicit chains, and routes with no eligible provider.
+
+For `embed()` and `complete()`, routes with fallback enabled retry the next eligible provider when the selected provider throws. When `providerIds` is present, fallback is limited to that explicit ordered chain; it does not try unlisted registered providers. `provider.fallback` is emitted with provider IDs, error category, and error message only. Streaming requests resolve one provider up front and do not retry mid-stream.
+
+Use the exported validators when building route configuration UI:
+
+```typescript
+function providerSatisfiesRouteRequirements(
+  provider: InferenceProvider,
+  requirements: ProviderRouteRequirements | undefined,
+  capability: keyof ProviderCapabilities,
+): boolean
+
+function getProviderRouteRequirementIssue(
+  provider: InferenceProvider,
+  requirements: ProviderRouteRequirements | undefined,
+  capability: keyof ProviderCapabilities,
+): string | undefined
+```
+
+`previewRoute()` resolves the provider/model that a task would use without sending inference payloads.
+`probeRoute()` resolves the same route and calls the selected provider's health probe.
+
+Route configuration changes emit `provider.route.configured` and `provider.route.cleared` with task/provider/model metadata only. Each routed request emits `provider.route.selected` with provider ID/name, tier, capability, task, optional model, and whether a task route matched. Completed requests emit `provider.route.completed` with attempt count, fallback count, and latency. Failed requests emit `provider.route.failed` with attempt count, fallback count, latency, error category, and error message. These events never include prompts, input text, output text, vectors, or API keys.
+
+---
+
 #### `registerLlmCapability(manager)` / `unregisterLlmCapability(manager)`
 
 ```typescript
@@ -1384,6 +1653,35 @@ function chunkText(content: string): string[]
 ```
 
 Split a document into overlapping chunks suitable for embedding. Used internally before calling the embed function on long notes.
+
+#### `selectEmbeddingTask(content, chunks, options?)`
+
+```typescript
+function selectEmbeddingTask(
+  content: string,
+  chunks: string[],
+  options?: {
+    largeDocumentChars?: number
+    largeDocumentChunks?: number
+  },
+): 'embedding.document' | 'embedding.large-document'
+```
+
+Returns `embedding.large-document` when content length or chunk count crosses the configured threshold. The default thresholds are exported as `DEFAULT_LARGE_DOCUMENT_CHARS` and `DEFAULT_LARGE_DOCUMENT_CHUNKS`.
+
+Non-React hosts can configure the built-in embedding job directly:
+
+```typescript
+function setEmbeddingTaskSelectionOptions(options?: {
+  largeDocumentChars?: number
+  largeDocumentChunks?: number
+}): void
+
+function getEmbeddingTaskSelectionOptions(): {
+  largeDocumentChars?: number
+  largeDocumentChunks?: number
+}
+```
 
 ---
 
@@ -2140,6 +2438,40 @@ Graph-source state machine: selects the source mode, loads/derives the `Communit
 
 ## @fortemi/react
 
+### Dataset Workflow
+
+Import the dataset workflow from the dedicated subpath:
+
+```tsx
+import {
+  DatasetConnectorForm,
+  DatasetLineageView,
+  DatasetWorkflowMachine,
+  useDatasetWorkflow,
+} from '@fortemi/react/dataset'
+
+const workflow = useDatasetWorkflow(connectorSchema, datasetApi)
+```
+
+`DatasetWorkflowMachine` and `useDatasetWorkflow` coordinate schema-driven
+configuration, staged checks, bounded side-effect-free previews, immutable plan
+approval, cancellation/retry, status, redacted rejections, and bounded lineage
+traversal. All I/O is delegated to the supplied `DatasetWorkflowApi`; the React
+package does not implement a second ingest or lineage backend.
+
+The subpath exports `DatasetConnectorForm`, `DatasetCheckView`,
+`DatasetPreviewView`, `DatasetPlanReview`, `DatasetRunView`,
+`DatasetStatusView`, `DatasetRejectionsView`, `DatasetLineageView`, and
+`DatasetWorkflowActions`. Credential references and password-shaped properties
+render as empty write-only inputs. Destructive reconciliation at or above the
+plan threshold requires the operator to enter the plan ID before approval.
+
+`datasetStatusStoryFixtures` and `datasetTerminalRunStories` provide stable UI
+states for canonical, derived, cached, stale, degraded, unverifiable,
+offline-cold/warm, rejected, cancelled, and failed scenarios.
+
+---
+
 ### Provider
 
 #### `FortemiProvider`
@@ -2445,15 +2777,18 @@ function useNoteProvenance(noteId: string): {
 
 interface ProvenanceEvent {
   timestamp: Date
-  type: 'created' | 'job' | 'revision'
+  type: 'created' | 'job' | 'revision' | 'provenance'
   label: string
   detail?: string
+  agent?: string
+  activity?: string
+  attributes?: Record<string, unknown> | null
 }
 ```
 
-Aggregates a chronological provenance timeline from existing data: note creation timestamp, completed job queue entries, and user/AI revisions. No schema changes required — uses `job_queue` and `note_revision` tables. Auto-refreshes when any job completes for this note.
+Aggregates a chronological provenance timeline from existing data: note creation timestamp, stored note-scoped `provenance_edge` rows, completed job queue entries, and user/AI revisions. Stored W3C PROV-style rows expose their `activity`, `agent`, and `attributes` so UIs can render source lineage, derivation, confidence, and other metadata without raw SQL. Auto-refreshes when any job completes for this note.
 
-Job results are summarized (e.g., `"3 links found"`, `"384-dim vector"`).
+Job results are summarized (e.g., `"3 links found"`, `"384-dim vector"`). Stored provenance attributes are passed through unchanged after JSON parsing.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -2534,6 +2869,39 @@ function useInferenceCapabilities(): {
 ```
 
 Detects browser and hardware inference capabilities, including WebGPU/WebNN/Chrome AI availability.
+
+---
+
+#### `useInferenceRouting(options?)`
+
+```typescript
+function useInferenceRouting(options?: {
+  tasks?: InferenceTask[]
+}): {
+  providers: InferenceProvider[]
+  activeProvider: InferenceProvider | null
+  routeValidation: ProviderRouteValidation[]
+  routeIssues: ProviderRouteValidationIssue[]
+  refresh: () => void
+  setActiveProvider: (id: string) => void
+  setRoute: (task: InferenceTask, policy: ProviderRoutePolicy) => void
+  clearRoute: (task: InferenceTask) => void
+  clearRoutes: () => void
+  getRoute: (task: InferenceTask) => ProviderRoutePolicy | undefined
+  previewRoute: (
+    task: InferenceTask | undefined,
+    capability?: keyof ProviderCapabilities,
+    requestModel?: string,
+  ) => ProviderRouteSelection
+  probeRoute: (
+    task: InferenceTask | undefined,
+    capability?: keyof ProviderCapabilities,
+    requestModel?: string,
+  ) => Promise<ProviderRouteProbeResult>
+}
+```
+
+React wrapper around the shared `ProviderRegistry`. It subscribes to provider and route configuration events so embedded host UIs can display provider lists, switch active providers, edit task routes, validate route configuration, and probe resolved routes without managing a separate routing store.
 
 ---
 

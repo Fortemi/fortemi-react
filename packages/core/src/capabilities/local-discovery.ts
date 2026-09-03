@@ -6,7 +6,7 @@
  * @implements #116 local server auto-discovery
  */
 
-import type { ModelInfo } from './inference-provider.js'
+import type { ModelInfo, ProviderProfile } from './inference-provider.js'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -79,6 +79,28 @@ export function classifyModel(modelId: string): ModelCategory {
 
   // Default: chat
   return 'chat'
+}
+
+export function inferLocalEmbeddingDimensions(models: ModelInfo[]): number[] | undefined {
+  const embeddingModel = models.find((model) => model.capabilities.embeddings)?.id.toLowerCase()
+  if (!embeddingModel) return undefined
+  if (embeddingModel.includes('nomic-embed')) return [768]
+  if (embeddingModel.includes('bge-large')) return [1024]
+  if (embeddingModel.includes('bge-base')) return [768]
+  if (embeddingModel.includes('bge-small')) return [384]
+  if (embeddingModel.includes('all-minilm')) return [384]
+  if (embeddingModel.includes('mxbai-embed-large')) return [1024]
+  return undefined
+}
+
+export function createLocalProviderProfile(models: ModelInfo[] = []): ProviderProfile {
+  const embeddingDimensions = inferLocalEmbeddingDimensions(models)
+  return {
+    privacyTier: 'local',
+    costTier: 'free',
+    embeddingDimensions,
+    dataClasses: ['public', 'private', 'sensitive'],
+  }
 }
 
 // ---------------------------------------------------------------------------

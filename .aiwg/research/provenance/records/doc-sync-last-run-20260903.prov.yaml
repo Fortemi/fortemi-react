@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-09-03T17:26:11Z"
+  description: "Update the durable doc-sync state for the v2026.9.0 audit"
+entity:
+  id: "urn:aiwg:artifact:.aiwg/reports/doc-sync-last-run.json"
+  type: "document"
+  created_at: "2026-09-03T17:26:11Z"
+  checksum: "sha256:e7673b35bf2233ee063143ce1bc601e1ba3243c88972437ec929a61d6f5b0d02"
+  size_bytes: 3651
+  attributes:
+    change_scope: "release-2026.9.0"
+    base_revision: "e528fbf889f5844dfeaa170eed6e33b67906b54b"
+activity:
+  id: "urn:aiwg:activity:modification:aiwg-reports-doc-sync-last-run-json:2026-09-03"
+  type: "modification"
+  started_at: "2026-09-03T17:26:10Z"
+  ended_at: "2026-09-03T17:26:11Z"
+  description: "Update the durable doc-sync state for the v2026.9.0 audit"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-last-run.json"
+    activity: "urn:aiwg:activity:modification:aiwg-reports-doc-sync-last-run-json:2026-09-03"
+    time: "2026-09-03T17:26:11Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:aiwg-reports-doc-sync-last-run-json:2026-09-03"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e528fbf889f5844dfeaa170eed6e33b67906b54b:.aiwg/reports/doc-sync-last-run.json"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-last-run.json"
+      source: "urn:aiwg:artifact:.aiwg/reports/doc-sync-20260903-code-to-docs.md"
+      derivation_type: "documents"
+      activity: "urn:aiwg:activity:modification:aiwg-reports-doc-sync-last-run-json:2026-09-03"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:aiwg-reports-doc-sync-last-run-json:2026-09-03"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-last-run.json"
+    agent: "urn:aiwg:agent:codex-gpt-5"

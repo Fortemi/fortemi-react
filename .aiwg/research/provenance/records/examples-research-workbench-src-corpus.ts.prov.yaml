@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-09-03T14:39:24Z"
+  description: "Add W3C PROV-shaped metadata to research workbench corpus records"
+entity:
+  id: "urn:aiwg:artifact:examples/research-workbench/src/corpus.ts"
+  type: code
+  created_at: "2026-09-03T14:39:24Z"
+  checksum: "sha256:f41ce7e75c29d221c808d3897980fb35c1f9a719f7eff912322ee5342b35ec7c"
+  size_bytes: 10752
+  attributes:
+    change_scope: "fortemi-react-prov-demo"
+    base_revision: "e528fbf889f5844dfeaa170eed6e33b67906b54b"
+activity:
+  id: "urn:aiwg:activity:modification:examples-research-workbench-src-corpus-ts:2026-09-03"
+  type: modification
+  started_at: "2026-09-03T14:39:24Z"
+  ended_at: "2026-09-03T14:39:24Z"
+  description: "Attach source, agent, derivation, timestamp, confidence, and location metadata to each demo paper"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: ai_assistant
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:examples/research-workbench/src/corpus.ts"
+    activity: "urn:aiwg:activity:modification:examples-research-workbench-src-corpus-ts:2026-09-03"
+    time: "2026-09-03T14:39:24Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:examples-research-workbench-src-corpus-ts:2026-09-03"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e528fbf889f5844dfeaa170eed6e33b67906b54b:examples/research-workbench/src/corpus.ts"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:examples/research-workbench/src/corpus.ts"
+      source: "urn:request:fortemi-react-prov-demo"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:modification:examples-research-workbench-src-corpus-ts:2026-09-03"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:examples-research-workbench-src-corpus-ts:2026-09-03"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:examples/research-workbench/src/corpus.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

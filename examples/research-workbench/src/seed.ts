@@ -5,6 +5,7 @@
 //   - an attachment per paper carrying the "full text" as extracted text
 //   - a SKOS scheme with area + method concepts, each note tagged
 //   - citation links (link_type 'cites') for every edge in the DAG
+//   - provenance edges with W3C PROV-style activity/agent/entity attributes
 //
 // It returns the note-id map plus a citation CommunityGraph (communities = areas)
 // so the UI can render the graph and drive one shared selection. Nothing here
@@ -12,6 +13,7 @@
 
 import {
   NotesRepository,
+  ProvenanceRepository,
   SkosRepository,
   manageAttachments,
   manageLinks,
@@ -39,6 +41,7 @@ export async function seedWorkbench(
   blobStore: BlobStore,
 ): Promise<SeededWorkbench> {
   const notes = new NotesRepository(db)
+  const provenance = new ProvenanceRepository(db)
   const skos = new SkosRepository(db)
 
   // 1 · Concept scheme: one concept per area + every cross-cutting method concept.
@@ -85,6 +88,25 @@ export async function seedWorkbench(
     // Concept tags: the area, plus each method concept.
     await skos.tagNote(note.id, conceptId.get(`area:${p.area}`)!)
     for (const m of p.concepts) await skos.tagNote(note.id, conceptId.get(`method:${m}`)!)
+
+    await provenance.recordProvenance('note', note.id, {
+      activity: p.provenance.activity,
+      agent: p.provenance.agent,
+      startedAt: p.provenance.generatedAt,
+      endedAt: p.provenance.generatedAt,
+      attributes: {
+        'prov:entity': p.provenance.entity,
+        'prov:wasGeneratedBy': p.provenance.activity,
+        'prov:wasAssociatedWith': p.provenance.agent,
+        'prov:wasDerivedFrom': p.provenance.derivedFrom,
+        'prov:location': p.provenance.location,
+        confidence: p.provenance.confidence,
+        paper_key: p.key,
+        source_title: p.title,
+        source_authors: p.authors,
+        source_year: p.year,
+      },
+    })
   }
 
   // 3 · Citation links (directed: citing → cited).
@@ -95,6 +117,21 @@ export async function seedWorkbench(
         source_note_id: idByKey.get(p.key)!,
         target_note_id: idByKey.get(target)!,
         link_type: 'cites',
+      })
+      await provenance.recordProvenance('note', idByKey.get(p.key)!, {
+        activity: 'prov:Derive',
+        agent: 'demo:citation-linker',
+        startedAt: p.provenance.generatedAt,
+        endedAt: p.provenance.generatedAt,
+        attributes: {
+          'prov:entity': `citation:${p.key}->${target}`,
+          'prov:wasDerivedFrom': `paper:${target}`,
+          'prov:wasAssociatedWith': 'demo:citation-linker',
+          confidence: 'reviewed',
+          relation: 'cites',
+          target_note_id: idByKey.get(target)!,
+          target_title: titleByNode.get(idByKey.get(target)!),
+        },
       })
     }
   }

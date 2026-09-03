@@ -10,7 +10,7 @@
 //   • manageAttachments    ← the attached full text
 //   • useNoteConcepts      ← SKOS tags (area + method)
 //   • manageLinks          ← who this paper cites / is cited by
-//   • useNoteProvenance    ← creation + edit history (the "Revise" button adds one)
+//   • useNoteProvenance    ← stored PROV edges + creation/edit history
 //
 // No server, no model download: the "extracted text" is the corpus body, and
 // concepts are assigned directly rather than by an embedding pipeline.
@@ -256,7 +256,7 @@ function PaperDetail({
             {attachments.map((a) => (
               <div key={a.id} className="attach">
                 <button className="attach-name" onClick={() => setOpenText(openText === a.id ? null : a.id)}>
-                  📄 {a.filename} <span className="muted">· {a.text.length} chars extracted</span>
+                  {a.filename} <span className="muted">· {a.text.length} chars extracted</span>
                 </button>
                 {openText === a.id && <pre className="extracted">{a.text}</pre>}
                 {openText !== a.id && <p className="preview">{a.text.slice(0, 180)}…</p>}
@@ -285,8 +285,18 @@ function PaperDetail({
             <ol className="timeline">
               {provenanceEvents.map((e, i) => (
                 <li key={i} className={`ev ${e.type}`}>
-                  <span className="ev-label">{e.label}</span>
-                  <span className="ev-time">{e.timestamp.toLocaleString()}</span>
+                  <div className="ev-main">
+                    <span className="ev-label">{e.label}</span>
+                    {e.detail && <span className="ev-detail">{e.detail}</span>}
+                    {e.type === 'provenance' && e.attributes && (
+                      <dl className="prov-fields">
+                        {provenanceField(e.attributes, 'prov:entity', 'entity')}
+                        {provenanceField(e.attributes, 'prov:wasDerivedFrom', 'derived from')}
+                        {provenanceField(e.attributes, 'prov:wasAssociatedWith', 'agent')}
+                      </dl>
+                    )}
+                  </div>
+                  <time className="ev-time" dateTime={e.timestamp.toISOString()}>{e.timestamp.toLocaleString()}</time>
                 </li>
               ))}
             </ol>
@@ -296,5 +306,20 @@ function PaperDetail({
         <p className="selected">Loading paper…</p>
       )}
     </article>
+  )
+}
+
+function provenanceField(
+  attributes: Record<string, unknown>,
+  key: string,
+  label: string,
+) {
+  const value = attributes[key]
+  if (typeof value !== 'string' || !value) return null
+  return (
+    <div key={key}>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
   )
 }

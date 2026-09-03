@@ -10,14 +10,49 @@ import type { DatabaseClient } from '../storage-backend.js'
 import { EmbeddingSetsRepository } from '../repositories/embedding-sets-repository.js'
 import { getNoteTextWithExtractedAttachments } from '../repositories/note-text.js'
 import { chunkText } from './chunking.js'
+import type { InferenceTask } from './inference-provider.js'
+
+export interface EmbedFunctionOptions {
+  task?: InferenceTask
+  model?: string
+}
+
+export interface EmbeddingTaskSelectionOptions {
+  largeDocumentChars?: number
+  largeDocumentChunks?: number
+}
+
+export const DEFAULT_LARGE_DOCUMENT_CHARS = 12_000
+export const DEFAULT_LARGE_DOCUMENT_CHUNKS = 12
 
 /** Type for the embed function — injected by the semantic capability module */
-export type EmbedFunction = (texts: string[]) => Promise<number[][]>
+export type EmbedFunction = (texts: string[], options?: EmbedFunctionOptions) => Promise<number[][]>
 
 let embedFn: EmbedFunction | null = null
+let embeddingTaskSelectionOptions: EmbeddingTaskSelectionOptions = {}
 
 export function setEmbedFunction(fn: EmbedFunction | null): void {
   embedFn = fn
+}
+
+export function setEmbeddingTaskSelectionOptions(options: EmbeddingTaskSelectionOptions = {}): void {
+  embeddingTaskSelectionOptions = { ...options }
+}
+
+export function getEmbeddingTaskSelectionOptions(): EmbeddingTaskSelectionOptions {
+  return { ...embeddingTaskSelectionOptions }
+}
+
+export function selectEmbeddingTask(
+  content: string,
+  chunks: string[],
+  options: EmbeddingTaskSelectionOptions = {},
+): InferenceTask {
+  const largeDocumentChars = options.largeDocumentChars ?? DEFAULT_LARGE_DOCUMENT_CHARS
+  const largeDocumentChunks = options.largeDocumentChunks ?? DEFAULT_LARGE_DOCUMENT_CHUNKS
+  return content.length >= largeDocumentChars || chunks.length >= largeDocumentChunks
+    ? 'embedding.large-document'
+    : 'embedding.document'
 }
 
 export function getEmbedFunction(): EmbedFunction | null {
@@ -58,9 +93,10 @@ export async function embeddingGenerationHandler(
 
   const content = noteText.combined
   const chunks = chunkText(content)
+  const task = selectEmbeddingTask(content, chunks, embeddingTaskSelectionOptions)
 
   // Generate embeddings for all chunks
-  const embeddings = await fn(chunks)
+  const embeddings = await fn(chunks, { task })
 
   // Average all chunk embeddings into one vector for storage
   const vector = averageEmbeddings(embeddings)
@@ -73,5 +109,5 @@ export async function embeddingGenerationHandler(
     vector,
   })
 
-  return { chunks: chunks.length, embeddings: embeddings.length, setId: set.id }
+  return { chunks: chunks.length, embeddings: embeddings.length, setId: set.id, task }
 }

@@ -19,7 +19,9 @@ import type {
   StreamChunk,
   ModelInfo,
   ProbeResult,
+  ProviderProfile,
 } from './inference-provider.js'
+import { classifyModel } from './local-discovery.js'
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -35,6 +37,7 @@ export interface OpenAIProviderConfig {
   tier?: ProviderTier
   headers?: Record<string, string>
   timeoutMs?: number
+  profile?: ProviderProfile
 }
 
 // ---------------------------------------------------------------------------
@@ -79,6 +82,7 @@ export class OpenAICompatibleProvider implements InferenceProvider {
   readonly name: string
   readonly tier: ProviderTier
   readonly capabilities: ProviderCapabilities
+  readonly profile?: ProviderProfile
 
   private baseURL: string
   private apiKey?: string
@@ -107,6 +111,9 @@ export class OpenAICompatibleProvider implements InferenceProvider {
       toolCalling: false,
       structuredOutput: false,
     }
+    this.profile = config.profile ?? (this.tier === 'local-server'
+      ? { privacyTier: 'local', costTier: 'free' }
+      : { privacyTier: 'external' })
   }
 
   // -------------------------------------------------------------------------
@@ -222,15 +229,19 @@ export class OpenAICompatibleProvider implements InferenceProvider {
     try {
       const response = await this.fetch('/models', undefined, 'GET')
       const data = response as OAIModelsResponse
-      return data.data.map(m => ({
-        id: m.id,
-        name: m.id,
-        capabilities: {
-          chat: !this.isEmbeddingModel(m.id),
-          embeddings: this.isEmbeddingModel(m.id),
-        },
-        owned_by: m.owned_by,
-      }))
+      return data.data.map(m => {
+        const category = classifyModel(m.id)
+        return {
+          id: m.id,
+          name: m.id,
+          capabilities: {
+            chat: category === 'chat' || category === 'vision',
+            embeddings: category === 'embedding',
+            vision: category === 'vision',
+          },
+          owned_by: m.owned_by,
+        }
+      })
     } catch {
       return []
     }
@@ -279,13 +290,6 @@ export class OpenAICompatibleProvider implements InferenceProvider {
       default: return undefined
     }
   }
-
-  private isEmbeddingModel(id: string): boolean {
-    const lower = id.toLowerCase()
-    return lower.includes('embed') || lower.includes('e5-') || lower.includes('bge-') ||
-      lower.includes('nomic-') || lower.includes('mxbai-') || lower.includes('all-minilm')
-  }
-
   private isLocalURL(): boolean {
     try {
       const url = new URL(this.baseURL)

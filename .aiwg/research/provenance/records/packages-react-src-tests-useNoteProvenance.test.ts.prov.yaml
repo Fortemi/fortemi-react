@@ -1,0 +1,42 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-09-03T17:26:11Z"
+  description: "Test stored provenance loading, attribute parsing, and chronological event composition"
+entity:
+  id: "urn:aiwg:artifact:packages/react/src/__tests__/useNoteProvenance.test.ts"
+  type: "test"
+  created_at: "2026-09-03T17:26:11Z"
+  checksum: "sha256:9e19d2538fe82971d52aa401321c438ba430e89666e3e42eb04b359ee21a0bf5"
+  size_bytes: 3166
+  attributes:
+    change_scope: "release-2026.9.0"
+    base_revision: "e528fbf889f5844dfeaa170eed6e33b67906b54b"
+activity:
+  id: "urn:aiwg:activity:generation:packages-react-src-tests-useNoteProvenance-test-ts:2026-09-03"
+  type: "generation"
+  started_at: "2026-09-03T17:26:10Z"
+  ended_at: "2026-09-03T17:26:11Z"
+  description: "Test stored provenance loading, attribute parsing, and chronological event composition"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/react/src/__tests__/useNoteProvenance.test.ts"
+    activity: "urn:aiwg:activity:generation:packages-react-src-tests-useNoteProvenance-test-ts:2026-09-03"
+    time: "2026-09-03T17:26:11Z"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/react/src/__tests__/useNoteProvenance.test.ts"
+      source: "urn:aiwg:artifact:packages/react/src/hooks/useNoteProvenance.ts"
+      derivation_type: "tests"
+      activity: "urn:aiwg:activity:generation:packages-react-src-tests-useNoteProvenance-test-ts:2026-09-03"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:packages-react-src-tests-useNoteProvenance-test-ts:2026-09-03"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/react/src/__tests__/useNoteProvenance.test.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

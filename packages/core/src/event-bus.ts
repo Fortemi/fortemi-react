@@ -34,6 +34,49 @@ export interface EventMap {
   'provider.added': { id: string; name: string }
   'provider.removed': { id: string }
   'provider.active': { id: string; name: string }
+  'provider.route.configured': {
+    task: string
+    providerIds: string[]
+    model?: string
+    fallback?: boolean
+    hasRequirements: boolean
+  }
+  'provider.route.cleared': { task?: string }
+  'provider.route.selected': {
+    providerId: string
+    providerName: string
+    tier: string
+    capability: string
+    task?: string
+    model?: string
+    routeMatched: boolean
+  }
+  'provider.route.completed': {
+    providerId: string
+    providerName: string
+    tier: string
+    capability: string
+    task?: string
+    model?: string
+    routeMatched: boolean
+    attempt: number
+    fallbackCount: number
+    latencyMs: number
+  }
+  'provider.route.failed': {
+    providerId?: string
+    providerName?: string
+    tier?: string
+    capability: string
+    task?: string
+    model?: string
+    routeMatched: boolean
+    attempt: number
+    fallbackCount: number
+    latencyMs: number
+    errorCategory: string
+    error: string
+  }
   'provider.fallback': { fromProvider: string; toProvider: string; errorCategory: string; error: string }
   'provider.cooldown': { providerId: string; errorCategory: string; cooldownMs: number; expiresAt: number }
 }

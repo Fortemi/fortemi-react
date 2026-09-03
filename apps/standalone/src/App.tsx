@@ -40,12 +40,12 @@ function E2EDiagnostics() {
 
 /** Register real capability loaders and auto-enable previously active capabilities */
 function CapabilitySetup() {
-  const { capabilityManager, events } = useFortemiContext()
+  const { capabilityManager, events, providerRegistry } = useFortemiContext()
   const initialized = useRef(false)
   useEffect(() => {
     if (!initialized.current) {
       initialized.current = true
-      setupCapabilities(capabilityManager, events)
+      setupCapabilities(capabilityManager, events, providerRegistry)
 
       // Auto-enable capabilities that were active last session (or defaults on first visit)
       const toEnable = getEnabledCapabilities()
@@ -55,7 +55,7 @@ function CapabilitySetup() {
         })
       }
     }
-  }, [capabilityManager, events])
+  }, [capabilityManager, events, providerRegistry])
   return null
 }
 

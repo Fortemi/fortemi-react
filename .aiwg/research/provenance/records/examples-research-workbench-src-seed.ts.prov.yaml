@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-09-03T14:39:24Z"
+  description: "Persist research workbench corpus metadata as Fortemi provenance edges"
+entity:
+  id: "urn:aiwg:artifact:examples/research-workbench/src/seed.ts"
+  type: code
+  created_at: "2026-09-03T14:39:24Z"
+  checksum: "sha256:585ffb300527832161163bfdfe785324c34bb65d943de7fd39154e4cfcbadf4b"
+  size_bytes: 5591
+  attributes:
+    change_scope: "fortemi-react-prov-demo"
+    base_revision: "e528fbf889f5844dfeaa170eed6e33b67906b54b"
+activity:
+  id: "urn:aiwg:activity:modification:examples-research-workbench-src-seed-ts:2026-09-03"
+  type: modification
+  started_at: "2026-09-03T14:39:24Z"
+  ended_at: "2026-09-03T14:39:24Z"
+  description: "Record W3C PROV-style note provenance and citation derivation events during demo seeding"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: ai_assistant
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:examples/research-workbench/src/seed.ts"
+    activity: "urn:aiwg:activity:modification:examples-research-workbench-src-seed-ts:2026-09-03"
+    time: "2026-09-03T14:39:24Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:examples-research-workbench-src-seed-ts:2026-09-03"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e528fbf889f5844dfeaa170eed6e33b67906b54b:examples/research-workbench/src/seed.ts"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:examples/research-workbench/src/seed.ts"
+      source: "urn:request:fortemi-react-prov-demo"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:modification:examples-research-workbench-src-seed-ts:2026-09-03"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:examples-research-workbench-src-seed-ts:2026-09-03"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:examples/research-workbench/src/seed.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

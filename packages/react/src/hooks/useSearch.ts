@@ -34,7 +34,7 @@ export function useSearch() {
           )
         }
         if (query.trim()) {
-          const [embedding] = await embedFn([query])
+          const [embedding] = await embedFn([query], { task: 'embedding.query' })
           queryEmbedding = embedding
         }
       } else {
@@ -42,7 +42,7 @@ export function useSearch() {
         if (semanticReady && query.trim()) {
           const embedFn = getEmbedFunction()
           if (embedFn) {
-            const [embedding] = await embedFn([query])
+            const [embedding] = await embedFn([query], { task: 'embedding.query' })
             queryEmbedding = embedding
           }
         }

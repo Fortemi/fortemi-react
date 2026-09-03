@@ -159,7 +159,7 @@ While PGlite is initializing, `FortemiProvider` returns `null`. The Suspense bou
 import { useFortemiContext } from '@fortemi/react'
 
 function DebugPanel() {
-  const { db, events, archiveManager, capabilityManager, blobStore } = useFortemiContext()
+  const { db, events, archiveManager, capabilityManager, blobStore, providerRegistry } = useFortemiContext()
 
   const handleInspect = async () => {
     // Raw query against PGlite — same API surface as the repositories use internally
@@ -173,6 +173,9 @@ function DebugPanel() {
 
     // Capability states
     console.log('Capabilities:', capabilityManager.listAll())
+
+    // Runtime inference providers
+    console.log('Inference providers:', providerRegistry.list().map(provider => provider.id))
   }
 
   return <button onClick={handleInspect}>Inspect DB</button>
@@ -189,6 +192,7 @@ interface FortemiContextValue {
   events: TypedEventBus         // Typed pub/sub bus shared across the entire tree
   archiveManager: ArchiveManager // Manages multiple databases (one per workspace)
   capabilityManager: CapabilityManager // Tracks WASM capability load states
+  providerRegistry: ProviderRegistry // Runtime inference provider registry and route table
   blobStore: BlobStore          // Content-addressable binary store (OPFS or IDB)
 }
 ```
@@ -781,6 +785,216 @@ function SearchProvider() {
 ```
 
 Both `createWorkerEmbedFunction(port, options?)` (the lower-level primitive) and `handleEmbedRequests(port, embed)` are exported for hosts that want to own the wiring directly. The existing main-thread `registerSemanticCapability(manager, embedFn)` path is unchanged — this transport is additive and opt-in.
+
+### Runtime inference provider composition
+
+Deployments that need browser-local models, local OpenAI-compatible servers, remote services, or host-managed inference can configure them once through `FortemiProvider`. The runtime registers every configured provider, adapts any available `window.fortemiBridge.inference` provider, optionally discovers local servers, and wires the `semantic` and `llm` capability loaders to the routed registry.
+
+```tsx
+import { FortemiProvider } from '@fortemi/react'
+
+export function App() {
+  return (
+    <FortemiProvider
+      persistence="indexeddb"
+      inference={{
+        providers: [
+          {
+            kind: 'openai-compatible',
+            config: {
+              id: 'remote-small',
+              name: 'Small remote service',
+              baseURL: 'https://router.example.com/v1',
+              defaultModel: 'fast-chat',
+              defaultEmbeddingModel: 'text-embedding-small',
+              profile: {
+                privacyTier: 'external',
+                costTier: 'low',
+                dataClasses: ['public'],
+              },
+            },
+          },
+          {
+            kind: 'openai-compatible',
+            config: {
+              id: 'local-ollama',
+              name: 'Ollama',
+              baseURL: 'http://localhost:11434/v1',
+              tier: 'local-server',
+              defaultEmbeddingModel: 'nomic-embed-text',
+              profile: {
+                privacyTier: 'local',
+                costTier: 'free',
+                embeddingDimensions: [768],
+                dataClasses: ['public', 'private', 'sensitive'],
+              },
+            },
+          },
+        ],
+        routes: {
+          'embedding.query': {
+            providerIds: ['local-ollama', 'remote-small'],
+            model: 'nomic-embed-text',
+            requirements: {
+              maxCostTier: 'low',
+            },
+          },
+          'embedding.large-document': {
+            providerIds: ['host:research-embedder'],
+            model: 'large-domain-embedder',
+            fallback: false,
+            requirements: {
+              minEmbeddingDimensions: 1536,
+              dataClass: 'private',
+            },
+          },
+          'chat.revision': {
+            providerIds: ['remote-small'],
+            model: 'fast-chat',
+          },
+        },
+        embeddingTaskSelection: {
+          largeDocumentChars: 24_000,
+          largeDocumentChunks: 16,
+        },
+        includeBridgeProviders: true,
+        discoverLocal: false,
+      }}
+    >
+      <Workspace />
+    </FortemiProvider>
+  )
+}
+```
+
+Routes are task hints, not data-contract claims. They only choose an inference provider/model for runtime work such as query embeddings, document embeddings, revisions, tagging, and linking. Static AIWG index validation, Knowledge Shard profiles, and live Fortemi persistence remain separate planes.
+
+The built-in embedding job selects `embedding.large-document` automatically when combined note and extracted attachment text crosses the exported size thresholds. Hosts that need different breakpoints can call `selectEmbeddingTask()` in custom ingestion or embedding pipelines and pass the selected task through `EmbedFunctionOptions`.
+
+Use `useInferenceRouting()` when a React host UI needs to list providers, switch the active provider, edit routes, or surface validation state:
+
+```tsx
+import { useInferenceRouting } from '@fortemi/react'
+
+function InferencePanel() {
+  const {
+    providers,
+    activeProvider,
+    routeIssues,
+    setActiveProvider,
+    setRoute,
+    probeRoute,
+  } = useInferenceRouting({
+    tasks: ['embedding.query', 'embedding.document', 'embedding.large-document', 'chat.revision'],
+  })
+
+  async function useLargeDocumentEmbedder() {
+    setRoute('embedding.large-document', {
+      providerIds: ['remote-large', 'local-ollama'],
+      model: 'text-embedding-3-large',
+      requirements: { minEmbeddingDimensions: 1536 },
+    })
+    await probeRoute('embedding.large-document')
+  }
+
+  return (
+    <select
+      value={activeProvider?.id ?? ''}
+      onChange={(event) => setActiveProvider(event.target.value)}
+    >
+      {providers.map(provider => (
+        <option key={provider.id} value={provider.id}>
+          {provider.name}
+        </option>
+      ))}
+    </select>
+  )
+}
+```
+
+For lower-level integrations, use `useFortemiContext().providerRegistry` directly:
+
+```tsx
+const { providerRegistry } = useFortemiContext()
+
+providerRegistry.setRoute('embedding.document', {
+  providerIds: ['remote-large', 'local-ollama'],
+  model: 'text-embedding-3-large',
+})
+
+const vectors = await providerRegistry.embed({
+  texts: ['Long policy document'],
+  task: 'embedding.document',
+})
+```
+
+Use `previewRoute()` or `probeRoute()` to verify task routing without sending note text, prompts, or vectors:
+
+```tsx
+const selection = providerRegistry.previewRoute('embedding.document', 'embeddings')
+const health = await providerRegistry.probeRoute('embedding.document', 'embeddings')
+
+console.log(selection.providerName, selection.model, health.probe.status)
+```
+
+Use `validateRoutes()` for a cheaper configuration check when a deployment first loads or after an admin edits route settings:
+
+```tsx
+const issues = providerRegistry
+  .validateRoutes()
+  .flatMap(route => route.issues)
+
+if (issues.length) {
+  console.warn('[fortemi] inference route configuration issues:', issues)
+}
+```
+
+Runtime config fragments can be composed before passing them to `FortemiProvider`. This is useful when a host has a shared provider pack, an environment-specific local discovery policy, and a workspace-specific routing profile:
+
+```tsx
+import {
+  defineInferenceRuntime,
+  defineOpenAICompatibleProvider,
+  mergeInferenceRuntimeConfigs,
+} from '@fortemi/core'
+
+const sharedServices = defineInferenceRuntime({
+  providers: [
+    defineOpenAICompatibleProvider({
+      id: 'remote-small',
+      name: 'Small remote service',
+      baseURL: 'https://router.example.com/v1',
+      defaultModel: 'fast-chat',
+    }),
+  ],
+})
+
+const localWorkstation = defineInferenceRuntime({
+  discoverLocal: { timeoutMs: 1500 },
+  includeBridgeProviders: true,
+})
+
+const workspaceRoutes = defineInferenceRuntime({
+  routes: {
+    'embedding.query': { providerIds: ['local:ollama', 'remote-small'] },
+    'embedding.large-document': {
+      providerIds: ['remote-large'],
+      fallback: false,
+      requirements: { minEmbeddingDimensions: 1536 },
+    },
+  },
+})
+
+const inference = mergeInferenceRuntimeConfigs(sharedServices, localWorkstation, workspaceRoutes)
+```
+
+Provider packs are merged by configured provider ID, so an environment-specific fragment can replace a shared `remote-small` definition without creating a duplicate registry entry.
+
+Provider route policy is intentionally small: ordered provider IDs, optional tier filtering, an optional model override, and fallback on/off. That keeps deployment configuration composable while still supporting cascades such as small local model first, larger service model second, or a strict domain embedder for selected document classes. In the standalone app, route settings expose this as an ordered primary/fallback provider chain per task. When `providerIds` is present, fallback stays inside that explicit chain; it does not spill to every registered provider. For embeddings and non-streaming chat, fallback also retries the next eligible provider after a provider error. Streaming resolves the route up front and uses one provider for the stream.
+
+Routes can also declare fail-closed requirements for privacy tier, cost ceiling, minimum context length, minimum embedding dimensions, allowed data class, or maximum input size. A provider that does not satisfy those requirements is skipped; if none match, the request fails instead of silently crossing a configured privacy or quality boundary. These provider profiles are runtime inference metadata and are unrelated to Knowledge Shard `core-v1`, `full-v1`, or `record-v1` profiles.
+
+The registry emits `provider.route.configured` and `provider.route.cleared` for host UI synchronization, plus `provider.route.selected`, `provider.route.completed`, and `provider.route.failed` for observability. Payloads contain provider ID/name, tier, capability, task, optional model, route-match status, attempt/fallback counts, latency, and error metadata only; prompts, note bodies, embeddings, generated text, and keys are not emitted.
 
 ### registerLlmCapability with WebLLM
 

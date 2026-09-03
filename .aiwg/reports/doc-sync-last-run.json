@@ -1,66 +1,65 @@
 {
   "schemaVersion": "aiwg.doc-sync-last-run.v1",
-  "runDate": "2026-08-23",
+  "runDate": "2026-09-03",
   "direction": "code-to-docs",
   "mode": "incremental-release-prep",
   "dryRunFirst": true,
   "repository": "/home/roctinam/dev/fortemi-suite/fortemi-react",
-  "baselineTag": "v2026.7.15",
-  "auditedHead": "5a75b7c9335e3f9d6f0afda79df5b52d61104c40",
-  "targetRelease": "v2026.8.0",
-  "releaseMonth": "August 2026",
+  "baselineTag": "v2026.8.0",
+  "auditedHead": "e528fbf889f5844dfeaa170eed6e33b67906b54b",
+  "targetRelease": "v2026.9.0",
+  "releaseMonth": "September 2026",
   "scope": [
-    "changed Core source import/search/purge files",
-    "README and package documentation",
-    "API reference",
-    "changelog and v2026.8.0 release notes",
-    "documentation manifest and embedded standalone docs"
+    "dataset execution, ingest, lineage, and materialization contracts",
+    "React dataset workflow and dedicated package subpath",
+    "configured inference runtime and task routing",
+    "React routing and stored provenance hooks",
+    "standalone provider settings",
+    "EX-18 provenance seed data and presentation",
+    "release and CI test policy",
+    "package versions, changelog, release note, manifest, and embedded docs"
   ],
-  "findingCount": 5,
+  "findingCount": 7,
   "changedFiles": [
-    ".aiwg/reports/doc-sync-20260823-code-to-docs.md",
+    ".aiwg/reports/doc-sync-20260903-code-to-docs.md",
     ".aiwg/reports/doc-sync-last-run.json",
     "CHANGELOG.md",
-    "README.md",
+    "apps/standalone/package.json",
     "apps/standalone/src/data/project-docs.ts",
     "docs/content/api-reference.md",
-    "docs/content/releases/v2026.8.0.md",
+    "docs/content/examples/index.md",
+    "docs/content/guides/integration.md",
+    "docs/content/guides/search.md",
+    "docs/content/releases/v2026.9.0.md",
     "docs/manifest.json",
+    "examples/README.md",
+    "examples/gallery.manifest.json",
+    "examples/research-workbench/README.md",
     "package.json",
-    "packages/core/README.md",
     "packages/core/package.json",
     "packages/core/src/index.ts",
     "packages/graph/package.json",
     "packages/graph/src/index.ts",
-    "packages/react/package.json",
-    "apps/standalone/package.json"
+    "packages/react/README.md",
+    "packages/react/package.json"
   ],
   "validation": {
-    "status": "passed",
+    "status": "passed-with-clean-path-note",
     "commands": [
-      "pnpm --filter @fortemi/core verify:knowledge-shard-contract",
       "pnpm typecheck",
       "pnpm lint",
-      "pnpm test:core",
+      "pnpm test:workspace",
       "pnpm build",
+      "pnpm examples:site:build",
       "tools/release/test-e2e.sh",
+      "pnpm exec playwright test examples/e2e/research-workbench-provenance.test.ts --config examples/playwright.config.ts --reporter=line",
       "git diff --check"
     ],
     "results": [
       {
-        "check": "core-typecheck",
-        "status": "passed",
-        "detail": "Core package typecheck passed."
-      },
-      {
-        "check": "knowledge-shard-contract",
-        "status": "passed",
-        "detail": "Revision 21 advertised authority and immutable revision 20 implementation lineage verified."
-      },
-      {
         "check": "workspace-typecheck",
         "status": "passed",
-        "detail": "Workspace typecheck passed."
+        "detail": "All 25 runnable workspace projects passed."
       },
       {
         "check": "lint",
@@ -68,19 +67,29 @@
         "detail": "ESLint passed."
       },
       {
-        "check": "core-tests",
+        "check": "workspace-tests",
         "status": "passed",
-        "detail": "74 files, 1261 tests."
+        "detail": "Core 79 files/1338 tests; Graph 6/87; React 7/35; EX-18 seed 1/1."
       },
       {
         "check": "build",
         "status": "passed",
-        "detail": "Workspace build passed."
+        "detail": "Workspace build passed in the isolated clean-path copy."
+      },
+      {
+        "check": "examples-gallery-build",
+        "status": "passed",
+        "detail": "All 20 examples and the static gallery index built successfully."
+      },
+      {
+        "check": "examples-browser",
+        "status": "passed",
+        "detail": "EX-18 source and citation PROV metadata rendered in the built gallery."
       },
       {
         "check": "release-e2e",
         "status": "passed",
-        "detail": "28 passed, 2 skipped."
+        "detail": "28 browser tests passed across Chromium, Firefox, and WebKit; 2 compatibility tests skipped as expected."
       },
       {
         "check": "git-diff-check",
@@ -90,8 +99,8 @@
     ]
   },
   "humanReview": [
-    "Gitea CI gate requires a pushed release commit.",
-    "Release tag signing is blocked by Vault 403 for the release-signing key in this shell.",
+    "Gitea CI must pass on the PR and merged release commit before tagging.",
+    "The original-path Vite/Vitest commands are affected by an unrelated empty /home/roctinam/package.json; clean-checkout CI is authoritative.",
     "Fortemi #1081 remains NO-GO; do not widen suite portability claims."
   ]
 }

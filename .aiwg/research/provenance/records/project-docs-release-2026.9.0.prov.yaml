@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-09-03T17:26:11Z"
+  description: "Embed the v2026.9.0 release note in the standalone documentation corpus"
+entity:
+  id: "urn:aiwg:artifact:apps/standalone/src/data/project-docs.ts"
+  type: "code"
+  created_at: "2026-09-03T17:26:11Z"
+  checksum: "sha256:3b74ccd74336fd737ddb6651e257a7b18f3021c4984908dfc0943ca7c8f90ee5"
+  size_bytes: 8510
+  attributes:
+    change_scope: "release-2026.9.0"
+    base_revision: "e528fbf889f5844dfeaa170eed6e33b67906b54b"
+activity:
+  id: "urn:aiwg:activity:modification:apps-standalone-src-data-project-docs-ts:2026-09-03"
+  type: "modification"
+  started_at: "2026-09-03T17:26:10Z"
+  ended_at: "2026-09-03T17:26:11Z"
+  description: "Embed the v2026.9.0 release note in the standalone documentation corpus"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:apps/standalone/src/data/project-docs.ts"
+    activity: "urn:aiwg:activity:modification:apps-standalone-src-data-project-docs-ts:2026-09-03"
+    time: "2026-09-03T17:26:11Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:apps-standalone-src-data-project-docs-ts:2026-09-03"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e528fbf889f5844dfeaa170eed6e33b67906b54b:apps/standalone/src/data/project-docs.ts"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:apps/standalone/src/data/project-docs.ts"
+      source: "urn:aiwg:artifact:docs/content/releases/v2026.9.0.md"
+      derivation_type: "documents"
+      activity: "urn:aiwg:activity:modification:apps-standalone-src-data-project-docs-ts:2026-09-03"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:apps-standalone-src-data-project-docs-ts:2026-09-03"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:apps/standalone/src/data/project-docs.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

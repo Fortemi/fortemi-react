@@ -1,0 +1,42 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-09-03T17:26:11Z"
+  description: "Verify EX-18 source and citation provenance against a migrated in-memory PGlite database"
+entity:
+  id: "urn:aiwg:artifact:examples/research-workbench/src/seed.test.ts"
+  type: "test"
+  created_at: "2026-09-03T17:26:11Z"
+  checksum: "sha256:12400eda83a0c800c8a43824ff8ff780e36cf5d666354e9e47a0a06b408ede0b"
+  size_bytes: 2211
+  attributes:
+    change_scope: "release-2026.9.0"
+    base_revision: "e528fbf889f5844dfeaa170eed6e33b67906b54b"
+activity:
+  id: "urn:aiwg:activity:generation:examples-research-workbench-src-seed-test-ts:2026-09-03"
+  type: "generation"
+  started_at: "2026-09-03T17:26:10Z"
+  ended_at: "2026-09-03T17:26:11Z"
+  description: "Verify EX-18 source and citation provenance against a migrated in-memory PGlite database"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:examples/research-workbench/src/seed.test.ts"
+    activity: "urn:aiwg:activity:generation:examples-research-workbench-src-seed-test-ts:2026-09-03"
+    time: "2026-09-03T17:26:11Z"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:examples/research-workbench/src/seed.test.ts"
+      source: "urn:aiwg:artifact:examples/research-workbench/src/seed.ts"
+      derivation_type: "tests"
+      activity: "urn:aiwg:activity:generation:examples-research-workbench-src-seed-test-ts:2026-09-03"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:examples-research-workbench-src-seed-test-ts:2026-09-03"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:examples/research-workbench/src/seed.test.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

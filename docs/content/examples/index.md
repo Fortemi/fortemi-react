@@ -74,7 +74,7 @@ Real surfaces: the focused hooks composed into whole apps.
 |----|---------|-----------------|
 | EX-16 | `knowledge-garden` | Notes CRUD + full-text search + a tag-derived graph + detail, all sharing one selection over a single PGlite database. |
 | EX-17 | `docs-atlas` | Build-time: a markdown corpus → tag-similarity graph → **baked snapshot**. Runtime: PGlite-free graph + reader that renders baked coordinates with no layout pass — deployable to any static host. |
-| EX-18 | `research-workbench` | A research library over one PGlite database: papers with **attachments** (`manageAttachments`, extracted text), **SKOS concept** tags (`useNoteConcepts`), **citation** links (`manageLinks`), and **revision provenance** (`useNoteProvenance` + `useUpdateNote`), all sharing one selection with a citation `GraphView`. No downloads. |
+| EX-18 | `research-workbench` | A research library over one PGlite database: papers with **attachments** (`manageAttachments`, extracted text), **SKOS concept** tags (`useNoteConcepts`), **citation** links (`manageLinks`), and W3C PROV-style source/derivation history (`ProvenanceRepository` + `useNoteProvenance`), all sharing one selection with a citation `GraphView`. No downloads. |
 | EX-19 | `dual-instance-sync` | Two divergent instances converge by exchanging shards both ways — an idempotent, server-less sync loop. |
 
 ## Shared dataset

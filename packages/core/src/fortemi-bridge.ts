@@ -3,6 +3,7 @@ import type {
   CompletionResponse,
   EmbedRequest,
   EmbedResponse,
+  ProviderProfile,
   ProbeResult,
   StreamChunk,
 } from './capabilities/inference-provider.js'
@@ -31,6 +32,7 @@ export interface BridgeProviderInfo {
     embeddings?: boolean
     streaming?: boolean
   }
+  profile?: ProviderProfile
 }
 
 export interface FortemiInferenceRouter {

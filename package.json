@@ -1,6 +1,6 @@
 {
   "name": "fortemi-react",
-  "version": "2026.8.0",
+  "version": "2026.9.0",
   "private": true,
   "type": "module",
   "license": "AGPL-3.0-only",
@@ -20,6 +20,7 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "test:core": "pnpm --filter @fortemi/core test",
+    "test:workspace": "pnpm test:core && pnpm --filter @fortemi/core build && pnpm --filter @fortemi/graph test && pnpm --filter @fortemi/graph build && pnpm --filter @fortemi/react test && pnpm -r --filter './examples/**' --if-present test",
     "test:db-table-parity": "pnpm --filter @fortemi/core test:db-table-parity",
     "test:portable-contract": "pnpm --filter @fortemi/core test:portable-contract",
     "test:platform-contract": "node packages/core/scripts/run-platform-contract.mjs",

@@ -13,11 +13,19 @@ import {
   type TypedEventBus,
   type EmbedFunction,
   type LlmCompleteFn,
+  type CompletionRequest,
+  type EmbedRequest,
+  type InferenceProvider,
+  type ProviderRegistry,
 } from '@fortemi/core'
 import {
   activateProvider,
   activeConfiguredProviderSupports,
+  applyProviderRouteConfigs,
+  BROWSER_PROVIDER_ID,
   loadProviderConfigs,
+  loadProviderRouteConfigs,
+  syncConfiguredProviders,
 } from './provider-config'
 
 /** Load transformers.js and return a real embed function */
@@ -139,9 +147,15 @@ async function loadWebLLM(onProgress?: (msg: string) => void): Promise<LlmComple
  * Register all capability loaders with the CapabilityManager.
  * Call once at app startup.
  */
-export function setupCapabilities(manager: CapabilityManager, events?: TypedEventBus): void {
+export function setupCapabilities(manager: CapabilityManager, events?: TypedEventBus, providerRegistry?: ProviderRegistry): void {
+  if (providerRegistry && !providerRegistry.get(BROWSER_PROVIDER_ID)) {
+    providerRegistry.add(createBrowserLocalProvider(manager))
+  }
+
   // Semantic: transformers.js embedding (works in all browsers, WASM-based)
   manager.registerLoader('semantic', async () => {
+    const active = providerRegistry?.getActive()
+    if (active?.capabilities.embeddings && active.embed) return
     if (activeConfiguredProviderSupports('semantic')) return
 
     const embedFn = await loadTransformersEmbedFunction((msg) => {
@@ -153,6 +167,8 @@ export function setupCapabilities(manager: CapabilityManager, events?: TypedEven
 
   // LLM: WebLLM (requires WebGPU)
   manager.registerLoader('llm', async () => {
+    const active = providerRegistry?.getActive()
+    if (active?.capabilities.chat && active.complete) return
     if (activeConfiguredProviderSupports('llm')) return
 
     if (typeof navigator === 'undefined' || !('gpu' in navigator)) {
@@ -170,11 +186,90 @@ export function setupCapabilities(manager: CapabilityManager, events?: TypedEven
   })
 
   if (events) {
-    const activeProvider = loadProviderConfigs().find((provider) => provider.active)
-    if (activeProvider && activeProvider.id !== 'browser') {
+    const providerConfigs = loadProviderConfigs()
+    if (providerRegistry) applyProviderRouteConfigs(loadProviderRouteConfigs(), providerRegistry)
+    const activeProvider = providerConfigs.find((provider) => provider.active)
+    if (providerRegistry) {
+      syncConfiguredProviders(providerConfigs, manager, events, providerRegistry).catch((err) => {
+        console.warn('[Providers] Active provider could not be restored:', err)
+      })
+    } else if (activeProvider && activeProvider.id !== 'browser') {
       activateProvider(activeProvider, manager, events).catch((err) => {
         console.warn('[Providers] Active provider could not be restored:', err)
       })
     }
+  }
+}
+
+function createBrowserLocalProvider(manager: CapabilityManager): InferenceProvider {
+  let embedPromise: Promise<EmbedFunction> | null = null
+  let llmPromise: Promise<LlmCompleteFn> | null = null
+
+  const getEmbed = () => {
+    embedPromise ??= loadTransformersEmbedFunction((msg) => {
+      console.log(`[Semantic] ${msg}`)
+      manager.setProgress?.('semantic', msg)
+    })
+    return embedPromise
+  }
+
+  const getLlm = () => {
+    llmPromise ??= loadWebLLM((msg) => {
+      console.log(`[LLM] ${msg}`)
+      manager.setProgress?.('llm', msg)
+    })
+    return llmPromise
+  }
+
+  return {
+    id: BROWSER_PROVIDER_ID,
+    name: 'In-browser ML',
+    tier: 'in-browser',
+    profile: {
+      privacyTier: 'local',
+      costTier: 'free',
+      embeddingDimensions: [384],
+      dataClasses: ['public', 'private', 'sensitive'],
+    },
+    capabilities: {
+      embeddings: true,
+      chat: true,
+      streaming: false,
+      vision: false,
+      toolCalling: false,
+      structuredOutput: false,
+    },
+    async embed(request: EmbedRequest) {
+      const embed = await getEmbed()
+      return {
+        vectors: await embed(request.texts, { task: request.task, model: request.model }),
+        model: request.model ?? 'Xenova/all-MiniLM-L6-v2',
+      }
+    },
+    async complete(request: CompletionRequest) {
+      const complete = await getLlm()
+      return {
+        text: await complete(request.prompt, {
+          maxTokens: request.maxTokens,
+          temperature: request.temperature,
+          task: request.task,
+          model: request.model,
+        }),
+        model: request.model ?? (getSelectedLlmModel() || 'webllm-auto'),
+      }
+    },
+    async listModels() {
+      return [
+        { id: 'Xenova/all-MiniLM-L6-v2', capabilities: { embeddings: true } },
+        ...LLM_PRESETS.map((model) => ({ id: model.id, name: model.label, capabilities: { chat: true } })),
+      ]
+    },
+    async probe() {
+      return { status: 'ok' as const, latencyMs: 0, message: 'Browser-local provider is available after capabilities load.' }
+    },
+    dispose() {
+      embedPromise = null
+      llmPromise = null
+    },
   }
 }

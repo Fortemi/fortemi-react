@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-09-03T17:26:11Z"
+  description: "Make all workspace unit suites part of the local release hard stop"
+entity:
+  id: "urn:aiwg:artifact:.aiwg/release.config"
+  type: "configuration"
+  created_at: "2026-09-03T17:26:11Z"
+  checksum: "sha256:123086cc800a159f8dda1309d7ad29d86700340632da4ed01c8e5d06f2241e20"
+  size_bytes: 2946
+  attributes:
+    change_scope: "release-2026.9.0"
+    base_revision: "e528fbf889f5844dfeaa170eed6e33b67906b54b"
+activity:
+  id: "urn:aiwg:activity:modification:aiwg-release-config:2026-09-03"
+  type: "modification"
+  started_at: "2026-09-03T17:26:10Z"
+  ended_at: "2026-09-03T17:26:11Z"
+  description: "Make all workspace unit suites part of the local release hard stop"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:.aiwg/release.config"
+    activity: "urn:aiwg:activity:modification:aiwg-release-config:2026-09-03"
+    time: "2026-09-03T17:26:11Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:aiwg-release-config:2026-09-03"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e528fbf889f5844dfeaa170eed6e33b67906b54b:.aiwg/release.config"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:.aiwg/release.config"
+      source: "urn:aiwg:artifact:packages/react/src/__tests__/useNoteProvenance.test.ts"
+      derivation_type: "derives_from"
+      activity: "urn:aiwg:activity:modification:aiwg-release-config:2026-09-03"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:aiwg-release-config:2026-09-03"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:.aiwg/release.config"
+    agent: "urn:aiwg:agent:codex-gpt-5"

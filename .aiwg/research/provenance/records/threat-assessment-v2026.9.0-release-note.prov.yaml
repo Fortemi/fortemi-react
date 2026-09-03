@@ -1,0 +1,42 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-09-03T17:26:11Z"
+  description: "Record the balanced enforce threat assessment for the v2026.9.0 release note"
+entity:
+  id: "urn:aiwg:artifact:.aiwg/reports/threat-assessment-v2026.9.0-release-note.json"
+  type: "data"
+  created_at: "2026-09-03T17:26:11Z"
+  checksum: "sha256:8f81ade99600c8788e1020cbff025b47f223dc6c209e297740928ec1798eaae3"
+  size_bytes: 801
+  attributes:
+    change_scope: "release-2026.9.0"
+    decision: "proceed"
+activity:
+  id: "urn:aiwg:activity:validation:release-note-threat-assessment:2026-09-03"
+  type: "validation"
+  started_at: "2026-09-03T17:26:10Z"
+  ended_at: "2026-09-03T17:26:11Z"
+  description: "Assess the release note as a release-note publication surface"
+agent:
+  id: "urn:aiwg:agent:tool:aiwg-threat-assessment-1.0.1"
+  type: "automated_tool"
+  name: "AIWG threat assessment"
+  version: "1.0.1"
+  tool: "tools/security/assess-forge-content.mjs"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:.aiwg/reports/threat-assessment-v2026.9.0-release-note.json"
+    activity: "urn:aiwg:activity:validation:release-note-threat-assessment:2026-09-03"
+    time: "2026-09-03T17:26:11Z"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:.aiwg/reports/threat-assessment-v2026.9.0-release-note.json"
+      source: "urn:aiwg:artifact:docs/content/releases/v2026.9.0.md"
+      derivation_type: "documents"
+      activity: "urn:aiwg:activity:validation:release-note-threat-assessment:2026-09-03"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:validation:release-note-threat-assessment:2026-09-03"
+    agent: "urn:aiwg:agent:tool:aiwg-threat-assessment-1.0.1"
+    role: "validator"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:.aiwg/reports/threat-assessment-v2026.9.0-release-note.json"
+    agent: "urn:aiwg:agent:tool:aiwg-threat-assessment-1.0.1"

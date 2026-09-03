@@ -1,0 +1,42 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-09-03T17:26:11Z"
+  description: "Verify the built EX-18 gallery renders source and citation PROV metadata"
+entity:
+  id: "urn:aiwg:artifact:examples/e2e/research-workbench-provenance.test.ts"
+  type: "test"
+  created_at: "2026-09-03T17:26:11Z"
+  checksum: "sha256:5e1cec43a4499f60e10c51a0eff0ba4dc9e76a93ded89c7b111aad3da94535ea"
+  size_bytes: 1505
+  attributes:
+    change_scope: "release-2026.9.0"
+    base_revision: "e528fbf889f5844dfeaa170eed6e33b67906b54b"
+activity:
+  id: "urn:aiwg:activity:generation:examples-e2e-research-workbench-provenance-test-ts:2026-09-03"
+  type: "generation"
+  started_at: "2026-09-03T17:26:10Z"
+  ended_at: "2026-09-03T17:26:11Z"
+  description: "Verify the built EX-18 gallery renders source and citation PROV metadata"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:examples/e2e/research-workbench-provenance.test.ts"
+    activity: "urn:aiwg:activity:generation:examples-e2e-research-workbench-provenance-test-ts:2026-09-03"
+    time: "2026-09-03T17:26:11Z"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:examples/e2e/research-workbench-provenance.test.ts"
+      source: "urn:aiwg:artifact:examples/research-workbench/src/App.tsx"
+      derivation_type: "tests"
+      activity: "urn:aiwg:activity:generation:examples-e2e-research-workbench-provenance-test-ts:2026-09-03"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:generation:examples-e2e-research-workbench-provenance-test-ts:2026-09-03"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:examples/e2e/research-workbench-provenance.test.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"

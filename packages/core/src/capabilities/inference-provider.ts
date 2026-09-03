@@ -20,13 +20,36 @@ export interface ProviderCapabilities {
   maxContextTokens?: number
 }
 
+export type ProviderPrivacyTier = 'local' | 'host-managed' | 'external'
+export type ProviderCostTier = 'free' | 'low' | 'medium' | 'high'
+export type ProviderDataClass = 'public' | 'private' | 'sensitive' | 'regulated'
+
+export interface ProviderProfile {
+  privacyTier?: ProviderPrivacyTier
+  costTier?: ProviderCostTier
+  maxInputChars?: number
+  embeddingDimensions?: number[]
+  dataClasses?: ProviderDataClass[]
+}
+
 // ---------------------------------------------------------------------------
 // Request / Response types
 // ---------------------------------------------------------------------------
 
+export type InferenceTask =
+  | 'embedding.query'
+  | 'embedding.document'
+  | 'embedding.large-document'
+  | 'chat.general'
+  | 'chat.revision'
+  | 'chat.tagging'
+  | 'chat.linking'
+  | 'vision.general'
+
 export interface EmbedRequest {
   texts: string[]
   model?: string
+  task?: InferenceTask
 }
 
 export interface EmbedResponse {
@@ -38,6 +61,7 @@ export interface EmbedResponse {
 export interface CompletionRequest {
   prompt: string
   model?: string
+  task?: InferenceTask
   maxTokens?: number
   temperature?: number
   systemPrompt?: string
@@ -91,6 +115,7 @@ export interface InferenceProvider {
   readonly name: string
   readonly tier: ProviderTier
   readonly capabilities: ProviderCapabilities
+  readonly profile?: ProviderProfile
 
   /** Generate embeddings for text inputs */
   embed?(request: EmbedRequest): Promise<EmbedResponse>

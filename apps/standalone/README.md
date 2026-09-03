@@ -33,6 +33,12 @@ pnpm --filter @fortemi/standalone preview    # preview the production build loca
 
 Deploy `apps/standalone/dist/` to any static host — Netlify, Vercel, GitHub Pages, Cloudflare Pages, an S3 bucket, or your own machine. With no server component, you fully control where it runs and what it talks to.
 
+## Inference providers
+
+The Settings page configures the same `ProviderRegistry` exposed by `@fortemi/react`. Browser-local transformers.js/WebLLM remains the default and is registered as a lazy local provider. Local no-key OpenAI-compatible servers such as Ollama and LM Studio can be selected directly, or discovered from the Settings page and merged into the saved provider list. Probing a provider refreshes missing or placeholder model defaults from its `/models` endpoint when available. Keyed remote services require a secure host bridge; API keys are never written to localStorage, IndexedDB, PGlite, notes, or Knowledge Shards.
+
+Advanced deployments can configure task routes on that registry, for example a cheap/local query embedder, a larger document embedder, and a separate revision model. The standalone settings persist provider profiles and ordered provider chains for each task, with model overrides, fallback control, privacy tier, cost ceiling, data class, input length, and embedding dimension requirements. Settings can draft a conservative local-first route profile from the currently selectable providers, warns when any selected route provider is unavailable or does not satisfy the route profile, and can probe the resolved route without sending inference payloads.
+
 ## Browser support
 
 | Browser | Storage | Notes |

@@ -179,7 +179,7 @@ Use `executionMode="worker"` for large imports, vector-heavy graph work, or any 
 | `useJobQueue` | AI job queue status and control |
 | `useRelatedNotes` | Embedding-based related notes |
 | `useNoteConcepts` | SKOS concept tags for a note |
-| `useNoteProvenance` | Revision and job provenance timeline |
+| `useNoteProvenance` | Stored PROV edges plus revision and job provenance timeline |
 | `useExportShard` | Knowledge Shard export |
 | `useImportShard` | Knowledge Shard import |
 | `useShardPrefetch` | Background warming and SHA verification for static shard assets |

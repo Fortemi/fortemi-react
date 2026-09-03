@@ -1,0 +1,46 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-09-03T17:26:11Z"
+  description: "Publish the Core inference routing surface and advance the version constant to 2026.9.0"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/index.ts"
+  type: "code"
+  created_at: "2026-09-03T17:26:11Z"
+  checksum: "sha256:47dad170f0f5caa1f550c420a114bdf25c747a69000474cb8c322ab0a302d612"
+  size_bytes: 23848
+  attributes:
+    change_scope: "release-2026.9.0"
+    base_revision: "e528fbf889f5844dfeaa170eed6e33b67906b54b"
+activity:
+  id: "urn:aiwg:activity:modification:packages-core-src-index-ts:2026-09-03"
+  type: "modification"
+  started_at: "2026-09-03T17:26:10Z"
+  ended_at: "2026-09-03T17:26:11Z"
+  description: "Publish the Core inference routing surface and advance the version constant to 2026.9.0"
+agent:
+  id: "urn:aiwg:agent:codex-gpt-5"
+  type: "ai_assistant"
+  name: "Codex"
+  version: "gpt-5"
+  tool: "codex"
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/index.ts"
+    activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:2026-09-03"
+    time: "2026-09-03T17:26:11Z"
+  used:
+    - activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:2026-09-03"
+      entity: "urn:git:git@git.integrolabs.net:Fortemi/fortemi-react.git:e528fbf889f5844dfeaa170eed6e33b67906b54b:packages/core/src/index.ts"
+      role: "previous_revision"
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/index.ts"
+      source: "urn:aiwg:artifact:docs/content/releases/v2026.9.0.md"
+      derivation_type: "implements"
+      activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:2026-09-03"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:packages-core-src-index-ts:2026-09-03"
+    agent: "urn:aiwg:agent:codex-gpt-5"
+    role: "primary_author"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/index.ts"
+    agent: "urn:aiwg:agent:codex-gpt-5"
