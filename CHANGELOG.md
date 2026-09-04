@@ -4,6 +4,33 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.9.1 - 2026-09-03
+
+### `@fortemi/core` - source-addressed live persistence contract (#404)
+
+- Consume Fortemi's authority-owned `source-note-upsert/1.0.0` contract for
+  both PGlite and RecordStore, including the canonical scoped identity
+  `(tenant, memory, source_namespace, external_id)`, additive batch journal
+  state, exact replay handling, and the explicit `version`, `replace`, and
+  `conflict` mutation policies.
+- Run the byte-identical upstream conformance fixture from
+  `packages/core/schemas/source-note-upsert/v1.conformance.json` and pin the
+  producer receipt in `packages/core/schemas/source-note-upsert/contract.receipt.json`.
+- Keep live source identities outside current Knowledge Shard profiles and
+  continue to emit the typed `source-identity-outside-profile` loss instead of
+  claiming shard portability for this live-only state.
+- Bind the consumer receipt to exact Fortemi and fortemi-react revisions,
+  fixture hashes, and CI runs. The exact current consumer head is
+  `10099c603e2f465730d2500eb95d112ace07e0ea`, with green PR run 51975 and
+  green `origin/main` run 51991.
+
+### Claim scope
+
+- This release qualifies the one named live-persistence contract only. It does
+  not change Fortemi #1081's suite-level `NO-GO` audit, does not add a new
+  Knowledge Shard profile, and does not establish unqualified portability,
+  parity, or complete backup.
+
 ## v2026.9.0 - 2026-09-03
 
 ### Dataset execution contracts and workflows
