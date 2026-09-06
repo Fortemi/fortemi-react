@@ -24,6 +24,13 @@ All notable changes to fortemi-react are documented here.
   `10099c603e2f465730d2500eb95d112ace07e0ea`, with green PR run 51975 and
   green `origin/main` run 51991.
 
+### Package publication verification (#415)
+
+- Pack each package once per registry workflow and publish the inspected tarball.
+- Verify registry SHA512 integrity and downloaded release assets against the
+  local tarballs and SHA256SUMS manifest; retain public npm provenance.
+- Signed publication and external artifact receipts remain pending.
+
 ### Claim scope
 
 - This release qualifies the one named live-persistence contract only. It does
