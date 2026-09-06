@@ -4,6 +4,18 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.9.2 - 2026-09-06
+
+### Publication verification (#415)
+
+- Persist the generated checksum manifest beside inspected package tarballs so
+  the final registry/release verifier can read the same manifest that was uploaded.
+- Cover the release-creation to verification handoff with a regression test.
+- The 2026.9.1 registry and release tarballs passed independent byte comparisons;
+  its failed final workflow check was a missing local manifest, not evidence of
+  differing published package bytes. Existing artifacts remain unchanged.
+
+
 ## v2026.9.1 - 2026-09-03
 
 ### `@fortemi/core` - source-addressed live persistence contract (#404)

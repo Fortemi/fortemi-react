@@ -18,7 +18,7 @@
 //   RELEASE_NOTES_DIR  dir holding <tag>.md release notes (default docs/releases,
 //                      fallback docs/content/releases)
 
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createChecksumManifest } from './checksum-manifest.mjs';
 
@@ -131,6 +131,7 @@ async function main() {
   });
 
   const manifest = createChecksumManifest(assets);
+  writeFileSync(join(packDir, CHECKSUM_MANIFEST), manifest);
   assets.push({
     name: CHECKSUM_MANIFEST,
     bytes: Buffer.from(manifest, 'utf8'),

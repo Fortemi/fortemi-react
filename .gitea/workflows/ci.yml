@@ -73,6 +73,8 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends jq
           tools/release/cut-tag.test.sh
+      - name: Release artifact and publication handoff tests
+        run: node --test tools/release/*.test.mjs
       - name: OpenBao Git credential bootstrap tests
         run: tools/git/openbao-approle.test.sh
       - name: Shard + AIWG index conformance gate

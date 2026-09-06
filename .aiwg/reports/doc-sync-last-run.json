@@ -2,20 +2,18 @@
   "date": "2026-09-06",
   "direction": "code-to-docs",
   "scope": [
-    "packages/**",
-    "apps/**",
-    "docs/**",
-    "README.md",
+    "tools/release",
+    "package.json",
+    "packages/*/package.json",
+    "apps/standalone",
+    "docs",
     "CHANGELOG.md"
   ],
-  "report": ".aiwg/reports/doc-sync-2026-09-06-lane-a-release.md",
-  "changed_files": [
-    "CHANGELOG.md",
-    "docs/content/releases/v2026.9.1.md"
-  ],
+  "report": ".aiwg/reports/doc-sync-2026-09-06-release-2026.9.2.md",
   "remaining_gates": [
+    "release checks",
+    "CI",
     "signed publication",
-    "registry and release artifact receipts",
-    "npm provenance"
+    "registry and release receipts"
   ]
 }
