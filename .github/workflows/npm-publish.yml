@@ -156,12 +156,13 @@ jobs:
 
       - name: Pack and inspect artifacts
         env:
+          RELEASE_PACK_DIR: /tmp/fortemi-publish-check
           RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
         run: |
           set -euo pipefail
           TAG_VERSION="${RELEASE_TAG#v}"
           export TAG_VERSION
-          PACK_DIR="/tmp/fortemi-publish-check"
+          PACK_DIR="${RELEASE_PACK_DIR:?RELEASE_PACK_DIR is required}"
           rm -rf "$PACK_DIR"
           mkdir -p "$PACK_DIR"
 
@@ -211,9 +212,11 @@ jobs:
         # basename, NOT the full path), and optionally environment. A 404 PUT
         # means one of these doesn't match the per-package npmjs.org config.
         env:
+          RELEASE_PACK_DIR: /tmp/fortemi-publish-check
           RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
         run: |
           set -euo pipefail
+          PACK_DIR="${RELEASE_PACK_DIR:?RELEASE_PACK_DIR is required}"
           echo "── OIDC publish context ──"
           echo "  repository:       ${GITHUB_REPOSITORY}"
           echo "  repository_owner: ${GITHUB_REPOSITORY_OWNER}"
@@ -237,12 +240,14 @@ jobs:
             package_dir="$1"
             package_name="$(node -p "require('./${package_dir}/package.json').name")"
             package_version="$(node -p "require('./${package_dir}/package.json').version")"
+            PACKAGE_TGZ="$PACK_DIR/fortemi-${package_name##*/}-${package_version}.tgz"
+            test -s "$PACKAGE_TGZ"
 
             if npm view "${package_name}@${package_version}" version >/dev/null 2>&1; then
               echo "${package_name}@${package_version} already exists on npmjs.org; skipping publish"
             else
               echo "Publishing ${package_name}@${package_version} to npmjs.org"
-              (cd "$package_dir" && pnpm publish --provenance --access public --no-git-checks --tag "$NPM_TAG") 2>&1 | tee "/tmp/publish-${package_name##*/}.txt" || {
+              npm publish "$PACKAGE_TGZ" --provenance --access public --tag "$NPM_TAG" 2>&1 | tee "/tmp/publish-${package_name##*/}.txt" || {
                 if grep -qE "404.*PUT|is not in this registry" "/tmp/publish-${package_name##*/}.txt"; then
                   echo "✗ 404 PUT — trusted-publisher config mismatch for ${package_name}" >&2
                   echo "  Operator action: https://www.npmjs.com/package/${package_name}/access" >&2
@@ -325,3 +330,14 @@ jobs:
           RELEASE_REPO: ${{ github.repository }}
           RELEASE_PACK_DIR: /tmp/fortemi-publish-check
         run: node tools/release/create-repo-release.mjs
+
+      - name: Verify registry and release attachment digests
+        env:
+          RELEASE_PLATFORM: github
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+          RELEASE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_API: ${{ github.api_url }}
+          RELEASE_REPO: ${{ github.repository }}
+          RELEASE_PACK_DIR: /tmp/fortemi-publish-check
+          NPM_REGISTRY: https://registry.npmjs.org
+        run: node tools/release/verify-published-artifacts.mjs

@@ -126,12 +126,13 @@ jobs:
 
       - name: Pack and inspect artifacts
         env:
+          RELEASE_PACK_DIR: /tmp/fortemi-publish-check
           RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
         run: |
           set -euo pipefail
           TAG_VERSION="${RELEASE_TAG#v}"
           export TAG_VERSION
-          PACK_DIR="/tmp/fortemi-publish-check"
+          PACK_DIR="${RELEASE_PACK_DIR:?RELEASE_PACK_DIR is required}"
           rm -rf "$PACK_DIR"
           mkdir -p "$PACK_DIR"
 
@@ -182,9 +183,11 @@ jobs:
 
       - name: Publish packages to Gitea registry
         env:
+          RELEASE_PACK_DIR: /tmp/fortemi-publish-check
           RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
         run: |
           set -euo pipefail
+          PACK_DIR="${RELEASE_PACK_DIR:?RELEASE_PACK_DIR is required}"
           NODE_AUTH_TOKEN="${GT_PUBLISH_TOKEN:-}"
           if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
             echo "GT_PUBLISH_TOKEN is required for internal Gitea package publishing" >&2
@@ -210,12 +213,14 @@ jobs:
             package_dir="$1"
             package_name="$(node -p "require('./${package_dir}/package.json').name")"
             package_version="$(node -p "require('./${package_dir}/package.json').version")"
+            PACKAGE_TGZ="$PACK_DIR/fortemi-${package_name##*/}-${package_version}.tgz"
+            test -s "$PACKAGE_TGZ"
 
             if npm view "${package_name}@${package_version}" version --registry "$REGISTRY" >/dev/null 2>&1; then
               echo "${package_name}@${package_version} already exists in Gitea; skipping publish"
             else
               echo "Publishing ${package_name}@${package_version} to Gitea"
-              (cd "$package_dir" && pnpm publish --registry "$REGISTRY" --access public --no-git-checks --tag "$NPM_TAG")
+              npm publish "$PACKAGE_TGZ" --registry "$REGISTRY" --access public --tag "$NPM_TAG"
             fi
 
             for attempt in 1 2 3 4 5; do
@@ -259,3 +264,17 @@ jobs:
           set -euo pipefail
           export RELEASE_TOKEN="${GT_PUBLISH_TOKEN:?GT_PUBLISH_TOKEN is required}"
           node tools/release/create-repo-release.mjs
+
+      - name: Verify registry and release attachment digests
+        env:
+          RELEASE_PLATFORM: gitea
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+          RELEASE_API: ${{ github.server_url }}/api/v1
+          RELEASE_REPO: ${{ github.repository }}
+          RELEASE_PACK_DIR: /tmp/fortemi-publish-check
+        run: |
+          set -euo pipefail
+          export RELEASE_TOKEN="${GT_PUBLISH_TOKEN:?GT_PUBLISH_TOKEN is required}"
+          REGISTRY="${GITHUB_SERVER_URL%/}/api/packages/${GITHUB_REPOSITORY_OWNER}/npm/"
+          export NPM_REGISTRY="$REGISTRY"
+          node tools/release/verify-published-artifacts.mjs
