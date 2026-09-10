@@ -6,14 +6,13 @@ import { useState } from 'react'
 import { useExportShard, type ExportProgress } from '@fortemi/react'
 
 export function ShardExportDialog() {
-  const { exportShard, isExporting, progress, error } = useExportShard()
-  const [includeEmbeddings, setIncludeEmbeddings] = useState(false)
+  const { exportShard, isExporting, progress, error, report } = useExportShard()
   const [success, setSuccess] = useState(false)
 
   const handleExport = async () => {
     setSuccess(false)
     try {
-      await exportShard({ includeEmbeddings })
+      await exportShard()
       setSuccess(true)
     } catch {
       // Error captured by hook
@@ -24,36 +23,33 @@ export function ShardExportDialog() {
     <div style={{ border: '1px solid #e0e0e0', borderRadius: 8, padding: 16, marginBottom: 12 }}>
       <h4 style={{ margin: '0 0 8px', fontSize: 13 }}>Export Knowledge Shard</h4>
       <p style={{ color: '#666', fontSize: 12, margin: '0 0 12px' }}>
-        Export all notes, collections, tags, and links as a portable .shard archive
-        compatible with the fortemi server.
+        Profile: 1.2.0/core-v1. Notes, collections, tags, templates, and links.
+        Attachments: references only; file bytes are excluded.
+        Embeddings, revision history, and advanced graph data are outside this profile.
       </p>
 
-      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, marginBottom: 12, cursor: 'pointer' }}>
-        <input
-          type="checkbox"
-          checked={includeEmbeddings}
-          onChange={(e) => setIncludeEmbeddings(e.target.checked)}
-          disabled={isExporting}
-        />
-        <span>
-          Include embeddings
-          <span style={{ color: '#999', marginLeft: 4 }}>(can significantly increase file size)</span>
-        </span>
-      </label>
+      {report && report.losses.length > 0 && (
+        <div role="status" style={{ fontSize: 12, marginBottom: 12 }}>
+          <strong>Export omissions and changes</strong>
+          <ul style={{ paddingLeft: 20 }}>
+            {report.losses.map((loss, index) => <li key={index}>{loss.message}</li>)}
+          </ul>
+        </div>
+      )}
 
       {progress && (
         <ProgressBar progress={progress} />
       )}
 
       {error && (
-        <div style={{ background: '#fce8e6', color: '#c5221f', padding: 8, borderRadius: 4, fontSize: 12, marginBottom: 8 }}>
+        <div role="alert" style={{ background: '#fce8e6', color: '#c5221f', padding: 8, borderRadius: 4, fontSize: 12, marginBottom: 8 }}>
           Export failed: {error.message}
         </div>
       )}
 
       {success && (
         <div style={{ background: '#e6f4ea', color: '#137333', padding: 8, borderRadius: 4, fontSize: 12, marginBottom: 8 }}>
-          Export complete. Check your downloads folder.
+          core-v1 export complete. Attachment bytes excluded.
         </div>
       )}
 

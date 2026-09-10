@@ -14,7 +14,7 @@ interface ShardBackupSectionProps {
 }
 
 export function ShardBackupSection({ appTag, appName }: ShardBackupSectionProps) {
-  const { exportShard, isExporting, error: exportError } = useExportShard()
+  const { exportShard, isExporting, error: exportError, report } = useExportShard()
   const { importShard, isImporting, result } = useImportShard()
   const [isDragOver, setIsDragOver] = useState(false)
   const [exportSuccess, setExportSuccess] = useState(false)
@@ -53,7 +53,7 @@ export function ShardBackupSection({ appTag, appName }: ShardBackupSectionProps)
   return (
     <details style={{ border: '1px solid #e0e0e0', borderRadius: 8, padding: 12, marginBottom: 16, background: '#f8f9fa' }}>
       <summary style={{ cursor: 'pointer', fontSize: 13, color: '#666', userSelect: 'none' }}>
-        Backup &amp; Restore {appName}
+        Export &amp; Import {appName}
       </summary>
 
       <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'flex-start', flexWrap: 'wrap' }}>
@@ -104,9 +104,14 @@ export function ShardBackupSection({ appTag, appName }: ShardBackupSectionProps)
       </div>
 
       {/* Feedback */}
+      {report && report.losses.length > 0 && (
+        <ul role="status" style={{ marginTop: 6, paddingLeft: 20, fontSize: 11 }}>
+          {report.losses.map((loss, index) => <li key={index}>{loss.message}</li>)}
+        </ul>
+      )}
       {exportSuccess && (
         <div style={{ marginTop: 6, fontSize: 11, color: '#137333' }}>
-          Exported! Check your downloads folder.
+          core-v1 export complete. Attachment bytes excluded.
         </div>
       )}
       {exportError && (
@@ -129,7 +134,8 @@ export function ShardBackupSection({ appTag, appName }: ShardBackupSectionProps)
       )}
 
       <div style={{ marginTop: 6, fontSize: 10, color: '#aaa' }}>
-        Export includes only notes tagged <code>{appTag}</code> and their links.
+        1.2.0/core-v1; note scope: <code>{appTag}</code>.
+        Attachments: references only. Embeddings and revision history excluded.
       </div>
     </details>
   )

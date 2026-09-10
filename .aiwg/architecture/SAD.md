@@ -26,6 +26,12 @@ fortemi-react runs entirely in the browser (no server required after initial loa
 
 ### 1.3 Monorepo Structure
 
+Default product shard exports use report-bearing `1.2.0/core-v1`, with visible
+losses and reference-only attachment policy (React #423, ADR-011 amendment).
+Historical legacy archives remain separate. The current product-to-server gate
+also requires Fortemi/fortemi#1145, which preserves validated wire tags during
+native restore. These source changes do not widen the existing released matrix.
+
 The project is organized as a pnpm workspace monorepo:
 
 | Package | Path | Purpose |

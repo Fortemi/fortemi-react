@@ -2804,10 +2804,26 @@ function useExportShard(): {
   isExporting: boolean
   progress: ExportProgress | null
   error: Error | null
+  report: ShardCapabilityReport | null
 }
 ```
 
-Exports the current archive as a Knowledge Shard and triggers a browser download.
+Exports current data through `exportShardWithReport` and triggers a browser download
+only after success. The default is `1.2.0/core-v1`: attachment references are
+included, attachment bytes and advanced components are excluded. `report` exposes
+the selected capability and every reported omission or normalization, including
+unsupported-profile failures. Render it alongside `error` in custom export UIs.
+Embedding, embedding-set, and materialized-selector options are rejected for
+`core-v1`; blob-sidecar and clustered-file requests are rejected by its producer.
+Explicit `full-v1` requires `schemaVersion: '2.0.0'` and its own supported-state
+requirements; the provider's BlobStore is supplied unless overridden.
+
+The core `exportShard(db, options)` API still deliberately emits historical
+unprofiled React-local archives when no profile is supplied. Historical import
+behavior is unchanged. Those legacy envelopes are not renamed or advertised as a
+named server profile. The hook no longer selects that legacy producer by default.
+Cross-repository claims remain limited to exact receipt-bound profiles and
+participants; the suite audit remains `NO-GO`.
 
 ---
 

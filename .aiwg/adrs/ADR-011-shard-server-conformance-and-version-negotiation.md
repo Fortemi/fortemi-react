@@ -19,6 +19,25 @@ The Knowledge Shard (`shard/*`) is fortemi-react's interchange format with the R
 
 ## Decision
 
+### Default Product Export Amendment (#423)
+
+`useExportShard` and both standalone export surfaces select the report-bearing
+`1.2.0/core-v1` producer by default. They expose the profile, reference-only
+attachment policy, omissions, and errors. Unsupported embedding requests fail;
+the core producer also rejects unsupported sidecar/cluster options. Historical
+unprofiled archives retain their explicit core API and existing import semantics.
+
+The product download regression uses real PGlite and the built React hook.
+The executable `apps/standalone/scripts/verify-default-export-server.mjs` consumes
+that download against a clean server, verifies dry-run and malformed-input zero
+mutation, repeat import, and source-field preservation through re-export.
+Released Fortemi 2026.9.9 rejects seeded `docs:...` tags during apply despite
+successful wire validation. Fortemi/fortemi#1145 corrects that restore path;
+source-level passing tests do not qualify the old server release. This amendment
+changes dispatch and runtime restoration, not the authority-owned wire schema.
+Release/package receipts remain required before closing #423. Suite `NO-GO` and
+the separate full-v1 snapshot/native-restore issue #424 remain unchanged.
+
 **1. Align the shard entity contract to a named, server-owned profile.**
 Concretely: rename `binary_sources` -> `attachments`; serialize
 `note.collection_id` and `link.to_url`; implement `template` and

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="UTF-8"><title>Export hook regression</title></head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      import { createElement as h } from 'react'
+      import { createRoot } from 'react-dom/client'
+      import { FortemiProvider, useFortemiContext, useExportShard } from '@fortemi/react'
+
+      function Probe() {
+        const { db } = useFortemiContext()
+        const { exportShard, error, report, isExporting } = useExportShard()
+        const run = (options) => exportShard(options).catch(() => {})
+        const exportWithLoss = async () => {
+          await db.query("INSERT INTO embedding_set (id, model_name, dimensions, name) VALUES ($1, 'test', 384, 'Test omission')", [crypto.randomUUID()])
+          await run()
+        }
+        return h('main', null,
+          h('button', { disabled: isExporting, onClick: exportWithLoss }, 'Export with omission'),
+          h('button', { disabled: isExporting, onClick: () => run({ includeEmbeddings: true }) }, 'Request embeddings'),
+          h('button', { disabled: isExporting, onClick: () => run({ includeBlobs: true }) }, 'Request bytes'),
+          h('button', { disabled: isExporting, onClick: () => run({ profile: 'unknown-profile' }) }, 'Request unknown profile'),
+          h('output', { 'aria-label': 'Export error' }, error?.message ?? ''),
+          h('output', { 'aria-label': 'Export report' }, report ? JSON.stringify(report) : '')
+        )
+      }
+      createRoot(document.getElementById('root')).render(h(FortemiProvider, { persistence: 'memory', archiveName: 'export-hook-regression' }, h(Probe)))
+    </script>
+  </body>
+</html>
