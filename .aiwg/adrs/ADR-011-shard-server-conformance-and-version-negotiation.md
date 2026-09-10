@@ -19,6 +19,29 @@ The Knowledge Shard (`shard/*`) is fortemi-react's interchange format with the R
 
 ## Decision
 
+### Archival API Separation Preparation (#424)
+
+Expose `importFullV1Snapshot` and `exportFullV1Snapshot` through the public Core
+entry point as explicitly archival operations, with a narrow import option type
+and malformed-input reports before mutation. Snapshot conflict policy is per
+authority tuple; native repository records are independent. Tests retain exact
+logical-file roundtrip while native data exists and changes.
+
+This is the first implementation step of #424, not its native-restore solution.
+The intended repair must separately materialize declared records through native
+repositories/search/traversal, reconcile native conflicts transactionally, and
+stop implicit snapshot precedence over current-state exports. The current
+dispatcher still has that defect. Existing snapshot receipts do not prove native
+restore, and native/published clean-destination acceptance remains open.
+No authority schema or historical fixture bytes change in this step; coordinate
+the later native matrix with Fortemi/fortemi#1059 and retain suite NO-GO.
+
+The advertisement's previously recorded implementation/presence receipt bytes
+are frozen from `b85d8fe6e527afdcd34694bbcf86afaa04edbf9f` under
+`schemas/historical/advertisement-b85d8fe6/`. Its existing identities remain
+unchanged; current implementation/presence receipts continue to check current
+source independently. This is not a new producer or runtime qualification.
+
 ### Scoped Full-v1 Export Amendment (#425)
 
 Live scope selectors must be nonempty. Collection and tag cannot be combined;

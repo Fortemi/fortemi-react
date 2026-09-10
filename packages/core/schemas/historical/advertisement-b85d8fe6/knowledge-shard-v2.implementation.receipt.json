@@ -21,8 +21,8 @@
     "sha256": "054da5528276806b9be69dcfff364a6969b72344045f05f9f6fcbeaca82a7a59"
   },
   "implementation": {
-    "scripts/generate-pglite-full-v1-receipt.mjs": "845b91cfbecc6dc0dac6d3ea34f09823d78b0b8e25bde9f454d9d7a4ebda16c5",
-    "src/shard/full-v1-store.ts": "82b12d5a614c88c93889f5e441c851b1c9a88f7fe32e0b57050b1652e13b44df",
+    "scripts/generate-pglite-full-v1-receipt.mjs": "afb2216abd0c6cfccb61694ff20de92a353fe7d9db5f6aa364e971ceb214590c",
+    "src/shard/full-v1-store.ts": "cc19742768a38f6966bdc3bdbfc352105d203ba0841036b9ce2b22ae11a5f320",
     "src/shard/live-full-v1.ts": "903b9b78a21b23c23319a9e72cf291e9d52a362bc216d691ba3fb3a791f7dc98",
     "src/shard/schema-validator.ts": "b45e349a43d472bfd0411adc4e87a2852ec43ad28f8a7ded64f0cca228c62c69",
     "src/shard/shard-import.ts": "71036913aa6d3b749bba1ef79ead1e5255026722fd5c2daf318efd3106cd5560",
@@ -35,7 +35,6 @@
     "src/migrations/0023_source_metadata_purge.ts": "3afa0abb3ddb2d99a167102c9eb5d79eec98d638c03e9bead8ddb73a3ab812f4",
     "src/migrations/index.ts": "277471c2efeb534b3f76f7eafb7f0ed934e9752c82a56366362de8d2335fd415",
     "src/__tests__/shard/full-v1-store.test.ts": "f3debf7794e1fc89ec1c05fb7dcc31814c8f9beea038ff7ce72e392ca5441c08",
-    "src/__tests__/shard/full-v1-public.test.ts": "74a214596be7e50d1882a5a09bb170495063aee7645a79b01e0b29cc774e8c2d",
     "schemas/knowledge-shard-v2.schema.receipt.json": "70657d6bcd501b684d0a143bcbf7c2a0d41fe909ef3aff32b1fb1f542506a53a"
   },
   "evidence": {
@@ -53,8 +52,7 @@
       "unrepresentable-live-state-rejected-with-typed-loss",
       "validate-before-mutation",
       "repeat-import-converges",
-      "exact-logical-files-reexported",
-      "public-archival-api-independent-of-native-state-not-native-restore"
+      "exact-logical-files-reexported"
     ]
   }
 }

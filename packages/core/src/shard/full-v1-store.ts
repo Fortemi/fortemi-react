@@ -21,6 +21,10 @@ import { componentPresenceLosses, presenceLosses } from './presence.js'
 const decoder = new TextDecoder()
 const encoder = new TextEncoder()
 
+/** Archival storage has no native row batching or native import progress phases. */
+export type FullV1SnapshotImportOptions = Pick<ImportOptions,
+  'conflictStrategy' | 'blobStore' | 'verifySignature' | 'trustStore'>
+
 function emptyCounts(): ImportCounts {
   return {
     notes: 0, collections: 0, templates: 0, tags: 0, links: 0,
@@ -99,10 +103,11 @@ async function signatureError(
   return `Full-v1 publisher verification failed: ${verdict.reason}`
 }
 
+/** Persist a validated archival snapshot, not native repository state. */
 export async function importFullV1Snapshot(
   db: DatabaseClient,
   data: Uint8Array | ArrayBuffer,
-  options?: ImportOptions,
+  options?: FullV1SnapshotImportOptions,
 ): Promise<ImportResult> {
   const started = performance.now()
   const counts = emptyCounts()
@@ -110,9 +115,26 @@ export async function importFullV1Snapshot(
     backend: 'pglite', operation: 'import', requestedProfile: 'full-v1',
     requestedSchemaVersion: '2.0.0',
   })
-  const files = unpackTarGz(data instanceof ArrayBuffer ? new Uint8Array(data) : data)
-  const archiveSha256 = await sha256Hex(data instanceof ArrayBuffer ? new Uint8Array(data) : data)
-  const manifest = JSON.parse(decoder.decode(files.get('manifest.json'))) as ShardManifest
+  const bytes = data instanceof ArrayBuffer ? new Uint8Array(data) : data
+  let files: Map<string, Uint8Array>
+  let manifest: ShardManifest
+  try {
+    files = unpackTarGz(bytes)
+    const manifestBytes = files.get('manifest.json')
+    if (!manifestBytes) throw new Error('Missing manifest')
+    const parsed: unknown = JSON.parse(decoder.decode(manifestBytes))
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('Manifest is not an object')
+    }
+    manifest = parsed as ShardManifest
+  } catch {
+    return {
+      success: false, counts, skipped: {}, warnings: [],
+      errors: ['Invalid full-v1 archive or manifest.'],
+      duration_ms: performance.now() - started, capability_report: capability,
+    }
+  }
+  const archiveSha256 = await sha256Hex(bytes)
   if (manifest.version !== '2.0.0' || manifest.profile !== 'full-v1') {
     return {
       success: false, counts, skipped: {}, warnings: [],
@@ -123,7 +145,7 @@ export async function importFullV1Snapshot(
   const runtimeLosses = presenceLosses(
     'full-v1', 'manifest', manifest as unknown as Record<string, unknown>,
   )
-  for (const component of manifest.components) {
+  for (const component of Array.isArray(manifest.components) ? manifest.components : []) {
     try {
       runtimeLosses.push(...componentPresenceLosses(
         'full-v1', component, componentRecords(component, files.get(FULL_V1_COMPONENT_FILES[component].file)),
@@ -255,6 +277,7 @@ export async function importFullV1Snapshot(
   }
 }
 
+/** Re-emit the stored archival state; intentionally excludes native repository changes. */
 export async function exportFullV1Snapshot(
   db: DatabaseClient,
   blobStore: NonNullable<ImportOptions['blobStore']>,

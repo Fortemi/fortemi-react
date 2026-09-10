@@ -384,7 +384,10 @@ requireReceipt(
   'Knowledge Shard 2.0 revision 20 historical lineage drifted',
 )
 for (const [filename, binding] of Object.entries(historicalLineage.receipts)) {
-  const actual = sha256(readFileSync(resolve(packageRoot, 'schemas', filename)))
+  // Advertisement lineage is immutable evidence, not the current implementation.
+  const frozenPath = ['knowledge-shard-v2.implementation.receipt.json', 'knowledge-shard-v2.presence.receipt.json']
+    .includes(filename) ? `historical/advertisement-b85d8fe6/${filename}` : filename
+  const actual = sha256(readFileSync(resolve(packageRoot, 'schemas', frozenPath)))
   requireReceipt(
     binding.path === `packages/core/schemas/${filename}` && actual === binding.sha256,
     `Knowledge Shard 2.0 historical receipt drifted: ${filename}`,

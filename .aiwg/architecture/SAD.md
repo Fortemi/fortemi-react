@@ -22,6 +22,13 @@ embedding-only set filters, and rejection of all scoped snapshot exports.
 Relationship/attachment closure is documented in the public API reference;
 snapshot persistence is not a native-restore or suite portability claim.
 
+The first #424 implementation step exposes explicitly named archival snapshot
+APIs through the public Core entry point, with pre-mutation malformed-input
+reports and tuple-level conflict semantics. This does not yet repair the ordinary
+full-v1 import/export dispatch: native restoration and stale-snapshot precedence
+remain open acceptance gates in ADR-011. Archival byte-preservation tests remain
+separate from native repository/search/traversal and post-import CRUD tests.
+
 fortemi-react runs entirely in the browser (no server required after initial load). It:
 - Persists data in PGlite (PostgreSQL WASM) via OPFS
 - Exposes 38 MCP tools via a Service Worker REST API

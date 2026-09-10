@@ -142,6 +142,7 @@ export { exportShard, exportShardWithReport } from './shard-export.js'
 // Import pipeline
 export { importShard } from './shard-import.js'
 export { importFullV1Snapshot, exportFullV1Snapshot } from './full-v1-store.js'
+export type { FullV1SnapshotImportOptions } from './full-v1-store.js'
 
 // Schema validation
 export {

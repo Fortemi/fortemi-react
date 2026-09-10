@@ -1,8 +1,10 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-09-03T21:54:11Z"
-  record_count: 79
+  updated_at: "2026-09-10T07:02:00Z"
+  record_count: 80
 records:
+  - entity: "urn:aiwg:artifact:packages/core/src/shard/full-v1-store.ts"
+    record: "records/lane-b-424-archival-api.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/schemas/source-note-upsert/contract.receipt.json"
     record: "records/source-note-upsert-consumer-404.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/schemas/source-note-upsert/v1.conformance.json"

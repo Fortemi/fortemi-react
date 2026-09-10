@@ -161,6 +161,24 @@ SKOS, provenance, embedding, and graph records when the AIWG source is fully
 representable. Derived, defaulted, or omitted source information returns
 `archive: null` with typed `losses`; lossy output is never labeled `full-v1`.
 
+### Archival Snapshots and Native Restore
+
+`importFullV1Snapshot(db, archive, options)` and
+`exportFullV1Snapshot(db, blobStore)` are explicit archival operations exported
+by `@fortemi/core`. They preserve the validated `2.0.0/full-v1` logical files
+and required bytes, not native repository/search state. Import conflict policy
+applies to the stored archive tuple, not native note IDs. `counts.notes` remains
+zero; `component_counts` describes archival records. Native CRUD is intentionally
+excluded from an explicitly requested archival export. Native batching/progress
+options are not part of `FullV1SnapshotImportOptions`.
+
+Native `full-v1` restore remains tracked in #424. The current `importShard`
+full-v1 path still delegates to archival storage, and implicit snapshot selection
+can omit later native changes. Do not use that path as native recovery or as
+proof of a current-state backup. These explicit operations separate the archival
+guarantee; they do not complete the native restore repair or widen historical
+receipts. Reduced `core-v1` import uses its existing native path.
+
 PGlite uses the same rule for `2.0.0/full-v1`. A previously imported full
 snapshot re-exports its complete logical file set; otherwise the exporter
 materializes all 33 files from live domain tables, requires every referenced
