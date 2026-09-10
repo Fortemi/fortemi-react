@@ -109,6 +109,14 @@ function coreV1OptionErrors(options: ExportOptions): string[] {
   return errors
 }
 
+function hasFullV1ScopeOptions(options: ExportOptions): boolean {
+  return Boolean(
+    options.collectionId
+    || options.tag
+    || (options.embeddingSetIds?.filter(Boolean).length ?? 0) > 0,
+  )
+}
+
 function toCoreV1Note(note: ShardNote): ShardNote {
   return {
     ...note,
@@ -299,16 +307,34 @@ export async function exportShardWithReport(
          ) AS present`,
       )
       if (persisted.rows[0]?.present) {
+        if (hasFullV1ScopeOptions(options)) {
+          return {
+            success: false,
+            archive: null,
+            errors: [
+              'Persisted full-v1 snapshots cannot be filtered by collection, tag, or embedding set; use a live scoped export or export the complete persisted snapshot.',
+            ],
+            capability_report: capabilityReport,
+          }
+        }
         return exportFullV1Snapshot(db, options.blobStore)
       }
       const coreArchive = await exportShardBytes(
         db,
-        { profile: 'core-v1', schemaVersion: '2.0.0' },
+        {
+          profile: 'core-v1',
+          schemaVersion: '2.0.0',
+          collectionId: options.collectionId,
+          tag: options.tag,
+        },
         { nativeSchema2Presence: true },
       )
       const legacyArchive = await exportShardBytes(db, {
         includeEmbeddings: true,
         includeMaterializedSelectors: true,
+        collectionId: options.collectionId,
+        tag: options.tag,
+        embeddingSetIds: options.embeddingSetIds,
       })
       return exportLiveFullV1(db, coreArchive, legacyArchive, {
         blobStore: options.blobStore,

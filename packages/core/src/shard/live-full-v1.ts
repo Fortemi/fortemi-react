@@ -25,6 +25,10 @@ type LiveFullV1Options = {
   blobStore: NonNullable<ExportOptions['blobStore']>
   signing?: ExportOptions['signing']
 }
+type ScopeSets = {
+  noteIds?: ReadonlySet<string>
+  embeddingSetIds?: ReadonlySet<string>
+}
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
@@ -77,7 +81,14 @@ function writeRecords(
   files.set(spec.file, encoder.encode(text))
 }
 
-async function liveRepresentationLosses(db: DatabaseClient): Promise<ShardLossEntry[]> {
+function scoped(values: ReadonlySet<string> | undefined): string[] | undefined {
+  return values ? [...values] : undefined
+}
+
+async function liveRepresentationLosses(
+  db: DatabaseClient,
+  scope: ScopeSets = {},
+): Promise<ShardLossEntry[]> {
   const tables = [
     ['collection', 'collections'],
     ['link', 'links'],
@@ -88,8 +99,39 @@ async function liveRepresentationLosses(db: DatabaseClient): Promise<ShardLossEn
   ] as const
   const losses: ShardLossEntry[] = []
   for (const [table, component] of tables) {
+    const noteIds = scoped(scope.noteIds)
+    let sql = `SELECT COUNT(*) AS count FROM ${table} WHERE deleted_at IS NOT NULL`
+    let params: unknown[] = []
+    if (noteIds) {
+      if (noteIds.length === 0) continue
+      if (table === 'attachment') {
+        sql += ' AND note_id = ANY($1)'
+        params = [noteIds]
+      } else if (table === 'link') {
+        sql += ' AND source_note_id = ANY($1) AND target_note_id = ANY($1)'
+        params = [noteIds]
+      } else if (table === 'link_url_target') {
+        sql += ' AND source_note_id = ANY($1)'
+        params = [noteIds]
+      } else if (table === 'collection') {
+        sql += ' AND EXISTS (SELECT 1 FROM collection_note cn WHERE cn.collection_id = collection.id AND cn.note_id = ANY($1))'
+        params = [noteIds]
+      } else if (table === 'skos_concept') {
+        sql += ' AND EXISTS (SELECT 1 FROM note_skos_tag nst WHERE nst.concept_id = skos_concept.id AND nst.note_id = ANY($1))'
+        params = [noteIds]
+      } else if (table === 'skos_scheme') {
+        sql += ` AND EXISTS (
+          SELECT 1
+            FROM skos_concept sc
+            JOIN note_skos_tag nst ON nst.concept_id = sc.id
+           WHERE sc.scheme_id = skos_scheme.id AND nst.note_id = ANY($1)
+        )`
+        params = [noteIds]
+      }
+    }
     const result = await db.query<{ count: number | string }>(
-      `SELECT COUNT(*) AS count FROM ${table} WHERE deleted_at IS NOT NULL`,
+      sql,
+      params,
     )
     const count = Number(result.rows[0]?.count ?? 0)
     if (count > 0) {
@@ -103,8 +145,15 @@ async function liveRepresentationLosses(db: DatabaseClient): Promise<ShardLossEn
       })
     }
   }
+  const noteIds = scoped(scope.noteIds)
+  const embeddingSetIds = scoped(scope.embeddingSetIds)
   const nullRevisions = await db.query<{ count: number | string }>(
-    'SELECT COUNT(*) AS count FROM note_revised_current WHERE content IS NULL',
+    noteIds
+      ? noteIds.length === 0
+        ? 'SELECT 0 AS count'
+        : 'SELECT COUNT(*) AS count FROM note_revised_current WHERE content IS NULL AND note_id = ANY($1)'
+      : 'SELECT COUNT(*) AS count FROM note_revised_current WHERE content IS NULL',
+    noteIds && noteIds.length > 0 ? [noteIds] : [],
   )
   const nullRevisionCount = Number(nullRevisions.rows[0]?.count ?? 0)
   if (nullRevisionCount > 0) {
@@ -120,14 +169,34 @@ async function liveRepresentationLosses(db: DatabaseClient): Promise<ShardLossEn
       reason: 'full-v1-live-production',
     })
   }
+  const vectorConditions: string[] = []
+  const vectorParams: unknown[] = []
+  if (noteIds) {
+    if (noteIds.length === 0) {
+      vectorConditions.push('FALSE')
+    } else {
+      vectorParams.push(noteIds)
+      vectorConditions.push(`note_id = ANY($${vectorParams.length})`)
+    }
+  }
+  if (embeddingSetIds) {
+    if (embeddingSetIds.length === 0) {
+      vectorConditions.push('FALSE')
+    } else {
+      vectorParams.push(embeddingSetIds)
+      vectorConditions.push(`embedding_set_id = ANY($${vectorParams.length})`)
+    }
+  }
   const vectorDimensions = await db.query<{
     dimension: number | string
     count: number | string
   }>(
     `SELECT vector_dims(vector)::int AS dimension, COUNT(*)::int AS count
        FROM embedding
+      ${vectorConditions.length > 0 ? `WHERE ${vectorConditions.join(' AND ')}` : ''}
       GROUP BY vector_dims(vector)
       ORDER BY vector_dims(vector)`,
+    vectorParams,
   )
   for (const row of vectorDimensions.rows) {
     const dimension = Number(row.dimension)
@@ -146,9 +215,23 @@ async function liveRepresentationLosses(db: DatabaseClient): Promise<ShardLossEn
     })
   }
   const unsupportedProvenance = await db.query<{ count: number | string }>(
-    `SELECT COUNT(*) AS count
+    noteIds
+      ? noteIds.length === 0
+        ? 'SELECT 0 AS count'
+        : `SELECT COUNT(*) AS count
+             FROM provenance_edge pe
+            WHERE entity_type NOT IN ('note', 'revision')
+              AND (
+                (pe.entity_type = 'note' AND pe.entity_id = ANY($1))
+                OR EXISTS (
+                  SELECT 1 FROM note_revision nr
+                   WHERE nr.id = pe.entity_id AND nr.note_id = ANY($1)
+                )
+              )`
+      : `SELECT COUNT(*) AS count
        FROM provenance_edge
       WHERE entity_type NOT IN ('note', 'revision')`,
+    noteIds && noteIds.length > 0 ? [noteIds] : [],
   )
   const unsupportedProvenanceCount = Number(unsupportedProvenance.rows[0]?.count ?? 0)
   if (unsupportedProvenanceCount > 0) {
@@ -169,6 +252,7 @@ async function liveRepresentationLosses(db: DatabaseClient): Promise<ShardLossEn
 
 async function noteHistoryRecords(
   db: DatabaseClient,
+  noteIds?: ReadonlySet<string>,
 ): Promise<Pick<Record<ShardComponent, JsonObject[]>,
   'note_originals' | 'note_original_history' | 'note_revised_current' | 'note_revisions'>> {
   const originals = await db.query<{
@@ -194,9 +278,13 @@ async function noteHistoryRecords(
     ai_metadata: unknown
   }>('SELECT note_id, content, ai_metadata FROM note_revised_current ORDER BY note_id')
 
+  const includesNote = (noteId: string): boolean => !noteIds || noteIds.has(noteId)
+  const originalRows = originals.rows.filter((row) => includesNote(row.note_id))
+  const revisionRows = revisions.rows.filter((row) => includesNote(row.note_id))
+  const currentRows = current.rows.filter((row) => includesNote(row.note_id))
   const previousByNote = new Map<string, string>()
   const lastByNote = new Map<string, string>()
-  const revisionRecords = revisions.rows.map((row) => {
+  const revisionRecords = revisionRows.map((row) => {
     const metadata = jsonObject(row.ai_metadata)
     const parentRevisionId = previousByNote.get(row.note_id) ?? null
     previousByNote.set(row.note_id, row.id)
@@ -220,7 +308,7 @@ async function noteHistoryRecords(
     }
   })
   return {
-    note_originals: originals.rows.map((row) => ({
+    note_originals: originalRows.map((row) => ({
       id: row.id,
       note_id: row.note_id,
       content: row.content,
@@ -230,7 +318,7 @@ async function noteHistoryRecords(
       version_number: 1,
     })),
     note_original_history: [],
-    note_revised_current: current.rows.map((row) => ({
+    note_revised_current: currentRows.map((row) => ({
       note_id: row.note_id,
       content: row.content,
       last_revision_id: lastByNote.get(row.note_id) ?? null,
@@ -478,7 +566,11 @@ function skosRecords(
   }
 }
 
-async function provenanceActivities(db: DatabaseClient): Promise<JsonObject[]> {
+async function provenanceActivities(
+  db: DatabaseClient,
+  noteIds?: ReadonlySet<string>,
+  revisionIds?: ReadonlySet<string>,
+): Promise<JsonObject[]> {
   const rows = await db.query<{
     id: string
     entity_type: string
@@ -489,7 +581,14 @@ async function provenanceActivities(db: DatabaseClient): Promise<JsonObject[]> {
     ended_at: Date | string | null
     attributes: unknown
   }>('SELECT * FROM provenance_edge ORDER BY started_at, id')
-  return rows.rows.map((row) => ({
+  const scopedRows = noteIds
+    ? rows.rows.filter((row) => {
+        if (row.entity_type === 'note') return noteIds.has(row.entity_id)
+        if (row.entity_type === 'revision') return revisionIds?.has(row.entity_id) ?? false
+        return false
+      })
+    : rows.rows
+  return scopedRows.map((row) => ({
     id: row.id,
     note_id: row.entity_type === 'note' ? row.entity_id : null,
     revision_id: row.entity_type === 'revision' ? row.entity_id : null,
@@ -514,7 +613,21 @@ export async function exportLiveFullV1(
     requestedSchemaVersion: '2.0.0',
     declaredComponents: Object.keys(FULL_V1_COMPONENT_FILES) as ShardComponent[],
   })
-  const losses = await liveRepresentationLosses(db)
+  const core = unpackTarGz(coreArchive)
+  const legacy = unpackTarGz(legacyArchive)
+  const records = Object.fromEntries(
+    (Object.keys(FULL_V1_COMPONENT_FILES) as ShardComponent[])
+      .map((component) => [component, [] as JsonObject[]]),
+  ) as Record<ShardComponent, JsonObject[]>
+  for (const component of ['notes', 'collections', 'tags', 'templates', 'links'] as const) {
+    records[component] = readRecords(core, component)
+  }
+  const exportedNoteIds = new Set(records.notes.map((note) => String(note.id)))
+  const exportedEmbeddingSetIds = new Set(readRecords(legacy, 'embedding_sets').map((set) => String(set.id)))
+  const losses = await liveRepresentationLosses(db, {
+    noteIds: exportedNoteIds,
+    embeddingSetIds: exportedEmbeddingSetIds,
+  })
   if (losses.length > 0) {
     capability = { ...capability, losses }
     return {
@@ -525,19 +638,16 @@ export async function exportLiveFullV1(
     }
   }
 
-  const core = unpackTarGz(coreArchive)
-  const legacy = unpackTarGz(legacyArchive)
-  const records = Object.fromEntries(
-    (Object.keys(FULL_V1_COMPONENT_FILES) as ShardComponent[])
-      .map((component) => [component, [] as JsonObject[]]),
-  ) as Record<ShardComponent, JsonObject[]>
-  for (const component of ['notes', 'collections', 'tags', 'templates', 'links'] as const) {
-    records[component] = readRecords(core, component)
-  }
-  Object.assign(records, await noteHistoryRecords(db))
+  const history = await noteHistoryRecords(db, exportedNoteIds)
+  Object.assign(records, history)
+  const exportedRevisionIds = new Set(history.note_revisions.map((revision) => String(revision.id)))
   Object.assign(records, await embeddingRecords(db, legacy))
   Object.assign(records, skosRecords(legacy))
-  records.provenance_activities = await provenanceActivities(db)
+  records.provenance_activities = await provenanceActivities(
+    db,
+    exportedNoteIds,
+    exportedRevisionIds,
+  )
   records.graph_sources = readRecords(legacy, 'graph_sources').map((row) => ({
     ...row,
     parameters: row.parameters ?? null,
