@@ -4,6 +4,27 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.9.3 - 2026-09-10
+
+### `@fortemi/core` - scoped `2.0.0/full-v1` PGlite export (#425)
+
+- Preserve caller `tag`, `collectionId`, and `embeddingSetIds` filters through
+  live full-v1 export instead of silently broadening the archive.
+- Scope live-only note history, current revisions, provenance activities, and
+  representation-loss checks to the exported note/revision/embedding-set sets.
+- Reject scoped export from persisted full-v1 snapshots before archive creation,
+  because stored snapshots cannot be safely narrowed by tag, collection, or
+  embedding set.
+- Add regression coverage for tag-scoped content/history/provenance/blob
+  sidecars and clean import, collection-scoped history/link exclusion,
+  embedding-set component/member exclusion, and persisted snapshot rejection.
+
+### Claim scope
+
+- This release qualifies the named React PGlite `2.0.0/full-v1` producer fix
+  only. It does not change the suite-level `NO-GO` audit and does not assert
+  unqualified parity, complete backup, or portability.
+
 ## v2026.9.2 - 2026-09-06
 
 ### Publication verification (#415)
