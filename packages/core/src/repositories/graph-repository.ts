@@ -1,5 +1,6 @@
 import type { QueryExecutor } from '../storage-backend.js'
 import { computeHash } from '../hash.js'
+import { readNativeGraphComponent } from '../shard/native-graph.js'
 import { EmbeddingSetsRepository, type EmbeddingSetSelector, type ResolvedEmbeddingSet } from './embedding-sets-repository.js'
 
 export interface GraphNode {
@@ -345,8 +346,26 @@ export class GraphRepository {
     )
   }
 
-  async loadGraphArtifact(graphSourceId: string, noteIds: string[] = []): Promise<CommunityGraph> {
-    return this.graphFromArtifact(graphSourceId, noteIds)
+  async getSourceRecord(graphSourceId: string) {
+    return (await readNativeGraphComponent(this.db, 'graph_sources', { id: graphSourceId }))[0] ?? null
+  }
+
+  async getEdgeRecords(graphSourceId: string) {
+    return readNativeGraphComponent(this.db, 'graph_edges', { graph_source_id: graphSourceId })
+  }
+
+  async loadGraphArtifact(graphSourceId: string, noteIds: string[] = [], communitySetId?: string): Promise<CommunityGraph> {
+    if (communitySetId === undefined) return this.graphFromArtifact(graphSourceId, noteIds)
+    const set = (await readNativeGraphComponent(this.db, 'communities', { id: communitySetId, graph_source_id: graphSourceId }))[0]
+    if (!set) throw new Error('Community set does not belong to the requested graph source')
+    const assignments = await readNativeGraphComponent(this.db, 'community_assignments', { community_set_id: communitySetId })
+    const records = await this.getEdgeRecords(graphSourceId)
+    const edges = records.map((edge) => ({ source: edge.from_note_id, target: edge.to_note_id, weight: edge.weight, kind: edge.kind }))
+    const nodes = [...new Set([...noteIds, ...edges.flatMap((edge) => [edge.source, edge.target]), ...assignments.map((row) => row.note_id),
+      ...set.communities.flatMap((community) => community.representative_note_ids ?? [])])].sort().map((id) => ({ id }))
+    const communities = set.communities.map((community) => ({ id: community.id,
+      nodes: assignments.filter((assignment) => assignment.community_id === community.id).map((assignment) => assignment.note_id) }))
+    return { nodes, edges, communities }
   }
 
   private async buildSimilarityGraphFromResolved(

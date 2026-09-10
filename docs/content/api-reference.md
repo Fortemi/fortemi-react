@@ -806,11 +806,19 @@ class GraphRepository {
     freshness?: 'fresh' | 'stale' | 'unknown'
   }): Promise<SimilarityGraphResult['graphSource']>
   markSimilarityGraphStale(graphSourceId: string, reason: string): Promise<void>
-  loadGraphArtifact(graphSourceId: string, noteIds?: string[]): Promise<CommunityGraph>
+  getSourceRecord(graphSourceId: string): Promise<GraphSourceRecord | null>
+  getEdgeRecords(graphSourceId: string): Promise<GraphEdgeRecord[]>
+  loadGraphArtifact(graphSourceId: string, noteIds?: string[], communitySetId?: string): Promise<CommunityGraph>
 }
 ```
 
 Builds citation and embedding-similarity graphs, detects communities, and persists precomputed graph artifacts for shard export/import and UI reuse. Cached graph results include source metadata, freshness, and cache status.
+
+Passing `communitySetId` loads that set's stored communities and assignments,
+including declared empty communities, without recomputing memberships. The set
+must belong to the requested graph source. Omitting it retains the existing
+computed-community behavior. Rich getters preserve nullable metadata, ranks,
+exact scalar timestamps and graph-scoped edge identities.
 
 ---
 
@@ -826,10 +834,19 @@ class CommunitiesRepository {
   listCommunitySources(): Promise<CommunitySourceDescriptor[]>
   getCommunityAssignments(sourceId: string): Promise<CommunityAssignmentView[]>
   listCommunitySummaries(sourceId: string): Promise<CommunitySummary[]>
+  getCommunitySet(sourceId: string): Promise<CommunitySetRecord | null>
+  getCommunityRecords(sourceId: string): Promise<CommunityRecord[]>
+  getAssignmentRecords(sourceId: string): Promise<CommunityAssignmentRecord[]>
 }
 ```
 
 Provides runtime-only dynamic community previews plus persisted dynamic snapshots and user-authored communities. Saved communities use the graph/community artifact tables so they can round-trip through Knowledge Shards.
+
+Rich getters retain null/empty/value distinctions and the nested community
+array order, independently of display rank. Graph, set and community IDs are
+case-sensitive opaque strings. `saveCommunity` writes its source, set, child and
+assignments in one transaction. These native APIs do not by themselves complete
+public full-v1 restore/export acceptance; #424 remains the integration gate.
 
 ---
 

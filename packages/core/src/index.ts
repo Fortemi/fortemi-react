@@ -290,6 +290,13 @@ export { LifecyclePurgeRepository } from './repositories/lifecycle-purge-reposit
 export { EmbeddingSetsRepository } from './repositories/embedding-sets-repository.js'
 export { GraphRepository, detectCommunities } from './repositories/graph-repository.js'
 export { CommunitiesRepository } from './repositories/communities-repository.js'
+export type {
+  NativeGraphSource as GraphSourceRecord,
+  NativeGraphEdge as GraphEdgeRecord,
+  NativeCommunitySet as CommunitySetRecord,
+  NativeCommunity as CommunityRecord,
+  NativeCommunityAssignment as CommunityAssignmentRecord,
+} from './shard/native-graph.js'
 export { buildNoteConditions } from './repositories/condition-builder.js'
 export type { ConditionResult } from './repositories/condition-builder.js'
 export { buildMetadataPredicateConditions, REGISTERED_METADATA_PATHS } from './repositories/metadata-predicates.js'

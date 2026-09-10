@@ -19,6 +19,31 @@ The Knowledge Shard (`shard/*`) is fortemi-react's interchange format with the R
 
 ## Decision
 
+### Native Graph Stage (2026-09-10)
+
+The existing graph_source, graph_edge_artifact, community_set, community and
+community_assignment tables already match the four component families.
+Migration0029 adds exact source timestamp companions and a native community
+position, backfilled in the legacy rank/id order. Nested community array order
+is preserved independently of rank; each included set's child array is applied
+as a complete value. Removing a child removes its owned assignments; unrelated
+sets remain untouched. The outer importer still owns conflict decisions and
+selection-wide relationship deletion.
+
+Opaque graph/set/community identifiers remain case-sensitive; only declared
+UUID references normalize case. All records are available through rich native
+repository methods. Selecting a community set while loading a graph uses actual
+stored assignments, including empty communities, without inferred membership.
+The existing no-selection computed-community mode remains available. Normal
+community creation is transactional across source, set, child and assignments.
+
+Producer-fixture, ordering, precision, null/value, identity, native mutation,
+legacy migration, deletion and late rollback tests qualify only this internal
+stage. The remaining five core component mappings, complete public import/export
+transaction, legacy-writer integration and released producer/consumer cells are
+still required by #424 and Fortemi/fortemi#1059. No authority tuple or matrix
+claim changes; suite NO-GO remains.
+
 ### Native Provenance Stage (2026-09-10)
 
 Migration0028 adds typed native storage for six provenance components. The

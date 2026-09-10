@@ -2,6 +2,7 @@ import type { DatabaseClient } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
 import type { EmbeddingSetSelector } from './embedding-sets-repository.js'
 import { SearchRepository } from './search-repository.js'
+import { readNativeCommunities, readNativeGraphComponent } from '../shard/native-graph.js'
 
 export type CommunitySourceType =
   | 'computed'
@@ -79,6 +80,18 @@ function iso(value: Date | string | undefined): string | undefined {
 export class CommunitiesRepository {
   constructor(private db: DatabaseClient) {}
 
+  async getCommunitySet(sourceId: string) {
+    return (await readNativeGraphComponent(this.db, 'communities', { id: sourceId }))[0] ?? null
+  }
+
+  async getCommunityRecords(sourceId: string) {
+    return readNativeCommunities(this.db, sourceId)
+  }
+
+  async getAssignmentRecords(sourceId: string) {
+    return readNativeGraphComponent(this.db, 'community_assignments', { community_set_id: sourceId })
+  }
+
   async previewDynamicCommunity(filters: CommunityFilterDefinition): Promise<CommunityAssignmentView[]> {
     const noteIds = await this.resolveFilterNoteIds(filters)
     return noteIds.map((noteId) => ({
@@ -99,28 +112,30 @@ export class CommunitiesRepository {
     const sourceKind = input.sourceType === 'dynamic-snapshot' ? 'search' : 'manual'
     const freshness = input.sourceType === 'dynamic-snapshot' ? 'fresh' : 'unknown'
 
-    await this.db.query(
-      `INSERT INTO graph_source (id, name, kind, source_table, parameters_json, input_hash, freshness_json)
-       VALUES ($1, $2, $3, 'manual', $4::jsonb, $5, $6::jsonb)`,
-      [sourceId, input.name, sourceKind, json({ filters: input.filters ?? null }), `community:${sourceId}`, json({ status: freshness })],
-    )
-    await this.db.query(
-      `INSERT INTO community_set (id, graph_source_id, name, source_type, parameters_json, input_hash, freshness_json)
-       VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7::jsonb)`,
-      [communitySetId, sourceId, input.name, input.sourceType, json({ filters: input.filters ?? null }), `community:${communitySetId}`, json({ status: freshness })],
-    )
-    await this.db.query(
-      `INSERT INTO community (community_set_id, id, label, rank, size, representative_note_ids)
-       VALUES ($1, $2, $3, 1, $4, $5)`,
-      [communitySetId, communityId, input.label ?? input.name, noteIds.length, input.representativeNoteIds ?? []],
-    )
-    for (const noteId of noteIds) {
-      await this.db.query(
-        `INSERT INTO community_assignment (community_set_id, community_id, note_id, confidence, source_type)
-         VALUES ($1, $2, $3, NULL, $4)`,
-        [communitySetId, communityId, noteId, input.sourceType],
+    await this.db.transaction(async (tx) => {
+      await tx.query(
+        `INSERT INTO graph_source (id, name, kind, source_table, parameters_json, input_hash, freshness_json)
+         VALUES ($1, $2, $3, 'manual', $4::jsonb, $5, $6::jsonb)`,
+        [sourceId, input.name, sourceKind, json({ filters: input.filters ?? null }), `community:${sourceId}`, json({ status: freshness })],
       )
-    }
+      await tx.query(
+        `INSERT INTO community_set (id, graph_source_id, name, source_type, parameters_json, input_hash, freshness_json)
+         VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7::jsonb)`,
+        [communitySetId, sourceId, input.name, input.sourceType, json({ filters: input.filters ?? null }), `community:${communitySetId}`, json({ status: freshness })],
+      )
+      await tx.query(
+        `INSERT INTO community (community_set_id, id, label, rank, size, representative_note_ids, position)
+         VALUES ($1, $2, $3, 1, $4, $5, 0)`,
+        [communitySetId, communityId, input.label ?? input.name, noteIds.length, input.representativeNoteIds ?? []],
+      )
+      for (const noteId of noteIds) {
+        await tx.query(
+          `INSERT INTO community_assignment (community_set_id, community_id, note_id, confidence, source_type)
+           VALUES ($1, $2, $3, NULL, $4)`,
+          [communitySetId, communityId, noteId, input.sourceType],
+        )
+      }
+    })
 
     return {
       id: communitySetId,

@@ -4,6 +4,15 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+### Native graph storage (#424)
+
+- Preserve graph/community timestamps, opaque identities and nested community
+  order in actual native tables; expose rich source, edge, set and assignment reads.
+- Load a selected community set's stored memberships without recomputing them;
+  create community sources and assignments atomically.
+- This internal stage does not complete public full-v1 restore/export or change
+  the suite NO-GO boundary.
+
 ### Native provenance storage (#424)
 
 - Add typed native activity, derivation, location, device and capture records,

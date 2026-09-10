@@ -47,6 +47,13 @@ queries support local 384- and producer 768-dimensional vectors; search ranks
 each note by its best selected-source chunk. This is another internal native
 apply stage, not completion of the full-v1 dispatcher or a widened runtime cell.
 
+Migration0029 completes the internal graph/community mapping using existing
+native tables, exact timestamp companions and community positions. Rich readers
+preserve all four component families, graph-scoped case-sensitive identities
+and nested array order. Selected graph rendering consumes stored community
+assignments; normal community creation is transactional. Five core mappings
+and the all-component public import/export integration remain unfinished.
+
 Migration0028 adds typed native activities, derivations, named locations,
 locations, devices and capture records. Native tstzrange and GeoJSON values are
 queryable; field-level precision/encoding companions never override changed

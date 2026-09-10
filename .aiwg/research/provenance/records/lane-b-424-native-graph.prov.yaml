@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-10T10:11:04Z",
+    "description": "Four-component native graph internal stage; public full-v1 restore remains incomplete"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:packages/core/src/shard/native-graph.ts",
+    "type": "code",
+    "created_at": "2026-09-10T10:11:04Z",
+    "checksum": "sha256:944f92552b397caa7ea981cd8464a83cc31acc83515b9098036e2903fe0fd9ff",
+    "attributes": {
+      "issue": "Fortemi/fortemi-react#424",
+      "producer_issue": "Fortemi/fortemi#1059",
+      "producer_revision": "c4ef37675f5637af76001570ef620e80ca1f9304",
+      "base_revision": "1c1ce91c56b88bb4c53916c7c06060e7f1ee7748",
+      "artifacts": {
+        ".aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md": "sha256:8c02108544d7bda4fa73baf8ab702885968b5c9e48571353d9747ea1bb566ddd",
+        ".aiwg/architecture/SAD.md": "sha256:57a8b1d370dc7a2a48411dec1b7b45c97bd97fdac7b975b4c4d25fc7790d8669",
+        "CHANGELOG.md": "sha256:83730b4487119434a5f2a988cf9e14069dd6eb05eb18d9d4d9098729e8dee497",
+        "docs/content/api-reference.md": "sha256:c88a8c7fda30d68d04dda5dbb0b608606ec6195d6a80cbf6d6301655425b8cb7",
+        "packages/core/package.json": "sha256:dfcfb81b1e550e8029cc17586ec7ddffb28586d675db17a6cc5c264f389523a3",
+        "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "sha256:a2fb359a4bf6e4cef23ddef0406dbd88ae121a03f2e71b271d48e035b968b34a",
+        "packages/core/schemas/knowledge-shard-v2.presence.receipt.json": "sha256:98be9b86c2ba5b83a0166c93b4ab4f018c03923c259cd94d7c577ca82887117b",
+        "packages/core/scripts/generate-pglite-full-v1-receipt.mjs": "sha256:905378cd997ed6407f6b66de952d855b0028d77019bbde0d5124c5d6136206eb",
+        "packages/core/src/index.ts": "sha256:8c6ef3568033a4cbf0658c0d27258bbba6c8bd9d8cdc0b257df26869defb4b4e",
+        "packages/core/src/migrations/index.ts": "sha256:3774bd0bc5f425dd27c4d4034c7764da90e1a4aaa23082f6017dbafb3b6d3413",
+        "packages/core/src/repositories/communities-repository.ts": "sha256:209a6fd4f1d9f8c55507bd5e4d6d4878dc1305f39754d132de1bf1284249291c",
+        "packages/core/src/repositories/graph-repository.ts": "sha256:5d869419f184ed29f50fd26ba72051421d6c3f8f52a570f4c327228ca0b3be0d",
+        "packages/core/src/__tests__/shard/native-graph.test.ts": "sha256:ca6a385da1c404d1ca487591797829970791a77868df6baf23a0f47bafb0ba30",
+        "packages/core/src/migrations/0029_native_graph.ts": "sha256:6631ceba633e82c1082aff3c3270a6eb98509ecbeeff052b532da6a2a2acc42d",
+        "packages/core/src/shard/native-graph.ts": "sha256:944f92552b397caa7ea981cd8464a83cc31acc83515b9098036e2903fe0fd9ff"
+      }
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:lane-b-424-native-graph",
+    "type": "modification",
+    "started_at": "2026-09-10T09:59:18.328Z",
+    "ended_at": "2026-09-10T10:11:04Z",
+    "description": "Implement native graph/community apply and rich reads, exact timestamps and nested order, graph-scoped opaque identities, stored membership loading and transactional authoring; verify producer fixture, null/value states, native edits/deletion, legacy backfill and rollback"
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/native-graph.ts",
+      "activity": "urn:aiwg:activity:lane-b-424-native-graph",
+      "time": "2026-09-10T10:11:04Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/native-graph.ts",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:lane-b-424-native-graph",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/native-graph.ts",
+        "source": "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:lane-b-424-native-graph"
+      },
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/native-graph.ts",
+        "source": "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-19-v2.shard",
+        "derivation_type": "tests",
+        "activity": "urn:aiwg:activity:lane-b-424-native-graph"
+      }
+    ]
+  }
+}
