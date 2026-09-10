@@ -17,17 +17,17 @@
       "artifacts": {
         ".aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md": "sha256:08c3c152ad456c22e5c2d34b692a92a9ed11c56f0392451bf9d147077d23fbcb",
         ".aiwg/architecture/SAD.md": "sha256:5eb946270e473ab98c9f56010868894226929c2bc982b0520e2e5fdbad03da0e",
-        "docs/content/api-reference.md": "sha256:3302201369a43b42373e9c134fa90b34ff553a55172a7d5c5fbef39dd06fa5da",
+        "docs/content/api-reference.md": "sha256:ac7da4734c5089d2f4b31adab0b446834870739f1b7bc2111aeb15146eab1049",
         "packages/core/package.json": "sha256:e7d7b500f9b3595ba13b09492c7fc4e2dec79ae4037f3d07dd8303e03fb7fc3a",
-        "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "sha256:a2b2addb9ec3202aeb9b5a5f4c03bfcf01529d18718f9ac1456a054567cb5931",
+        "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "sha256:06e41331f87133be1f9a935e2fdf6226bf58eb7d04aa32bcff7afb56c97c2fc4",
         "packages/core/schemas/knowledge-shard-v2.presence.receipt.json": "sha256:de707c904ae2dae21b7e57e55942cc45dca6ab67843291414d25aa056474ed4d",
         "packages/core/scripts/generate-pglite-full-v1-receipt.mjs": "sha256:d23ada577e719134aee3b16d3a2147acb1de27add6469ce69cadfff2b3d380ea",
-        "packages/core/src/__tests__/shard/native-embeddings.test.ts": "sha256:2730f79203507e57d147aa1fa564fe4a4a224d8fe890f0917d53c3cd28efe0d5",
-        "packages/core/src/index.ts": "sha256:5e3513d855ccd8e99c46f21de25f45a01a0ae851c81c1c57f385e1975917fd4f",
+        "packages/core/src/__tests__/shard/native-embeddings.test.ts": "sha256:f7f902537f1b1211c8bbf077618ef043a7d1792a569d743f6554a1b3d88cf91d",
+        "packages/core/src/index.ts": "sha256:078b7fda646590e59a536074e99ace485c428cf320343874ab23cf9693553348",
         "packages/core/src/job-queue-worker.ts": "sha256:1516bcad7025ae9a9cb1cd10f8d0098effb8deeb8323be617f8a4ae3b2915e5d",
         "packages/core/src/migrations/0026_native_embeddings.ts": "sha256:7cdd3fe438f80ed6f0ade038c24fa7bf60b6edef812269958709fa79e4554ec2",
         "packages/core/src/migrations/index.ts": "sha256:c190d901c8a9b0d2e22d3549e6dccf1a52a5a8ae2c0ac1dc4b18b908fda0cee1",
-        "packages/core/src/repositories/embedding-sets-repository.ts": "sha256:01e6b68a3f0883149b4803334cb6149459ae59286e07172224e97690540d37dd",
+        "packages/core/src/repositories/embedding-sets-repository.ts": "sha256:fd6a0fcc3f816f3196e22f5830cc51eb92ce26f80c8ee0761f171aa83c3295d9",
         "packages/core/src/repositories/search-repository.ts": "sha256:1e3372a809aaaed2aa3c37f2ac3e459fe24e91a6f4ad58b43ab44c17967cfbe8",
         "packages/core/src/shard/native-embeddings.ts": "sha256:126ee44ac9d484289c8ae48401d1b9c6b309c91f065afe622b18234ca3f35fd8"
       }
@@ -37,8 +37,8 @@
     "id": "urn:aiwg:activity:lane-b-424-native-embeddings",
     "type": "modification",
     "started_at": "2026-09-10T08:12:37.307Z",
-    "ended_at": "2026-09-10T08:25:09.136Z",
-    "description": "Implement typed native config/set/member/vector state, retain numeric/timestamp precision and declaration presence, and verify mixed-dimension best-chunk search, linking and atomic apply rollback"
+    "ended_at": "2026-09-10T08:33:42.488Z",
+    "description": "Implement typed native config/set/member/vector state, retain numeric/timestamp precision and declaration presence, and verify mixed-dimension best-chunk search, linking and atomic apply rollback; expose metadata-only native memberships independently of vector search"
   },
   "agent": {
     "id": "urn:aiwg:agent:codex",
@@ -49,7 +49,7 @@
     "wasGeneratedBy": {
       "entity": "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts",
       "activity": "urn:aiwg:activity:lane-b-424-native-embeddings",
-      "time": "2026-09-10T08:25:09.136Z"
+      "time": "2026-09-10T08:33:42.488Z"
     },
     "wasAttributedTo": {
       "entity": "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts",

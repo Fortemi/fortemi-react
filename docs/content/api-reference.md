@@ -718,6 +718,7 @@ class EmbeddingSetsRepository {
 
   getConfig(id: string): Promise<EmbeddingConfigRow>
   listConfigs(): Promise<EmbeddingConfigRow[]>
+  listMembers(setId: string): Promise<EmbeddingMemberRow[]>
   listEmbeddings(setId: string): Promise<EmbeddingRow[]>
   create(input: EmbeddingSetCreateInput): Promise<EmbeddingSetRow>
   ensureDefault(): Promise<EmbeddingSetRow>
@@ -733,7 +734,8 @@ class EmbeddingSetsRepository {
 Manages physical and virtual embedding sets. Selectors can target explicit sets, criteria-based sets, set operations, latest-compatible sets, snapshots, or fallback chains. Virtual definitions are durable metadata until materialized by application code.
 
 Configuration reads include native provider, MRL and document-composition
-metadata. `listEmbeddings` includes all chunks and metadata-only records with
+metadata. `listMembers` includes declared memberships even without a vector.
+`listEmbeddings` includes all chunks and metadata-only records with
 null vectors; selector resolution excludes rows without usable note vectors.
 `EmbeddingRow` exposes nullable owners/timestamps and explicit contract-fingerprint
 presence. `EmbeddingSetRow` also exposes stored index/refresh and agent metadata.

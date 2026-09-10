@@ -53,6 +53,9 @@ describe('native embedding stage, not public full-v1 restoration', () => {
     expect(await sets.get(source.embedding_sets[0].id)).toMatchObject({ model_name: 'test-model', dimensions: 768 })
     expect(await sets.getConfig(source.embedding_configs[0].id)).toMatchObject({ name: 'Research config', model: 'test-model', dimension: 768 })
     expect(await sets.listConfigs()).toHaveLength(1)
+    expect(await sets.listMembers(source.embedding_sets[0].id)).toEqual([
+      expect.objectContaining({ ...source.embedding_set_members[0], embedding_id: null }),
+    ])
     expect((await sets.listEmbeddings(source.embedding_sets[0].id)).map((row) => row.id)).toEqual(source.embeddings.map((row) => row.id))
     const resolved = await sets.resolveSelector({ kind: 'embedding-set', embeddingSetId: source.embedding_sets[0].id })
     expect(resolved.noteIds).toEqual([owner])
@@ -101,6 +104,9 @@ describe('native embedding stage, not public full-v1 restoration', () => {
     await apply(state)
     expect(await readNativeEmbeddings(db)).toEqual(state)
     expect((await new EmbeddingSetsRepository(db).resolveSelector({ kind: 'embedding-set', embeddingSetId: state.embedding_sets[0].id })).rows).toEqual([])
+    expect(await new EmbeddingSetsRepository(db).listMembers(state.embedding_sets[0].id)).toEqual([
+      expect.objectContaining(state.embedding_set_members[0]),
+    ])
     const result = await new SearchRepository(db, true).semanticSearch(Array(768).fill(0.25))
     expect(result.results).toEqual([])
     expect(result.total).toBe(0)

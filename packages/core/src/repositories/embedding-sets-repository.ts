@@ -5,7 +5,7 @@
 import type { QueryExecutor } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
 import { computeHash } from '../hash.js'
-import type { NativeEmbeddingConfig, NativeEmbeddingSet } from '../shard/native-embeddings.js'
+import type { NativeEmbeddingConfig, NativeEmbeddingMember, NativeEmbeddingSet } from '../shard/native-embeddings.js'
 
 const ATTACHMENT_TEXT_JOIN = `
        LEFT JOIN (
@@ -169,6 +169,11 @@ export interface EmbeddingConfigRow extends Omit<NativeEmbeddingConfig, 'created
   updated_at: Date
 }
 
+export interface EmbeddingMemberRow extends Omit<NativeEmbeddingMember, 'added_at'> {
+  embedding_id: string | null
+  added_at: Date | null
+}
+
 export interface EmbeddingRow {
   id: string
   note_id: string | null
@@ -262,6 +267,12 @@ export class EmbeddingSetsRepository {
 
   async listConfigs(): Promise<EmbeddingConfigRow[]> {
     return (await this.db.query<EmbeddingConfigRow>('SELECT * FROM embedding_config ORDER BY name, id')).rows
+  }
+
+  async listMembers(setId: string): Promise<EmbeddingMemberRow[]> {
+    return (await this.db.query<EmbeddingMemberRow>(
+      'SELECT * FROM embedding_set_member WHERE embedding_set_id = $1 ORDER BY note_id', [setId],
+    )).rows
   }
 
   /** Includes metadata-only records and every chunk, unlike a resolved graph selector. */

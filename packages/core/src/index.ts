@@ -335,6 +335,7 @@ export type {
 } from './repositories/lifecycle-purge-repository.js'
 export type {
   EmbeddingConfigRow,
+  EmbeddingMemberRow,
   EmbeddingRow,
   EmbeddingSetRow,
   EmbeddingSetCreateInput,
