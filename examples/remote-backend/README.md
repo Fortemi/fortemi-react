@@ -27,8 +27,10 @@ the demo still compiles and renders; it just has nothing to list.
   `headers`).
 - List and detail use validated server envelopes. The provenance graph retains
   server activities and edges; it is not a local PGlite edge list. Remote
-  `provenanceOf` is unsupported. Search mapping (#419) and mutation/capability
-  dispatch (#420) remain open repairs, not qualified operations in this example.
+  `provenanceOf` is unsupported. Search defaults to FTS with `q`; its timestamps
+  require detail enrichment. The API exposes degradation and a report-bearing
+  semantic method. REST note mutations use explicit validated action mappings;
+  source fixture tests do not establish live released-package qualification.
 - No `FortemiProvider` is mounted — `useRemote` needs no local database. (The
   `@fortemi/react` root entry still carries the engine, so it ships in `dist/`
   but never boots.)

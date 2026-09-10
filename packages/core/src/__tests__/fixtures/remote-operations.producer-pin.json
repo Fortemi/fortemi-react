@@ -1,0 +1,9 @@
+{
+  "repository": "Fortemi/fortemi",
+  "fixtureCommit": "9588dea2d20fe16086da26f078723f74c7c51327",
+  "fixturePath": "contracts/openapi/fixtures/remote-operations.json",
+  "sha256": "c086a4ec2f02fb3e1c12b25c93427dbe720a4527b6eadef6cd3244b568397d52",
+  "runtimeCommit": "e91c595a896275f835cb7ed1aef173cb26056206",
+  "runtimeImage": "ghcr.io/fortemi/fortemi@sha256:f24c621176dd17ff69896a78c3c9ba0f96f6b0a7ed15024dfb42343401d99cb1",
+  "boundary": "37 producer-captured HTTP cases including degraded search and REST mutations. Not successful vector retrieval, auth qualification or released-consumer acceptance. Producer #1146; React #419/#420. Suite NO-GO unchanged."
+}

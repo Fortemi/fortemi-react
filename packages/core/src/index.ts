@@ -173,7 +173,7 @@ export type {
 
 // Backend seam (#191) — uniform tool-intent operation interface + negotiation
 export { RemoteBackendError } from './remote-error.js'
-export type { RemoteProvenanceGraph } from './remote-contract.js'
+export type { RemoteProvenanceGraph, RemoteSearchMode, RemoteSearchDegradation, RemoteSearchMetadata, RemoteManageNoteInput } from './remote-contract.js'
 export type { RemoteBackendErrorKind } from './remote-error.js'
 export {
   selectBackend,
@@ -202,6 +202,10 @@ export type {
   ShardBackendOptions,
   RemoteBackendConfig,
   RemoteBackendPaths,
+  RemoteDataBackend,
+  RemoteSearchOptions,
+  RemoteSearchResult,
+  RemoteManageNoteResult,
 } from './data-backend.js'
 
 export {

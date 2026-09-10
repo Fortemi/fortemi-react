@@ -1139,10 +1139,13 @@ function createRemoteBackend(config: {
   headers?: HeadersInit | (() => HeadersInit | Promise<HeadersInit>)
   authToken?: string
   paths?: Partial<RemoteBackendPaths>
-}): DataBackend
+}): RemoteDataBackend
 ```
 
-Creates the network-backed Fortemi server tier for `selectBackend`. The returned backend advertises `read`, `write`, `merge`, `multiUser`, `semantic: 'server'`, and `startupCost: 'network'`.
+Creates the network-backed Fortemi server tier for `selectBackend`. The returned
+backend advertises `read`, `write`, `multiUser`, `semantic: 'server'`,
+`merge: false`, and `startupCost: 'network'`. These describe implemented dispatch,
+not authorization or provider availability for a particular server request.
 
 A fourth seam adapter, [`createRecordBackend`](#canonical-records), serves the writable canonical record tier with no PGlite at all — see Canonical Records.
 
@@ -1160,9 +1163,53 @@ endpoints. Remote concepts mark `altLabels` and `definition` in
 Authorization, transport, malformed response and enrichment errors throw
 `RemoteBackendError` with bounded status/problem metadata and no raw body text.
 
-Qualification boundary: producer-captured read fixtures do not establish
-released-consumer parity. Search and mutation/capability repairs remain tracked
-by #419/#420; current capability flags are not conformance evidence.
+Remote `search(query, options?)` uses `q` and defaults to `mode: 'fts'` with a
+20-hit limit. Supported modes are `fts`, `semantic`, and `hybrid`; the adapter
+admits integer limits 1-100. `tags` is an AND-filter encoded as one comma-separated
+value; empty, padded or comma-bearing tag values reject. Nonzero offset and
+nonempty source filters are unsupported and reject before dispatch. This endpoint
+does not provide offset pagination or facets. `totalKind: 'returned-hits'` makes
+the producer's count semantics explicit.
+
+Search metadata preserves actual EnhancedSearchHit scores, snippets and optional
+chain/embedding fields. Timestamps are enriched with at most 100 sequential
+validated note-detail reads, preserving result order and reusing duplicate IDs.
+This is not an atomic snapshot: an enrichment failure fails the whole operation,
+and detail metadata can be newer than the search result. No empty timestamps or
+partial-success records are manufactured.
+
+`RemoteSearchResult` includes `requestedMode`, `effectiveMode`, `degraded` and
+optional `degradation` (`code`, `effective_mode`). `semanticWithReport(query, k?)`
+retains explicit fallback results. The legacy array-returning `semantic(query, k?)`
+throws `RemoteBackendError` with `kind: 'degraded-search'` on fallback, before
+detail enrichment; it does not present FTS results as vector retrieval.
+
+`manageNote(input)` accepts only these validated shapes:
+
+| Action | Fields besides action | REST operation |
+| --- | --- | --- |
+| `create` | `content`, optional `title`, `tags`, `source` | POST notes, revision mode none, empty pipeline |
+| `update` | `note_id`, `content` and/or `tags` | PATCH note; content uses revision mode none |
+| `star` / `unstar` | `note_id` | PATCH starred boolean |
+| `archive` / `unarchive` | `note_id` | PATCH archived boolean |
+| `delete` | `note_id` | DELETE note, body-free 204 |
+| `restore` | `note_id` | POST note/restore with revision mode none |
+
+Tag updates replace the tag set. Unknown actions/fields, including unsupported
+title/format/visibility updates, reject before dispatch as `invalid-request`.
+The result contains `action` and `note_id`; only PATCH responses include the
+projected `note`. Create/restore acknowledgements are identity-validated without
+an additional detail fetch. A failed transport or response validation does not
+prove that a dispatched mutation rolled back. Restore may queue server indexing
+work even with AI revision disabled. No automatic mutation retries are performed.
+
+Legacy `paths.manageNote` and `paths.semantic` overrides reject as unsupported;
+use operation-specific `notes`, `note`, `restore` and `search` paths. A path
+override cannot translate a tool-intent or MCP envelope into a REST contract.
+
+Qualification boundary: pinned producer fixtures and source tests do not establish
+released-consumer parity, successful vector retrieval or auth qualification.
+Those acceptance gates remain tracked by #417-421 and producer #1146.
 
 ---
 
@@ -3170,19 +3217,20 @@ Opens a Knowledge Shard for in-place, read-only browsing and search without impo
 
 ```typescript
 function useRemote(config: RemoteBackendConfig): {
-  backend: DataBackend
+  backend: RemoteDataBackend
   loading: boolean
   error: Error | null
   listNotes: (options?: BackendListOptions) => Promise<{ items: BackendNote[]; total: number }>
   getNote: (id: string) => Promise<BackendNote | null>
-  search: (query: string, options?: BackendSearchQueryOptions) => Promise<BackendSearchResult>
+  search: (query: string, options?: RemoteSearchOptions) => Promise<RemoteSearchResult>
   getNoteFull: (id: string) => Promise<BackendNoteFull | null>
   linksOf: (id: string) => Promise<BackendLink[]>
   conceptsOf: (id: string) => Promise<BackendConcept[]>
   provenanceOf: (id: string) => Promise<BackendProvenanceEdge[]>
   provenanceGraphOf: (id: string) => Promise<RemoteProvenanceGraph>
   semantic: (query: string, k?: number) => Promise<BackendSearchHit[]>
-  manageNote: (input: unknown) => Promise<unknown>
+  semanticWithReport: (query: string, k?: number) => Promise<RemoteSearchResult>
+  manageNote: (input: unknown) => Promise<RemoteManageNoteResult>
 }
 ```
 

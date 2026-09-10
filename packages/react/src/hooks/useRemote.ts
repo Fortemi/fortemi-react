@@ -4,31 +4,33 @@ import {
   type BackendListOptions,
   type BackendNote,
   type BackendNoteFull,
-  type BackendSearchQueryOptions,
-  type BackendSearchResult,
+  type RemoteSearchOptions,
+  type RemoteSearchResult,
   type BackendSearchHit,
   type BackendLink,
   type BackendConcept,
   type BackendProvenanceEdge,
-  type DataBackend,
+  type RemoteDataBackend,
+  type RemoteManageNoteResult,
   type RemoteBackendConfig,
   type RemoteProvenanceGraph,
 } from '@fortemi/core'
 
 export interface UseRemoteReturn {
-  backend: DataBackend
+  backend: RemoteDataBackend
   loading: boolean
   error: Error | null
   listNotes: (options?: BackendListOptions) => Promise<{ items: BackendNote[]; total: number }>
   getNote: (id: string) => Promise<BackendNote | null>
-  search: (query: string, options?: BackendSearchQueryOptions) => Promise<BackendSearchResult>
+  search: (query: string, options?: RemoteSearchOptions) => Promise<RemoteSearchResult>
   getNoteFull: (id: string) => Promise<BackendNoteFull | null>
   linksOf: (id: string) => Promise<BackendLink[]>
   conceptsOf: (id: string) => Promise<BackendConcept[]>
   provenanceOf: (id: string) => Promise<BackendProvenanceEdge[]>
   provenanceGraphOf: (id: string) => Promise<RemoteProvenanceGraph>
   semantic: (query: string, k?: number) => Promise<BackendSearchHit[]>
-  manageNote: (input: unknown) => Promise<unknown>
+  semanticWithReport: (query: string, k?: number) => Promise<RemoteSearchResult>
+  manageNote: (input: unknown) => Promise<RemoteManageNoteResult>
 }
 
 export function useRemote(config: RemoteBackendConfig): UseRemoteReturn {
@@ -53,7 +55,7 @@ export function useRemote(config: RemoteBackendConfig): UseRemoteReturn {
   const listNotes = useCallback((options?: BackendListOptions) => call(() => backend.listNotes(options)), [backend, call])
   const getNote = useCallback((id: string) => call(() => backend.getNote(id)), [backend, call])
   const search = useCallback(
-    (query: string, options?: BackendSearchQueryOptions) => call(() => backend.search(query, options)),
+    (query: string, options?: RemoteSearchOptions) => call(() => backend.search(query, options)),
     [backend, call],
   )
   const getNoteFull = useCallback((id: string) => call(() => backend.getNoteFull!(id)), [backend, call])
@@ -62,6 +64,7 @@ export function useRemote(config: RemoteBackendConfig): UseRemoteReturn {
   const provenanceOf = useCallback((id: string) => call(() => backend.provenanceOf!(id)), [backend, call])
   const provenanceGraphOf = useCallback((id: string) => call(() => backend.provenanceGraphOf!(id)), [backend, call])
   const semantic = useCallback((query: string, k?: number) => call(() => backend.semantic!(query, k)), [backend, call])
+  const semanticWithReport = useCallback((query: string, k?: number) => call(() => backend.semanticWithReport(query, k)), [backend, call])
   const manageNote = useCallback((input: unknown) => call(() => backend.manageNote!(input)), [backend, call])
 
   return {
@@ -77,6 +80,7 @@ export function useRemote(config: RemoteBackendConfig): UseRemoteReturn {
     provenanceOf,
     provenanceGraphOf,
     semantic,
+    semanticWithReport,
     manageNote,
   }
 }

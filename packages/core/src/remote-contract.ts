@@ -1,9 +1,10 @@
 import { z } from 'zod'
 import type { BackendConcept, BackendLink, BackendNote, BackendNoteFull } from './data-backend.js'
-import { remoteProjection } from './remote-error.js'
+import { RemoteBackendError, remoteProjection } from './remote-error.js'
 
+const uuid = z.string().uuid().transform((value) => value.toLowerCase())
 const metadata = z.object({
-  id: z.string().uuid(), title: z.string().nullable(),
+  id: uuid, title: z.string().nullable(),
   created_at_utc: z.string().datetime({ offset: true }),
   updated_at_utc: z.string().datetime({ offset: true }),
   starred: z.boolean(), archived: z.boolean(), source: z.string().optional(),
@@ -41,8 +42,13 @@ export function parseRemoteNoteDetail(value: unknown): BackendNoteFull {
   })
 }
 
-const uuid = z.string().uuid()
 const timestamp = z.string().datetime({ offset: true })
+
+export function remoteNoteId(value: string): string {
+  const parsed = uuid.safeParse(value)
+  if (!parsed.success) throw new RemoteBackendError('invalid-request')
+  return parsed.data
+}
 const link = z.object({
   id: uuid, from_note_id: uuid, to_note_id: uuid.nullable(), to_url: z.string().nullable(),
   kind: z.string(), score: z.number().finite(), created_at_utc: timestamp,
@@ -131,5 +137,77 @@ export function parseRemoteProvenance(value: unknown, noteId: string): RemotePro
       throw new Error('Invalid provenance graph')
     }
     return graph
+  })
+}
+
+const searchMode = z.enum(['fts', 'semantic', 'hybrid'])
+const searchOptions = z.object({
+  mode: searchMode.default('fts'), limit: z.number().int().min(1).max(100).default(20),
+  offset: z.number().int().nonnegative().optional(), source: z.array(z.string()).optional(),
+  tags: z.array(z.string().min(1).refine((tag) => tag === tag.trim() && !tag.includes(','))).optional(),
+}).strict()
+export type RemoteSearchMode = z.infer<typeof searchMode>
+
+export function remoteSearchParameters(query: string, options: unknown) {
+  const parsed = searchOptions.safeParse(options ?? {})
+  if (typeof query !== 'string' || !parsed.success) throw new RemoteBackendError('invalid-request')
+  const value = parsed.data
+  if ((value.offset ?? 0) !== 0 || (value.source?.length ?? 0) > 0) throw new RemoteBackendError('unsupported-operation')
+  return { q: query, mode: value.mode, limit: value.limit,
+    ...(value.tags?.length ? { tags: value.tags.join(',') } : {}) }
+}
+
+const searchHit = z.object({
+  note_id: uuid, score: z.number().finite(), snippet: z.string().nullable(),
+  title: z.string().optional(), tags: z.array(z.string()).optional(),
+  embedding_status: z.enum(['ready', 'pending', 'failed', 'none']).optional(),
+  chain_info: z.object({
+    chain_id: uuid, original_title: z.string(), chunks_matched: z.number().int().nonnegative(),
+    best_chunk_sequence: z.number().int().nonnegative(), total_chunks: z.number().int().nonnegative(),
+  }).optional(),
+})
+const searchDegradation = z.object({
+  code: z.string().regex(/^[a-z][a-z0-9_]{0,63}$/), effective_mode: searchMode,
+})
+const searchResponse = z.object({
+  query: z.string(), results: z.array(searchHit), total: z.number().int().nonnegative(),
+  degraded: z.boolean(), degradation: searchDegradation.optional(),
+})
+export type RemoteSearchDegradation = z.infer<typeof searchDegradation>
+export type RemoteSearchMetadata = Pick<z.infer<typeof searchHit>, 'title' | 'tags' | 'embedding_status' | 'chain_info'>
+
+export function parseRemoteSearch(value: unknown, query: string, limit: number) {
+  return remoteProjection(() => {
+    const result = searchResponse.parse(value)
+    if (result.query !== query || result.total !== result.results.length || result.results.length > limit
+      || result.degraded !== (result.degradation !== undefined)) throw new Error('Invalid search envelope')
+    return result
+  })
+}
+
+const lifecycleAction = z.enum(['delete', 'restore', 'archive', 'unarchive', 'star', 'unstar'])
+const manageInput = z.union([
+  z.object({ action: z.literal('create'), content: z.string(), title: z.string().nullable().optional(),
+    tags: z.array(z.string()).optional(), source: z.string().optional() }).strict(),
+  z.object({ action: z.literal('update'), note_id: uuid, content: z.string().optional(),
+    tags: z.array(z.string()).optional() }).strict().refine((value) => value.content !== undefined || value.tags !== undefined),
+  z.object({ action: lifecycleAction, note_id: uuid }).strict(),
+])
+export type RemoteManageNoteInput = z.infer<typeof manageInput>
+
+export function parseRemoteManageInput(input: unknown): RemoteManageNoteInput {
+  const parsed = manageInput.safeParse(input)
+  if (!parsed.success) throw new RemoteBackendError('invalid-request')
+  return parsed.data
+}
+
+export function parseRemoteCreated(value: unknown): string {
+  return remoteProjection(() => z.object({ id: uuid }).parse(value).id)
+}
+
+export function parseRemoteRestored(value: unknown, id: string): void {
+  remoteProjection(() => {
+    const result = z.object({ restored: z.literal(true), id: uuid }).parse(value)
+    if (result.id !== id) throw new Error('Invalid restore identity')
   })
 }

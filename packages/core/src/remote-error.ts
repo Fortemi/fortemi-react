@@ -1,4 +1,4 @@
-export type RemoteBackendErrorKind = 'http' | 'transport' | 'aborted' | 'invalid-response' | 'unsupported-operation'
+export type RemoteBackendErrorKind = 'http' | 'transport' | 'aborted' | 'invalid-response' | 'invalid-request' | 'unsupported-operation' | 'degraded-search'
 
 /** Bounded diagnostics only: never retains request URLs, headers or response text. */
 export class RemoteBackendError extends Error {

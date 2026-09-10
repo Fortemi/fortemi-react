@@ -121,9 +121,34 @@ self-links can occur in both directions. SKOS assignment tuples preserve their
 assignment metadata. Unreturned alternate labels and definitions retain neutral
 placeholders accompanied by `unavailableFields`, not a claim of known absence.
 
-Fixture/source tests are not released-package qualification. Remote search and
-mutation/capability repairs (#419/#420), live published-consumer evidence and
-release closeout remain separate gates. Suite NO-GO is unchanged.
+### Remote Search and Mutation Amendment (#419/#420)
+
+The remote adapter sends `q` through the producer search endpoint, admitting
+explicit fts/semantic/hybrid modes, bounded limits and comma-joined AND tags.
+Nonzero offset and source filters are not implemented by this producer contract
+and reject before dispatch. Returned totals count returned hits, not corpus size.
+Search hits have no timestamps: bounded sequential detail enrichment supplies
+validated UTC values without changing rank order. Enrichment is not atomic with
+search, and failures reject the operation instead of inventing note metadata.
+
+`RemoteSearchResult` preserves requested/effective mode and degradation.
+`semanticWithReport` can return explicit FTS fallback; the older array-only
+`semantic` rejects degraded responses so it cannot imply vector retrieval.
+Backend capability `semantic: server` describes dispatch, not provider readiness.
+
+Validated create/update/star/archive/delete/restore intents dispatch to actual
+operation-specific REST methods. Create and content update disable AI revision;
+create requests an empty pipeline. Restore retains server-side indexing behavior.
+Unknown actions/fields and legacy tool/semantic path overrides reject before
+dispatch. No automatic mutation retry or rollback guarantee is introduced.
+Remote merge capability is false because no merge operation is implemented.
+
+Producer #1146 owns separate 25-case read and 37-case operation captures, with
+fixture-source and runtime identities independently pinned. Historical fixture
+bytes remain unchanged. Fixture/source tests are not released-package
+qualification; successful vector retrieval, auth/error runtime evidence, live
+published-consumer execution and release closeout remain gates. Suite NO-GO is
+unchanged.
 
 - `DataBackend`, `BackendCapabilities`, `selectBackend` live in core (`src/data-backend.ts`).
 - PGlite adapter wraps the repositories/tools; static-file adapter wraps `ShardReader` (#189).

@@ -78,8 +78,7 @@ export function App() {
 
       {error && (
         <p className="banner err">
-          Couldn’t reach <code>{baseUrl}</code>: {error.message}. Start a Fortémi server and try again —
-          this demo compiles and renders without one; it just needs a server to return data.
+          Request failed: {error.message}
         </p>
       )}
 
