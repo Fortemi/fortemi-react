@@ -21,6 +21,7 @@ const implementationPaths = [
   'src/migrations/0023_source_metadata_purge.ts',
   'src/migrations/index.ts',
   'src/__tests__/shard/full-v1-store.test.ts',
+  'src/__tests__/shard/full-v1-public.test.ts',
   'schemas/knowledge-shard-v2.schema.receipt.json',
 ]
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex')
@@ -79,6 +80,7 @@ await writeFile(receiptPath, `${JSON.stringify({
       'validate-before-mutation',
       'repeat-import-converges',
       'exact-logical-files-reexported',
+      'public-archival-api-independent-of-native-state-not-native-restore',
     ],
   },
 }, null, 2)}\n`)

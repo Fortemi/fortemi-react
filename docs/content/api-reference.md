@@ -1929,6 +1929,25 @@ released consumer qualification and suite NO-GO remain separately governed.
 
 #### `importShard(db, data, options?)`
 
+**Full-v1 limitation (#424):** this dispatcher currently stores an archival
+snapshot, not native repository state. Its matching export path can select that
+snapshot despite later native CRUD. Native restore/current-state export is not
+qualified. `core-v1` retains its native import path.
+
+For intentionally archival operations, use the separately exported
+`importFullV1Snapshot(db, data, options?)` and
+`exportFullV1Snapshot(db, blobStore)` from `@fortemi/core`. The exact tuple must
+be `2.0.0/full-v1`; both return existing report-bearing result types. Snapshot
+import options are `conflictStrategy`, `blobStore`, `verifySignature`, and
+`trustStore` (`FullV1SnapshotImportOptions`). Required attachment bytes must be
+preserved. Malformed input returns a failure before storage mutation. The
+conflict unit is the persisted archive tuple: `skip` accepts identical archive
+bytes only, `replace` replaces that snapshot, and `error` rejects an existing
+snapshot. These operations do not merge native notes, index imported content,
+or include later native changes. Archival counts are in `component_counts`;
+native `counts.notes` remains zero. This separation does not close #424 or widen
+the historical cross-repository receipt.
+
 ```typescript
 function importShard(
   db: DatabaseClient,

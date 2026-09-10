@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-10T07:02:00Z",
+    "description": "Explicit archival API preparation; native restore remains incomplete"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:packages/core/src/shard/full-v1-store.ts",
+    "type": "code",
+    "created_at": "2026-09-10T07:02:00Z",
+    "checksum": "sha256:82b12d5a614c88c93889f5e441c851b1c9a88f7fe32e0b57050b1652e13b44df",
+    "attributes": {
+      "issue": "Fortemi/fortemi-react#424",
+      "producer_issue": "Fortemi/fortemi#1059",
+      "base_revision": "b85d8fe6e527afdcd34694bbcf86afaa04edbf9f",
+      "artifacts": {
+        "packages/core/schemas/historical/advertisement-b85d8fe6/README.md": "sha256:7bfa74b6c880901494db19debc6a9d94b2ad9cc85949ac81f5e1c1998dfc2ba1",
+        "packages/core/schemas/historical/advertisement-b85d8fe6/knowledge-shard-v2.implementation.receipt.json": "sha256:97a9711761dd6f9537739304fc7853a5880e0dbd7a8df476e0169212b5223425",
+        "packages/core/schemas/historical/advertisement-b85d8fe6/knowledge-shard-v2.presence.receipt.json": "sha256:149ba75a545ae3abbeafbe7cb661dba982a7ffc8299dc5bca3b956114646f4c0",
+        "packages/core/src/__tests__/shard/full-v1-public.test.ts": "sha256:74a214596be7e50d1882a5a09bb170495063aee7645a79b01e0b29cc774e8c2d",
+        ".aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md": "sha256:65fa5954f2cfd858caf8dd76723e9abe0ed2e0f67f5629cee599932fc8f7653b",
+        ".aiwg/architecture/SAD.md": "sha256:32270cf7323241e305256c2c2330a3da9250b6370067d4f27f41a5423245df93",
+        "docs/content/api-reference.md": "sha256:9a6ca4069f204f0fd8a1b76e11a25457efbb1ae09d9dda9d638c2eb47e544e09",
+        "packages/core/README.md": "sha256:0b30dcd1d00515a49b2205761a4d2120e93569ed9f77cbdd8019911788341941",
+        "packages/core/package.json": "sha256:3a434100fea601782b286d972575d5eec3c0b53bea82f2b8bf4cb792e75b8980",
+        "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "sha256:eab8c00b076830fdb8a2c29c22c579d7a966354fb0111ecb826dec512579138c",
+        "packages/core/schemas/knowledge-shard-v2.presence.receipt.json": "sha256:530a696555caedd52960e0caf7c544f997bc653cd4b01b6ba664d43336b1abe3",
+        "packages/core/scripts/generate-pglite-full-v1-receipt.mjs": "sha256:845b91cfbecc6dc0dac6d3ea34f09823d78b0b8e25bde9f454d9d7a4ebda16c5",
+        "packages/core/scripts/verify-knowledge-shard-contract.mjs": "sha256:2877c18c7eaca041ace5f395ef478f4658c5fed233416e913b356c3619b02f8f",
+        "packages/core/src/index.ts": "sha256:ff86956bd6731c5478ca68945e62eaff27de91ce38571bd35c042304a267cb2c",
+        "packages/core/src/shard/full-v1-store.ts": "sha256:82b12d5a614c88c93889f5e441c851b1c9a88f7fe32e0b57050b1652e13b44df",
+        "packages/core/src/shard/index.ts": "sha256:6e6454261ec6c3ba22acd3c3468e1603b29ca78f48db8525e4a2647925132add"
+      }
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-424-archival-api:001",
+    "type": "modification",
+    "started_at": "2026-09-10T06:55:00Z",
+    "ended_at": "2026-09-10T07:02:00Z",
+    "description": "Expose snapshot operations at public entry, reject malformed envelopes before writes, and separate frozen lineage from current implementation; not native restore"
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/full-v1-store.ts",
+      "activity": "urn:aiwg:activity:modification:lane-b-424-archival-api:001",
+      "time": "2026-09-10T07:02:00Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/full-v1-store.ts",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-424-archival-api:001",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/full-v1-store.ts",
+        "source": "urn:aiwg:artifact:packages/core/schemas/knowledge-shard/2.0.0/full-v1/manifest.schema.json",
+        "derivation_type": "conforms_to",
+        "activity": "urn:aiwg:activity:modification:lane-b-424-archival-api:001"
+      },
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/full-v1-store.ts",
+        "source": "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-19-v2.shard",
+        "derivation_type": "tests",
+        "activity": "urn:aiwg:activity:modification:lane-b-424-archival-api:001"
+      }
+    ]
+  }
+}
