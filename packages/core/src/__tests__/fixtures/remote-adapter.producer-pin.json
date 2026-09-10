@@ -1,0 +1,9 @@
+{
+  "repository": "Fortemi/fortemi",
+  "fixtureCommit": "2a97942b1f6aaa11ea6f33709bc248df03d91fb3",
+  "fixturePath": "contracts/openapi/fixtures/remote-adapter.json",
+  "sha256": "cf2949e25dd5bba13466b6bf15957f233464279d974a3e0917ce2a8d33ffbd4f",
+  "runtimeCommit": "e91c595a896275f835cb7ed1aef173cb26056206",
+  "runtimeImage": "ghcr.io/fortemi/fortemi@sha256:f24c621176dd17ff69896a78c3c9ba0f96f6b0a7ed15024dfb42343401d99cb1",
+  "boundary": "Supplemental producer-owned HTTP fixture, not released-consumer qualification. Producer #1146; consumers #417-421. Suite NO-GO unchanged."
+}

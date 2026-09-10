@@ -1519,6 +1519,14 @@ HTTP for the full Fortemi server tier (`read`/`write`/`merge`/`multiUser`,
 The React `useRemote(config)` hook wraps `createRemoteBackend` and exposes the
 same remote operations with `loading`/`error` state.
 
+The remote wire contract is not the local database schema. In particular,
+`provenanceGraphOf(id)` exposes the server revision/activity graph, and composed
+notes store it in `provenanceGraph`. Remote `provenanceOf` rejects as unsupported
+rather than manufacturing local edges. Note absence is distinct from HTTP,
+transport and enrichment errors, which are surfaced as `RemoteBackendError`.
+Remote search and mutation/capability conformance remain pending #419/#420;
+capability flags alone must not be used as qualification evidence.
+
 `selectBackend` prefers a fully-satisfying backend with the lightest
 `startupCost`; when none fully satisfy, it returns the fewest-missing candidate
 so the caller can degrade deliberately via `selection.missing`.

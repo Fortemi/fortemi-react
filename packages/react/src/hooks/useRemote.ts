@@ -12,6 +12,7 @@ import {
   type BackendProvenanceEdge,
   type DataBackend,
   type RemoteBackendConfig,
+  type RemoteProvenanceGraph,
 } from '@fortemi/core'
 
 export interface UseRemoteReturn {
@@ -25,6 +26,7 @@ export interface UseRemoteReturn {
   linksOf: (id: string) => Promise<BackendLink[]>
   conceptsOf: (id: string) => Promise<BackendConcept[]>
   provenanceOf: (id: string) => Promise<BackendProvenanceEdge[]>
+  provenanceGraphOf: (id: string) => Promise<RemoteProvenanceGraph>
   semantic: (query: string, k?: number) => Promise<BackendSearchHit[]>
   manageNote: (input: unknown) => Promise<unknown>
 }
@@ -58,6 +60,7 @@ export function useRemote(config: RemoteBackendConfig): UseRemoteReturn {
   const linksOf = useCallback((id: string) => call(() => backend.linksOf!(id)), [backend, call])
   const conceptsOf = useCallback((id: string) => call(() => backend.conceptsOf!(id)), [backend, call])
   const provenanceOf = useCallback((id: string) => call(() => backend.provenanceOf!(id)), [backend, call])
+  const provenanceGraphOf = useCallback((id: string) => call(() => backend.provenanceGraphOf!(id)), [backend, call])
   const semantic = useCallback((query: string, k?: number) => call(() => backend.semantic!(query, k)), [backend, call])
   const manageNote = useCallback((input: unknown) => call(() => backend.manageNote!(input)), [backend, call])
 
@@ -72,6 +75,7 @@ export function useRemote(config: RemoteBackendConfig): UseRemoteReturn {
     linksOf,
     conceptsOf,
     provenanceOf,
+    provenanceGraphOf,
     semantic,
     manageNote,
   }

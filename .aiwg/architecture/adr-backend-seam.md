@@ -98,6 +98,33 @@ The interface is operation-shaped, not SQL-shaped, specifically so the remote ba
 
 ## Implementation notes
 
+### Remote Read Projection Amendment (#417, #418, #421)
+
+The earlier extension-point assumption of shared JSON shapes does not hold for
+the live server. Its note envelopes, directional links and revision/activity
+graph require explicit validated projections. The server runtime handlers and
+`matric-core` models remain authoritative; the supplemental producer #1146
+capture is bound to released server 2026.9.9 and is not a shared storage schema.
+
+`getNote` returns null only for an authoritative note-not-found Problem Details
+response. Transport, authorization, invalid payload and relationship failures
+throw bounded `RemoteBackendError` diagnostics without body text or credentials.
+`getNoteFull` composes current revised content with links, concepts and
+`provenanceGraph`; enrichment errors must not make an existing note appear absent.
+
+Remote `provenanceGraphOf` preserves server field names and the distinct
+activity, edge, current-chain and derived-note components. The legacy
+`provenanceOf` local-edge projection is unsupported remotely and throws before
+dispatch. PGlite and static-shard provenance remain unchanged. Remote links
+retain endpoints, direction relative to the requested note and UTC timestamps;
+self-links can occur in both directions. SKOS assignment tuples preserve their
+assignment metadata. Unreturned alternate labels and definitions retain neutral
+placeholders accompanied by `unavailableFields`, not a claim of known absence.
+
+Fixture/source tests are not released-package qualification. Remote search and
+mutation/capability repairs (#419/#420), live published-consumer evidence and
+release closeout remain separate gates. Suite NO-GO is unchanged.
+
 - `DataBackend`, `BackendCapabilities`, `selectBackend` live in core (`src/data-backend.ts`).
 - PGlite adapter wraps the repositories/tools; static-file adapter wraps `ShardReader` (#189).
 - Depends on #187 (snapshot/PGlite backend) and #189 (static-file backend) being available — implement after both land.

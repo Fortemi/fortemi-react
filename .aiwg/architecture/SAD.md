@@ -540,6 +540,15 @@ All operations work without network access. The only network-dependent features 
 
 ## 11. Architectural Risks (Residual)
 
+Remote read projection amendment (#417/#418/#421): server HTTP envelopes are
+validated before projection, independently of PGlite and shard schemas. The
+server revision/activity graph is exposed through `provenanceGraphOf` and
+`BackendNoteFull.provenanceGraph`, not relabeled as local provenance edges.
+Only authoritative note-not-found responses become null; other failures remain
+bounded typed errors. See [backend ADR](adr-backend-seam.md) for projection and
+evidence limits. Search/mutation repairs and published-consumer qualification
+remain open gates; the suite audit is still NO-GO.
+
 After Elaboration Iteration 1 PoC:
 
 | Risk | Residual Concern | Mitigation |

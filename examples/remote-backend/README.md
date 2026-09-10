@@ -22,18 +22,22 @@ the demo still compiles and renders; it just has nothing to list.
 
 - **`useRemote(config)`** creates a REST-backed `DataBackend` and exposes the
   same operations the local hooks do: `listNotes`, `search`, `getNoteFull`,
-  plus `linksOf` / `conceptsOf` / `provenanceOf` / `semantic`. `config` is just
+  plus `linksOf` / `conceptsOf` / `provenanceGraphOf`. `config` is just
   `{ baseUrl, authToken? }` (and optional custom `paths` / `fetchImpl` /
   `headers`).
-- The list, full-text search (with server-side facets), and detail flow read
-  identically to the PGlite starters — only the data source differs. That is the
-  point: a UI written against `DataBackend` runs over either the browser
-  database or a server without change.
+- List and detail use validated server envelopes. The provenance graph retains
+  server activities and edges; it is not a local PGlite edge list. Remote
+  `provenanceOf` is unsupported. Search mapping (#419) and mutation/capability
+  dispatch (#420) remain open repairs, not qualified operations in this example.
 - No `FortemiProvider` is mounted — `useRemote` needs no local database. (The
   `@fortemi/react` root entry still carries the engine, so it ships in `dist/`
   but never boots.)
 
 ## Local vs. remote
+
+Producer-captured fixture tests are not published-package/live-server acceptance.
+Errors preserve bounded HTTP status and problem codes without exposing response
+content. A failed relationship request does not turn an existing note into null.
 
 | | Local (EX-06/07) | Remote (this) |
 |---|---|---|

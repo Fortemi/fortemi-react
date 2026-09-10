@@ -1146,7 +1146,23 @@ Creates the network-backed Fortemi server tier for `selectBackend`. The returned
 
 A fourth seam adapter, [`createRecordBackend`](#canonical-records), serves the writable canonical record tier with no PGlite at all — see Canonical Records.
 
-Readable `DataBackend` implementations expose `listNotes`, `getNote`, `search`, `getNoteFull`, `linksOf`, `conceptsOf`, and `provenanceOf`; write-capable backends expose `manageNote`, and semantic-capable backends expose `semantic`.
+Readable `DataBackend` implementations expose `listNotes`, `getNote` and `search`,
+with optional full-note and relationship methods. Remote `getNoteFull` includes
+`provenanceGraph`, preserving server activities, edges, current chain and derived
+note IDs. Use `provenanceGraphOf(id)` for that graph. Remote `provenanceOf` throws
+`RemoteBackendError` with `kind: 'unsupported-operation'`; it cannot represent
+the server graph as local PGlite edges. PGlite and shard methods are unchanged.
+
+Remote links include `direction` relative to the requested note and retain both
+endpoints. Remote concepts mark `altLabels` and `definition` in
+`unavailableFields`: their empty/null placeholders do not assert absence.
+`getNote`/`getNoteFull` return null only for a recognized note-not-found response.
+Authorization, transport, malformed response and enrichment errors throw
+`RemoteBackendError` with bounded status/problem metadata and no raw body text.
+
+Qualification boundary: producer-captured read fixtures do not establish
+released-consumer parity. Search and mutation/capability repairs remain tracked
+by #419/#420; current capability flags are not conformance evidence.
 
 ---
 
@@ -3145,6 +3161,7 @@ function useRemote(config: RemoteBackendConfig): {
   linksOf: (id: string) => Promise<BackendLink[]>
   conceptsOf: (id: string) => Promise<BackendConcept[]>
   provenanceOf: (id: string) => Promise<BackendProvenanceEdge[]>
+  provenanceGraphOf: (id: string) => Promise<RemoteProvenanceGraph>
   semantic: (query: string, k?: number) => Promise<BackendSearchHit[]>
   manageNote: (input: unknown) => Promise<unknown>
 }

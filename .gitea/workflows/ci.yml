@@ -47,6 +47,8 @@ jobs:
       - run: pnpm --filter @fortemi/core exec vitest run --coverage
         env:
           VITEST_MAX_WORKERS: 2
+      - name: Verify immutable remote producer fixture
+        run: node packages/core/scripts/verify-remote-producer-fixture.mjs
       # @fortemi/graph now imports @fortemi/core by its published entry point
       # (dist), so build core before running graph's tests.
       - run: pnpm --filter @fortemi/core build

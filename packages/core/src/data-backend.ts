@@ -20,6 +20,9 @@ import type { NoteSummary, NoteFull, SearchResult } from './repositories/types.j
 import { manageNote } from './tools/manage-note.js'
 import type { ShardReader, ShardReaderNote } from './shard/shard-reader.js'
 import type { ShardLink, ShardProvenanceEdge, ShardSkosConcept } from './shard/types.js'
+import { RemoteBackendError, isRemoteNoteNotFound, remoteHttpError } from './remote-error.js'
+import { parseRemoteConcepts, parseRemoteLinks, parseRemoteNoteDetail, parseRemoteNoteList, parseRemoteProvenance } from './remote-contract.js'
+import type { RemoteProvenanceGraph } from './remote-contract.js'
 
 // ── Capabilities ──────────────────────────────────────────────────────────
 
@@ -76,6 +79,8 @@ export interface BackendNoteFull extends BackendNote {
   links?: BackendLink[]
   concepts?: BackendConcept[]
   provenance?: BackendProvenanceEdge[]
+  /** Server revision/activity graph; not interchangeable with local provenance edges. */
+  provenanceGraph?: RemoteProvenanceGraph
 }
 
 export interface BackendLink {
@@ -87,6 +92,11 @@ export interface BackendLink {
   score: number | null
   createdAt: string
   metadata?: Record<string, unknown>
+  /** Exact server JSON metadata, including non-object values and null. */
+  remoteMetadata?: unknown
+  /** Relative to the requested note; remote self-links can appear in both directions. */
+  direction?: 'outgoing' | 'incoming'
+  snippet?: string | null
 }
 
 export interface BackendConcept {
@@ -97,6 +107,9 @@ export interface BackendConcept {
   definition: string | null
   createdAt: string
   updatedAt: string
+  /** Placeholder values for these fields are unavailable, not evidence of absence. */
+  unavailableFields?: Array<'altLabels' | 'definition'>
+  assignment?: { noteId: string; source: string; relevanceScore: number; isPrimary: boolean; createdAt: string; confidence?: number; createdBy?: string }
 }
 
 export interface BackendProvenanceEdge {
@@ -179,6 +192,8 @@ export interface DataBackend {
   conceptsOf?(id: string): Promise<BackendConcept[]>
   /** W3C PROV edges for a note (present when capabilities.read). */
   provenanceOf?(id: string): Promise<BackendProvenanceEdge[]>
+  /** Remote revision/activity graph, preserving the server model and field names. */
+  provenanceGraphOf?(id: string): Promise<RemoteProvenanceGraph>
   /** Vector search (present when capabilities.semantic !== 'none'). */
   semantic?(query: string, k?: number): Promise<BackendSearchHit[]>
   /** Write op (present when capabilities.write). */
@@ -305,6 +320,13 @@ function searchResultToBackend(r: SearchResult): BackendNote {
 }
 
 function remoteNoteToBackend(n: RemoteNoteRecord): BackendNote {
+  if (!n || typeof n.id !== 'string' || !n.id
+    || !(n.title === null || typeof n.title === 'string')
+    || !Array.isArray(n.tags) || !n.tags.every((tag) => typeof tag === 'string')
+    || !Number.isFinite(Date.parse(n.createdAt ?? n.created_at ?? ''))
+    || !Number.isFinite(Date.parse(n.updatedAt ?? n.updated_at ?? ''))) {
+    throw new RemoteBackendError('invalid-response')
+  }
   return {
     id: n.id,
     title: n.title,
@@ -314,13 +336,6 @@ function remoteNoteToBackend(n: RemoteNoteRecord): BackendNote {
     source: n.source,
     starred: n.starred ?? n.is_starred,
     archived: n.archived ?? n.is_archived,
-  }
-}
-
-function remoteFullToBackend(n: RemoteNoteRecord): BackendNoteFull {
-  return {
-    ...remoteNoteToBackend(n),
-    content: n.content ?? n.current?.content ?? '',
   }
 }
 
@@ -435,43 +450,6 @@ function provenanceToBackend(edge: {
 }
 
 function shardProvenanceToBackend(edge: ShardProvenanceEdge): BackendProvenanceEdge {
-  return provenanceToBackend(edge)
-}
-
-function remoteLinkToBackend(link: Partial<BackendLink> & {
-  id: string
-  from_note_id?: string
-  source_note_id?: string
-  to_note_id?: string
-  target_note_id?: string
-  to_url?: string | null
-  kind?: string
-  link_type?: string
-  score?: number | null
-  confidence?: number | null
-  created_at?: string
-}): BackendLink {
-  return {
-    id: link.id,
-    fromNoteId: link.fromNoteId ?? link.from_note_id ?? link.source_note_id ?? '',
-    toNoteId: link.toNoteId ?? link.to_note_id ?? link.target_note_id ?? null,
-    toUrl: link.toUrl ?? link.to_url ?? null,
-    kind: link.kind ?? link.link_type ?? '',
-    score: link.score ?? link.confidence ?? null,
-    createdAt: link.createdAt ?? link.created_at ?? '',
-    ...(link.metadata ? { metadata: link.metadata } : {}),
-  }
-}
-
-function remoteConceptToBackend(concept: BackendConcept | Parameters<typeof conceptToBackend>[0]): BackendConcept {
-  if ('schemeId' in concept) return concept
-  return conceptToBackend(concept)
-}
-
-function remoteProvenanceToBackend(
-  edge: BackendProvenanceEdge | Parameters<typeof provenanceToBackend>[0],
-): BackendProvenanceEdge {
-  if ('entityType' in edge) return edge
   return provenanceToBackend(edge)
 }
 
@@ -683,11 +661,18 @@ async function remoteHeaders(config: RemoteBackendConfig, json = false): Promise
 
 async function remoteJson<T>(config: RemoteBackendConfig, path: string, init: RequestInit = {}): Promise<T> {
   const fetchImpl = config.fetchImpl ?? globalThis.fetch
-  const response = await fetchImpl(remoteUrl(config.baseUrl, path), init)
-  if (!response.ok) {
-    throw new Error(`Remote backend request failed (${response.status}): ${path}`)
+  let response: Response
+  try {
+    response = await fetchImpl(remoteUrl(config.baseUrl, path), init)
+  } catch (error) {
+    throw new RemoteBackendError(error instanceof Error && error.name === 'AbortError' ? 'aborted' : 'transport')
   }
-  return response.json() as Promise<T>
+  if (!response.ok) {
+    throw await remoteHttpError(response)
+  }
+  try { return await response.json() as T } catch {
+    throw new RemoteBackendError('invalid-response', response.status)
+  }
 }
 
 export function createRemoteBackend(config: RemoteBackendConfig): DataBackend {
@@ -709,36 +694,31 @@ export function createRemoteBackend(config: RemoteBackendConfig): DataBackend {
   }
 
   async function getNoteFull(id: string): Promise<BackendNoteFull | null> {
+    let note: unknown
     try {
-      const note = await getJson<RemoteNoteRecord>(remotePath(paths.note, id), { full: true })
-      const [links, concepts, provenance] = await Promise.all([
-        linksOf(id),
-        conceptsOf(id),
-        provenanceOf(id),
-      ])
-      return { ...remoteFullToBackend(note), links, concepts, provenance }
-    } catch {
-      return null
+      note = await getJson<unknown>(remotePath(paths.note, id))
+    } catch (error) {
+      if (isRemoteNoteNotFound(error)) return null
+      throw error
     }
+    const full = parseRemoteNoteDetail(note)
+    if (full.id !== id) throw new RemoteBackendError('invalid-response')
+    const [links, concepts, provenanceGraph] = await Promise.all([
+      linksOf(id), conceptsOf(id), provenanceGraphOf(id),
+    ])
+    return { ...full, links, concepts, provenanceGraph }
   }
 
   async function linksOf(id: string): Promise<BackendLink[]> {
-    const links = await getJson<Array<Parameters<typeof remoteLinkToBackend>[0]>>(remotePath(paths.links, id))
-    return links.map(remoteLinkToBackend)
+    return parseRemoteLinks(await getJson<unknown>(remotePath(paths.links, id)), id)
   }
 
   async function conceptsOf(id: string): Promise<BackendConcept[]> {
-    const concepts = await getJson<Array<BackendConcept | Parameters<typeof conceptToBackend>[0]>>(
-      remotePath(paths.concepts, id),
-    )
-    return concepts.map(remoteConceptToBackend)
+    return parseRemoteConcepts(await getJson<unknown>(remotePath(paths.concepts, id)), id)
   }
 
-  async function provenanceOf(id: string): Promise<BackendProvenanceEdge[]> {
-    const edges = await getJson<Array<BackendProvenanceEdge | Parameters<typeof provenanceToBackend>[0]>>(
-      remotePath(paths.provenance, id),
-    )
-    return edges.map(remoteProvenanceToBackend)
+  async function provenanceGraphOf(id: string): Promise<RemoteProvenanceGraph> {
+    return parseRemoteProvenance(await getJson<unknown>(remotePath(paths.provenance, id)), id)
   }
 
   return {
@@ -753,15 +733,22 @@ export function createRemoteBackend(config: RemoteBackendConfig): DataBackend {
     },
 
     async listNotes(o) {
-      const result = await getJson<{ items: RemoteNoteRecord[]; total: number }>(paths.notes, o ? { ...o } : undefined)
-      return { items: result.items.map(remoteNoteToBackend), total: result.total }
+      const result = await getJson<unknown>(paths.notes, o ? { ...o } : undefined)
+      return parseRemoteNoteList(result)
     },
 
     async getNote(id) {
       try {
-        return remoteNoteToBackend(await getJson<RemoteNoteRecord>(remotePath(paths.note, id)))
-      } catch {
-        return null
+        const full = parseRemoteNoteDetail(await getJson<unknown>(remotePath(paths.note, id)))
+        if (full.id !== id) throw new RemoteBackendError('invalid-response')
+        return {
+          id: full.id, title: full.title, tags: full.tags,
+          createdAt: full.createdAt, updatedAt: full.updatedAt,
+          source: full.source, starred: full.starred, archived: full.archived,
+        }
+      } catch (error) {
+        if (isRemoteNoteNotFound(error)) return null
+        throw error
       }
     },
 
@@ -787,7 +774,10 @@ export function createRemoteBackend(config: RemoteBackendConfig): DataBackend {
     getNoteFull,
     linksOf,
     conceptsOf,
-    provenanceOf,
+    provenanceGraphOf,
+    async provenanceOf() {
+      throw new RemoteBackendError('unsupported-operation')
+    },
 
     async semantic(query, k) {
       const result = await getJson<{ hits: BackendSearchHit[] }>(paths.semantic, { query, k })

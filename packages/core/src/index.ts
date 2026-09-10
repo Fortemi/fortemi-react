@@ -172,6 +172,9 @@ export type {
 } from './data-archive.js'
 
 // Backend seam (#191) — uniform tool-intent operation interface + negotiation
+export { RemoteBackendError } from './remote-error.js'
+export type { RemoteProvenanceGraph } from './remote-contract.js'
+export type { RemoteBackendErrorKind } from './remote-error.js'
 export {
   selectBackend,
   createPGliteBackend,

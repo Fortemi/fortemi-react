@@ -124,7 +124,7 @@ export function App() {
               <p className="muted mono">
                 {new Date(selected.updatedAt).toLocaleString()} · {selected.tags.length} tags
                 {selected.concepts?.length ? ` · ${selected.concepts.length} concepts` : ''}
-                {selected.provenance?.length ? ` · ${selected.provenance.length} revisions` : ''}
+                {selected.provenanceGraph?.all_activities.length ? ` · ${selected.provenanceGraph.all_activities.length} activities` : ''}
               </p>
               <p className="body">{selected.content}</p>
             </>
