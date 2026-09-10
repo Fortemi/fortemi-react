@@ -1,6 +1,6 @@
 import type { QueryExecutor } from '../storage-backend.js'
 
-export type NativeField = { column?: string; kind?: 'json' | 'timestamp' | 'uuid' | 'vector' }
+export type NativeField = { column?: string; kind?: 'json' | 'timestamp' | 'uuid' | 'vector' | 'range' }
 export type NativeFields<T> = { [K in keyof T]-?: NativeField }
 export const nativeUuid = (value: string | null): string | null => value === null ? null : value.toLowerCase()
 export const nativeUtc = (column: string): string => `CASE WHEN ${column}_utc::timestamptz IS NOT DISTINCT FROM ${column}
@@ -19,16 +19,20 @@ export async function upsertNativeFields<T extends object>(
     const column = field.column ?? name
     const value = row[name]
     columns.push(column)
-    params.push(field.kind === 'json' ? JSON.stringify(value)
+    params.push(field.kind === 'json' || field.kind === 'range' ? JSON.stringify(value)
       : field.kind === 'vector' ? value === null ? null : JSON.stringify(value)
         : field.kind === 'uuid' ? nativeUuid(value as string | null) : value)
     const param = `$${params.length}`
     values.push(field.kind === 'json' ? `${param}::jsonb`
       : field.kind === 'timestamp' ? `${param}::text::timestamptz`
-        : field.kind === 'vector' ? `${param}::vector` : param)
+        : field.kind === 'vector' ? `${param}::vector`
+          : field.kind === 'range' ? `native_tstzrange(${param}::jsonb)` : param)
     if (field.kind === 'timestamp') {
       columns.push(`${column}_utc`)
       values.push(`${param}::text`)
+    } else if (field.kind === 'range') {
+      columns.push(`${column}_source`)
+      values.push(`${param}::jsonb`)
     } else if (field.kind === 'vector') {
       columns.push(`${column}_values`)
       params.push(value)
@@ -48,7 +52,10 @@ export function selectNativeFields<T>(fields: NativeFields<T>): string {
     const column = field.column ?? name
     const value = field.kind === 'timestamp' ? nativeUtc(column) : field.kind === 'vector'
       ? `CASE WHEN ${column}_values::vector = ${column} THEN to_jsonb(${column}_values) ELSE ${column}::text::jsonb END`
-      : column
+      : field.kind === 'range'
+        ? `CASE WHEN native_tstzrange(${column}_source) IS NOT DISTINCT FROM ${column}
+            THEN ${column}_source ELSE native_tstzrange_json(${column}) END`
+        : column
     return `${value} AS ${name}`
   }).join(', ')
 }

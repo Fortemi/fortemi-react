@@ -117,10 +117,10 @@ export interface BackendProvenanceEdge {
   entityType: string
   entityId: string
   activity: string
-  agent: string
+  agent: string | null
   startedAt: string
   endedAt: string | null
-  attributes: Record<string, unknown> | null
+  attributes: unknown
 }
 
 /** One search hit — note plus optional rank/snippet when the backend ranks. */
@@ -386,21 +386,15 @@ function shardConceptToBackend(concept: ShardSkosConcept): BackendConcept {
   return conceptToBackend(concept)
 }
 
-function parseAttributes(attributes: Record<string, unknown> | string | null): Record<string, unknown> | null {
-  if (attributes === null) return null
-  if (typeof attributes === 'string') return JSON.parse(attributes) as Record<string, unknown>
-  return attributes
-}
-
 function provenanceToBackend(edge: {
   id: string
   entity_type: string
   entity_id: string
   activity: string
-  agent: string
+  agent: string | null
   started_at: Date | string
   ended_at: Date | string | null
-  attributes: Record<string, unknown> | string | null
+  attributes: unknown
 }): BackendProvenanceEdge {
   return {
     id: edge.id,
@@ -410,7 +404,7 @@ function provenanceToBackend(edge: {
     agent: edge.agent,
     startedAt: toIso(edge.started_at),
     endedAt: edge.ended_at ? toIso(edge.ended_at) : null,
-    attributes: parseAttributes(edge.attributes),
+    attributes: edge.attributes,
   }
 }
 
@@ -482,14 +476,14 @@ export function createPGliteBackend(db: DatabaseClient, options: PGliteBackendOp
       entity_type: string
       entity_id: string
       activity: string
-      agent: string
+      agent: string | null
       started_at: Date | string
       ended_at: Date | string | null
-      attributes: Record<string, unknown> | string | null
+      attributes: unknown
     }>(
       `SELECT *
        FROM provenance_edge
-       WHERE entity_type = 'note' AND entity_id = $1
+       WHERE (entity_type = 'note' AND entity_id = $1) OR note_id = $1
        ORDER BY started_at`,
       [id],
     )

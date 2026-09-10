@@ -690,18 +690,38 @@ class ProvenanceRepository {
     entityId: string,
     input: {
       activity: string
-      agent: string
+      agent: string | null
       startedAt?: Date | string
       endedAt?: Date | string | null
-      attributes?: Record<string, unknown> | null
+      attributes?: unknown
     }
   ): Promise<ProvenanceEdge>
 
   forEntity(entityType: string, entityId: string): Promise<ProvenanceEdge[]>
+  getActivity(id: string): Promise<ProvenanceActivity | null>
+  activitiesForNote(noteId: string): Promise<ProvenanceActivity[]>
+  derivationsForRevision(revisionId: string): Promise<ProvenanceDerivation[]>
+  getNamedLocation(id: string): Promise<NamedLocation | null>
+  getLocation(id: string): Promise<ProvenanceLocation | null>
+  getDevice(id: string): Promise<ProvenanceDevice | null>
+  getCapture(id: string): Promise<ProvenanceCapture | null>
+  captureForNote(noteId: string): Promise<ProvenanceCapture | null>
 }
 ```
 
 First-class W3C PROV write/read surface over `provenance_edge`, so consumers do not need raw SQL to record lifecycle events.
+
+The historical `ProvenanceEdge` name denotes a local activity. Rich derivations
+are separate `ProvenanceDerivation` records. Note reads include activities owned
+by that note's revisions. Agents may be null and metadata is arbitrary JSON;
+narrow `unknown` before object-field access. JSON strings are values, not encoded
+objects to parse a second time. `useNoteProvenance` retains the same values.
+
+Capture records expose exact structured time ranges. Geometry getters emit EWKB
+from current native GeoJSON, retaining original byte order only for unchanged
+values. These APIs expose the internal native provenance stage, not completion
+of public `full-v1` restoration. Full archive transaction, export, and released
+producer/consumer qualification remain tracked in #424.
 
 ---
 

@@ -7,9 +7,9 @@ export interface ProvenanceEvent {
   type: 'created' | 'job' | 'revision' | 'provenance'
   label: string
   detail?: string
-  agent?: string
+  agent?: string | null
   activity?: string
-  attributes?: Record<string, unknown> | null
+  attributes?: unknown
 }
 
 export async function loadNoteProvenanceEvents(
@@ -34,19 +34,19 @@ export async function loadNoteProvenanceEvents(
   // 2. Stored W3C PROV-style edges.
   const provResult = await db.query<{
     activity: string
-    agent: string
+    agent: string | null
     started_at: Date
     ended_at: Date | null
-    attributes: Record<string, unknown> | string | null
+    attributes: unknown
   }>(
     `SELECT activity, agent, started_at, ended_at, attributes
      FROM provenance_edge
-     WHERE entity_type = 'note' AND entity_id = $1
+     WHERE (entity_type = 'note' AND entity_id = $1) OR note_id = $1
      ORDER BY started_at ASC`,
     [noteId],
   )
   for (const edge of provResult.rows) {
-    const attributes = parseAttributes(edge.attributes)
+    const attributes = edge.attributes
     allEvents.push({
       timestamp: new Date(edge.started_at),
       type: 'provenance',
@@ -134,21 +134,6 @@ export function useNoteProvenance(noteId: string) {
   return { events: provenanceEvents, loading }
 }
 
-function parseAttributes(value: Record<string, unknown> | string | null): Record<string, unknown> | null {
-  if (!value) return null
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value)
-      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-        ? parsed as Record<string, unknown>
-        : null
-    } catch {
-      return null
-    }
-  }
-  return value
-}
-
 function formatProvenanceActivity(activity: string): string {
   const labels: Record<string, string> = {
     'prov:Create': 'PROV create',
@@ -162,17 +147,20 @@ function formatProvenanceActivity(activity: string): string {
 
 function summarizeProvenance(
   activity: string,
-  agent: string,
-  attributes: Record<string, unknown> | null,
+  agent: string | null,
+  metadata: unknown,
 ): string {
-  const parts = [`Agent: ${agent}`]
+  const attributes = metadata !== null && typeof metadata === 'object' && !Array.isArray(metadata)
+    ? metadata as Record<string, unknown> : null
+  const parts = agent === null ? [] : [`Agent: ${agent}`]
+  const initialLength = parts.length
   const entity = getString(attributes, 'prov:entity') ?? getString(attributes, 'entity')
   const source = getString(attributes, 'prov:wasDerivedFrom') ?? getString(attributes, 'source')
   const confidence = getString(attributes, 'confidence')
   if (entity) parts.push(`Entity: ${entity}`)
   if (source) parts.push(`Derived from: ${source}`)
   if (confidence) parts.push(`Confidence: ${confidence}`)
-  if (parts.length === 1 && activity) parts.push(activity)
+  if (parts.length === initialLength && activity) parts.push(activity)
   return parts.join(' · ')
 }
 

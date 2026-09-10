@@ -383,6 +383,15 @@ export type { SkosScheme, SkosConcept, SkosRelation, NoteSkosTag, SkosLabel, Sko
   NoteSkosAssignment } from './repositories/skos-repository.js'
 export { ProvenanceRepository } from './repositories/provenance-repository.js'
 export type { ProvenanceEdge, RecordProvenanceInput } from './repositories/provenance-repository.js'
+export type {
+  NativeProvenanceActivity as ProvenanceActivity,
+  NativeProvenanceEdge as ProvenanceDerivation,
+  NativeNamedLocation as NamedLocation,
+  NativeProvenanceLocation as ProvenanceLocation,
+  NativeProvenanceDevice as ProvenanceDevice,
+  NativeProvenanceRecord as ProvenanceCapture,
+  NativeTimestampRange as ProvenanceTimeRange,
+} from './shard/native-provenance.js'
 
 export { captureKnowledge, manageNote, searchTool } from './tools/index.js'
 export type { CaptureKnowledgeResult, ManageNoteResult } from './tools/index.js'

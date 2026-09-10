@@ -4,6 +4,16 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+### Native provenance storage (#424)
+
+- Add typed native activity, derivation, location, device and capture records,
+  exact time-range preservation, and browser-compatible WGS84 geometry handling.
+- Include revision-owned activities in note provenance reads. Agents can be null;
+  metadata is arbitrary JSON, so TypeScript consumers must narrow `unknown`
+  before accessing properties. JSON strings are no longer parsed a second time.
+- This is an internal native restore stage. Public full-v1 import/export and
+  released producer/consumer acceptance are not yet complete; suite NO-GO remains.
+
 ## v2026.9.3 - 2026-09-10
 
 ### `@fortemi/core` - scoped `2.0.0/full-v1` PGlite export (#425)

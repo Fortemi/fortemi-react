@@ -78,7 +78,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:db-table-parity": "vitest run src/__tests__/db-table-parity",
-    "test:portable-contract": "pnpm build && node scripts/generate-record-v1-self-fixture.mjs --verify && pnpm verify:knowledge-shard-contract && vitest run --maxWorkers=2 src/__tests__/aiwg-index.test.ts src/__tests__/aiwg-index-full-shard.test.ts src/__tests__/shard/aiwg-core-v1-projection.test.ts src/__tests__/shard/shard-conformance.spike.test.ts src/__tests__/shard/schema-validator.test.ts src/__tests__/shard/profile-registry.test.ts src/__tests__/shard/presence.test.ts src/__tests__/shard/full-v1-store.test.ts src/__tests__/shard/full-v1-public.test.ts src/__tests__/shard/full-v1-references.test.ts src/__tests__/shard/native-note-history.test.ts src/__tests__/shard/native-embeddings.test.ts src/__tests__/shard/native-skos.test.ts src/__tests__/shard/shard-import.test.ts src/__tests__/shard/core-v1-self-cell.test.ts src/__tests__/shard/fortemi-core-v1-consumer-cell.test.ts src/__tests__/shard/shard-signature.test.ts src/__tests__/shard/shard-tar.test.ts src/__tests__/records/record-store.test.ts src/__tests__/records/record-shard.test.ts src/__tests__/shard/bundled-example-shards.test.ts",
+    "test:portable-contract": "pnpm build && node scripts/generate-record-v1-self-fixture.mjs --verify && pnpm verify:knowledge-shard-contract && vitest run --maxWorkers=2 src/__tests__/aiwg-index.test.ts src/__tests__/aiwg-index-full-shard.test.ts src/__tests__/shard/aiwg-core-v1-projection.test.ts src/__tests__/shard/shard-conformance.spike.test.ts src/__tests__/shard/schema-validator.test.ts src/__tests__/shard/profile-registry.test.ts src/__tests__/shard/presence.test.ts src/__tests__/shard/full-v1-store.test.ts src/__tests__/shard/full-v1-public.test.ts src/__tests__/shard/full-v1-references.test.ts src/__tests__/shard/native-note-history.test.ts src/__tests__/shard/native-embeddings.test.ts src/__tests__/shard/native-skos.test.ts src/__tests__/shard/native-provenance.test.ts src/__tests__/shard/native-geometry.test.ts src/__tests__/shard/shard-import.test.ts src/__tests__/shard/core-v1-self-cell.test.ts src/__tests__/shard/fortemi-core-v1-consumer-cell.test.ts src/__tests__/shard/shard-signature.test.ts src/__tests__/shard/shard-tar.test.ts src/__tests__/records/record-store.test.ts src/__tests__/records/record-shard.test.ts src/__tests__/shard/bundled-example-shards.test.ts",
     "test:platform-contract": "node scripts/run-platform-contract.mjs",
     "test:source-upsert-contract": "vitest run src/__tests__/source-upsert-contract.test.ts",
     "verify:platform-contract-receipt": "node scripts/verify-platform-contract-receipt.mjs",
@@ -99,8 +99,11 @@
     "@bytecask/core": "^2026.7.5",
     "@noble/hashes": "^1.7.2",
     "ajv": "^8.17.1",
+    "buffer": "^6.0.3",
     "fflate": "^0.8.2",
+    "inherits": "^2.0.4",
     "uuid": "^13.0.0",
+    "wkx": "^0.5.0",
     "zod": "^3.24.0"
   },
   "optionalDependencies": {
@@ -109,6 +112,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "^4.1.1",
+    "esbuild": "0.27.4",
     "fake-indexeddb": "^6.2.5",
     "tsup": "^8.3.5",
     "typescript": "^5.8.0",

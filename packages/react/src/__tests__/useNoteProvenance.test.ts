@@ -7,23 +7,24 @@ function result<T>(rows: T[]): QueryResult<T> {
 }
 
 describe('loadNoteProvenanceEvents', () => {
-  it('loads stored PROV edges with parsed attributes and chronological history', async () => {
+  it('loads stored PROV edges with native JSONB attributes and chronological history', async () => {
     const query = vi.fn(async (sql: string, params?: unknown[]) => {
       expect(params).toEqual(['note-1'])
       if (sql.includes('FROM note WHERE')) {
         return result([{ created_at: new Date('2026-07-17T12:00:00Z') }])
       }
       if (sql.includes('FROM provenance_edge')) {
+        expect(sql).toContain('OR note_id = $1')
         return result([{
           activity: 'prov:Derive',
           agent: 'demo:citation-linker',
           started_at: new Date('2026-07-17T12:03:00Z'),
           ended_at: new Date('2026-07-17T12:03:00Z'),
-          attributes: JSON.stringify({
+          attributes: {
             'prov:entity': 'citation:rag->dpr',
             'prov:wasDerivedFrom': 'paper:dpr',
             confidence: 'reviewed',
-          }),
+          },
         }])
       }
       if (sql.includes('FROM job_queue')) {
@@ -68,7 +69,7 @@ describe('loadNoteProvenanceEvents', () => {
     expect(query).toHaveBeenCalledTimes(4)
   })
 
-  it('keeps malformed optional metadata from hiding a provenance edge', async () => {
+  it('preserves JSON string metadata without attempting a second parse', async () => {
     const query = vi.fn(async (sql: string) => {
       if (sql.includes('FROM provenance_edge')) {
         return result([{
@@ -90,7 +91,15 @@ describe('loadNoteProvenanceEvents', () => {
       type: 'provenance',
       label: 'custom:Transform',
       detail: 'Agent: demo:custom-agent · custom:Transform',
-      attributes: null,
+      attributes: '{not-json',
     })
+  })
+
+  it.each([null, false, 0, '', 'null', '{}', [], ['source']])('preserves arbitrary JSON metadata %j and a null agent', async (attributes) => {
+    const query = vi.fn(async (sql: string) => result(sql.includes('FROM provenance_edge') ? [{
+      activity: 'transform', agent: null, started_at: new Date('2026-07-17T12:00:00Z'), ended_at: null, attributes,
+    }] : []))
+    const events = await loadNoteProvenanceEvents({ query } as unknown as DatabaseClient, 'note-1')
+    expect(events[0]).toMatchObject({ attributes, agent: null, detail: 'transform' })
   })
 })

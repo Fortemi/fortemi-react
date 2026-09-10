@@ -47,6 +47,16 @@ queries support local 384- and producer 768-dimensional vectors; search ranks
 each note by its best selected-source chunk. This is another internal native
 apply stage, not completion of the full-v1 dispatcher or a widened runtime cell.
 
+Migration0028 adds typed native activities, derivations, named locations,
+locations, devices and capture records. Native tstzrange and GeoJSON values are
+queryable; field-level precision/encoding companions never override changed
+native values. WKX is bundled with browser-local shims. Repository/backend/hook
+reads retain nullable agents and arbitrary JSON metadata, including JSON strings.
+Migration backfill, owner rejection, native deletion and transaction rollback
+are tested. This remains an internal stage: the public full-v1 dispatcher,
+complete native serializer and released producer/consumer acceptance are still
+unfinished; purge-receipt qualification is separately required.
+
 Migration0027 adds native records for all ten SKOS components, including
 language-bearing labels/notes, mappings, memberships and ordered collections.
 Display projections refresh from actual label/note state; authoring paths write

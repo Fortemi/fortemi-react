@@ -26,6 +26,7 @@ import { migration0024 } from './0024_source_upsert_contract.js'
 import { migration0025 } from './0025_native_note_history.js'
 import { migration0026 } from './0026_native_embeddings.js'
 import { migration0027 } from './0027_native_skos.js'
+import { migration0028 } from './0028_native_provenance.js'
 
 export const allMigrations: Migration[] = [
   migration0001,
@@ -55,4 +56,5 @@ export const allMigrations: Migration[] = [
   migration0025,
   migration0026,
   migration0027,
+  migration0028,
 ]

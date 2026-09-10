@@ -288,7 +288,7 @@ function PaperDetail({
                   <div className="ev-main">
                     <span className="ev-label">{e.label}</span>
                     {e.detail && <span className="ev-detail">{e.detail}</span>}
-                    {e.type === 'provenance' && e.attributes && (
+                    {e.type === 'provenance' && e.attributes !== null && typeof e.attributes === 'object' && !Array.isArray(e.attributes) && (
                       <dl className="prov-fields">
                         {provenanceField(e.attributes, 'prov:entity', 'entity')}
                         {provenanceField(e.attributes, 'prov:wasDerivedFrom', 'derived from')}
@@ -310,11 +310,11 @@ function PaperDetail({
 }
 
 function provenanceField(
-  attributes: Record<string, unknown>,
+  attributes: object,
   key: string,
   label: string,
 ) {
-  const value = attributes[key]
+  const value = (attributes as Record<string, unknown>)[key]
   if (typeof value !== 'string' || !value) return null
   return (
     <div key={key}>

@@ -1,0 +1,88 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-10T09:49:55Z",
+    "description": "Six-component native provenance internal stage; public full-v1 restore remains incomplete"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:packages/core/src/shard/native-provenance.ts",
+    "type": "code",
+    "created_at": "2026-09-10T09:49:55Z",
+    "checksum": "sha256:adccf1982824b1fb140688b4752cd54dd28669bdc01bd047726beb5a720484c4",
+    "attributes": {
+      "issue": "Fortemi/fortemi-react#424",
+      "producer_issue": "Fortemi/fortemi#1059",
+      "producer_revision": "c4ef37675f5637af76001570ef620e80ca1f9304",
+      "base_revision": "7b414dfb8e02d9b851ecc3ad15ddeea944ae4b63",
+      "artifacts": {
+        ".aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md": "sha256:83d64b6c344b570d8cacea46de46732f4937008ad278cf93133569868fd6a6df",
+        ".aiwg/architecture/SAD.md": "sha256:5b5996ddcf402b5f0b9bc79b1b13ddb14cc57ead8a640f3f5b39c4b4a7aa51ed",
+        "CHANGELOG.md": "sha256:9ba0364fe3e85531caf6bf682151d421db8dab7a9a1e8ad29e3c761e614699d1",
+        "docs/content/api-reference.md": "sha256:a2c4f2727012b5921401291a90c13996980e5d45039c57356489689e1e2e852e",
+        "examples/research-workbench/src/App.tsx": "sha256:2a7a3cf391db5caf786d0eb33add9c79a1ba192fb1542acbe8cf3a6e4d0e65cf",
+        "packages/core/package.json": "sha256:ddde7d49f541e6293efe2a5a336fc200d5878fdaa7800d8dacbf23d7985d8b82",
+        "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "sha256:d1f0ce9c836d97b2dbbf7347d665ad3bf6bbf148b67c972a5347a351a2ed512e",
+        "packages/core/schemas/knowledge-shard-v2.presence.receipt.json": "sha256:9cd09a99dc981f1954391104fbb67a8c55a4037fc5b9689db995e2a8c0a6d822",
+        "packages/core/scripts/generate-pglite-full-v1-receipt.mjs": "sha256:db1e09a2eae8a898ea4949d81dbd003cd6c6b5a44eeb1c7637125db4fdceb360",
+        "packages/core/src/data-backend.ts": "sha256:cbd4a9a55eb45a9c7026beaff2c4a4f86806aa4b038dbdfed08b33f5e8c3b7d3",
+        "packages/core/src/index.ts": "sha256:ecef2c13a6c0852e0eb811cde684130ca3e23fb1926e8fb16706274923e28018",
+        "packages/core/src/migrations/index.ts": "sha256:a4545db9067daffd6104a240e415473c800b7327e550211b1d66351124bbc360",
+        "packages/core/src/repositories/provenance-repository.ts": "sha256:91dbcb52995e266707cbca456b82c7b224b09deb8f4f095d90142e176a8531e8",
+        "packages/core/src/shard/native-fields.ts": "sha256:ab3c43f428930fc7ac8d9a16878b9f3f45bad00f61b3bf4b48abbeeb2048f565",
+        "packages/core/tsup.config.ts": "sha256:5b827d916b8589a62ca4fd8f7ab382e631304ede278e615905ebe3ea5b3a304f",
+        "packages/react/src/__tests__/useNoteProvenance.test.ts": "sha256:403884b1de57559abf7bb8b126603df84ea23249345df7e689e3cf1730c75f08",
+        "packages/react/src/hooks/useNoteProvenance.ts": "sha256:4e6f54d87a9627a5a07b5f7cfe37bd4ded9a7a469e6b705f433dbf1475c64377",
+        "pnpm-lock.yaml": "sha256:b86f9f276a0446bf73d0db568f64bc0771e5a89d43d6dc635024168c457c6067",
+        "packages/core/src/__tests__/shard/native-geometry.test.ts": "sha256:4aece38d6e4e2a0502d71a56ebb0b1da0a1c0f7b0faeb652561adc271f62663f",
+        "packages/core/src/__tests__/shard/native-provenance.test.ts": "sha256:4a17e354808eeda2e801cddbc656a73dccf02078e5b10e825850f35ed3bc1ee9",
+        "packages/core/src/migrations/0028_native_provenance.ts": "sha256:9aee4375da992eacf12c63a6140af4aea1255901dfd3bc297deaad5f93a40387",
+        "packages/core/src/shard/geometry-buffer.ts": "sha256:ab6b0b8457327a821669ef929bc05f964339555eab953c9c4619d95b8a411100",
+        "packages/core/src/shard/geometry-util.js": "sha256:a76563db9aafbe442d6c1f0a2a8c2cb86d381825e75525b56e10627ef316a3ab",
+        "packages/core/src/shard/native-geometry.ts": "sha256:3fd09f879f02ac3561f7bbaa5594a5a01657b3193275f6c139ab201b6159601f",
+        "packages/core/src/shard/native-provenance.ts": "sha256:adccf1982824b1fb140688b4752cd54dd28669bdc01bd047726beb5a720484c4"
+      }
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:lane-b-424-native-provenance",
+    "type": "modification",
+    "started_at": "2026-09-10T09:27:33.082Z",
+    "ended_at": "2026-09-10T09:49:55Z",
+    "description": "Implement native provenance records, typed temporal and spatial projections, browser geometry encoding, exact arbitrary JSON reads, migration backfill and ownership constraints; verify producer fixture, precision, mutation, deletion, rollback and browser execution"
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/native-provenance.ts",
+      "activity": "urn:aiwg:activity:lane-b-424-native-provenance",
+      "time": "2026-09-10T09:49:55Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/native-provenance.ts",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:lane-b-424-native-provenance",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/native-provenance.ts",
+        "source": "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:lane-b-424-native-provenance"
+      },
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/native-provenance.ts",
+        "source": "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-19-v2.shard",
+        "derivation_type": "tests",
+        "activity": "urn:aiwg:activity:lane-b-424-native-provenance"
+      }
+    ]
+  }
+}

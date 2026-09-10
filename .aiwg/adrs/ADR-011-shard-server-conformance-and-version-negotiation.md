@@ -19,6 +19,36 @@ The Knowledge Shard (`shard/*`) is fortemi-react's interchange format with the R
 
 ## Decision
 
+### Native Provenance Stage (2026-09-10)
+
+Migration0028 adds typed native storage for six provenance components. The
+existing local `provenance_edge` represents activities; actual derivations use
+`provenance_derivation`. Note/revision ownership is explicit, mismatches reject,
+and legacy entities without a real note owner remain readable locally but reject
+unscoped full-v1 serialization. Native owner deletion cascades owned records;
+deleting shared location/device/activity references sets nullable references to
+null. These storage checks do not qualify the shared purge-receipt contract.
+
+Capture intervals use native `tstzrange` with structured field-level source
+companions for exact bound precision, empty and infinite states. Locations use
+native GeoJSON Point/Polygon values plus EWKB field companions, not opaque
+component archives. WKX decodes/encodes 2D WGS84 geometry; browser bundles include
+local Buffer/inherits shims without installing Node globals. All geometry is
+decoded before database access. Export preserves source encoding only while it
+matches current geometry; native edits and deletions take precedence.
+
+Repository, backend and React provenance reads include revision-owned note
+activities and preserve arbitrary JSON metadata. Public agent types admit null;
+metadata types are now `unknown`, requiring consumers to narrow before property
+access. The research-workbench consumer does so. This type correction must be
+included in the repository-appropriate release notes and package qualification.
+
+The stage has producer-fixture, repeat-apply, precision, browser-codec, migration,
+ownership, native-edit, deletion and rollback tests. Public full-v1 import still
+uses archival storage; all-component native import/export and released-package
+acceptance remain open under #424 and Fortemi/fortemi#1059. No schema tuple,
+cross-repository matrix cell or suite NO-GO boundary changes.
+
 ### Native SKOS Stage (2026-09-10)
 
 Migration0027 and internal `native-skos` apply/read functions preserve all ten

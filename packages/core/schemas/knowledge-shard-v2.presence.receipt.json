@@ -40,7 +40,7 @@
     "src/records/record-shard.ts": "f57d93d789bbbcf5866eb28edd82bf1e644aa8281839be1304dbf0f320ad802a",
     "src/migrations/0019_shard_field_presence.ts": "7410ed0ef405970ce040f347644c1da7e438a5f62cc1d743a2dff09c15a20cf9",
     "src/migrations/0021_attachment_extraction_projection.ts": "681c4569e8067b745c97851e66aaf779d411ef5738a90cdefbea1744fdc5a6b1",
-    "src/migrations/index.ts": "b450463bcab514d98a6c47e0c6c516b02a5990cd129a90d216ca56bd07495056",
+    "src/migrations/index.ts": "a4545db9067daffd6104a240e415473c800b7327e550211b1d66351124bbc360",
     "src/__tests__/shard/presence.test.ts": "46477a1da4b542861e651e1a9dd3318afd8b11e3ef13d96aed21508fdbde5645",
     "src/__tests__/records/record-store.test.ts": "5ebd62d0b656cd19894fe12a203a8aad59103eb05e5b8577d0411f0089b2e005",
     "src/__tests__/records/record-shard.test.ts": "896b9e9fedf74dd28fe5a8e9bbe6b6f99938ab5589c05488e1e077e0f24bfac6"
