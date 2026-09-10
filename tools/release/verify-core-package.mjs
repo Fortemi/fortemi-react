@@ -1,4 +1,5 @@
 import { strict as assert } from 'node:assert'
+import { randomUUID } from 'node:crypto'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
@@ -61,6 +62,75 @@ function record(id, relationships = []) {
   }
 }
 
+async function verifyFullV1Scope(core) {
+  const db = await core.createPGliteInstance('memory', 'package-full-scope')
+  try {
+    await new core.MigrationRunner(db).apply(core.allMigrations)
+    const blobs = new core.MemoryBlobStore()
+    const notes = new core.NotesRepository(db)
+    const included = await notes.create({ content: 'PACKAGE-INCLUDED', tags: ['selected'] })
+    const excluded = await notes.create({ content: 'PACKAGE-EXCLUDED', tags: ['outside'] })
+    const excludedBytes = new TextEncoder().encode('PACKAGE-EXCLUDED-BYTES')
+    const excludedHash = core.computeBlobHash(excludedBytes)
+    await new core.AttachmentsRepository(db, blobs).attach({
+      noteId: excluded.id, data: excludedBytes, filename: 'excluded.txt', mimeType: 'text/plain',
+    })
+    const collectionId = randomUUID()
+    await db.query('INSERT INTO collection (id, name) VALUES ($1, $2)', [collectionId, 'Selected collection'])
+    await db.query('INSERT INTO collection_note (collection_id, note_id) VALUES ($1, $2)', [collectionId, included.id])
+    await db.query(
+      "INSERT INTO link (id, source_note_id, target_note_id, link_type) VALUES ($1, $2, $3, 'related')",
+      [randomUUID(), included.id, excluded.id],
+    )
+    const parseNotes = (archive) => new TextDecoder().decode(core.unpackTarGz(archive).get('notes.jsonl'))
+      .split('\n').filter(Boolean).map((line) => JSON.parse(line))
+    for (const [scope, expectedIds] of [
+      [{ tag: 'selected' }, [included.id]],
+      [{ collectionId }, [included.id]],
+      [{ tag: 'no-match' }, []],
+      [{ collectionId: randomUUID() }, []],
+    ]) {
+      const result = await core.exportShardWithReport(db, {
+        profile: 'full-v1', schemaVersion: '2.0.0', blobStore: blobs, ...scope,
+      })
+      assert.equal(result.success, true, result.errors.join('; '))
+      assert.equal((await core.validateFullV1ShardArchive(result.archive)).valid, true)
+      assert.deepEqual(parseNotes(result.archive).map((note) => note.id), expectedIds)
+      const files = core.unpackTarGz(result.archive)
+      assert.equal(new TextDecoder().decode(files.get('links.jsonl')).trim(), '')
+      assert.equal([...files.keys()].some((path) => path.startsWith('blobs/')), false)
+      const target = await core.createPGliteInstance('memory', 'package-scoped-target')
+      try {
+        await new core.MigrationRunner(target).apply(core.allMigrations)
+        const targetBlobs = new core.MemoryBlobStore()
+        const imported = await core.importShard(target, result.archive, { conflictStrategy: 'replace', blobStore: targetBlobs })
+        assert.equal(imported.success, true, imported.errors.join('; '))
+        assert.equal(await targetBlobs.read(excludedHash), null)
+        const returned = await core.exportShardWithReport(target, {
+          profile: 'full-v1', schemaVersion: '2.0.0', blobStore: targetBlobs,
+        })
+        assert.equal(returned.success, true, returned.errors.join('; '))
+        assert.deepEqual(parseNotes(returned.archive).map((note) => note.id), expectedIds)
+        for (const snapshotScope of [{ tag: 'selected' }, { collectionId }, { embeddingSetIds: [randomUUID()] }]) {
+          const rejected = await core.exportShardWithReport(target, {
+            profile: 'full-v1', schemaVersion: '2.0.0', blobStore: targetBlobs, ...snapshotScope,
+          })
+          assert.equal(rejected.success, false)
+          assert.equal(rejected.archive, null)
+        }
+      } finally { await target.close() }
+    }
+    for (const scope of [{ tag: 'selected', collectionId }, { tag: '' }, { embeddingSetIds: [] }]) {
+      const rejected = await core.exportShardWithReport(db, {
+        profile: 'full-v1', schemaVersion: '2.0.0', blobStore: blobs, ...scope,
+      })
+      assert.equal(rejected.success, false)
+      assert.equal(rejected.archive, null)
+    }
+    console.log('Verified packed 2.0.0/full-v1 note-scope exclusions and clean snapshot roundtrip; not native restore')
+  } finally { await db.close() }
+}
+
 try {
   writeFileSync(
     resolve(installRoot, 'package.json'),
@@ -80,6 +150,7 @@ try {
   const aiwg = await import(pathToFileURL(resolve(packageRoot, 'dist/aiwg-index.js')).href)
   const aiwgShard = await import(pathToFileURL(resolve(packageRoot, 'dist/aiwg-index-shard.js')).href)
   assert.equal(core.VERSION, expectedVersion)
+  await verifyFullV1Scope(core)
   assert.equal(core.CURRENT_SHARD_VERSION, '1.2.0')
   assert.equal(typeof aiwg.createAiwgIndexController, 'function')
   assert.equal(aiwg.aiwgFortemiIndexToKnowledgeShard, undefined)

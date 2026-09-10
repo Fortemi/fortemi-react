@@ -221,11 +221,11 @@ export interface ExportOptions {
   /** Explicit authority schema tuple; 2.0.0 is opt-in until matrix receipts pass. */
   schemaVersion?: '1.2.0' | '2.0.0'
   includeEmbeddings?: boolean
-  /** Filter to specific collection (export only notes in this collection). */
+  /** Filter to one collection. full-v1 rejects an empty value or combination with tag. */
   collectionId?: string
-  /** Filter to notes with this tag (e.g. 'app:research' for app-scoped export). */
+  /** Filter to notes with this tag. full-v1 rejects an empty value or combination with collectionId. */
   tag?: string
-  /** Export only these embedding sets and their member/vector rows. */
+  /** Export only these sets and their member/vector rows, not a note selector. full-v1 requires a nonempty list. */
   embeddingSetIds?: string[]
   /** Preserve virtual selector materialization metadata and virtual member rows. */
   includeMaterializedSelectors?: boolean

@@ -19,6 +19,25 @@ The Knowledge Shard (`shard/*`) is fortemi-react's interchange format with the R
 
 ## Decision
 
+### Scoped Full-v1 Export Amendment (#425)
+
+Live scope selectors must be nonempty. Collection and tag cannot be combined;
+reject this ambiguous request before any database read rather than letting one
+selector silently override the other. Embedding-set selectors narrow embedding
+components, not notes. Persisted snapshots reject all explicit scope selectors.
+The public API reference defines the relationship/attachment closure, including
+shared metadata that is not a note authorization boundary. No-match and mixed
+scope tests validate exact `2.0.0/full-v1` archives and separately named clean
+PGlite snapshot import/re-export. This does not resolve native restore #424 or
+widen historical producer/server receipts. Server authority #1059 remains
+unchanged; new released consumer qualification is required.
+
+The released cross-repository evidence now binds a frozen verbatim implementation
+receipt from its declared producer commit `45ee08e99dfb6fa0263aca2992aa6de91e2f1e98`
+(`2026.7.13`), rather than rebinding historical package evidence whenever local
+implementation hashes change. The current local receipt remains independently
+checked against current source. Neither binding substitutes for new scope tests.
+
 ### Default Product Export Amendment (#423)
 
 `useExportShard` and both standalone export surfaces select the report-bearing

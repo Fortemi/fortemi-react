@@ -4,6 +4,7 @@ import { PGlite } from '@electric-sql/pglite'
 import { vector } from '@electric-sql/pglite/vector'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { MemoryBlobStore } from '../../blob-store.js'
+import { computeBlobHash } from '../../hash.js'
 import { MigrationRunner } from '../../migration-runner.js'
 import { allMigrations } from '../../migrations/index.js'
 import { AttachmentsRepository } from '../../repositories/attachments-repository.js'
@@ -410,6 +411,82 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
     expect(fileText).not.toContain(excludedSetId)
   }, 30_000)
 
+  it.each([
+    { tag: 'no-such-tag' },
+    { collectionId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' },
+  ])('preserves no-match note scope through clean snapshot import: %j', async (scope) => {
+    const blobs = new MemoryBlobStore()
+    const excluded = await new NotesRepository(db).create({ content: 'NO-MATCH-EXCLUDED', tags: ['outside'] })
+    await new AttachmentsRepository(db, blobs).attach({
+      noteId: excluded.id, data: new TextEncoder().encode('NO-MATCH-BLOB'),
+      filename: 'excluded.txt', mimeType: 'text/plain',
+    })
+    const result = await exportShardWithReport(db, {
+      profile: 'full-v1', schemaVersion: '2.0.0', blobStore: blobs, ...scope,
+    })
+    expect(result.success, result.errors.join('; ')).toBe(true)
+    expect((await validateFullV1ShardArchive(result.archive!)).valid).toBe(true)
+    const files = unpackTarGz(result.archive!)
+    for (const path of ['notes.jsonl', 'note_originals.jsonl', 'note_revisions.jsonl',
+      'note_revised_current.jsonl', 'links.jsonl', 'provenance_activities.jsonl']) {
+      expect(parseComponent(files, path), path).toEqual([])
+    }
+    expect([...files.keys()].filter((path) => path.startsWith('blobs/'))).toEqual([])
+    expect([...files.values()].map((bytes) => new TextDecoder().decode(bytes)).join('\n'))
+      .not.toContain('NO-MATCH-EXCLUDED')
+    const destination = await createDb()
+    try {
+      const destinationBlobs = new MemoryBlobStore()
+      const imported = await importShard(destination, result.archive!, {
+        conflictStrategy: 'replace', blobStore: destinationBlobs,
+      })
+      expect(imported.success, imported.errors.join('; ')).toBe(true)
+      expect(await destinationBlobs.read(computeBlobHash(new TextEncoder().encode('NO-MATCH-BLOB')))).toBeNull()
+      const restored = await exportShardWithReport(destination, {
+        profile: 'full-v1', schemaVersion: '2.0.0', blobStore: destinationBlobs,
+      })
+      expect(restored.success, restored.errors.join('; ')).toBe(true)
+      expect(parseComponent(unpackTarGz(restored.archive!), 'notes.jsonl')).toEqual([])
+    } finally { await destination.close() }
+  }, 30_000)
+
+  it('emits no embedding sets for a nonmatching set selector without treating it as a note filter', async () => {
+    const note = await new NotesRepository(db).create({ content: 'Still selected without a note filter' })
+    const excludedSetId = crypto.randomUUID()
+    await db.query(
+      "INSERT INTO embedding_set (id, model_name, dimensions, name) VALUES ($1, 'excluded-model', 384, 'Excluded set')",
+      [excludedSetId],
+    )
+    await db.query(
+      'INSERT INTO embedding_set_member (embedding_set_id, note_id, embedding_id) VALUES ($1, $2, NULL)',
+      [excludedSetId, note.id],
+    )
+    const result = await exportShardWithReport(db, {
+      profile: 'full-v1', schemaVersion: '2.0.0', blobStore: new MemoryBlobStore(),
+      embeddingSetIds: ['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'],
+    })
+    expect(result.success, result.errors.join('; ')).toBe(true)
+    expect((await validateFullV1ShardArchive(result.archive!)).valid).toBe(true)
+    const files = unpackTarGz(result.archive!)
+    expect(parseComponent<{ id: string }>(files, 'notes.jsonl').map((row) => row.id)).toEqual([note.id])
+    expect(parseComponent(files, 'embedding_sets.json')).toEqual([])
+    expect(parseComponent(files, 'embedding_set_members.jsonl')).toEqual([])
+    expect(parseComponent(files, 'embeddings.jsonl')).toEqual([])
+  }, 30_000)
+
+  it.each([
+    { tag: 'selected', collectionId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' },
+    { tag: '' }, { collectionId: '' }, { embeddingSetIds: [] }, { embeddingSetIds: [''] },
+  ])('rejects unsupported full-v1 scope before reading live or snapshot data: %j', async (scope) => {
+    const unreadableDb = { query: () => { throw new Error('scope validation read the database') } } as unknown as DatabaseClient
+    const result = await exportShardWithReport(unreadableDb, {
+      profile: 'full-v1', schemaVersion: '2.0.0', blobStore: new MemoryBlobStore(), ...scope,
+    })
+    expect(result.success).toBe(false)
+    expect(result.archive).toBeNull()
+    expect(result.errors.join('; ')).toContain('nonempty scope selectors')
+  })
+
   it('signs a full-v1 archive produced directly from live PGlite state', async () => {
     await new NotesRepository(db).create({ content: 'Signed live state' })
     const keyPair = (await crypto.subtle.generateKey({ name: 'Ed25519' }, true, [
@@ -672,7 +749,11 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
     })).toEqual({ ok: true, keyId: 'full-v1-runtime-test' })
   }, 30_000)
 
-  it('rejects scoped full-v1 export from persisted snapshots', async () => {
+  it.each([
+    { tag: 'selected' },
+    { collectionId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' },
+    { embeddingSetIds: ['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'] },
+  ])('rejects scoped full-v1 export from persisted snapshots: %j', async (scope) => {
     const blobs = new MemoryBlobStore()
     const imported = await importShard(db, schema2Archive(), {
       conflictStrategy: 'replace',
@@ -684,7 +765,7 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
       profile: 'full-v1',
       schemaVersion: '2.0.0',
       blobStore: blobs,
-      tag: 'selected',
+      ...scope,
     })
     expect(exported.success).toBe(false)
     expect(exported.archive).toBeNull()

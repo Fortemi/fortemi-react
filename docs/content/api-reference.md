@@ -1892,6 +1892,25 @@ conformance use. It is not included in backend capability advertisements until
 the independent cross-repository receipt tracked by #382 is delivered. Schema
 1.x `full-v1` is not accepted.
 
+For live `2.0.0/full-v1`, select notes by a nonempty `tag` **or**
+`collectionId`; supplying both is rejected before producing an archive.
+`embeddingSetIds` narrows sets and their member/vector rows, not the note set;
+use it with a note selector to limit both. Empty selectors/lists are rejected.
+A nonmatching note selector produces no notes or attachment bytes. A nonmatching
+embedding selector produces no embedding sets but does not remove selected notes.
+Stored snapshots reject every explicit scope selector instead of returning
+unfiltered bytes.
+
+Scoped note exports include their declared tags, histories, revisions, attachment
+projections and mandatory bytes. Note links require both endpoints to be selected;
+URL links require their owning note, and provenance requires its selected note or
+revision. Graph edges and assignments are limited to selected notes and applicable
+embedding sets. Supporting collection ancestry, referenced graph/SKOS metadata,
+and shared templates remain profile dependencies, not additional selected notes.
+This is not an entire-database backup or an authorization boundary for shared
+metadata. Clean PGlite snapshot roundtrip is distinct from native restore (#424);
+released consumer qualification and suite NO-GO remain separately governed.
+
 #### `importShard(db, data, options?)`
 
 ```typescript

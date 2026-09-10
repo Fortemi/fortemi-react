@@ -16,6 +16,12 @@ This Software Architecture Document (SAD) describes the architecture of fortemi-
 
 ### 1.2 Scope
 
+The #425 scope amendment in ADR-011 governs live `2.0.0/full-v1` exports:
+nonempty note selectors, rejection of combined tag/collection selectors,
+embedding-only set filters, and rejection of all scoped snapshot exports.
+Relationship/attachment closure is documented in the public API reference;
+snapshot persistence is not a native-restore or suite portability claim.
+
 fortemi-react runs entirely in the browser (no server required after initial load). It:
 - Persists data in PGlite (PostgreSQL WASM) via OPFS
 - Exposes 38 MCP tools via a Service Worker REST API

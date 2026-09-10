@@ -74,7 +74,9 @@
     ]
   },
   "evidence": {
-    "localImplementationReceiptSha256": "1834926dcefcc8636cb482862849aaf2496b82f7b7b698acf45be1272c1c15cf",
+    "localImplementationReceiptPath": "schemas/knowledge-shard-v2.implementation-2026.7.13.receipt.json",
+    "localImplementationReceiptSha256": "3780dd9c0d23f21a7c9ca6ba8778432ae0cee8e9492214db39ab34febb88b3d0",
+    "implementationBindingNote": "Frozen verbatim from the declared React producer commit 45ee08e99dfb6fa0263aca2992aa6de91e2f1e98. Historical released evidence does not qualify subsequent scope or native-restore changes.",
     "fortemiRuntimeReceiptSha256": "29f5e7cca66aec38baba0d7e58da1f5f6cc8520995f290831bc949bde1de1647",
     "reactCommand": "pnpm --filter @fortemi/core test:portable-contract",
     "fortemiCommands": [

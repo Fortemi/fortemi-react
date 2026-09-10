@@ -33,7 +33,7 @@
     "src/shard/presence.ts": "77a36e4011b0de378d725467b5c670a0e0082e96346ed52d4755456aa7645985",
     "src/shard/presence-store.ts": "99163e2d3e60a97bffa5bb6fa73d456e81ca0d6113cf21317ea661d40f22d35c",
     "src/shard/shard-import.ts": "71036913aa6d3b749bba1ef79ead1e5255026722fd5c2daf318efd3106cd5560",
-    "src/shard/shard-export.ts": "a77c9fa72512dd78680ca62dc757c3cb4fd9f38697311fa5093bcc5e0b829a90",
+    "src/shard/shard-export.ts": "58352e7b8247f9f886a707a92b5c9732165cf64afd41d41e7ec62d496eec9f70",
     "src/records/types.ts": "82b8d014ec8f91376bcf459fb08d8ecd5668ecaf273bce2df821f4bf8e196a31",
     "src/records/memory-record-store.ts": "6fb02714f1c7258de7ef25f346683e910404d2030d2f652ffeb3823f917c48ee",
     "src/records/idb-record-store.ts": "0f47ee1ce02e2edf07fbb8b3c6e6dcfa4cebe87a15fc5acd34c65dba75a13d1f",

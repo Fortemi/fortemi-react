@@ -500,11 +500,16 @@ requireReceipt(
     && crossRepositoryReceipt.authority.schemaBundleSha256 === v2Receipt.schemaBundle.sha256,
   'historical matrix authority does not match revision 20 lineage',
 )
+const releasedImplementationPath = 'schemas/knowledge-shard-v2.implementation-2026.7.13.receipt.json'
+const releasedImplementationBytes = readFileSync(resolve(packageRoot, releasedImplementationPath))
 requireReceipt(
-  crossRepositoryReceipt.evidence.localImplementationReceiptSha256
-    === sha256(readFileSync(v2ImplementationReceiptPath))
+  crossRepositoryReceipt.evidence.localImplementationReceiptPath === releasedImplementationPath
+    && crossRepositoryReceipt.reactProducer.commit === '45ee08e99dfb6fa0263aca2992aa6de91e2f1e98'
+    && sha256(releasedImplementationBytes) === '3780dd9c0d23f21a7c9ca6ba8778432ae0cee8e9492214db39ab34febb88b3d0'
+    && crossRepositoryReceipt.evidence.localImplementationReceiptSha256
+      === sha256(releasedImplementationBytes)
     && crossRepositoryReceipt.reactProducer.archive.sha256
-      === v2ImplementationReceipt.archive.sha256,
+      === JSON.parse(releasedImplementationBytes.toString('utf8')).archive.sha256,
   'released PGlite implementation/archive binding failed',
 )
 requireReceipt(

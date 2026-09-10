@@ -110,11 +110,9 @@ function coreV1OptionErrors(options: ExportOptions): string[] {
 }
 
 function hasFullV1ScopeOptions(options: ExportOptions): boolean {
-  return Boolean(
-    options.collectionId
-    || options.tag
-    || (options.embeddingSetIds?.filter(Boolean).length ?? 0) > 0,
-  )
+  return options.collectionId !== undefined
+    || options.tag !== undefined
+    || options.embeddingSetIds !== undefined
 }
 
 function toCoreV1Note(note: ShardNote): ShardNote {
@@ -285,6 +283,17 @@ export async function exportShardWithReport(
       backend: 'pglite', operation: 'export', requestedProfile: options.profile,
       requestedSchemaVersion: options.schemaVersion ?? null,
     })
+    if ((options.collectionId !== undefined && options.tag !== undefined)
+      || (options.collectionId !== undefined && !options.collectionId.trim())
+      || (options.tag !== undefined && !options.tag.trim())
+      || (options.embeddingSetIds !== undefined
+        && (options.embeddingSetIds.length === 0 || options.embeddingSetIds.some((id) => !id.trim())))) {
+      return {
+        success: false, archive: null,
+        errors: ['full-v1 requires nonempty scope selectors and accepts either collectionId or tag, not both.'],
+        capability_report: capabilityReport,
+      }
+    }
     if (options.schemaVersion !== '2.0.0') {
       return {
         success: false, archive: null,
