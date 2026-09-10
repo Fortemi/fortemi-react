@@ -21,10 +21,11 @@
     "sha256": "054da5528276806b9be69dcfff364a6969b72344045f05f9f6fcbeaca82a7a59"
   },
   "implementation": {
-    "scripts/generate-pglite-full-v1-receipt.mjs": "845b91cfbecc6dc0dac6d3ea34f09823d78b0b8e25bde9f454d9d7a4ebda16c5",
+    "scripts/generate-pglite-full-v1-receipt.mjs": "5f4d17f8c76c73406ddffa1503ce70c51a0e6acd50c8bfdd3b1dfce80dfa179c",
     "src/shard/full-v1-store.ts": "82b12d5a614c88c93889f5e441c851b1c9a88f7fe32e0b57050b1652e13b44df",
     "src/shard/live-full-v1.ts": "903b9b78a21b23c23319a9e72cf291e9d52a362bc216d691ba3fb3a791f7dc98",
-    "src/shard/schema-validator.ts": "b45e349a43d472bfd0411adc4e87a2852ec43ad28f8a7ded64f0cca228c62c69",
+    "src/shard/schema-validator.ts": "c5cd3021af96f12fed41408580cc20bf4ca1310f48758d45ce261e88a6fee810",
+    "src/shard/full-v1-references.ts": "b68e78fdb06328648cddef43a4e42445c59395e05cc3b0ba1bbd617c352f5309",
     "src/shard/shard-import.ts": "71036913aa6d3b749bba1ef79ead1e5255026722fd5c2daf318efd3106cd5560",
     "src/shard/shard-export.ts": "58352e7b8247f9f886a707a92b5c9732165cf64afd41d41e7ec62d496eec9f70",
     "src/shard/profile-registry.ts": "ea4cdb7a3c865e1be6340a48cb13aeeb8849f47b31a1983d473834168f9e3ba6",
@@ -36,6 +37,9 @@
     "src/migrations/index.ts": "277471c2efeb534b3f76f7eafb7f0ed934e9752c82a56366362de8d2335fd415",
     "src/__tests__/shard/full-v1-store.test.ts": "f3debf7794e1fc89ec1c05fb7dcc31814c8f9beea038ff7ce72e392ca5441c08",
     "src/__tests__/shard/full-v1-public.test.ts": "74a214596be7e50d1882a5a09bb170495063aee7645a79b01e0b29cc774e8c2d",
+    "src/__tests__/shard/full-v1-references.test.ts": "56f88b0231f9307694f1921d405819d451577af161e737ea9d78aed7e8d647b8",
+    "src/__tests__/shard/fixtures/full-v1/reference-conformance.json": "904ae4286fd5595473280d1e85727be38540763e5bf5b39ec5b886b21ef0d0fe",
+    "src/__tests__/shard/fixtures/full-v1/reference-conformance.receipt.json": "c964b1d0d5c74c2f44e39cf185e43ffd06b33f605d9e8e33ad0362cd78638fb0",
     "schemas/knowledge-shard-v2.schema.receipt.json": "70657d6bcd501b684d0a143bcbf7c2a0d41fe909ef3aff32b1fb1f542506a53a"
   },
   "evidence": {
@@ -54,7 +58,8 @@
       "validate-before-mutation",
       "repeat-import-converges",
       "exact-logical-files-reexported",
-      "public-archival-api-independent-of-native-state-not-native-restore"
+      "public-archival-api-independent-of-native-state-not-native-restore",
+      "producer-owned-relationship-mutations-rejected-before-storage-not-native-restore"
     ]
   }
 }

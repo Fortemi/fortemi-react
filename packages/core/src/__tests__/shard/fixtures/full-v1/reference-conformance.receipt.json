@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "scope": "Relationship preflight only; not native restore or released compatibility",
+  "producer": {
+    "repository": "https://git.integrolabs.net/Fortemi/fortemi",
+    "commit": "c4ef37675f5637af76001570ef620e80ca1f9304",
+    "path": "tests/fixtures/shards/full-v1-reference-conformance.json",
+    "sha256": "904ae4286fd5595473280d1e85727be38540763e5bf5b39ec5b886b21ef0d0fe",
+    "command": "cargo test -p matric-api --bin matric-api full_v1_shared_reference_conformance",
+    "recordSchemasChecked": ["1.2.0/full-v1", "2.0.0/full-v1"]
+  },
+  "consumer": {
+    "tuple": "2.0.0/full-v1",
+    "source": "reference-conformance.json",
+    "adaptedArchive": "server-full-v1-revision-19-v2.shard",
+    "archiveSha256": "054da5528276806b9be69dcfff364a6969b72344045f05f9f6fcbeaca82a7a59",
+    "command": "pnpm --filter @fortemi/core test:portable-contract"
+  },
+  "cases": 97,
+  "accepted": 4,
+  "rejected": 93,
+  "nativeRestoreQualified": false,
+  "publishedPackageQualified": false,
+  "suiteAudit": "NO-GO"
+}

@@ -11,6 +11,7 @@ const implementationPaths = [
   'src/shard/full-v1-store.ts',
   'src/shard/live-full-v1.ts',
   'src/shard/schema-validator.ts',
+  'src/shard/full-v1-references.ts',
   'src/shard/shard-import.ts',
   'src/shard/shard-export.ts',
   'src/shard/profile-registry.ts',
@@ -22,6 +23,9 @@ const implementationPaths = [
   'src/migrations/index.ts',
   'src/__tests__/shard/full-v1-store.test.ts',
   'src/__tests__/shard/full-v1-public.test.ts',
+  'src/__tests__/shard/full-v1-references.test.ts',
+  'src/__tests__/shard/fixtures/full-v1/reference-conformance.json',
+  'src/__tests__/shard/fixtures/full-v1/reference-conformance.receipt.json',
   'schemas/knowledge-shard-v2.schema.receipt.json',
 ]
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex')
@@ -81,6 +85,7 @@ await writeFile(receiptPath, `${JSON.stringify({
       'repeat-import-converges',
       'exact-logical-files-reexported',
       'public-archival-api-independent-of-native-state-not-native-restore',
+      'producer-owned-relationship-mutations-rejected-before-storage-not-native-restore',
     ],
   },
 }, null, 2)}\n`)

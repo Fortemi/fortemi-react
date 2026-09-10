@@ -8,6 +8,7 @@
  * @agent Codex
  */
 import Ajv2020 from 'ajv/dist/2020.js'
+import { fullV1ReferenceErrors } from './full-v1-references.js'
 import type { ErrorObject, ValidateFunction } from 'ajv'
 import legacySchema from '../../schemas/knowledge-shard.schema.json' with { type: 'json' }
 import authorityReceipt from '../../schemas/knowledge-shard.schema.receipt.json' with { type: 'json' }
@@ -875,6 +876,9 @@ function validateCoreV1Structure(files: ShardFiles, manifest: ShardManifest): st
 
 function validateFullV1Structure(files: ShardFiles, manifest: ShardManifest): string[] {
   const errors: string[] = []
+  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
+    return ['manifest.json must be an object']
+  }
   const schemaVersion = fullSchemaVersion(manifest.version)
   if (!schemaVersion) {
     return ['manifest.json uses an unsupported canonical full-v1 schema version']
@@ -932,6 +936,7 @@ function validateFullV1Structure(files: ShardFiles, manifest: ShardManifest): st
     records.set(component, parsed.records)
   }
 
+  if (errors.length > 0) return errors
   const communitySets = records.get('communities') as Array<Record<string, unknown>>
   const communityCount = communitySets.reduce((total, set) => {
     const communities = Array.isArray(set.communities) ? set.communities : []
@@ -981,6 +986,7 @@ function validateFullV1Structure(files: ShardFiles, manifest: ShardManifest): st
       }
     }
   }
+  if (errors.length === 0) errors.push(...fullV1ReferenceErrors(records))
   return errors
 }
 

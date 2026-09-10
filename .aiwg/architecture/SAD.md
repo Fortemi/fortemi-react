@@ -29,6 +29,11 @@ full-v1 import/export dispatch: native restoration and stale-snapshot precedence
 remain open acceptance gates in ADR-011. Archival byte-preservation tests remain
 separate from native repository/search/traversal and post-import CRUD tests.
 
+Full-v1 relationship preflight now rejects inconsistent component identities,
+references, revision ownership and ordering before storage access. A shared
+producer-owned mutation corpus checks Rust/TypeScript agreement; this guard
+does not materialize native records or resolve snapshot export precedence.
+
 fortemi-react runs entirely in the browser (no server required after initial load). It:
 - Persists data in PGlite (PostgreSQL WASM) via OPFS
 - Exposes 38 MCP tools via a Service Worker REST API

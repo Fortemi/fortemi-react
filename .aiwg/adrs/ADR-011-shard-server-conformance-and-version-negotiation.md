@@ -21,6 +21,16 @@ The Knowledge Shard (`shard/*`) is fortemi-react's interchange format with the R
 
 ### Archival API Separation Preparation (#424)
 
+The next prerequisite adds complete-component relationship preflight before
+storage access. The shared Fortemi-owned `full-v1-reference-conformance.json`
+corpus exercises schema-valid mutations against the production Rust validator
+and this consumer, including UUID normalization, opaque graph identities and
+nanosecond range ordering. Consumer tests recompute counts/checksums and prove
+rejection before database operations or blob writes. This is enforcement of
+existing authority rules, not a schema/profile change or native restoration.
+Historical receipts remain frozen; current implementation receipts bind this
+validator separately. The remaining native work below is still required.
+
 Expose `importFullV1Snapshot` and `exportFullV1Snapshot` through the public Core
 entry point as explicitly archival operations, with a narrow import option type
 and malformed-input reports before mutation. Snapshot conflict policy is per
