@@ -37,6 +37,12 @@ local Buffer/inherits shims without installing Node globals. All geometry is
 decoded before database access. Export preserves source encoding only while it
 matches current geometry; native edits and deletions take precedence.
 
+The Buffer shim imports the explicit `buffer/index.js` package file. Directory
+imports are invalid under native Node ESM even when bundlers accept them.
+Regression coverage runs the unbundled shim through Node's native resolver and
+the bundled codec in a browser-like context without Node globals; standalone
+Playwright discovery exercises the source import path as well.
+
 Repository, backend and React provenance reads include revision-owned note
 activities and preserve arbitrary JSON metadata. Public agent types admit null;
 metadata types are now `unknown`, requiring consumers to narrow before property

@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { runInNewContext } from 'node:vm'
 import { build } from 'esbuild'
@@ -13,6 +14,18 @@ const polygon = { type: 'Polygon' as const, coordinates: [
 ] }
 
 describe('native WGS84 geometry codec', () => {
+  it('loads the unbundled Buffer shim with native Node ESM resolution', async () => {
+    const root = fileURLToPath(new URL('../../../', import.meta.url))
+    const result = await build({ absWorkingDir: root, entryPoints: ['src/shard/geometry-buffer.ts'],
+      bundle: false, write: false, platform: 'node', format: 'esm', target: 'es2022',
+    })
+    expect(execFileSync(process.execPath, ['--input-type=module'], {
+      cwd: root,
+      input: `${result.outputFiles[0].text}\nif (Buffer !== globalThis.Buffer) throw Error('Native Buffer replaced');\nprocess.stdout.write(Buffer.from([1, 2]).toString('hex'));`,
+      encoding: 'utf8',
+    })).toBe('0102')
+  })
+
   it('reads both byte orders and preserves an unchanged source encoding', () => {
     expect(decodeWgs84Ewkb(little, 'Point')).toEqual(point)
     expect(decodeWgs84Ewkb(big, 'Point')).toEqual(point)

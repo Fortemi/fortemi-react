@@ -50,7 +50,9 @@ apply stage, not completion of the full-v1 dispatcher or a widened runtime cell.
 Migration0028 adds typed native activities, derivations, named locations,
 locations, devices and capture records. Native tstzrange and GeoJSON values are
 queryable; field-level precision/encoding companions never override changed
-native values. WKX is bundled with browser-local shims. Repository/backend/hook
+native values. WKX is bundled with browser-local shims; the explicit Buffer
+package-file import also supports native Node ESM source loading. Both resolver
+paths have regression coverage. Repository/backend/hook
 reads retain nullable agents and arbitrary JSON metadata, including JSON strings.
 Migration backfill, owner rejection, native deletion and transaction rollback
 are tested. This remains an internal stage: the public full-v1 dispatcher,
