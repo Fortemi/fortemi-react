@@ -508,35 +508,24 @@ export function conceptTaggingHandler(job: Job, db: DatabaseClient): Promise<unk
 /** Linking: find semantically related notes using FTS + vector RRF */
 export function linkingHandler(job: Job, db: DatabaseClient): Promise<unknown> {
   return (async () => {
-    // Check if this note has embeddings
-    const embResult = await db.query<{ id: string }>(
-      `SELECT e.id FROM embedding e
+    const vecResult = await db.query<{ vector: string; embedding_set_id: string | null; model: string | null }>(
+      `SELECT e.vector::text, e.embedding_set_id, e.model FROM embedding e
        JOIN note n ON n.id = e.note_id AND n.deleted_at IS NULL
-       WHERE e.note_id = $1 LIMIT 1`,
-      [job.note_id],
-    )
-    if (embResult.rows.length === 0) {
-      return { skipped: true, reason: 'no embeddings for this note yet' }
-    }
-
-    // Get this note's embedding vector
-    const vecResult = await db.query<{ vector: string }>(
-      `SELECT e.vector::text FROM embedding e
-       JOIN note n ON n.id = e.note_id AND n.deleted_at IS NULL
-       WHERE e.note_id = $1 LIMIT 1`,
+       WHERE e.note_id = $1 AND e.vector IS NOT NULL ORDER BY e.created_at DESC NULLS LAST, e.id LIMIT 1`,
       [job.note_id],
     )
     if (vecResult.rows.length === 0) return { skipped: true, reason: 'no vector found' }
 
     // Find similar notes by vector cosine distance (top 5, excluding self)
     const similar = await db.query<{ note_id: string; distance: number }>(
-      `SELECT e.note_id, e.vector <=> (SELECT vector FROM embedding WHERE note_id = $1 LIMIT 1) as distance
+      `SELECT e.note_id, e.vector <=> $2::vector as distance
        FROM embedding e
        JOIN note n ON n.id = e.note_id AND n.deleted_at IS NULL
-       WHERE e.note_id != $1
+       WHERE e.note_id != $1 AND vector_dims(e.vector) = vector_dims($2::vector)
+         AND e.embedding_set_id IS NOT DISTINCT FROM $3 AND e.model IS NOT DISTINCT FROM $4
        ORDER BY distance ASC
        LIMIT 5`,
-      [job.note_id],
+      [job.note_id, vecResult.rows[0].vector, vecResult.rows[0].embedding_set_id, vecResult.rows[0].model],
     )
 
     let created = 0

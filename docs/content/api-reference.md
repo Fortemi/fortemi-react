@@ -716,6 +716,9 @@ Unlike other repositories, `AttachmentsRepository` takes a `BlobStore` instead o
 class EmbeddingSetsRepository {
   constructor(db: PGlite, events?: TypedEventBus)
 
+  getConfig(id: string): Promise<EmbeddingConfigRow>
+  listConfigs(): Promise<EmbeddingConfigRow[]>
+  listEmbeddings(setId: string): Promise<EmbeddingRow[]>
   create(input: EmbeddingSetCreateInput): Promise<EmbeddingSetRow>
   ensureDefault(): Promise<EmbeddingSetRow>
   get(id: string): Promise<EmbeddingSetRow>
@@ -728,6 +731,18 @@ class EmbeddingSetsRepository {
 ```
 
 Manages physical and virtual embedding sets. Selectors can target explicit sets, criteria-based sets, set operations, latest-compatible sets, snapshots, or fallback chains. Virtual definitions are durable metadata until materialized by application code.
+
+Configuration reads include native provider, MRL and document-composition
+metadata. `listEmbeddings` includes all chunks and metadata-only records with
+null vectors; selector resolution excludes rows without usable note vectors.
+`EmbeddingRow` exposes nullable owners/timestamps and explicit contract-fingerprint
+presence. `EmbeddingSetRow` also exposes stored index/refresh and agent metadata.
+These native reads do not yet imply public full-v1 native restoration (#424).
+
+Semantic and hybrid queries compare vectors of the query dimension, exclude
+null vectors and rank each note once using its best matching chunk. An explicit
+set selector retains all chunks in the source set chosen for each note. Native
+linking also requires the same set/model; 384- and 768-dimensional data can coexist.
 
 ---
 

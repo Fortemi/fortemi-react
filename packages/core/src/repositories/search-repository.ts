@@ -21,6 +21,12 @@ const ATTACHMENT_TEXT_JOIN = `
 const COMBINED_TEXT_SQL = `trim(both from (coalesce(c.content, '') || ' ' || coalesce(ax.extracted_text, '')))`
 const COMBINED_TEXT_VECTOR_SQL = `to_tsvector('english', ${COMBINED_TEXT_SQL})`
 
+function vectorColumn(query: number[]): string {
+  if (query.length === 0 || !query.every(Number.isFinite)) throw new Error('Query embedding must be a nonempty finite vector')
+  // Match the partial expression indexes for the local and producer dimensions.
+  return query.length === 384 || query.length === 768 ? `e.vector::vector(${query.length})` : 'e.vector'
+}
+
 export class SearchRepository {
   constructor(
     private db: DatabaseClient,
@@ -37,7 +43,7 @@ export class SearchRepository {
     const setFilter = embeddingSetId ? ' AND embedding_set_id = $2' : ''
     if (embeddingSetId) params.push(embeddingSetId)
     const result = await this.db.query<{ note_id: string }>(
-      'SELECT note_id FROM embedding WHERE note_id = ANY($1)' + setFilter,
+      'SELECT note_id FROM embedding WHERE vector IS NOT NULL AND note_id = ANY($1)' + setFilter,
       params,
     )
     return new Set(result.rows.map((r) => r.note_id))
@@ -82,8 +88,12 @@ export class SearchRepository {
       conditions.push('FALSE')
       return paramIdx
     }
-    conditions.push('e.id = ANY($' + paramIdx + ')')
-    params.push(resolved.embeddingIds)
+    // A selector chooses one source set per note, not one arbitrary chunk.
+    // Keep that policy while allowing every chunk of the selected note/set pair.
+    conditions.push(`EXISTS (SELECT 1 FROM jsonb_to_recordset($${paramIdx}::jsonb)
+      AS selected(note_id text, embedding_set_id text)
+      WHERE selected.note_id = e.note_id AND selected.embedding_set_id = e.embedding_set_id)`)
+    params.push(JSON.stringify(resolved.rows.map((row) => ({ note_id: row.note_id, embedding_set_id: row.embedding_set_id }))))
     return paramIdx + 1
   }
 
@@ -279,6 +289,7 @@ export class SearchRepository {
 
   async semanticSearch(queryEmbedding: number[], options: SearchOptions = {}): Promise<SearchResponse> {
     const { limit = 20, offset = 0 } = options
+    const vector = vectorColumn(queryEmbedding)
     const vectorStr = `[${queryEmbedding.join(',')}]`
     const resolvedEmbeddingSet = await this.resolveEmbeddingSet(options)
     const { conditions, params, nextIdx } = buildNoteConditions(options, 1)
@@ -286,10 +297,11 @@ export class SearchRepository {
     conditions.push(...metadata.conditions)
     params.push(...metadata.params)
     let paramIdx = this.scopeToResolvedEmbeddingRows(conditions, params, metadata.nextIdx, resolvedEmbeddingSet)
+    conditions.push(`vector_dims(e.vector) = ${queryEmbedding.length}`)
     const where = conditions.join(' AND ')
 
     const countResult = await this.db.query<{ count: string }>(
-      `SELECT COUNT(*) as count
+      `SELECT COUNT(DISTINCT n.id) as count
        FROM embedding e
        JOIN note n ON n.id = e.note_id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
@@ -310,8 +322,8 @@ export class SearchRepository {
       distance: number
       snippet: string
     }>(
-      `SELECT n.id, n.title, n.created_at, n.updated_at,
-              (e.vector <=> $${vecIdx}::vector) as distance,
+      `SELECT * FROM (SELECT DISTINCT ON (n.id) n.id, n.title, n.created_at, n.updated_at,
+              (${vector} <=> $${vecIdx}::vector) as distance,
               LEFT(${COMBINED_TEXT_SQL}, 200) as snippet
        FROM embedding e
        JOIN note n ON n.id = e.note_id
@@ -319,7 +331,8 @@ export class SearchRepository {
        ${metadata.joins.join('\n')}
        ${ATTACHMENT_TEXT_JOIN}
        WHERE ${where}
-       ORDER BY e.vector <=> $${vecIdx}::vector ASC
+       ORDER BY n.id, ${vector} <=> $${vecIdx}::vector ASC, e.id) AS best_chunks
+       ORDER BY distance ASC, id
        LIMIT $${limIdx} OFFSET $${offIdx}`,
       [...params, vectorStr, limit, offset],
     )
@@ -405,17 +418,20 @@ export class SearchRepository {
     vecCond.conditions.push(...vecMeta.conditions)
     vecCond.params.push(...vecMeta.params)
     vecCond.nextIdx = this.scopeToResolvedEmbeddingRows(vecCond.conditions, vecCond.params, vecMeta.nextIdx, resolvedEmbeddingSet)
+    const vector = vectorColumn(queryEmbedding)
+    vecCond.conditions.push(`vector_dims(e.vector) = ${queryEmbedding.length}`)
     const vecWhere = vecCond.conditions.join(' AND ')
     const vecVecIdx = vecCond.nextIdx
 
     const vectorResult = await this.db.query<{ id: string; distance: number }>(
-      `SELECT n.id, (e.vector <=> $${vecVecIdx}::vector) as distance
+      `SELECT * FROM (SELECT DISTINCT ON (n.id) n.id, (${vector} <=> $${vecVecIdx}::vector) as distance
        FROM embedding e
        JOIN note n ON n.id = e.note_id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
        ${vecMeta.joins.join('\n')}
        WHERE ${vecWhere}
-       ORDER BY e.vector <=> $${vecVecIdx}::vector ASC
+       ORDER BY n.id, ${vector} <=> $${vecVecIdx}::vector ASC, e.id) AS best_chunks
+       ORDER BY distance ASC, id
        LIMIT 100`,
       [...vecCond.params, vectorStr],
     )

@@ -19,6 +19,32 @@ The Knowledge Shard (`shard/*`) is fortemi-react's interchange format with the R
 
 ## Decision
 
+### Native Embedding Storage Stage (#424)
+
+Migration0026 and the internal `native-embeddings` stage extend the actual
+embedding/config/set/member tables. Rich provider/MRL/index/refresh metadata
+uses typed columns, with scalar timestamp precision and declaration presence.
+Nullable owners, vectors and timestamps are native states, not fabricated rows.
+Optional contract fingerprints retain absent/null/value distinctions without
+inventing lineage. Numeric arrays retain source precision alongside a live
+pgvector representation; reads use the precise values only while their vector
+projection still matches current native state.
+
+Native vector storage supports existing 384-dimensional vectors and the
+producer's 768-dimensional records, with partial expression indexes for each.
+Semantic and hybrid queries filter dimensions, rank unique notes by their best
+chunk, and retain every chunk in the source set chosen by a selector. Native
+linking excludes null vectors and incompatible dimensions, sets and models.
+Repository reads expose configurations and all chunks independently of graph
+selector resolution. Existing virtual definitions remain native metadata.
+
+This stage still does not change public full-v1 import/export dispatch. The
+remaining provenance/spatial, SKOS, graph/community and core/blob mappings,
+all-component conflict transaction and current-state exporter remain required.
+The producer fixture and local mutations test this consumer stage; they are not
+a new producer runtime, published-package or cross-repository acceptance cell.
+Historical receipts remain immutable and suite NO-GO remains in force.
+
 ### Native History Storage Stage (#424)
 
 Migration0025 and the internal `native-note-history` apply/read stage represent

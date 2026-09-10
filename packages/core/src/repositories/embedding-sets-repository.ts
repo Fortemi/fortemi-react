@@ -5,6 +5,7 @@
 import type { QueryExecutor } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
 import { computeHash } from '../hash.js'
+import type { NativeEmbeddingConfig, NativeEmbeddingSet } from '../shard/native-embeddings.js'
 
 const ATTACHMENT_TEXT_JOIN = `
        LEFT JOIN (
@@ -150,7 +151,7 @@ export interface ResolvedEmbeddingRow {
   embedding_set_id: string
   embedding_id: string
   vector: string
-  created_at: Date
+  created_at: Date | null
 }
 
 export interface ResolvedEmbeddingSet {
@@ -163,7 +164,26 @@ export interface ResolvedEmbeddingSet {
   resolutionSource: 'live' | 'materialized'
 }
 
-export interface EmbeddingSetRow {
+export interface EmbeddingConfigRow extends Omit<NativeEmbeddingConfig, 'created_at' | 'updated_at'> {
+  created_at: Date
+  updated_at: Date
+}
+
+export interface EmbeddingRow {
+  id: string
+  note_id: string | null
+  embedding_set_id: string | null
+  chunk_index: number
+  text: string
+  vector: string | null
+  model: string | null
+  contract_fingerprint: string | null
+  shard_contract_fingerprint_present: boolean
+  created_at: Date | null
+}
+
+export interface EmbeddingSetRow extends Partial<Omit<NativeEmbeddingSet,
+  'created_at' | 'updated_at' | 'mode' | 'set_type' | 'keywords' | 'criteria' | 'truncate_dim'>> {
   id: string
   name: string
   purpose: string | null
@@ -222,7 +242,8 @@ function dateString(value: Date | string | undefined): string | undefined {
   return value instanceof Date ? value.toISOString() : value
 }
 
-function dateMillis(value: Date | string): number {
+function dateMillis(value: Date | string | null): number {
+  if (value === null) return 0
   return value instanceof Date ? value.getTime() : new Date(value).getTime()
 }
 
@@ -232,6 +253,25 @@ function hashJson(value: unknown): string {
 
 export class EmbeddingSetsRepository {
   constructor(private db: QueryExecutor) {}
+
+  async getConfig(id: string): Promise<EmbeddingConfigRow> {
+    const result = await this.db.query<EmbeddingConfigRow>('SELECT * FROM embedding_config WHERE id = $1', [id])
+    if (!result.rows[0]) throw new Error(`Embedding config not found: ${id}`)
+    return result.rows[0]
+  }
+
+  async listConfigs(): Promise<EmbeddingConfigRow[]> {
+    return (await this.db.query<EmbeddingConfigRow>('SELECT * FROM embedding_config ORDER BY name, id')).rows
+  }
+
+  /** Includes metadata-only records and every chunk, unlike a resolved graph selector. */
+  async listEmbeddings(setId: string): Promise<EmbeddingRow[]> {
+    return (await this.db.query<EmbeddingRow>(
+      `SELECT id, note_id, embedding_set_id, chunk_index, text, vector::text AS vector, model,
+         contract_fingerprint, shard_contract_fingerprint_present, created_at
+       FROM embedding WHERE embedding_set_id = $1 ORDER BY note_id, chunk_index, id`, [setId],
+    )).rows
+  }
 
   async create(input: EmbeddingSetCreateInput): Promise<EmbeddingSetRow> {
     const id = input.id ?? generateId()
@@ -362,9 +402,9 @@ export class EmbeddingSetsRepository {
     const embeddingId = input.id ?? generateId()
     const vector = `[${input.vector.join(',')}]`
     await this.db.query(
-      `INSERT INTO embedding (id, note_id, embedding_set_id, vector)
-       VALUES ($1, $2, $3, $4::vector)`,
-      [embeddingId, input.note_id, input.embedding_set_id, vector],
+      `INSERT INTO embedding (id, note_id, embedding_set_id, vector, model)
+       VALUES ($1, $2, $3, $4::vector, $5)`,
+      [embeddingId, input.note_id, input.embedding_set_id, vector, set.model_name],
     )
 
     await this.db.query(
@@ -523,7 +563,7 @@ export class EmbeddingSetsRepository {
     const result = await this.db.query<ResolvedEmbeddingRow>(
       `SELECT note_id, embedding_set_id, id as embedding_id, vector::text as vector, created_at
        FROM embedding
-       WHERE embedding_set_id = $1
+       WHERE embedding_set_id = $1 AND vector IS NOT NULL AND note_id IS NOT NULL
        ORDER BY note_id, created_at DESC`,
       [setId],
     )
@@ -535,7 +575,7 @@ export class EmbeddingSetsRepository {
       `SELECT e.note_id, e.embedding_set_id, e.id as embedding_id, e.vector::text as vector, e.created_at
        FROM embedding_set_member m
        JOIN embedding e ON e.id = m.embedding_id
-       WHERE m.embedding_set_id = $1
+       WHERE m.embedding_set_id = $1 AND e.vector IS NOT NULL AND e.note_id IS NOT NULL
        ORDER BY e.note_id, e.created_at DESC`,
       [setId],
     )
@@ -547,7 +587,7 @@ export class EmbeddingSetsRepository {
     if (criteria.conceptIds && criteria.conceptIds.length > 0) {
       throw new Error('Unsupported virtual embedding-set criteria field: conceptIds')
     }
-    const conditions = ['e.embedding_set_id = $1', 'n.deleted_at IS NULL']
+    const conditions = ['e.embedding_set_id = $1', 'e.vector IS NOT NULL', 'n.deleted_at IS NULL']
     const params: unknown[] = [source.baseSetId]
     let idx = 2
     if (criteria.noteIds?.length) {

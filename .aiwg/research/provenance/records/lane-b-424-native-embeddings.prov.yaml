@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-10T08:25:09.136Z",
+    "description": "Native embedding storage/apply stage and mixed-dimension note search; public full-v1 restore remains incomplete"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts",
+    "type": "code",
+    "created_at": "2026-09-10T08:25:09.136Z",
+    "checksum": "sha256:126ee44ac9d484289c8ae48401d1b9c6b309c91f065afe622b18234ca3f35fd8",
+    "attributes": {
+      "issue": "Fortemi/fortemi-react#424",
+      "producer_issue": "Fortemi/fortemi#1059",
+      "producer_revision": "c4ef37675f5637af76001570ef620e80ca1f9304",
+      "base_revision": "956f044db1b7362fd13311fca40586cc4fcc213e",
+      "artifacts": {
+        ".aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md": "sha256:08c3c152ad456c22e5c2d34b692a92a9ed11c56f0392451bf9d147077d23fbcb",
+        ".aiwg/architecture/SAD.md": "sha256:5eb946270e473ab98c9f56010868894226929c2bc982b0520e2e5fdbad03da0e",
+        "docs/content/api-reference.md": "sha256:3302201369a43b42373e9c134fa90b34ff553a55172a7d5c5fbef39dd06fa5da",
+        "packages/core/package.json": "sha256:e7d7b500f9b3595ba13b09492c7fc4e2dec79ae4037f3d07dd8303e03fb7fc3a",
+        "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "sha256:a2b2addb9ec3202aeb9b5a5f4c03bfcf01529d18718f9ac1456a054567cb5931",
+        "packages/core/schemas/knowledge-shard-v2.presence.receipt.json": "sha256:de707c904ae2dae21b7e57e55942cc45dca6ab67843291414d25aa056474ed4d",
+        "packages/core/scripts/generate-pglite-full-v1-receipt.mjs": "sha256:d23ada577e719134aee3b16d3a2147acb1de27add6469ce69cadfff2b3d380ea",
+        "packages/core/src/__tests__/shard/native-embeddings.test.ts": "sha256:2730f79203507e57d147aa1fa564fe4a4a224d8fe890f0917d53c3cd28efe0d5",
+        "packages/core/src/index.ts": "sha256:5e3513d855ccd8e99c46f21de25f45a01a0ae851c81c1c57f385e1975917fd4f",
+        "packages/core/src/job-queue-worker.ts": "sha256:1516bcad7025ae9a9cb1cd10f8d0098effb8deeb8323be617f8a4ae3b2915e5d",
+        "packages/core/src/migrations/0026_native_embeddings.ts": "sha256:7cdd3fe438f80ed6f0ade038c24fa7bf60b6edef812269958709fa79e4554ec2",
+        "packages/core/src/migrations/index.ts": "sha256:c190d901c8a9b0d2e22d3549e6dccf1a52a5a8ae2c0ac1dc4b18b908fda0cee1",
+        "packages/core/src/repositories/embedding-sets-repository.ts": "sha256:01e6b68a3f0883149b4803334cb6149459ae59286e07172224e97690540d37dd",
+        "packages/core/src/repositories/search-repository.ts": "sha256:1e3372a809aaaed2aa3c37f2ac3e459fe24e91a6f4ad58b43ab44c17967cfbe8",
+        "packages/core/src/shard/native-embeddings.ts": "sha256:126ee44ac9d484289c8ae48401d1b9c6b309c91f065afe622b18234ca3f35fd8"
+      }
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:lane-b-424-native-embeddings",
+    "type": "modification",
+    "started_at": "2026-09-10T08:12:37.307Z",
+    "ended_at": "2026-09-10T08:25:09.136Z",
+    "description": "Implement typed native config/set/member/vector state, retain numeric/timestamp precision and declaration presence, and verify mixed-dimension best-chunk search, linking and atomic apply rollback"
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts",
+      "activity": "urn:aiwg:activity:lane-b-424-native-embeddings",
+      "time": "2026-09-10T08:25:09.136Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:lane-b-424-native-embeddings",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts",
+        "source": "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:lane-b-424-native-embeddings"
+      },
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts",
+        "source": "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-19-v2.shard",
+        "derivation_type": "tests",
+        "activity": "urn:aiwg:activity:lane-b-424-native-embeddings"
+      }
+    ]
+  }
+}

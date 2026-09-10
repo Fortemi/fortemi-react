@@ -1,8 +1,10 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-09-10T08:03:13.649Z"
-  record_count: 82
+  updated_at: "2026-09-10T08:25:09.136Z"
+  record_count: 83
 records:
+  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts"
+    record: "records/lane-b-424-native-embeddings.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/shard/native-note-history.ts"
     record: "records/lane-b-424-native-note-history.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/shard/full-v1-references.ts"
