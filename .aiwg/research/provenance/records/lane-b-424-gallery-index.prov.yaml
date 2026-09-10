@@ -1,0 +1,59 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-10T09:09:47.822Z",
+    "description": "Repair gallery HNSW rebuild after native variable-dimension embedding storage"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:examples/knowledge-workspace/src/app/FortemiApp.tsx",
+    "type": "code",
+    "created_at": "2026-09-10T09:09:47.822Z",
+    "checksum": "sha256:5926a2eaa725146693c48f3c4477609f91a7ffa7a0314b59b61f54839b7ddeca",
+    "attributes": {
+      "issue": "Fortemi/fortemi-react#424",
+      "pull_request": 440,
+      "base_revision": "e770f6e85a84241f9091bf9165cd732e2e358a9b",
+      "failed_ci": 57614,
+      "artifacts": {
+        "examples/knowledge-workspace/src/app/FortemiApp.tsx": "sha256:5926a2eaa725146693c48f3c4477609f91a7ffa7a0314b59b61f54839b7ddeca",
+        "examples/e2e/knowledge-workspace.test.ts": "sha256:b3df66f3b5f02199922b4272552bfcc427308af847751c57367f7f8e88903696"
+      }
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:lane-b-424-gallery-index",
+    "type": "modification",
+    "started_at": "2026-09-10T09:04:18.546Z",
+    "ended_at": "2026-09-10T09:09:47.822Z",
+    "description": "Use the dimension-scoped 384-vector expression index for gallery rebuild; include collected browser errors in failure diagnostics"
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:examples/knowledge-workspace/src/app/FortemiApp.tsx",
+      "activity": "urn:aiwg:activity:lane-b-424-gallery-index",
+      "time": "2026-09-10T09:09:47.822Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:examples/knowledge-workspace/src/app/FortemiApp.tsx",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:lane-b-424-gallery-index",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:examples/knowledge-workspace/src/app/FortemiApp.tsx",
+        "source": "urn:aiwg:artifact:packages/core/src/migrations/0026_native_embeddings.ts",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:lane-b-424-gallery-index"
+      }
+    ]
+  }
+}

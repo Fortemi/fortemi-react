@@ -90,7 +90,7 @@ const NOTES_SHARD = `${CORPUS_ROOT}/corpus.notes.shard`;
 const SUMMARIES_SHARD = `${CORPUS_ROOT}/corpus.summaries.shard`;
 const FULL_SHARD = `${CORPUS_ROOT}/corpus.shard`;
 const HNSW_CREATE =
-  'CREATE INDEX IF NOT EXISTS idx_embedding_vector ON embedding USING hnsw (vector vector_cosine_ops) WITH (m = 16, ef_construction = 64)';
+  'CREATE INDEX IF NOT EXISTS idx_embedding_vector ON embedding USING hnsw ((vector::vector(384)) vector_cosine_ops) WITH (m = 16, ef_construction = 64) WHERE vector_dims(vector) = 384';
 
 // Yield to the event loop so the browser can repaint between heavy phases (the
 // progress bar updates, and Chrome's "page unresponsive" watchdog resets). The

@@ -52,7 +52,7 @@ test('semantic upgrade succeeds against the bundled corpus shards', async ({ pag
   const failureBanner = page.getByText('Semantic search unavailable')
   const semanticReady = page.getByRole('button', { name: 'AI summaries' })
   await expect(semanticReady.or(failureBanner).first()).toBeVisible({ timeout: 360_000 })
-  await expect(failureBanner, 'semantic upgrade reported a failure banner').toHaveCount(0)
+  await expect(failureBanner, `semantic upgrade reported a failure banner:\n${errors.join('\n')}`).toHaveCount(0)
   await expect(semanticReady).toBeVisible()
 
   // 4. A semantic query returns ranked hybrid results.
