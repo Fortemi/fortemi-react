@@ -4,6 +4,19 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+### Native core storage (#424)
+
+- Preserve independent note metadata, exact timestamps and tombstone presence,
+  standalone tag records, collection snapshot counts, template arrays, precise
+  links and nested attachment paths/extraction state in native storage.
+- Expose note metadata through repository/backend detail reads, rich tag/link/
+  collection reads and TemplatesRepository CRUD. Registered metadata search now
+  uses note metadata independently of current revision AI metadata.
+- Preserve legacy metadata authoring and unprofiled URL-only import behavior.
+  Native byte access, edits, upgrade and rollback are tested; SQL blob counts
+  remain non-authoritative. Public full-v1 restore/export and released
+  qualification are still incomplete; suite NO-GO remains.
+
 ### Native graph storage (#424)
 
 - Preserve graph/community timestamps, opaque identities and nested community

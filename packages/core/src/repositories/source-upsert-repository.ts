@@ -182,9 +182,9 @@ async function insertNote(tx: QueryExecutor, input: SourceUpsertItem, noteId: st
     await tx.query('INSERT INTO archive (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING', [input.source.archive_id, input.source.archive_id])
   }
   await tx.query(
-    `INSERT INTO note (id, archive_id, title, format, source, visibility)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
-    [noteId, input.source.archive_id ?? null, input.title ?? null, input.format ?? 'markdown', `source:${input.source.namespace}`, input.visibility ?? 'private'],
+    `INSERT INTO note (id, archive_id, title, format, source, visibility, metadata, metadata_independent)
+     VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, TRUE)`,
+    [noteId, input.source.archive_id ?? null, input.title ?? null, input.format ?? 'markdown', `source:${input.source.namespace}`, input.visibility ?? 'private', JSON.stringify(input.metadata ?? null)],
   )
   await tx.query('INSERT INTO note_original (id, note_id, content, content_hash) VALUES ($1, $2, $3, $4)', [originalId, noteId, input.content, digest])
   await tx.query(
@@ -205,8 +205,9 @@ async function updateNote(tx: QueryExecutor, input: SourceUpsertItem, noteId: st
   }
   // Serialize native revision allocation with repository and worker edits.
   await tx.query(
-    `UPDATE note SET title = $1, format = $2, visibility = $3, archive_id = $4, updated_at = now(), deleted_at = NULL WHERE id = $5`,
-    [input.title ?? null, input.format ?? 'markdown', input.visibility ?? 'private', input.source.archive_id ?? null, noteId],
+    `UPDATE note SET title = $1, format = $2, visibility = $3, archive_id = $4, updated_at = now(), deleted_at = NULL,
+       metadata = $6::jsonb, metadata_independent = TRUE WHERE id = $5`,
+    [input.title ?? null, input.format ?? 'markdown', input.visibility ?? 'private', input.source.archive_id ?? null, noteId, JSON.stringify(input.metadata ?? null)],
   )
   let revisionId: string | null = null
   if (outcome === 'versioned') {

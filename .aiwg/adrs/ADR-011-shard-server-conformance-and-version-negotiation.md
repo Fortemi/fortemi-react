@@ -19,6 +19,44 @@ The Knowledge Shard (`shard/*`) is fortemi-react's interchange format with the R
 
 ## Decision
 
+### Native Core Stage (2026-09-10)
+
+Migration0030 and native-core map the five core families and nested attachment
+projections to native storage, invoking the existing native history stage in
+the caller's transaction. Note metadata is independent of revision AI metadata;
+repository/source/legacy-shard writes and registered metadata search use the
+native field. Existing databases backfill their available metadata, and legacy
+current-metadata writers continue projecting only while the note has not gained
+independent metadata. Optional tombstone presence and exact timestamps survive
+import, while later native edits take precedence.
+
+The native tag catalog preserves unused declared tags separately from note
+membership. Required membership-only rows can remain absent from the exported
+tags component. Collection snapshot counts follow the producer's semantics:
+restore after importing memberships, invalidate on later membership mutation.
+Multiple native collection memberships remain usable locally but reject the
+single-collection full-v1 projection. Templates retain ordered default tags and
+precise timestamps, with a native repository for CRUD.
+
+Links retain arbitrary JSON and double-precision scores, with one wire identity
+across note and URL target tables. Target-kind replacement removes the previous
+native representation. Unprofiled legacy URL links retain their established
+permissive owner semantics; native full-v1 apply requires an existing owner.
+Exact attachment paths remain display values, never filesystem storage keys.
+Extraction projection changes and actual blob reads are tested; native status
+or extracted-text edits invalidate stale imported extraction status/reason.
+SQL reference counts remain derived reporting data, not a new GC authority.
+No bytes, inference jobs or archival component rows are created by this stage.
+
+The caller still owns whole-archive trust/reference/blob validation, conflict
+selection, all-component replacement and commit. The unscoped internal reader
+rejects unrepresentable native state; public scoped serialization must establish
+closure before testing selected state. Public full-v1 dispatch/snapshot
+precedence, legacy SKOS integration, clean-installed native regression and
+released producer/consumer qualification remain open. RecordStore and blob
+lifecycle authority retain ADR013's boundaries. No contract tuple, matrix cell
+or suite NO-GO claim changes.
+
 ### Native Graph Stage (2026-09-10)
 
 The existing graph_source, graph_edge_artifact, community_set, community and
@@ -39,8 +77,9 @@ community creation is transactional across source, set, child and assignments.
 
 Producer-fixture, ordering, precision, null/value, identity, native mutation,
 legacy migration, deletion and late rollback tests qualify only this internal
-stage. The remaining five core component mappings, complete public import/export
-transaction, legacy-writer integration and released producer/consumer cells are
+stage. At its delivery, five core component mappings remained; the Native Core
+Stage above now supplies them. The complete public import/export transaction,
+legacy-writer integration and released producer/consumer cells are
 still required by #424 and Fortemi/fortemi#1059. No authority tuple or matrix
 claim changes; suite NO-GO remains.
 

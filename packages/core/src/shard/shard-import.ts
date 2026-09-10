@@ -814,6 +814,11 @@ export async function importShard(
           )
         }
 
+        // Legacy shard replacement must also refresh independent native note
+        // metadata; current AI metadata no longer owns that field after restore.
+        await tx.query('UPDATE note SET metadata = $2::jsonb, metadata_independent = TRUE WHERE id = $1',
+          [note.id, JSON.stringify(note.ai_metadata ?? null)])
+
         // Import note tags
         if (strategy === 'replace') {
           await tx.query(

@@ -10,6 +10,7 @@
 
 import type { DatabaseClient } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
+import { readNativeCollections, type NativeCollection } from '../shard/native-core.js'
 
 export interface CollectionRow {
   id: string
@@ -30,6 +31,10 @@ export interface CollectionCreateInput {
 
 export class CollectionsRepository {
   constructor(private db: DatabaseClient) {}
+
+  async getRecord(id: string): Promise<NativeCollection | null> {
+    return (await readNativeCollections(this.db, id))[0] ?? null
+  }
 
   async create(input: CollectionCreateInput): Promise<CollectionRow> {
     const id = generateId()

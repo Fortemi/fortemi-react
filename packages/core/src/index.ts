@@ -383,6 +383,12 @@ export { TagsRepository } from './repositories/tags-repository.js'
 export { CollectionsRepository } from './repositories/collections-repository.js'
 export type { CollectionRow, CollectionCreateInput } from './repositories/collections-repository.js'
 export { LinksRepository } from './repositories/links-repository.js'
+export { TemplatesRepository } from './repositories/templates-repository.js'
+export type { TemplateCreateInput } from './repositories/templates-repository.js'
+export type {
+  NativeCollection as CollectionRecord, NativeTag as TagRecord, NativeTemplate as TemplateRecord,
+  NativeLink as LinkRecord, NativeNote as NativeNoteRecord, NativeAttachmentProjection as NativeAttachmentRecord,
+} from './shard/native-core.js'
 export type { LinkRow } from './repositories/links-repository.js'
 export { SkosRepository } from './repositories/skos-repository.js'
 export type { SkosScheme, SkosConcept, SkosRelation, NoteSkosTag, SkosLabel, SkosNote, SkosMapping,

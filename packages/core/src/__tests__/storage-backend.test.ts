@@ -51,6 +51,7 @@ class FakeStorageBackend implements StorageBackend {
   readonly mode = 'readwrite' as const
   readonly queries: Array<{ sql: string; params?: unknown[] }> = []
   readonly execs: string[] = []
+  transactionCount = 0
   closed = false
 
   constructor(readonly id: string) {}
@@ -70,6 +71,7 @@ class FakeStorageBackend implements StorageBackend {
   }
 
   async transaction<T>(fn: (tx: QueryExecutor) => Promise<T>): Promise<T> {
+    this.transactionCount++
     return fn(this)
   }
 
@@ -126,8 +128,12 @@ describe('storage backend abstraction', () => {
 
     await repo.addTag('note-1', 'portable')
 
-    expect(backend.queries[0].params?.slice(1)).toEqual(['note-1', 'portable'])
-    expect(backend.queries[0].sql).toContain('INSERT INTO note_tag')
+    expect(backend.transactionCount).toBe(1)
+    expect(backend.queries).toHaveLength(2)
+    expect(backend.queries[0].sql).toContain('INSERT INTO tag')
+    expect(backend.queries[0].params).toEqual(['portable'])
+    expect(backend.queries[1].params?.slice(1)).toEqual(['note-1', 'portable'])
+    expect(backend.queries[1].sql).toContain('INSERT INTO note_tag')
   })
 
   it('passes persistence through to an injected backend factory when provided', async () => {

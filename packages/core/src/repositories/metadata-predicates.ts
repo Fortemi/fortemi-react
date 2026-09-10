@@ -56,7 +56,7 @@ function assertBoundedValue(value: unknown): void {
 
 function jsonAccessor(path: RegisteredMetadataPath): string {
   if (path === 'import_run_id') return 'si.import_run_id'
-  return `c.ai_metadata ->> '${path}'`
+  return `n.metadata ->> '${path}'`
 }
 
 export function buildMetadataPredicateConditions(

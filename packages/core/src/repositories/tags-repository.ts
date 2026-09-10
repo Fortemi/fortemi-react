@@ -9,16 +9,23 @@
 
 import type { DatabaseClient } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
+import { readNativeTags, type NativeTag } from '../shard/native-core.js'
 export class TagsRepository {
   constructor(
     private db: DatabaseClient,
   ) {}
 
+  /** Declared native tags, including records with no note membership. */
+  async listRecords(): Promise<NativeTag[]> { return readNativeTags(this.db) }
+
   async addTag(noteId: string, tag: string): Promise<void> {
-    await this.db.query(
-      `INSERT INTO note_tag (id, note_id, tag) VALUES ($1, $2, $3) ON CONFLICT (note_id, tag) DO NOTHING`,
-      [generateId(), noteId, tag],
-    )
+    await this.db.transaction(async (tx) => {
+      await tx.query('INSERT INTO tag (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET shard_export_present = TRUE', [tag])
+      await tx.query(
+        `INSERT INTO note_tag (id, note_id, tag) VALUES ($1, $2, $3) ON CONFLICT (note_id, tag) DO NOTHING`,
+        [generateId(), noteId, tag],
+      )
+    })
   }
 
   async removeTag(noteId: string, tag: string): Promise<void> {

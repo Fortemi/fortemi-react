@@ -76,6 +76,8 @@ export interface BackendNote {
 /** A note plus its current rendered content. */
 export interface BackendNoteFull extends BackendNote {
   content: string
+  /** Native note metadata, separate from inference metadata where supported. */
+  metadata?: unknown
   links?: BackendLink[]
   concepts?: BackendConcept[]
   provenance?: BackendProvenanceEdge[]
@@ -544,7 +546,7 @@ export function createPGliteBackend(db: DatabaseClient, options: PGliteBackendOp
           conceptsOf(id),
           provenanceOf(id),
         ])
-        return { ...summaryToBackend(f), content: f.current.content, links: noteLinks, concepts, provenance }
+        return { ...summaryToBackend(f), content: f.current.content, metadata: f.metadata, links: noteLinks, concepts, provenance }
       } catch {
         return null
       }

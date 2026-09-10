@@ -9,6 +9,7 @@
 
 import type { DatabaseClient } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
+import { readNativeLinks, type NativeLink } from '../shard/native-core.js'
 
 export interface LinkRow {
   id: string
@@ -23,6 +24,11 @@ export interface LinkRow {
 
 export class LinksRepository {
   constructor(private db: DatabaseClient) {}
+
+  /** Rich full-v1-representable link, including URL targets and metadata. */
+  async getRecord(id: string): Promise<NativeLink | null> {
+    return (await readNativeLinks(this.db, id))[0] ?? null
+  }
 
   async create(
     sourceNoteId: string,
@@ -74,6 +80,9 @@ export class LinksRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await this.db.query(`UPDATE link SET deleted_at = now() WHERE id = $1`, [id])
+    await this.db.transaction(async (tx) => {
+      await tx.query(`UPDATE link SET deleted_at = now() WHERE id = $1`, [id])
+      await tx.query(`UPDATE link_url_target SET deleted_at = now() WHERE id = $1`, [id])
+    })
   }
 }

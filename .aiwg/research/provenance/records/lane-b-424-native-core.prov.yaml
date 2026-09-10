@@ -1,0 +1,88 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-10T11:04:14.540Z",
+    "description": "Five-component native core and nested attachment internal stage; public full-v1 restoration remains incomplete"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:packages/core/src/shard/native-core.ts",
+    "type": "code",
+    "created_at": "2026-09-10T11:04:14.540Z",
+    "checksum": "sha256:62317c17b223e6c8dee306a9cfb08b6ffb7bc94b09ee6d7301218c3cafc28c28",
+    "attributes": {
+      "issue": "Fortemi/fortemi-react#424",
+      "producer_issue": "Fortemi/fortemi#1059",
+      "producer_revision": "c4ef37675f5637af76001570ef620e80ca1f9304",
+      "base_revision": "5b7a8ed99a15e2baaa4c158af7b18bfddb31bc45",
+      "artifacts": {
+        ".aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md": "sha256:29caecb823fa041ff2c12ff4055d9c87986350192f440c919b5260d1f778fed0",
+        ".aiwg/architecture/SAD.md": "sha256:5f7e88e16aab323dd235afcfbfff1abdc165a0f1c7941d4a3440015d5edad500",
+        "CHANGELOG.md": "sha256:f9e40a486eb55e0ce32e7d2238cd3cc7bf8efea1d96588b51f1a57265d7f8852",
+        "docs/content/api-reference.md": "sha256:26c6c52f36b319a567165f69cd3b8d8cacdf2700f896f39863edaa937bd049d7",
+        "packages/core/package.json": "sha256:f63c28843ff280b9791fb0bec72d6e488bc3c5f84dc32a0ff1d595a769e07a52",
+        "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "sha256:32a9ded277a30f8930f7c2da705d08c705f1314d0b2c91bb99384b9522686b18",
+        "packages/core/schemas/knowledge-shard-v2.presence.receipt.json": "sha256:d14831c31c954a44718f518cc6f45fb564721467040154629540ab01e0805137",
+        "packages/core/scripts/generate-pglite-full-v1-receipt.mjs": "sha256:2631a5db1a914ee824f207f5e8d9ee7f2585b20e0fee0a6f02085930a491a866",
+        "packages/core/src/__tests__/db-table-parity/db-table-parity.test.ts": "sha256:1eaef6aa85527d6b12aa28cd916da5ad8638bb6542292250cc57966c3185070d",
+        "packages/core/src/__tests__/storage-backend.test.ts": "sha256:9be58b1daf162a03377574f7839059fd78c3a10f1116effc8484c243ae7018be",
+        "packages/core/src/data-backend.ts": "sha256:91fec6cfc5d7c5677da6d760b78114f38715d539fe1b0e39958038fbc9cb8aa0",
+        "packages/core/src/index.ts": "sha256:25160c08331212be79e45a9104a70d5e0b3993d23f3cb5c7bcd3e69bc59ac8b6",
+        "packages/core/src/migrations/index.ts": "sha256:72ccf0ed2700863a78355ac55f1c62dba44ece7e5f1363edb3158739487c0492",
+        "packages/core/src/repositories/collections-repository.ts": "sha256:fb3de696ac14214e65d9720b84625508abb9b44bd5e4196f8d4107e2405173fe",
+        "packages/core/src/repositories/links-repository.ts": "sha256:d7f21e5b5bef705c9138c472e4f716cc906a40c4339a41499f27963a4f6eab28",
+        "packages/core/src/repositories/metadata-predicates.ts": "sha256:6e620e16a8615f10653e435c6607deca30063e97b6eda253522ed047f9f62295",
+        "packages/core/src/repositories/notes-repository.ts": "sha256:4516f20e5280de65199f9620fc5dd1ec8078421e9db87b5e1b10f954f91fe28a",
+        "packages/core/src/repositories/source-upsert-repository.ts": "sha256:d8c63548a104306a118e5127b6212ad4357f6e966ef062b7e57a97ac342026b6",
+        "packages/core/src/repositories/tags-repository.ts": "sha256:177d279ab940c45c192542f0e8253d9f8c36c686152b79ce37a3d8409604cade",
+        "packages/core/src/repositories/types.ts": "sha256:6b035a0e9e6499f8e6b8fcdef7f9e04e14a89fc3e51895228d406af00e25ed48",
+        "packages/core/src/shard/shard-import.ts": "sha256:e8ae08c29e74cd8993a5b88571c5e367b4a9ba7f28f7e8e9b24cd03d6b0247db",
+        "packages/core/src/__tests__/shard/native-core.test.ts": "sha256:b6d3b212c705ae1f142b3278469b7a99346fabd21bd814a1ae1aaa19b335136e",
+        "packages/core/src/migrations/0030_native_core.ts": "sha256:9096380e0c4d01108f5243b4702bda8f9041458808f57253233c2f54311f5eb5",
+        "packages/core/src/repositories/templates-repository.ts": "sha256:df3423635d0ed2edbd504e3f3816315a293fd2276aea807659e345263443902c",
+        "packages/core/src/shard/native-core.ts": "sha256:62317c17b223e6c8dee306a9cfb08b6ffb7bc94b09ee6d7301218c3cafc28c28"
+      }
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:lane-b-424-native-core",
+    "type": "modification",
+    "started_at": "2026-09-10T10:39:37.461Z",
+    "ended_at": "2026-09-10T11:04:14.540Z",
+    "description": "Implement native notes, collections, tags, templates, links and nested attachment apply/read storage; separate note and AI metadata, preserve exact scalar/presence/order values, legacy writers and native mutation semantics; verify real blob reads, migration, conflicts and transaction rollback"
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/native-core.ts",
+      "activity": "urn:aiwg:activity:lane-b-424-native-core",
+      "time": "2026-09-10T11:04:14.540Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/native-core.ts",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:lane-b-424-native-core",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/native-core.ts",
+        "source": "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:lane-b-424-native-core"
+      },
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/native-core.ts",
+        "source": "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-19-v2.shard",
+        "derivation_type": "tests",
+        "activity": "urn:aiwg:activity:lane-b-424-native-core"
+      }
+    ]
+  }
+}

@@ -81,7 +81,8 @@ describe('DB Table Parity', () => {
     const comparison = matchServerShape(result.rows[0], serverFixture[0])
 
     expect(comparison.missing).toEqual([])
-    expect(comparison.extra).toEqual([])
+    // Native schema-2 precision and imported snapshot count (migration0030).
+    expect(comparison.extra.sort()).toEqual(['created_at_utc', 'shard_note_count'])
     expect(comparison.typeMismatch).toEqual([])
   })
 
@@ -100,7 +101,7 @@ describe('DB Table Parity', () => {
     const comparison = matchServerShape(result.rows[0], serverFixture[0])
 
     expect(comparison.missing).toEqual([])
-    expect(comparison.extra).toEqual([])
+    expect(comparison.extra).toEqual(['position'])
     expect(comparison.typeMismatch).toEqual([])
   })
 
@@ -174,7 +175,7 @@ describe('DB Table Parity', () => {
     const comparison = matchServerShape(result.rows[0], serverFixture[0])
 
     expect(comparison.missing).toEqual([])
-    expect(comparison.extra).toEqual([])
+    expect(comparison.extra.sort()).toEqual(['created_at_utc', 'metadata_json'])
     expect(comparison.typeMismatch).toEqual([])
   })
 

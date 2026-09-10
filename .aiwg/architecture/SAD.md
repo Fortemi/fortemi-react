@@ -29,6 +29,18 @@ full-v1 import/export dispatch: native restoration and stale-snapshot precedence
 remain open acceptance gates in ADR-011. Archival byte-preservation tests remain
 separate from native repository/search/traversal and post-import CRUD tests.
 
+Migration0030 adds native core state: independent note metadata and tombstone
+presence, exact timestamps, standalone declared tags, collection snapshot counts,
+ordered memberships and precise link metadata/scores. Native core apply handles
+the five families and attachment projections, delegating history in the same
+caller-owned transaction. Attachment paths are preserved exactly as display
+values; BLAKE3 remains the byte locator. Extraction edits invalidate stale
+imported projections. SQL refcounts stay derived, non-authoritative data under
+ADR013. Rich collection/link/tag reads and template CRUD expose native records.
+Producer-fixture, ordinary mutation, byte-read, upgrade and rollback tests cover
+this internal stage. They do not qualify public scoped native restore/export,
+RecordStore full-v1, a published package, or a wider suite matrix cell.
+
 Full-v1 relationship preflight now rejects inconsistent component identities,
 references, revision ownership and ordering before storage access. A shared
 producer-owned mutation corpus checks Rust/TypeScript agreement; this guard

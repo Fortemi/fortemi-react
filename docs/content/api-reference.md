@@ -503,6 +503,14 @@ class NotesRepository {
 Native history reads include original version/user timestamps, revision parent,
 summary/rationale, generation/user-edit fields and current `last_revision_id`.
 `NoteFull.original.id` may be null; original identity is scoped by note owner.
+
+`NoteFull.metadata` and native-backend `BackendNoteFull.metadata` expose note
+metadata separately from `current.ai_metadata`. `NoteCreateInput.metadata` and
+`NoteUpdateInput.metadata` accept JSON values, including null, arrays and scalar
+values. Explicit metadata writes and source imports remain independent of AI
+revision changes. Legacy current-metadata writers retain their prior projection
+until independent note metadata is authored. Registered metadata predicates use
+the note field. This does not complete public full-v1 restore/export acceptance.
 `OriginalContentRevision` is exported by Core and preserves scalar timestamp
 precision. These reads do not imply that ordinary `full-v1` import restores
 native state: the all-component native dispatcher is still incomplete (#424).
@@ -556,19 +564,22 @@ Shared SQL condition builder used by both `SearchRepository` and `NotesRepositor
 
 ```typescript
 class TagsRepository {
-  constructor(db: PGlite, events?: TypedEventBus)
-
-  list(): Promise<string[]>
-  getFrequency(): Promise<Array<{ tag: string; count: number }>>
-  suggest(partial: string): Promise<string[]>
+  constructor(db: DatabaseClient)
+  addTag(noteId: string, tag: string): Promise<void>
+  removeTag(noteId: string, tag: string): Promise<void>
+  getTagsForNote(noteId: string): Promise<string[]>
+  getNotesForTag(tag: string): Promise<string[]>
+  listAllTags(): Promise<Array<{ tag: string; count: number }>>
+  listRecords(): Promise<TagRecord[]>
 }
 ```
 
 | Method | Description |
 |--------|-------------|
-| `list()` | Return all distinct tags in the database. |
-| `getFrequency()` | Return all tags with their usage counts, ordered by frequency descending. |
-| `suggest(partial)` | Return tags that begin with the given prefix string. |
+| `addTag` / `removeTag` | Add or remove a note membership. Adding declares the native tag atomically. |
+| `getTagsForNote` / `getNotesForTag` | Query native membership in either direction. |
+| `listAllTags()` | Return tags used by notes with usage counts. |
+| `listRecords()` | Return declared tag records and exact creation timestamps, including unused tags. |
 
 ---
 
@@ -576,27 +587,29 @@ class TagsRepository {
 
 ```typescript
 class CollectionsRepository {
-  constructor(db: PGlite, events?: TypedEventBus)
+  constructor(db: DatabaseClient)
 
   create(input: { name: string; description?: string }): Promise<CollectionRow>
-  get(id: string): Promise<CollectionRow | null>
+  get(id: string): Promise<CollectionRow>
+  getRecord(id: string): Promise<CollectionRecord | null>
   list(): Promise<CollectionRow[]>
   update(id: string, input: { name?: string; description?: string }): Promise<CollectionRow>
   delete(id: string): Promise<void>
-  addNotes(collectionId: string, noteIds: string[]): Promise<void>
-  removeNotes(collectionId: string, noteIds: string[]): Promise<void>
+  assignNote(collectionId: string, noteId: string): Promise<void>
+  unassignNote(collectionId: string, noteId: string): Promise<void>
 }
 ```
 
 | Method | Description |
 |--------|-------------|
 | `create(input)` | Create a new named collection. |
-| `get(id)` | Retrieve a collection by ID. Returns `null` if not found. |
+| `get(id)` | Retrieve an active collection by ID; throws if not found. |
+| `getRecord(id)` | Read the full-v1 record with precise timestamp and imported snapshot count, or null if absent. |
 | `list()` | List all collections. |
 | `update(id, input)` | Update name or description. |
 | `delete(id)` | Delete a collection. Does not delete member notes. |
-| `addNotes(collectionId, noteIds)` | Add notes to a collection. Silently skips already-present members. |
-| `removeNotes(collectionId, noteIds)` | Remove notes from a collection. |
+| `assignNote(collectionId, noteId)` | Add membership; an existing membership is unchanged. |
+| `unassignNote(collectionId, noteId)` | Remove membership. Membership mutations invalidate imported snapshot counts. |
 
 ---
 
@@ -604,23 +617,43 @@ class CollectionsRepository {
 
 ```typescript
 class LinksRepository {
-  constructor(db: PGlite, events?: TypedEventBus)
-
-  create(input: { sourceId: string; targetId: string; relation?: string }): Promise<LinkRow>
-  get(id: string): Promise<LinkRow | null>
-  list(noteId?: string): Promise<LinkRow[]>
+  constructor(db: DatabaseClient)
+  create(sourceNoteId: string, targetNoteId: string, linkType?: string): Promise<LinkRow>
+  get(id: string): Promise<LinkRow>
+  getRecord(id: string): Promise<LinkRecord | null>
+  listForNote(noteId: string): Promise<{ outbound: LinkRow[]; inbound: LinkRow[] }>
+  getBacklinks(noteId: string): Promise<string[]>
   delete(id: string): Promise<void>
-  getRelated(noteId: string): Promise<NoteSummary[]>
 }
 ```
 
 | Method | Description |
 |--------|-------------|
-| `create(input)` | Create a directional link between two notes. `relation` is an optional label (e.g. `'supports'`, `'contradicts'`). |
-| `get(id)` | Retrieve a link record by ID. |
-| `list(noteId?)` | List all links, or only links where the given note is source or target. |
-| `delete(id)` | Remove a link by ID. |
-| `getRelated(noteId)` | Return summaries for all notes connected to the given note by any link. |
+| `create(sourceNoteId, targetNoteId, linkType?)` | Create a note-target link, reusing an existing active pair/type. |
+| `get(id)` | Retrieve a note-target link; throws if absent. |
+| `getRecord(id)` | Read either target kind with full-v1 metadata/score/timestamp; rejects unrepresentable values such as a null score. |
+| `listForNote` / `getBacklinks` | Read directional note-target relationships. |
+| `delete(id)` | Soft-delete either target kind atomically. |
+
+---
+
+#### `TemplatesRepository`
+
+```typescript
+class TemplatesRepository {
+  constructor(db: DatabaseClient)
+  create(input: TemplateCreateInput): Promise<TemplateRecord>
+  get(id: string): Promise<TemplateRecord>
+  list(): Promise<TemplateRecord[]>
+  update(id: string, input: Partial<TemplateCreateInput>): Promise<TemplateRecord>
+  delete(id: string): Promise<void>
+}
+```
+
+`TemplateCreateInput` requires `name` and `content`; optional fields are
+`description`, `format`, `default_tags` and `collection_id`. Records preserve
+native identities, ordered default tags and precise timestamps. Invalid records
+reject before mutation. `get` throws when absent; deletion removes the record.
 
 ---
 

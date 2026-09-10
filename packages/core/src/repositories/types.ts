@@ -22,6 +22,8 @@ export interface NoteSummary {
 }
 
 export interface NoteFull extends NoteSummary {
+  /** Note metadata is independent of the current revision's AI metadata. */
+  metadata?: unknown
   archive_id: string | null
   revision_mode: string
   original: {
@@ -45,6 +47,7 @@ export interface NoteFull extends NoteSummary {
 }
 
 export interface NoteCreateInput {
+  metadata?: unknown
   content: string
   title?: string
   format?: string
@@ -62,6 +65,7 @@ export interface NoteCreateInput {
 }
 
 export interface NoteUpdateInput {
+  metadata?: unknown
   title?: string
   content?: string
   format?: string

@@ -46,8 +46,8 @@ export class NotesRepository {
     await this.db.transaction(async (tx) => {
       // Insert note
       await tx.query(
-        `INSERT INTO note (id, archive_id, title, format, source, visibility)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+        `INSERT INTO note (id, archive_id, title, format, source, visibility, metadata, metadata_independent)
+         VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8)`,
         [
           noteId,
           input.archive_id ?? null,
@@ -55,6 +55,8 @@ export class NotesRepository {
           input.format ?? 'markdown',
           input.source ?? 'user',
           input.visibility ?? 'private',
+          input.metadata === undefined ? null : JSON.stringify(input.metadata),
+          input.metadata !== undefined,
         ],
       )
 
@@ -136,6 +138,7 @@ export class NotesRepository {
       user_last_edited_at: string | null
       current_content: string
       ai_metadata: unknown | null
+      metadata: unknown
       generation_count: number
       model: string | null
       is_user_edited: boolean
@@ -144,7 +147,7 @@ export class NotesRepository {
     }>(
       `SELECT n.id, n.archive_id, n.title, n.format, n.source, n.visibility,
               n.revision_mode, n.is_starred, n.is_pinned, n.is_archived,
-              n.created_at, n.updated_at, n.deleted_at,
+              n.created_at, n.updated_at, n.deleted_at, n.metadata,
               o.id         AS original_id,
               o.content    AS original_content,
               o.content_hash,
@@ -188,6 +191,7 @@ export class NotesRepository {
       created_at: row.created_at,
       updated_at: row.updated_at,
       deleted_at: row.deleted_at,
+      metadata: row.metadata,
       tags: tagsResult.rows.map((r) => r.tag),
       original: {
         id: row.original_id,
@@ -355,6 +359,10 @@ export class NotesRepository {
       if (input.visibility !== undefined) {
         setClauses.push(`visibility = $${paramIdx++}`)
         noteParams.push(input.visibility)
+      }
+      if (input.metadata !== undefined) {
+        setClauses.push(`metadata = $${paramIdx++}::jsonb`, 'metadata_independent = TRUE')
+        noteParams.push(JSON.stringify(input.metadata))
       }
 
       noteParams.push(id)
