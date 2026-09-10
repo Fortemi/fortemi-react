@@ -1501,7 +1501,7 @@ const writable = selectBackend({ read: true, write: true }, [pglite, shard])
 const lightWritable = selectBackend({ read: true, write: true }, [pglite, records])
 // → lightWritable.backend.id === 'canonical-records' (writable AND instant; PGlite only wins when semantic/FTS is requested)
 
-const serverTier = selectBackend({ read: true, write: true, merge: true, multiUser: true, semantic: 'server' }, [pglite, shard, remote])
+const serverTier = selectBackend({ read: true, write: true, multiUser: true, semantic: 'server' }, [pglite, shard, remote])
 // → serverTier.backend.id === 'remote-server'
 
 const results = await backend!.search('founder breakfast') // same call shape on either backend
@@ -1512,7 +1512,7 @@ also expose `getNoteFull`, `linksOf`, `conceptsOf`, and `provenanceOf`.
 `semantic` and `manageNote` are present only when the backend advertises them
 (`capabilities.write` gates `manageNote`, `capabilities.semantic !== 'none'`
 gates `semantic`). `createRemoteBackend(config)` proxies the same surface over
-HTTP for the full Fortemi server tier (`read`/`write`/`merge`/`multiUser`,
+HTTP for the Fortemi server tier (`read`/`write`/`multiUser`, `merge: false`,
 `semantic: 'server'`, `startupCost: 'network'`). Pass session credentials via
 `headers` or `authToken`; do not put secrets in source.
 
@@ -1524,8 +1524,16 @@ The remote wire contract is not the local database schema. In particular,
 notes store it in `provenanceGraph`. Remote `provenanceOf` rejects as unsupported
 rather than manufacturing local edges. Note absence is distinct from HTTP,
 transport and enrichment errors, which are surfaced as `RemoteBackendError`.
-Remote search and mutation/capability conformance remain pending #419/#420;
-capability flags alone must not be used as qualification evidence.
+Remote search uses `q`, explicit fts/semantic/hybrid modes and AND-tag filters.
+Nonzero offset and source filtering reject as unsupported. Timestamps come from
+bounded detail enrichment, not the search response; this is not an atomic
+snapshot. Read `degraded`/`effectiveMode` on the result before interpreting rank.
+`semanticWithReport` preserves fallback; array-returning `semantic` rejects it.
+`manageNote` maps create/update/star/archive/delete/restore intents to actual
+REST operations. Unsupported fields reject instead of being silently dropped.
+See the API reference for exact inputs and acknowledgements. Source fixtures do
+not replace live published-package qualification or prove provider availability;
+capability flags alone remain insufficient evidence.
 
 `selectBackend` prefers a fully-satisfying backend with the lightest
 `startupCost`; when none fully satisfy, it returns the fewest-missing candidate

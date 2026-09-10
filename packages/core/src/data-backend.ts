@@ -21,8 +21,8 @@ import { manageNote } from './tools/manage-note.js'
 import type { ShardReader, ShardReaderNote } from './shard/shard-reader.js'
 import type { ShardLink, ShardProvenanceEdge, ShardSkosConcept } from './shard/types.js'
 import { RemoteBackendError, isRemoteNoteNotFound, remoteHttpError } from './remote-error.js'
-import { parseRemoteConcepts, parseRemoteLinks, parseRemoteNoteDetail, parseRemoteNoteList, parseRemoteProvenance } from './remote-contract.js'
-import type { RemoteProvenanceGraph } from './remote-contract.js'
+import { parseRemoteConcepts, parseRemoteCreated, parseRemoteLinks, parseRemoteManageInput, parseRemoteNoteDetail, parseRemoteNoteList, parseRemoteProvenance, parseRemoteRestored, parseRemoteSearch, remoteNoteId, remoteSearchParameters } from './remote-contract.js'
+import type { RemoteProvenanceGraph, RemoteSearchDegradation, RemoteSearchMetadata, RemoteSearchMode } from './remote-contract.js'
 
 // ── Capabilities ──────────────────────────────────────────────────────────
 
@@ -128,6 +128,8 @@ export interface BackendSearchHit {
   note: BackendNote
   rank?: number
   snippet?: string
+  /** Original remote search metadata; detail enrichment is a separate read. */
+  remoteSearch?: RemoteSearchMetadata
 }
 
 /** Search response with optional facet counts. */
@@ -150,23 +152,6 @@ export interface BackendSearchQueryOptions extends BackendListOptions {
   tags?: string[]
   /** OR-filter on note source. */
   source?: string[]
-}
-
-interface RemoteNoteRecord {
-  id: string
-  title: string | null
-  tags?: string[]
-  createdAt?: string
-  created_at?: string
-  updatedAt?: string
-  updated_at?: string
-  source?: string
-  starred?: boolean
-  is_starred?: boolean
-  archived?: boolean
-  is_archived?: boolean
-  content?: string
-  current?: { content?: string }
 }
 
 // ── The uniform operation interface ───────────────────────────────────────
@@ -316,26 +301,6 @@ function searchResultToBackend(r: SearchResult): BackendNote {
     tags: r.tags,
     createdAt: toIso(r.created_at),
     updatedAt: toIso(r.updated_at),
-  }
-}
-
-function remoteNoteToBackend(n: RemoteNoteRecord): BackendNote {
-  if (!n || typeof n.id !== 'string' || !n.id
-    || !(n.title === null || typeof n.title === 'string')
-    || !Array.isArray(n.tags) || !n.tags.every((tag) => typeof tag === 'string')
-    || !Number.isFinite(Date.parse(n.createdAt ?? n.created_at ?? ''))
-    || !Number.isFinite(Date.parse(n.updatedAt ?? n.updated_at ?? ''))) {
-    throw new RemoteBackendError('invalid-response')
-  }
-  return {
-    id: n.id,
-    title: n.title,
-    tags: n.tags ?? [],
-    createdAt: n.createdAt ?? n.created_at ?? '',
-    updatedAt: n.updatedAt ?? n.updated_at ?? '',
-    source: n.source,
-    starred: n.starred ?? n.is_starred,
-    archived: n.archived ?? n.is_archived,
   }
 }
 
@@ -610,8 +575,37 @@ export interface RemoteBackendPaths {
   links: string
   concepts: string
   provenance: string
-  manageNote: string
-  semantic: string
+  restore: string
+  /** @deprecated Tool-intent path overrides cannot adapt the REST contract and are rejected. */
+  manageNote?: string
+  /** @deprecated Semantic search uses the search path and mode parameter. Overrides are rejected. */
+  semantic?: string
+}
+
+export interface RemoteSearchOptions extends BackendSearchQueryOptions {
+  mode?: RemoteSearchMode
+}
+
+export interface RemoteSearchResult extends BackendSearchResult {
+  /** The server total counts returned hits, not the corpus or a pagination estimate. */
+  totalKind: 'returned-hits'
+  requestedMode: RemoteSearchMode
+  effectiveMode: RemoteSearchMode
+  degraded: boolean
+  degradation?: RemoteSearchDegradation
+}
+
+export interface RemoteManageNoteResult {
+  action: 'create' | 'update' | 'delete' | 'restore' | 'archive' | 'unarchive' | 'star' | 'unstar'
+  note_id: string
+  /** Present only when the mutation itself returns a note envelope. */
+  note?: BackendNoteFull
+}
+
+export interface RemoteDataBackend extends DataBackend {
+  search(query: string, options?: RemoteSearchOptions): Promise<RemoteSearchResult>
+  semanticWithReport(query: string, k?: number): Promise<RemoteSearchResult>
+  manageNote(input: unknown): Promise<RemoteManageNoteResult>
 }
 
 export interface RemoteBackendConfig {
@@ -630,8 +624,7 @@ const DEFAULT_REMOTE_PATHS: RemoteBackendPaths = {
   links: '/api/v1/notes/:id/links',
   concepts: '/api/v1/notes/:id/concepts',
   provenance: '/api/v1/notes/:id/provenance',
-  manageNote: '/api/v1/tools/manage-note',
-  semantic: '/api/v1/semantic/search',
+  restore: '/api/v1/notes/:id/restore',
 }
 
 function remotePath(template: string, id?: string): string {
@@ -659,7 +652,7 @@ async function remoteHeaders(config: RemoteBackendConfig, json = false): Promise
   return headers
 }
 
-async function remoteJson<T>(config: RemoteBackendConfig, path: string, init: RequestInit = {}): Promise<T> {
+async function remoteJson<T>(config: RemoteBackendConfig, path: string, init: RequestInit = {}, expectedStatus = 200): Promise<T> {
   const fetchImpl = config.fetchImpl ?? globalThis.fetch
   let response: Response
   try {
@@ -670,12 +663,17 @@ async function remoteJson<T>(config: RemoteBackendConfig, path: string, init: Re
   if (!response.ok) {
     throw await remoteHttpError(response)
   }
+  if (response.status !== expectedStatus) throw new RemoteBackendError('invalid-response', response.status)
+  if (expectedStatus === 204) return undefined as T
   try { return await response.json() as T } catch {
     throw new RemoteBackendError('invalid-response', response.status)
   }
 }
 
-export function createRemoteBackend(config: RemoteBackendConfig): DataBackend {
+export function createRemoteBackend(config: RemoteBackendConfig): RemoteDataBackend {
+  if (config.paths?.manageNote !== undefined || config.paths?.semantic !== undefined) {
+    throw new RemoteBackendError('unsupported-operation')
+  }
   const paths = { ...DEFAULT_REMOTE_PATHS, ...config.paths }
 
   async function getJson<T>(path: string, params?: Record<string, unknown>): Promise<T> {
@@ -685,15 +683,49 @@ export function createRemoteBackend(config: RemoteBackendConfig): DataBackend {
     })
   }
 
-  async function postJson<T>(path: string, body: unknown): Promise<T> {
+  async function writeJson<T>(method: string, path: string, body?: unknown, expectedStatus = 200): Promise<T> {
     return remoteJson<T>(config, path, {
-      method: 'POST',
-      headers: await remoteHeaders(config, true),
-      body: JSON.stringify(body),
-    })
+      method,
+      headers: await remoteHeaders(config, body !== undefined),
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    }, expectedStatus)
+  }
+
+  async function detailOf(id: string): Promise<BackendNoteFull> {
+    id = remoteNoteId(id)
+    const note = parseRemoteNoteDetail(await getJson<unknown>(remotePath(paths.note, id)))
+    if (note.id !== id) throw new RemoteBackendError('invalid-response')
+    return note
+  }
+
+  async function searchRemote(query: string, options?: RemoteSearchOptions, requireSemantic = false): Promise<RemoteSearchResult> {
+    const params = remoteSearchParameters(query, options)
+    const result = parseRemoteSearch(await getJson<unknown>(paths.search, params), query, params.limit)
+    if (requireSemantic && result.degraded) throw new RemoteBackendError('degraded-search')
+    const hits: BackendSearchHit[] = []
+    // At most 100 sequential detail reads: bounded enrichment, preserving rank order.
+    const notes = new Map<string, BackendNoteFull>()
+    for (const hit of result.results) {
+      let detail = notes.get(hit.note_id)
+      if (!detail) { detail = await detailOf(hit.note_id); notes.set(hit.note_id, detail) }
+      hits.push({
+        note: { id: detail.id, title: hit.title ?? detail.title, tags: hit.tags ?? [],
+          createdAt: detail.createdAt, updatedAt: detail.updatedAt, source: detail.source,
+          starred: detail.starred, archived: detail.archived },
+        rank: hit.score, ...(hit.snippet === null ? {} : { snippet: hit.snippet }),
+        remoteSearch: { ...(hit.title === undefined ? {} : { title: hit.title }),
+          ...(hit.tags === undefined ? {} : { tags: hit.tags }),
+          ...(hit.embedding_status === undefined ? {} : { embedding_status: hit.embedding_status }),
+          ...(hit.chain_info === undefined ? {} : { chain_info: hit.chain_info }) },
+      })
+    }
+    return { hits, total: result.total, totalKind: 'returned-hits', requestedMode: params.mode,
+      effectiveMode: result.degradation?.effective_mode ?? params.mode, degraded: result.degraded,
+      ...(result.degradation ? { degradation: result.degradation } : {}) }
   }
 
   async function getNoteFull(id: string): Promise<BackendNoteFull | null> {
+    id = remoteNoteId(id)
     let note: unknown
     try {
       note = await getJson<unknown>(remotePath(paths.note, id))
@@ -710,14 +742,17 @@ export function createRemoteBackend(config: RemoteBackendConfig): DataBackend {
   }
 
   async function linksOf(id: string): Promise<BackendLink[]> {
+    id = remoteNoteId(id)
     return parseRemoteLinks(await getJson<unknown>(remotePath(paths.links, id)), id)
   }
 
   async function conceptsOf(id: string): Promise<BackendConcept[]> {
+    id = remoteNoteId(id)
     return parseRemoteConcepts(await getJson<unknown>(remotePath(paths.concepts, id)), id)
   }
 
   async function provenanceGraphOf(id: string): Promise<RemoteProvenanceGraph> {
+    id = remoteNoteId(id)
     return parseRemoteProvenance(await getJson<unknown>(remotePath(paths.provenance, id)), id)
   }
 
@@ -726,7 +761,7 @@ export function createRemoteBackend(config: RemoteBackendConfig): DataBackend {
     capabilities: {
       read: true,
       write: true,
-      merge: true,
+      merge: false,
       multiUser: true,
       semantic: 'server',
       startupCost: 'network',
@@ -738,6 +773,7 @@ export function createRemoteBackend(config: RemoteBackendConfig): DataBackend {
     },
 
     async getNote(id) {
+      id = remoteNoteId(id)
       try {
         const full = parseRemoteNoteDetail(await getJson<unknown>(remotePath(paths.note, id)))
         if (full.id !== id) throw new RemoteBackendError('invalid-response')
@@ -752,24 +788,7 @@ export function createRemoteBackend(config: RemoteBackendConfig): DataBackend {
       }
     },
 
-    async search(query, o) {
-      const result = await getJson<{
-        results?: Array<{ note?: RemoteNoteRecord; rank?: number; snippet?: string } & RemoteNoteRecord>
-        hits?: BackendSearchHit[]
-        total: number
-        facets?: BackendSearchResult['facets']
-      }>(paths.search, { query, ...o })
-      if (result.hits) return { hits: result.hits, total: result.total, facets: result.facets }
-      return {
-        hits: (result.results ?? []).map((hit) => ({
-          note: remoteNoteToBackend(hit.note ?? hit),
-          rank: hit.rank,
-          snippet: hit.snippet,
-        })),
-        total: result.total,
-        facets: result.facets,
-      }
-    },
+    search: searchRemote,
 
     getNoteFull,
     linksOf,
@@ -780,12 +799,42 @@ export function createRemoteBackend(config: RemoteBackendConfig): DataBackend {
     },
 
     async semantic(query, k) {
-      const result = await getJson<{ hits: BackendSearchHit[] }>(paths.semantic, { query, k })
+      const result = await searchRemote(query, { mode: 'semantic', limit: k }, true)
       return result.hits
     },
 
-    async manageNote(input) {
-      return postJson<unknown>(paths.manageNote, input)
+    async semanticWithReport(query, k) {
+      return searchRemote(query, { mode: 'semantic', limit: k })
+    },
+
+    async manageNote(rawInput) {
+      const input = parseRemoteManageInput(rawInput)
+      if (input.action === 'create') {
+        const result = await writeJson<unknown>('POST', paths.notes, {
+          content: input.content, ...(input.title === undefined ? {} : { title: input.title }),
+          ...(input.tags === undefined ? {} : { tags: input.tags }),
+          ...(input.source === undefined ? {} : { source: input.source }), revision_mode: 'none', pipeline: [],
+        }, 201)
+        return { action: input.action, note_id: parseRemoteCreated(result) }
+      }
+      const id = input.note_id
+      if (input.action === 'delete') {
+        await writeJson<void>('DELETE', remotePath(paths.note, id), undefined, 204)
+        return { action: input.action, note_id: id }
+      }
+      if (input.action === 'restore') {
+        const result = await writeJson<unknown>('POST', remoteUrl(config.baseUrl, remotePath(paths.restore, id), { revision_mode: 'none' }))
+        parseRemoteRestored(result, id)
+        return { action: input.action, note_id: id }
+      }
+      const body = input.action === 'update'
+        ? { ...(input.content === undefined ? {} : { content: input.content, revision_mode: 'none' }),
+          ...(input.tags === undefined ? {} : { tags: input.tags }) }
+        : input.action === 'star' || input.action === 'unstar'
+          ? { starred: input.action === 'star' } : { archived: input.action === 'archive' }
+      const note = parseRemoteNoteDetail(await writeJson<unknown>('PATCH', remotePath(paths.note, id), body))
+      if (note.id !== id) throw new RemoteBackendError('invalid-response')
+      return { action: input.action, note_id: id, note }
     },
   }
 }

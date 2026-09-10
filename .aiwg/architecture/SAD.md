@@ -546,8 +546,12 @@ server revision/activity graph is exposed through `provenanceGraphOf` and
 `BackendNoteFull.provenanceGraph`, not relabeled as local provenance edges.
 Only authoritative note-not-found responses become null; other failures remain
 bounded typed errors. See [backend ADR](adr-backend-seam.md) for projection and
-evidence limits. Search/mutation repairs and published-consumer qualification
-remain open gates; the suite audit is still NO-GO.
+evidence limits. Search dispatch validates producer EnhancedSearchHit envelopes,
+preserves degradation and uses bounded detail enrichment for missing timestamps.
+Mutation intents map to specific REST methods; unsupported fields reject before
+dispatch, and merge capability is false. Source fixture coverage is not provider
+readiness, auth qualification or published-consumer acceptance. Those live/release
+gates remain open; the suite audit is still NO-GO.
 
 After Elaboration Iteration 1 PoC:
 
