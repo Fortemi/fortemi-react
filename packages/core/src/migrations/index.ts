@@ -25,6 +25,7 @@ import { migration0023 } from './0023_source_metadata_purge.js'
 import { migration0024 } from './0024_source_upsert_contract.js'
 import { migration0025 } from './0025_native_note_history.js'
 import { migration0026 } from './0026_native_embeddings.js'
+import { migration0027 } from './0027_native_skos.js'
 
 export const allMigrations: Migration[] = [
   migration0001,
@@ -53,4 +54,5 @@ export const allMigrations: Migration[] = [
   migration0024,
   migration0025,
   migration0026,
+  migration0027,
 ]

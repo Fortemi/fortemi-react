@@ -628,32 +628,53 @@ class LinksRepository {
 
 ```typescript
 class SkosRepository {
-  constructor(db: PGlite, events?: TypedEventBus)
+  constructor(db: DatabaseClient)
 
-  createScheme(input: { uri: string; title: string }): Promise<{ id: string }>
-  createConcept(input: { schemeId: string; prefLabel: string; uri?: string }): Promise<{ id: string }>
-  createRelation(input: { conceptId: string; relationType: string; targetConceptId: string }): Promise<void>
+  createScheme(title: string, description?: string): Promise<SkosScheme>
+  createConcept(schemeId: string, prefLabel: string, options?: { altLabels?: string[]; definition?: string }): Promise<SkosConcept>
+  createRelation(sourceConceptId: string, targetConceptId: string, relationType: 'broader' | 'narrower' | 'related'): Promise<SkosRelation>
   tagNote(noteId: string, conceptId: string): Promise<NoteSkosTag>
   untagNote(noteId: string, conceptId: string): Promise<void>
   conceptsForNote(noteId: string): Promise<SkosConcept[]>
-  getScheme(id: string): Promise<{ id: string; uri: string; title: string } | null>
-  getConcept(id: string): Promise<{ id: string; schemeId: string; prefLabel: string; uri?: string } | null>
-  listConcepts(schemeId: string): Promise<Array<{ id: string; prefLabel: string; uri?: string }>>
+  listSchemes(): Promise<SkosScheme[]>
+  listConcepts(schemeId: string): Promise<SkosConcept[]>
+  getRelations(conceptId: string): Promise<SkosRelation[]>
+  deleteScheme(id: string): Promise<void>
+  deleteConcept(id: string): Promise<void>
+  getSchemeRecord(id: string): Promise<SkosSchemeRecord | null>
+  getConceptRecord(id: string): Promise<SkosConceptRecord | null>
+  getLabels(conceptId: string): Promise<SkosLabel[]>
+  getNotes(conceptId: string): Promise<SkosNote[]>
+  getMappings(conceptId: string): Promise<SkosMapping[]>
+  getSchemeMemberships(conceptId: string): Promise<SkosMembership[]>
+  getAssignments(noteId: string): Promise<NoteSkosAssignment[]>
+  listCollections(schemeId?: string): Promise<SkosCollection[]>
+  getCollectionMembers(collectionId: string): Promise<SkosCollectionMember[]>
 }
 ```
 
-Supports a subset of the SKOS (Simple Knowledge Organization System) model for organizing note tags into hierarchical concept schemes and attaching concepts to notes.
+Native records preserve rich scheme/concept fields, multilingual labels and
+notes, semantic relations, external mappings, memberships, assignments and
+collections. Rich record methods return timestamp strings with retained source
+precision; existing display methods keep their `Date` timestamp contract.
+Collection members sort by position, with null positions last. Scheme/concept
+record reads exclude soft-deleted rows.
+
+Concept creation writes English labels, an optional definition and a primary
+scheme membership transactionally. Label/note edits update flattened display
+fields, which are projections rather than rich record authority. These native
+reads do not imply public full-v1 native restoration; #424 remains incomplete.
 
 | Method | Description |
 |--------|-------------|
-| `createScheme(input)` | Create a top-level concept scheme identified by URI. |
-| `createConcept(input)` | Create a concept within a scheme. |
-| `createRelation(input)` | Assert a typed relation (e.g. `'broader'`, `'narrower'`, `'related'`) between concepts. |
+| `createScheme(title, description)` | Create a scheme; its initial notation is its generated ID. |
+| `createConcept(schemeId, prefLabel, options)` | Create a concept and native labels, definition and membership. |
+| `createRelation(sourceId, targetId, type)` | Assert a `'broader'`, `'narrower'`, or `'related'` relation. |
 | `tagNote(noteId, conceptId)` | Attach a SKOS concept to a note idempotently. |
 | `untagNote(noteId, conceptId)` | Remove a note-to-concept assignment. |
 | `conceptsForNote(noteId)` | Read active SKOS concepts assigned to a note. |
-| `getScheme(id)` | Retrieve a scheme by ID. |
-| `getConcept(id)` | Retrieve a concept by ID. |
+| `getSchemeRecord(id)` | Retrieve a rich active scheme record by ID. |
+| `getConceptRecord(id)` | Retrieve a rich active concept record by ID. |
 | `listConcepts(schemeId)` | List all concepts belonging to a scheme. |
 
 ---

@@ -47,6 +47,15 @@ queries support local 384- and producer 768-dimensional vectors; search ranks
 each note by its best selected-source chunk. This is another internal native
 apply stage, not completion of the full-v1 dispatcher or a widened runtime cell.
 
+Migration0027 adds native records for all ten SKOS components, including
+language-bearing labels/notes, mappings, memberships and ordered collections.
+Display projections refresh from actual label/note state; authoring paths write
+the native records transactionally. Timestamp/vector scalar precision and
+composite assignment identities survive internal apply/read. Unrepresentable
+tombstones fail closed. Legacy archive writer adaptation and the complete
+public native dispatcher/exporter remain required; this stage does not change
+the producer authority or qualify a published-package matrix cell.
+
 fortemi-react runs entirely in the browser (no server required after initial load). It:
 - Persists data in PGlite (PostgreSQL WASM) via OPFS
 - Exposes 38 MCP tools via a Service Worker REST API

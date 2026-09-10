@@ -1,0 +1,79 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-10T09:11:36.919Z",
+    "description": "Ten-component typed native SKOS internal stage; public full-v1 restore remains incomplete"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:packages/core/src/shard/native-skos.ts",
+    "type": "code",
+    "created_at": "2026-09-10T09:11:36.919Z",
+    "checksum": "sha256:f3986c65c6e9a67af262d4b7415fd2e708d88765d219d32faa0e9ef39d87bbf4",
+    "attributes": {
+      "issue": "Fortemi/fortemi-react#424",
+      "producer_issue": "Fortemi/fortemi#1059",
+      "producer_revision": "c4ef37675f5637af76001570ef620e80ca1f9304",
+      "base_revision": "69751ea882281d7dc45585a783b0b07497568f22",
+      "artifacts": {
+        ".aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md": "sha256:9e0fd06167df4f2ee32edf95ead7248fdab1e2b97693070044503fd3f1c7a04a",
+        ".aiwg/architecture/SAD.md": "sha256:b67a262fac98c584a9b7e7b762d451318181366a7785734a08cfdccbe7704f11",
+        "docs/content/api-reference.md": "sha256:3ac0e6e122588d89ade5097c8958316b0d567be11014d57de3b6dabfbbc3870d",
+        "packages/core/package.json": "sha256:b41c2c1d363d7bbc9805eacbbb8398bc937905bd929a4b6ef9b7f0a46d42c244",
+        "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "sha256:81728cd533f7c5cbcc897d22ccd430382363795783756905628b6a5dae1f2e77",
+        "packages/core/schemas/knowledge-shard-v2.presence.receipt.json": "sha256:66a238029dce78a80167b90004daaaa3fb3372120cefe799615bc2e6de3f3bf7",
+        "packages/core/scripts/generate-pglite-full-v1-receipt.mjs": "sha256:72c572338ea4d0e23f4bf28d749681eacb900a16992f272c1e91ec6828dffe6e",
+        "packages/core/src/__tests__/db-table-parity/db-table-parity.test.ts": "sha256:118e52a2c2d872b3a6b6c5c1355e03d997ec89aa16462b7ad3b73c858c5cad0b",
+        "packages/core/src/index.ts": "sha256:b3fe368740c59838cab418f4bebf380efaf0660ee46222b0369537515f7e22f9",
+        "packages/core/src/migrations/index.ts": "sha256:b450463bcab514d98a6c47e0c6c516b02a5990cd129a90d216ca56bd07495056",
+        "packages/core/src/repositories/skos-repository.ts": "sha256:38967027add33cf7190094b03f3c84e41e304a5b6269ce445ab15cc95a39d5f2",
+        "packages/core/src/shard/native-embeddings.ts": "sha256:02ee781e40d23cbd18ad41dd257406de3a5dae9e25d838b56f5484cd752ba5e5",
+        "packages/core/src/__tests__/shard/native-skos.test.ts": "sha256:1a1d2c6965462e6f50cab91cf9cad2c7b2e0ea7e4f8c513b7d23cd8f6e4c878c",
+        "packages/core/src/migrations/0027_native_skos.ts": "sha256:813484ba684f5671d1fa3e0cc311b01c432f177ec55ae0f53e447ed3dca0112e",
+        "packages/core/src/shard/native-fields.ts": "sha256:cd71632a3d7905b5b7af962444269f732c95d4b2deac45ea3ceb6616cd09841a",
+        "packages/core/src/shard/native-skos.ts": "sha256:f3986c65c6e9a67af262d4b7415fd2e708d88765d219d32faa0e9ef39d87bbf4"
+      }
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:lane-b-424-native-skos",
+    "type": "modification",
+    "started_at": "2026-09-10T08:52:16.360Z",
+    "ended_at": "2026-09-10T09:11:36.919Z",
+    "description": "Implement native SKOS fields and language-bearing records, precision-preserving typed adapters, projection triggers, repository reads and transactional concept authoring; verify fixture roundtrip, rich/null/identity states, legacy migration and late rollback"
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/native-skos.ts",
+      "activity": "urn:aiwg:activity:lane-b-424-native-skos",
+      "time": "2026-09-10T09:11:36.919Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/native-skos.ts",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:lane-b-424-native-skos",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/native-skos.ts",
+        "source": "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:lane-b-424-native-skos"
+      },
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/native-skos.ts",
+        "source": "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-19-v2.shard",
+        "derivation_type": "tests",
+        "activity": "urn:aiwg:activity:lane-b-424-native-skos"
+      }
+    ]
+  }
+}

@@ -1,4 +1,6 @@
 import type { QueryExecutor } from '../storage-backend.js'
+import { nativeUuid as uuid, nativeUtc as utc, upsertNativeFields as upsertFields,
+  selectNativeFields as selectFields, type NativeFields as Fields } from './native-fields.js'
 
 type JsonObject = Record<string, unknown>
 
@@ -89,8 +91,6 @@ export interface NativeEmbeddings {
   embeddings: NativeEmbedding[]
 }
 
-type Field = { column?: string; kind?: 'json' | 'timestamp' | 'uuid' }
-type Fields<T> = { [K in keyof T]-?: Field }
 const configFields: Fields<NativeEmbeddingConfig> = {
   id: { kind: 'uuid' }, name: {}, description: {}, model: {}, dimension: {}, chunk_size: {}, chunk_overlap: {},
   hnsw_m: {}, hnsw_ef_construction: {}, ivfflat_lists: {}, is_default: {}, supports_mrl: {}, matryoshka_dims: {},
@@ -110,45 +110,6 @@ const setFields: Fields<Omit<NativeEmbeddingSet, 'set_type'>> = {
 const memberFields: Fields<NativeEmbeddingMember> = {
   embedding_set_id: { kind: 'uuid' }, note_id: { kind: 'uuid' }, membership_type: {},
   added_at: { kind: 'timestamp' }, added_by: {},
-}
-
-const uuid = (value: string | null): string | null => value === null ? null : value.toLowerCase()
-const utc = (column: string): string => `CASE WHEN ${column}_utc::timestamptz IS NOT DISTINCT FROM ${column}
-  THEN ${column}_utc ELSE to_char(${column} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') END`
-
-// Only fixed internal field maps supply SQL identifiers. Each canonical field
-// has native storage; timestamp projections retain the original scalar precision.
-async function upsertFields<T extends object>(
-  tx: QueryExecutor, table: string, row: T, fields: Partial<Fields<T>>, keys: string[], extra: Record<string, unknown> = {},
-): Promise<void> {
-  const columns: string[] = []
-  const values: string[] = []
-  const params: unknown[] = []
-  for (const [name, field] of Object.entries(fields) as [keyof T & string, Field][]) {
-    const column = field.column ?? name
-    const value = row[name]
-    columns.push(column)
-    params.push(field.kind === 'json' ? JSON.stringify(value) : field.kind === 'uuid' ? uuid(value as string | null) : value)
-    const param = `$${params.length}`
-    values.push(field.kind === 'json' ? `${param}::jsonb` : field.kind === 'timestamp' ? `${param}::text::timestamptz` : param)
-    if (field.kind === 'timestamp') {
-      columns.push(`${column}_utc`)
-      values.push(`${param}::text`)
-    }
-  }
-  for (const [column, value] of Object.entries(extra)) {
-    columns.push(column); params.push(value); values.push(`$${params.length}`)
-  }
-  await tx.query(`INSERT INTO ${table} (${columns.join(', ')}) VALUES (${values.join(', ')})
-    ON CONFLICT (${keys.join(', ')}) DO UPDATE SET ${columns.filter((column) => !keys.includes(column))
-      .map((column) => `${column} = EXCLUDED.${column}`).join(', ')}`, params)
-}
-
-function selectFields<T>(fields: Fields<T>): string {
-  return (Object.entries(fields) as [string, Field][]).map(([name, field]) => {
-    const column = field.column ?? name
-    return `${field.kind === 'timestamp' ? utc(column) : column} AS ${name}`
-  }).join(', ')
 }
 
 /** Internal stage. Caller validates the complete archive and resolves conflicts

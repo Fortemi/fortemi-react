@@ -9,8 +9,16 @@
 
 import type { DatabaseClient } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
+import { readNativeSkosComponent, type NativeSkosScheme, type NativeSkosConcept, type NativeSkosRelation,
+  type NativeNoteSkosTag, type NativeSkosLabel, type NativeSkosNote, type NativeSkosMapping,
+  type NativeSkosMembership, type NativeSkosCollection, type NativeSkosCollectionMember } from '../shard/native-skos.js'
 
-export interface SkosScheme {
+export type { NativeSkosLabel as SkosLabel, NativeSkosNote as SkosNote, NativeSkosMapping as SkosMapping,
+  NativeSkosMembership as SkosMembership, NativeSkosCollection as SkosCollection,
+  NativeSkosCollectionMember as SkosCollectionMember, NativeSkosScheme as SkosSchemeRecord,
+  NativeSkosConcept as SkosConceptRecord, NativeNoteSkosTag as NoteSkosAssignment } from '../shard/native-skos.js'
+
+export interface SkosScheme extends Partial<Omit<NativeSkosScheme, 'created_at' | 'updated_at' | 'issued_at' | 'modified_at' | 'embedded_at' | 'embedding'>> {
   id: string
   title: string
   description: string | null
@@ -19,7 +27,7 @@ export interface SkosScheme {
   deleted_at: Date | null
 }
 
-export interface SkosConcept {
+export interface SkosConcept extends Partial<Omit<NativeSkosConcept, 'primary_scheme_id' | 'created_at' | 'updated_at' | 'promoted_at' | 'deprecated_at' | 'first_used_at' | 'last_used_at' | 'antipattern_checked_at' | 'embedded_at' | 'embedding'>> {
   id: string
   scheme_id: string
   pref_label: string
@@ -30,7 +38,7 @@ export interface SkosConcept {
   deleted_at: Date | null
 }
 
-export interface SkosRelation {
+export interface SkosRelation extends Partial<Omit<NativeSkosRelation, 'subject_id' | 'object_id' | 'created_at' | 'relation_type'>> {
   id: string
   source_concept_id: string
   target_concept_id: string
@@ -38,7 +46,7 @@ export interface SkosRelation {
   created_at: Date
 }
 
-export interface NoteSkosTag {
+export interface NoteSkosTag extends Partial<Omit<NativeNoteSkosTag, 'created_at'>> {
   id: string
   note_id: string
   concept_id: string
@@ -79,21 +87,21 @@ export class SkosRepository {
     options?: { altLabels?: string[]; definition?: string },
   ): Promise<SkosConcept> {
     const id = generateId()
-    await this.db.query(
-      `INSERT INTO skos_concept (id, scheme_id, pref_label, alt_labels, definition) VALUES ($1, $2, $3, $4, $5)`,
-      [
-        id,
-        schemeId,
-        prefLabel,
-        JSON.stringify(options?.altLabels ?? []),
-        options?.definition ?? null,
-      ],
-    )
-    const result = await this.db.query<SkosConcept>(
-      `SELECT * FROM skos_concept WHERE id = $1`,
-      [id],
-    )
-    return result.rows[0]
+    return this.db.transaction(async (tx) => {
+      await tx.query(`INSERT INTO skos_concept (id, scheme_id, pref_label) VALUES ($1, $2, $3)`, [id, schemeId, prefLabel])
+      await tx.query(`INSERT INTO skos_concept_label (id, concept_id, label_type, value) VALUES ($1, $2, 'pref_label', $3)`,
+        [generateId(), id, prefLabel])
+      for (const value of options?.altLabels ?? []) {
+        await tx.query(`INSERT INTO skos_concept_label (id, concept_id, label_type, value) VALUES ($1, $2, 'alt_label', $3)`,
+          [generateId(), id, value])
+      }
+      if (options?.definition !== undefined) {
+        await tx.query(`INSERT INTO skos_concept_note (id, concept_id, note_type, value) VALUES ($1, $2, 'definition', $3)`,
+          [generateId(), id, options.definition])
+      }
+      await tx.query('INSERT INTO skos_scheme_membership (concept_id, scheme_id) VALUES ($1, $2)', [id, schemeId])
+      return (await tx.query<SkosConcept>('SELECT * FROM skos_concept WHERE id = $1', [id])).rows[0]
+    })
   }
 
   async listConcepts(schemeId: string): Promise<SkosConcept[]> {
@@ -170,5 +178,42 @@ export class SkosRepository {
       [noteId],
     )
     return result.rows
+  }
+
+  async getSchemeRecord(id: string): Promise<NativeSkosScheme | null> {
+    return (await readNativeSkosComponent(this.db, 'skos_schemes', { id }))[0] ?? null
+  }
+
+  async getConceptRecord(id: string): Promise<NativeSkosConcept | null> {
+    return (await readNativeSkosComponent(this.db, 'skos_concepts', { id }))[0] ?? null
+  }
+
+  async getLabels(conceptId: string): Promise<NativeSkosLabel[]> {
+    return readNativeSkosComponent(this.db, 'skos_labels', { concept_id: conceptId })
+  }
+
+  async getNotes(conceptId: string): Promise<NativeSkosNote[]> {
+    return readNativeSkosComponent(this.db, 'skos_notes', { concept_id: conceptId })
+  }
+
+  async getMappings(conceptId: string): Promise<NativeSkosMapping[]> {
+    return readNativeSkosComponent(this.db, 'skos_mapping_relations', { concept_id: conceptId })
+  }
+
+  async getSchemeMemberships(conceptId: string): Promise<NativeSkosMembership[]> {
+    return readNativeSkosComponent(this.db, 'skos_scheme_memberships', { concept_id: conceptId })
+  }
+
+  async getAssignments(noteId: string): Promise<NativeNoteSkosTag[]> {
+    return readNativeSkosComponent(this.db, 'note_skos_tags', { note_id: noteId })
+  }
+
+  async listCollections(schemeId?: string): Promise<NativeSkosCollection[]> {
+    return readNativeSkosComponent(this.db, 'skos_collections', schemeId === undefined ? {} : { scheme_id: schemeId })
+  }
+
+  async getCollectionMembers(collectionId: string): Promise<NativeSkosCollectionMember[]> {
+    const rows = await readNativeSkosComponent(this.db, 'skos_collection_members', { collection_id: collectionId })
+    return rows.sort((a, b) => (a.position ?? Infinity) - (b.position ?? Infinity) || a.concept_id.localeCompare(b.concept_id))
   }
 }

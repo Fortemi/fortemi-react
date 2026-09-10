@@ -378,7 +378,9 @@ export type { CollectionRow, CollectionCreateInput } from './repositories/collec
 export { LinksRepository } from './repositories/links-repository.js'
 export type { LinkRow } from './repositories/links-repository.js'
 export { SkosRepository } from './repositories/skos-repository.js'
-export type { SkosScheme, SkosConcept, SkosRelation, NoteSkosTag } from './repositories/skos-repository.js'
+export type { SkosScheme, SkosConcept, SkosRelation, NoteSkosTag, SkosLabel, SkosNote, SkosMapping,
+  SkosMembership, SkosCollection, SkosCollectionMember, SkosSchemeRecord, SkosConceptRecord,
+  NoteSkosAssignment } from './repositories/skos-repository.js'
 export { ProvenanceRepository } from './repositories/provenance-repository.js'
 export type { ProvenanceEdge, RecordProvenanceInput } from './repositories/provenance-repository.js'
 

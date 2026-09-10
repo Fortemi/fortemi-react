@@ -104,7 +104,7 @@ describe('DB Table Parity', () => {
     expect(comparison.typeMismatch).toEqual([])
   })
 
-  it('skos_scheme table shape matches server', async () => {
+  it('skos_scheme retains legacy fixture columns plus the declared native SKOS extension', async () => {
     await db.query(
       `INSERT INTO skos_scheme (id, title, description, created_at, updated_at, deleted_at)
        VALUES ($1, $2, $3, $4, $5, $6)`,
@@ -119,11 +119,15 @@ describe('DB Table Parity', () => {
     const comparison = matchServerShape(result.rows[0], serverFixture[0])
 
     expect(comparison.missing).toEqual([])
-    expect(comparison.extra).toEqual([])
+    expect(comparison.extra.sort()).toEqual([
+      'uri', 'notation', 'creator', 'publisher', 'rights', 'version', 'is_active', 'is_system',
+      'created_at_utc', 'updated_at_utc', 'issued_at', 'issued_at_utc', 'modified_at', 'modified_at_utc',
+      'embedding', 'embedding_values', 'embedding_model', 'embedded_at', 'embedded_at_utc',
+    ].sort())
     expect(comparison.typeMismatch).toEqual([])
   })
 
-  it('skos_concept table shape matches server', async () => {
+  it('skos_concept retains legacy fixture columns plus the declared native SKOS extension', async () => {
     await db.query(
       `INSERT INTO skos_concept (id, scheme_id, pref_label, alt_labels, definition, created_at, updated_at, deleted_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
@@ -144,7 +148,14 @@ describe('DB Table Parity', () => {
     const comparison = matchServerShape(row, serverFixture[0])
 
     expect(comparison.missing).toEqual([])
-    expect(comparison.extra).toEqual([])
+    expect(comparison.extra.sort()).toEqual([
+      'uri', 'notation', 'facet_type', 'facet_source', 'facet_domain', 'facet_scope', 'status',
+      'promoted_at', 'promoted_at_utc', 'deprecated_at', 'deprecated_at_utc', 'deprecation_reason',
+      'replaced_by_id', 'note_count', 'first_used_at', 'first_used_at_utc', 'last_used_at', 'last_used_at_utc',
+      'depth', 'broader_count', 'narrower_count', 'related_count', 'antipatterns', 'antipattern_checked_at',
+      'antipattern_checked_at_utc', 'created_at_utc', 'updated_at_utc', 'embedding', 'embedding_values',
+      'embedding_model', 'embedded_at', 'embedded_at_utc',
+    ].sort())
     expect(comparison.typeMismatch).toEqual([])
   })
 

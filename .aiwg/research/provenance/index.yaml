@@ -1,8 +1,10 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-09-10T09:09:47.822Z"
-  record_count: 84
+  updated_at: "2026-09-10T09:11:36.919Z"
+  record_count: 85
 records:
+  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-skos.ts"
+    record: "records/lane-b-424-native-skos.prov.yaml"
   - entity: "urn:aiwg:artifact:examples/knowledge-workspace/src/app/FortemiApp.tsx"
     record: "records/lane-b-424-gallery-index.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts"

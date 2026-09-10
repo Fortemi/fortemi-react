@@ -19,6 +19,34 @@ The Knowledge Shard (`shard/*`) is fortemi-react's interchange format with the R
 
 ## Decision
 
+### Native SKOS Stage (2026-09-10)
+
+Migration0027 and internal `native-skos` apply/read functions preserve all ten
+SKOS components in typed native tables. Required primary schemes and the three
+semantic relation kinds already match local constraints; the extension adds
+rich fields, multilingual labels/notes, mappings, memberships and collections.
+Same-family forward replacement references are deferred. Composite assignments
+preserve their local IDs on repeat apply. Imported absent label/note/membership
+declarations are not synthesized, and no inference jobs or archival rows are
+created. Typed timestamp/vector companions retain source precision only while
+the native projection agrees. Soft-deleted schemes/concepts fail the unscoped
+internal full-v1 reader instead of being emitted as active records.
+
+Label/note triggers keep the existing flattened display fields current after
+insert, edit, reparent and deletion. Normal concept creation writes actual
+language-bearing rows and a primary scheme membership transactionally. Legacy
+database migration preserves text, including empty values that full-v1 cannot
+represent, with UUIDv7 child identities. Rich repository reads expose all new
+families. Existing legacy archive import still writes flattened concepts and
+requires explicit adaptation before the native serializer can become public.
+
+This is internal native-state evidence, not public full-v1 restore acceptance.
+The public dispatcher, all-component conflict/presence transaction, native
+export scope closure and clean released-package producer/consumer tests remain
+open under #424 and Fortemi/fortemi#1059. No authority tuple or matrix cell is
+widened; suite NO-GO remains. Current receipts bind this stage separately from
+the unchanged historical archival and installed-package evidence.
+
 ### Native Embedding Storage Stage (#424)
 
 Migration0026 and the internal `native-embeddings` stage extend the actual
