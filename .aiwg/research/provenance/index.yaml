@@ -1,10 +1,14 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-09-10T10:11:04Z"
-  record_count: 87
+  updated_at: "2026-09-10T10:29:45Z"
+  record_count: 89
 records:
+  - entity: "urn:aiwg:artifact:packages/core/src/shard/geometry-buffer.ts"
+    record: "records/lane-b-424-graph-esm-integration.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/shard/native-graph.ts"
     record: "records/lane-b-424-native-graph.prov.yaml"
+  - entity: "urn:aiwg:artifact:packages/core/src/shard/geometry-buffer.ts"
+    record: "records/lane-b-424-geometry-esm.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/shard/native-provenance.ts"
     record: "records/lane-b-424-native-provenance.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/shard/native-skos.ts"

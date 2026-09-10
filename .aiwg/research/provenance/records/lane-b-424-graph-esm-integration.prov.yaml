@@ -1,0 +1,71 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-10T10:29:45Z",
+    "description": "Non-rewritten graph/provenance integration with native ESM correction and combined-source receipt"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:packages/core/src/shard/geometry-buffer.ts",
+    "type": "code",
+    "created_at": "2026-09-10T10:29:45Z",
+    "checksum": "sha256:ebc060cbc31a4630a641aeac727d546eec51a92bac11cdf9915e4c2fb57bbb5d",
+    "attributes": {
+      "issue": "Fortemi/fortemi-react#424",
+      "producer_issue": "Fortemi/fortemi#1059",
+      "producer_revision": "c4ef37675f5637af76001570ef620e80ca1f9304",
+      "base_revision": "988ddbcf2fa7fe65e863220aed35163db26fd7c7",
+      "artifacts": {
+        ".aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md": "sha256:3ca801e6ceba4692a181f770c8bdd35610cade5222e0fef98ec0d8454f66ba6f",
+        ".aiwg/architecture/SAD.md": "sha256:73da79b657476658dca004f978f9ddeaeda407cf9a3b6dbcbb2e5e0d3e57ac12",
+        "CHANGELOG.md": "sha256:bc9556b1d07fa26ac5279c64f739fd88a2358082757d091e07aece71f3874221",
+        "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "sha256:4e988b008795efca7225733e55cc69f7ea01bd73ca9f1241a30772efa826e7d5",
+        "packages/core/src/__tests__/shard/native-geometry.test.ts": "sha256:f94fcf09c7a149929d52ef2d96e5ab70cadb38b2e124833afaedf76f090e5c32",
+        "packages/core/src/shard/geometry-buffer.ts": "sha256:ebc060cbc31a4630a641aeac727d546eec51a92bac11cdf9915e4c2fb57bbb5d",
+        "packages/core/tsup.config.ts": "sha256:7af07789a3f3b559e9da4aa0ee5697ab3532e93a4591fa49871b8a69e666bb99"
+      },
+      "merged_revision": "0ef3e031479685a02715a537cad3765bab490769"
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:lane-b-424-graph-esm-integration",
+    "type": "modification",
+    "started_at": "2026-09-10T10:26:30Z",
+    "ended_at": "2026-09-10T10:29:45Z",
+    "description": "Merge ESM compatibility correction into graph branch; preserve both provenance records, regenerate combined implementation receipt and verify native/browser paths"
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/geometry-buffer.ts",
+      "activity": "urn:aiwg:activity:lane-b-424-graph-esm-integration",
+      "time": "2026-09-10T10:29:45Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/geometry-buffer.ts",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:lane-b-424-graph-esm-integration",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/geometry-buffer.ts",
+        "source": "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:lane-b-424-graph-esm-integration"
+      },
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/geometry-buffer.ts",
+        "source": "urn:aiwg:artifact:packages/core/src/__tests__/shard/native-geometry.test.ts",
+        "derivation_type": "tests",
+        "activity": "urn:aiwg:activity:lane-b-424-graph-esm-integration"
+      }
+    ]
+  }
+}

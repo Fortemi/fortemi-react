@@ -1,0 +1,70 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-10T10:25:50Z",
+    "description": "Native Node ESM geometry shim compatibility correction; no widened full-v1 acceptance"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:packages/core/src/shard/geometry-buffer.ts",
+    "type": "code",
+    "created_at": "2026-09-10T10:25:50Z",
+    "checksum": "sha256:ebc060cbc31a4630a641aeac727d546eec51a92bac11cdf9915e4c2fb57bbb5d",
+    "attributes": {
+      "issue": "Fortemi/fortemi-react#424",
+      "producer_issue": "Fortemi/fortemi#1059",
+      "producer_revision": "c4ef37675f5637af76001570ef620e80ca1f9304",
+      "base_revision": "1c1ce91c56b88bb4c53916c7c06060e7f1ee7748",
+      "artifacts": {
+        ".aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md": "sha256:a25349e189cdabb54d571bbe4f757ca401a116ba6cc848e66d0caa42aa545301",
+        ".aiwg/architecture/SAD.md": "sha256:1362fae13ab3cdcc921646a8369cb06df539e1ee0f765a1fa05525a0342e697f",
+        "CHANGELOG.md": "sha256:f230c7405072846bfa47c55a8cca47fa43eb7db7578f22a90e124d57e608bcdf",
+        "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "sha256:e62fd040a6cbd25f7f7c5e6ac18a33b947d9187d7e730079b2a4059b12e616c9",
+        "packages/core/src/__tests__/shard/native-geometry.test.ts": "sha256:f94fcf09c7a149929d52ef2d96e5ab70cadb38b2e124833afaedf76f090e5c32",
+        "packages/core/src/shard/geometry-buffer.ts": "sha256:ebc060cbc31a4630a641aeac727d546eec51a92bac11cdf9915e4c2fb57bbb5d",
+        "packages/core/tsup.config.ts": "sha256:7af07789a3f3b559e9da4aa0ee5697ab3532e93a4591fa49871b8a69e666bb99"
+      }
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:lane-b-424-geometry-esm",
+    "type": "modification",
+    "started_at": "2026-09-10T10:22:48Z",
+    "ended_at": "2026-09-10T10:25:50Z",
+    "description": "Reproduce native Node ESM directory-import rejection, switch to explicit package file, verify native resolver and browser codec, standalone discovery and Chromium desktop/mobile export, and refresh implementation receipts"
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/geometry-buffer.ts",
+      "activity": "urn:aiwg:activity:lane-b-424-geometry-esm",
+      "time": "2026-09-10T10:25:50Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/geometry-buffer.ts",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:lane-b-424-geometry-esm",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/geometry-buffer.ts",
+        "source": "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:lane-b-424-geometry-esm"
+      },
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/geometry-buffer.ts",
+        "source": "urn:aiwg:artifact:packages/core/src/__tests__/shard/native-geometry.test.ts",
+        "derivation_type": "tests",
+        "activity": "urn:aiwg:activity:lane-b-424-geometry-esm"
+      }
+    ]
+  }
+}

@@ -17,6 +17,8 @@ All notable changes to fortemi-react are documented here.
 
 - Add typed native activity, derivation, location, device and capture records,
   exact time-range preservation, and browser-compatible WGS84 geometry handling.
+- Resolve the geometry Buffer shim through an explicit package file so native
+  Node ESM and standalone Playwright discovery work as well as browser bundles.
 - Include revision-owned activities in note provenance reads. Agents can be null;
   metadata is arbitrary JSON, so TypeScript consumers must narrow `unknown`
   before accessing properties. JSON strings are no longer parsed a second time.

@@ -21,7 +21,7 @@ export default defineConfig([
     splitting: false,
     treeshake: true,
     outDir: 'dist',
-    noExternal: ['wkx', 'buffer', 'buffer/', 'base64-js', 'ieee754', 'inherits'],
+    noExternal: ['wkx', 'buffer', 'buffer/index.js', 'base64-js', 'ieee754', 'inherits'],
     esbuildOptions(options) {
       options.inject = ['src/shard/geometry-buffer.ts'];
       options.alias = { ...options.alias, util: './src/shard/geometry-util.js' };
