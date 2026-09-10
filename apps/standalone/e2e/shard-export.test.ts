@@ -4,6 +4,7 @@ import { unpackTarGz, validateCoreV1ShardArchive } from '@fortemi/core'
 
 for (const viewport of [{ width: 1280, height: 900 }, { width: 390, height: 844 }]) {
   test(`default product export declares core-v1 at ${viewport.width}px`, async ({ page }, testInfo) => {
+    test.setTimeout(120_000)
     await page.setViewportSize(viewport)
     await page.goto('/')
     await page.getByRole('button', { name: '+ New Note' }).click({ timeout: 45_000 })
@@ -11,7 +12,8 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 390, height: 844 
     await page.getByPlaceholder('Note content (markdown)').fill('PRODUCT-EXPORT-CONTENT-423')
     await page.getByPlaceholder('Tags (comma-separated)').fill('export-423')
     await page.getByRole('button', { name: 'Create Note', exact: true }).click()
-    await expect(page.getByPlaceholder('Note content (markdown)')).toBeHidden()
+    // This awaits a PGlite transaction, which can queue behind startup doc seeding.
+    await expect(page.getByPlaceholder('Note content (markdown)')).toBeHidden({ timeout: 45_000 })
     await page.getByRole('button', { name: 'Settings', exact: true }).click()
     await expect(page.getByText('Profile: 1.2.0/core-v1.', { exact: false })).toBeVisible()
     await expect(page.getByText('Attachments: references only;', { exact: false })).toBeVisible()

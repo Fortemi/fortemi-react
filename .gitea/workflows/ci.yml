@@ -149,6 +149,16 @@ jobs:
         env:
           CI: true
           HOME: /root
+      - name: Retain browser acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+        with:
+          name: standalone-browser-evidence
+          path: |
+            apps/standalone/test-results/
+            apps/standalone/playwright-report/
+          retention-days: 14
+          if-no-files-found: warn
 
   build:
     runs-on: ubuntu-latest
