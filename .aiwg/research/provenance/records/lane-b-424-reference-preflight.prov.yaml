@@ -1,0 +1,73 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-10T07:32:03Z",
+    "description": "Full-v1 relationship preflight prerequisite; native restoration remains incomplete"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:packages/core/src/shard/full-v1-references.ts",
+    "type": "code",
+    "created_at": "2026-09-10T07:32:03Z",
+    "checksum": "sha256:b68e78fdb06328648cddef43a4e42445c59395e05cc3b0ba1bbd617c352f5309",
+    "attributes": {
+      "issue": "Fortemi/fortemi-react#424",
+      "producer_issue": "Fortemi/fortemi#1059",
+      "producer_revision": "c4ef37675f5637af76001570ef620e80ca1f9304",
+      "base_revision": "de9be2dbd855bb3914d775f6e2f85ec5c1b44c77",
+      "artifacts": {
+        ".aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md": "sha256:d6056aebfbd28efc94c76cbd78c5f94aeef594f2a3bcf6420c408654ba249997",
+        ".aiwg/architecture/SAD.md": "sha256:07de7d3a679a0037af47d380b40823e5795087804a8fc3e4233502edfc1121b6",
+        "packages/core/package.json": "sha256:75eba9885b8f6b70ba06e834236a4a9816eeed573949f11dd0109e7aeb90eaaa",
+        "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "sha256:eac7e7d89a32bd6717c6b4597fbfe2c81955aa33cdbfc34e54296fe5f8436192",
+        "packages/core/scripts/generate-pglite-full-v1-receipt.mjs": "sha256:5f4d17f8c76c73406ddffa1503ce70c51a0e6acd50c8bfdd3b1dfce80dfa179c",
+        "packages/core/src/__tests__/shard/fixtures/full-v1/reference-conformance.json": "sha256:904ae4286fd5595473280d1e85727be38540763e5bf5b39ec5b886b21ef0d0fe",
+        "packages/core/src/__tests__/shard/fixtures/full-v1/reference-conformance.receipt.json": "sha256:c964b1d0d5c74c2f44e39cf185e43ffd06b33f605d9e8e33ad0362cd78638fb0",
+        "packages/core/src/__tests__/shard/full-v1-references.test.ts": "sha256:56f88b0231f9307694f1921d405819d451577af161e737ea9d78aed7e8d647b8",
+        "packages/core/src/shard/full-v1-references.ts": "sha256:b68e78fdb06328648cddef43a4e42445c59395e05cc3b0ba1bbd617c352f5309",
+        "packages/core/src/shard/schema-validator.ts": "sha256:c5cd3021af96f12fed41408580cc20bf4ca1310f48758d45ce261e88a6fee810"
+      }
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:lane-b-424-reference-preflight-consumer",
+    "type": "modification",
+    "started_at": "2026-09-10T07:21:00Z",
+    "ended_at": "2026-09-10T07:32:03Z",
+    "description": "Port production relationship validation, consume identical shared mutations, enforce pre-storage rejection and preserve historical receipt boundaries"
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/full-v1-references.ts",
+      "activity": "urn:aiwg:activity:lane-b-424-reference-preflight-consumer",
+      "time": "2026-09-10T07:32:03Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/full-v1-references.ts",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:lane-b-424-reference-preflight-consumer",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/full-v1-references.ts",
+        "source": "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/full-v1/reference-conformance.receipt.json",
+        "derivation_type": "conforms_to",
+        "activity": "urn:aiwg:activity:lane-b-424-reference-preflight-consumer"
+      },
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/full-v1-references.ts",
+        "source": "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-19-v2.shard",
+        "derivation_type": "tests",
+        "activity": "urn:aiwg:activity:lane-b-424-reference-preflight-consumer"
+      }
+    ]
+  }
+}
