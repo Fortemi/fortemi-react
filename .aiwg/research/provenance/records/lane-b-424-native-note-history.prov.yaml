@@ -1,0 +1,81 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-10T08:03:13.649Z",
+    "description": "Native note-history storage/apply stage and post-apply writers; public full-v1 restore remains incomplete"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:packages/core/src/shard/native-note-history.ts",
+    "type": "code",
+    "created_at": "2026-09-10T08:03:13.649Z",
+    "checksum": "sha256:b9fa8777a51d77850e550ca9908a2fbc09a9808321bbbb798f03774d4d53a6a8",
+    "attributes": {
+      "issue": "Fortemi/fortemi-react#424",
+      "producer_issue": "Fortemi/fortemi#1059",
+      "producer_revision": "c4ef37675f5637af76001570ef620e80ca1f9304",
+      "base_revision": "5736727d7c3f93f001f0cd8f8fb6b803c132b77e",
+      "artifacts": {
+        ".aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md": "sha256:938f0732f17944e411d5cbb13c5c2f664960c63407fb67c229e9f121ba399556",
+        ".aiwg/architecture/SAD.md": "sha256:dfb7c5e4ce3e1d01ed03f2223a948ef54f624a1c7ae7b9738be3071547e1d537",
+        "docs/content/api-reference.md": "sha256:26febccf2e26545d3a865b229920e3cc5c7914cde8f5e203b6ca5929bd90afa9",
+        "packages/core/package.json": "sha256:37914cf965fdf92b61f53ec19991057462e725d98ed1dd64c1261c41fc0a56c5",
+        "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "sha256:7de8bc92bf35566eefe8721200322f2d019cdfb5edb867ce7de6ffc476e167d2",
+        "packages/core/schemas/knowledge-shard-v2.presence.receipt.json": "sha256:96d948b0a9da40981abfcda870f39cee4af71a0e1880f3516c6e91bbadd56aaf",
+        "packages/core/scripts/generate-pglite-full-v1-receipt.mjs": "sha256:b8ccd87db5f737b4a108ad8f3f06eb02890e0f044746398afefcb68dcbf80464",
+        "packages/core/src/__tests__/shard/native-note-history.test.ts": "sha256:77cb6a747c09df68cd09725eef58717c3dc8dba8f659903b4283ed8cb423f2e9",
+        "packages/core/src/index.ts": "sha256:46b003180b7134deb9d4ba18fb0178875ad59e276eefc5ba908514389a8f9713",
+        "packages/core/src/job-queue-worker.ts": "sha256:d017d631a8cc371afc9e5a8b410cc5ca1f393cc7bcf63aebbb08204b155a1431",
+        "packages/core/src/migrations/0025_native_note_history.ts": "sha256:122af426252662b55a1c5a0c68d4230daf0fa8377418114fcbb3eddd6a2cd5d0",
+        "packages/core/src/migrations/index.ts": "sha256:3eaaf2fed3c12b4466ff722fc782b032048ffc67b0d3a4320b0ac94689a9fb76",
+        "packages/core/src/records/record-projection.ts": "sha256:479b6558535d0e14035924289466eae7d909e48e33f6a2927beef32520a47c84",
+        "packages/core/src/repositories/notes-repository.ts": "sha256:95b42596276581afe12265cf86a462c3d5dc937bf1b3f0ef680dfc581faffe26",
+        "packages/core/src/repositories/source-upsert-repository.ts": "sha256:e67941288f1e494b40d74b65f72705e91d701862ed5f81adc03e2c86f01ccac6",
+        "packages/core/src/repositories/types.ts": "sha256:f981213c75629b71f057b0154ba66357c32f49686fbde10ccf08950207eca3e3",
+        "packages/core/src/shard/native-note-history.ts": "sha256:b9fa8777a51d77850e550ca9908a2fbc09a9808321bbbb798f03774d4d53a6a8",
+        "packages/core/src/shard/shard-import.ts": "sha256:88b6f227419cc36c9cbbff4a9bdba9a848f183e4b69a30d57c98be46ee2748d4"
+      }
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:lane-b-424-native-note-history",
+    "type": "modification",
+    "started_at": "2026-09-10T07:40:00Z",
+    "ended_at": "2026-09-10T08:03:13.649Z",
+    "description": "Implement typed native original/history/revision/current tables and mapping; preserve nullable identity and declaration presence; verify repository/source/AI edits and atomic rollback without claiming all-component native restore"
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/native-note-history.ts",
+      "activity": "urn:aiwg:activity:lane-b-424-native-note-history",
+      "time": "2026-09-10T08:03:13.649Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/native-note-history.ts",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:lane-b-424-native-note-history",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/native-note-history.ts",
+        "source": "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:lane-b-424-native-note-history"
+      },
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/native-note-history.ts",
+        "source": "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/full-v1/server-full-v1-revision-19-v2.shard",
+        "derivation_type": "tests",
+        "activity": "urn:aiwg:activity:lane-b-424-native-note-history"
+      }
+    ]
+  }
+}

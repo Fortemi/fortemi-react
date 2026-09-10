@@ -21,12 +21,13 @@
     "sha256": "054da5528276806b9be69dcfff364a6969b72344045f05f9f6fcbeaca82a7a59"
   },
   "implementation": {
-    "scripts/generate-pglite-full-v1-receipt.mjs": "5f4d17f8c76c73406ddffa1503ce70c51a0e6acd50c8bfdd3b1dfce80dfa179c",
+    "scripts/generate-pglite-full-v1-receipt.mjs": "b8ccd87db5f737b4a108ad8f3f06eb02890e0f044746398afefcb68dcbf80464",
     "src/shard/full-v1-store.ts": "82b12d5a614c88c93889f5e441c851b1c9a88f7fe32e0b57050b1652e13b44df",
     "src/shard/live-full-v1.ts": "903b9b78a21b23c23319a9e72cf291e9d52a362bc216d691ba3fb3a791f7dc98",
     "src/shard/schema-validator.ts": "c5cd3021af96f12fed41408580cc20bf4ca1310f48758d45ce261e88a6fee810",
     "src/shard/full-v1-references.ts": "b68e78fdb06328648cddef43a4e42445c59395e05cc3b0ba1bbd617c352f5309",
-    "src/shard/shard-import.ts": "71036913aa6d3b749bba1ef79ead1e5255026722fd5c2daf318efd3106cd5560",
+    "src/shard/native-note-history.ts": "b9fa8777a51d77850e550ca9908a2fbc09a9808321bbbb798f03774d4d53a6a8",
+    "src/shard/shard-import.ts": "88b6f227419cc36c9cbbff4a9bdba9a848f183e4b69a30d57c98be46ee2748d4",
     "src/shard/shard-export.ts": "58352e7b8247f9f886a707a92b5c9732165cf64afd41d41e7ec62d496eec9f70",
     "src/shard/profile-registry.ts": "ea4cdb7a3c865e1be6340a48cb13aeeb8849f47b31a1983d473834168f9e3ba6",
     "src/shard/shard-signature.ts": "fa3590f493e42edcf3a34fbdc62887eaf237f9e4563bbeb5b7fe7a8c57894070",
@@ -34,10 +35,18 @@
     "src/migrations/0020_full_v1_snapshot.ts": "54b5d47b521dc6fe44423b75f9032885e80f8e3fcbf04c11478baf98a9dc8841",
     "src/migrations/0022_embedding_config_timestamps.ts": "9e1de11f047cd1e071cc49d1ab231e5e4e01d5e80dda1ec63cb950e11adea0e0",
     "src/migrations/0023_source_metadata_purge.ts": "3afa0abb3ddb2d99a167102c9eb5d79eec98d638c03e9bead8ddb73a3ab812f4",
-    "src/migrations/index.ts": "277471c2efeb534b3f76f7eafb7f0ed934e9752c82a56366362de8d2335fd415",
+    "src/migrations/0025_native_note_history.ts": "122af426252662b55a1c5a0c68d4230daf0fa8377418114fcbb3eddd6a2cd5d0",
+    "src/migrations/index.ts": "3eaaf2fed3c12b4466ff722fc782b032048ffc67b0d3a4320b0ac94689a9fb76",
+    "src/repositories/notes-repository.ts": "95b42596276581afe12265cf86a462c3d5dc937bf1b3f0ef680dfc581faffe26",
+    "src/repositories/source-upsert-repository.ts": "e67941288f1e494b40d74b65f72705e91d701862ed5f81adc03e2c86f01ccac6",
+    "src/repositories/types.ts": "f981213c75629b71f057b0154ba66357c32f49686fbde10ccf08950207eca3e3",
+    "src/records/record-projection.ts": "479b6558535d0e14035924289466eae7d909e48e33f6a2927beef32520a47c84",
+    "src/job-queue-worker.ts": "d017d631a8cc371afc9e5a8b410cc5ca1f393cc7bcf63aebbb08204b155a1431",
+    "src/index.ts": "46b003180b7134deb9d4ba18fb0178875ad59e276eefc5ba908514389a8f9713",
     "src/__tests__/shard/full-v1-store.test.ts": "f3debf7794e1fc89ec1c05fb7dcc31814c8f9beea038ff7ce72e392ca5441c08",
     "src/__tests__/shard/full-v1-public.test.ts": "74a214596be7e50d1882a5a09bb170495063aee7645a79b01e0b29cc774e8c2d",
     "src/__tests__/shard/full-v1-references.test.ts": "56f88b0231f9307694f1921d405819d451577af161e737ea9d78aed7e8d647b8",
+    "src/__tests__/shard/native-note-history.test.ts": "77cb6a747c09df68cd09725eef58717c3dc8dba8f659903b4283ed8cb423f2e9",
     "src/__tests__/shard/fixtures/full-v1/reference-conformance.json": "904ae4286fd5595473280d1e85727be38540763e5bf5b39ec5b886b21ef0d0fe",
     "src/__tests__/shard/fixtures/full-v1/reference-conformance.receipt.json": "c964b1d0d5c74c2f44e39cf185e43ffd06b33f605d9e8e33ad0362cd78638fb0",
     "schemas/knowledge-shard-v2.schema.receipt.json": "70657d6bcd501b684d0a143bcbf7c2a0d41fe909ef3aff32b1fb1f542506a53a"
@@ -59,7 +68,8 @@
       "repeat-import-converges",
       "exact-logical-files-reexported",
       "public-archival-api-independent-of-native-state-not-native-restore",
-      "producer-owned-relationship-mutations-rejected-before-storage-not-native-restore"
+      "producer-owned-relationship-mutations-rejected-before-storage-not-native-restore",
+      "internal-native-note-history-stage-and-post-apply-writers-not-public-full-v1-restore"
     ]
   }
 }

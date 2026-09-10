@@ -19,6 +19,31 @@ The Knowledge Shard (`shard/*`) is fortemi-react's interchange format with the R
 
 ## Decision
 
+### Native History Storage Stage (#424)
+
+Migration0025 and the internal `native-note-history` apply/read stage represent
+the original, original-history, revision and current-revision components in
+native typed tables. Originals are keyed by owner, with nullable/nonunique
+original IDs as prescribed by the producer. Rich revision fields, same-owner
+parent/current pointers and scalar timestamp precision are retained. Explicit
+presence flags distinguish declared records from fallback rows needed for
+ordinary repository reads. No raw archival component rows are used by this stage.
+
+Repository, source-upsert and AI writers allocate after the maximum existing
+revision number and maintain or clear current pointers appropriately. Source
+replacement archives the prior original. AI history/current/job writes share
+one transaction and refuse to overwrite content edited during inference. The
+legacy null-current state remains observable; it is not filled from an old
+archive. A duplicate legacy original owner fails migration atomically without
+discarding either record.
+
+This is an internal stage in the complete native restore implementation, not a
+new public importer or an all-component acceptance claim. Ordinary full-v1
+dispatch and snapshot precedence remain unchanged until all 33 components,
+conflicts, blobs and current-state export are implemented together. Source
+history tests use the pinned producer fixture; current receipts bind this new
+code separately from frozen historical and published evidence.
+
 ### Archival API Separation Preparation (#424)
 
 The next prerequisite adds complete-component relationship preflight before

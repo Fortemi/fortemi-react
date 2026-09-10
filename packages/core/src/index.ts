@@ -306,6 +306,7 @@ export type {
   SearchFacets,
   SearchOptions,
   NoteRevision,
+  OriginalContentRevision,
 } from './repositories/types.js'
 export type {
   SourceIdentityInput,

@@ -480,6 +480,7 @@ class NotesRepository {
   addTags(id: string, tags: string[]): Promise<void>
   removeTags(id: string, tags: string[]): Promise<void>
   getRevisions(id: string): Promise<NoteRevision[]>
+  getOriginalHistory(id: string): Promise<OriginalContentRevision[]>
 }
 ```
 
@@ -497,6 +498,14 @@ class NotesRepository {
 | `addTags(id, tags)` | Append tags to a note without duplicates. |
 | `removeTags(id, tags)` | Remove specific tags from a note. |
 | `getRevisions(id)` | Return the ordered revision history for a note. |
+| `getOriginalHistory(id)` | Return user-authored original history, newest version first. |
+
+Native history reads include original version/user timestamps, revision parent,
+summary/rationale, generation/user-edit fields and current `last_revision_id`.
+`NoteFull.original.id` may be null; original identity is scoped by note owner.
+`OriginalContentRevision` is exported by Core and preserves scalar timestamp
+precision. These reads do not imply that ordinary `full-v1` import restores
+native state: the all-component native dispatcher is still incomplete (#424).
 
 ---
 

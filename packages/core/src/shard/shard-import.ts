@@ -754,7 +754,7 @@ export async function importShard(
               note.created_at, note.updated_at, note.deleted_at,
             ],
           )
-          // Upsert original — note_original has id PK, so check if one exists for this note_id
+          // Current original identity is scoped to the owning note.
           const existingOrig = await tx.query(
             `SELECT id FROM note_original WHERE note_id = $1`,
             [note.id],

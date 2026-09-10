@@ -34,6 +34,13 @@ references, revision ownership and ordering before storage access. A shared
 producer-owned mutation corpus checks Rust/TypeScript agreement; this guard
 does not materialize native records or resolve snapshot export precedence.
 
+The next internal stage stores original/history/revision/current state in actual
+native tables (migration0025), preserving typed fields and declaration presence.
+Native readers expose restored history; repository/source/AI writes preserve
+revision ordering and current pointers. This stage is not yet wired to the
+public full-v1 dispatcher. All-component native apply, current-state export and
+clean published producer/consumer qualification remain required by ADR-011.
+
 fortemi-react runs entirely in the browser (no server required after initial load). It:
 - Persists data in PGlite (PostgreSQL WASM) via OPFS
 - Exposes 38 MCP tools via a Service Worker REST API

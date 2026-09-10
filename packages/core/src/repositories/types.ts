@@ -25,10 +25,13 @@ export interface NoteFull extends NoteSummary {
   archive_id: string | null
   revision_mode: string
   original: {
-    id: string
+    id: string | null
     content: string
     content_hash: string
     created_at: Date
+    version_number?: number
+    user_created_at?: string | null
+    user_last_edited_at?: string | null
   }
   current: {
     content: string
@@ -37,6 +40,7 @@ export interface NoteFull extends NoteSummary {
     model: string | null
     is_user_edited: boolean
     updated_at: Date
+    last_revision_id?: string | null
   }
 }
 
@@ -143,4 +147,22 @@ export interface NoteRevision {
   ai_metadata: unknown | null
   model: string | null
   created_at: Date
+  parent_revision_id?: string | null
+  summary?: string | null
+  rationale?: string | null
+  created_at_utc?: string | null
+  ai_generated_at?: string | null
+  user_last_edited_at?: string | null
+  is_user_edited?: boolean
+  generation_count?: number
+}
+
+export interface OriginalContentRevision {
+  id: string
+  note_id: string
+  version_number: number
+  content: string
+  hash: string
+  created_at_utc: string
+  created_by: string
 }

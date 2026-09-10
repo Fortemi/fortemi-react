@@ -19,6 +19,7 @@ import type {
   NoteUpdateInput,
   NoteListOptions,
   NoteRevision,
+  OriginalContentRevision,
   PaginatedResult,
 } from './types.js'
 
@@ -126,16 +127,20 @@ export class NotesRepository {
       created_at: Date
       updated_at: Date
       deleted_at: Date | null
-      original_id: string
+      original_id: string | null
       original_content: string
       content_hash: string
       original_created_at: Date
+      version_number: number
+      user_created_at: string | null
+      user_last_edited_at: string | null
       current_content: string
       ai_metadata: unknown | null
       generation_count: number
       model: string | null
       is_user_edited: boolean
       current_updated_at: Date
+      last_revision_id: string | null
     }>(
       `SELECT n.id, n.archive_id, n.title, n.format, n.source, n.visibility,
               n.revision_mode, n.is_starred, n.is_pinned, n.is_archived,
@@ -144,12 +149,13 @@ export class NotesRepository {
               o.content    AS original_content,
               o.content_hash,
               o.created_at AS original_created_at,
+              o.version_number, o.user_created_at, o.user_last_edited_at,
               c.content    AS current_content,
               c.ai_metadata,
               c.generation_count,
               c.model,
               c.is_user_edited,
-              c.updated_at AS current_updated_at
+              c.updated_at AS current_updated_at, c.last_revision_id
        FROM note n
        LEFT JOIN note_original       o ON o.note_id = n.id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
@@ -188,6 +194,9 @@ export class NotesRepository {
         content: row.original_content,
         content_hash: row.content_hash,
         created_at: row.original_created_at,
+        version_number: row.version_number,
+        user_created_at: row.user_created_at,
+        user_last_edited_at: row.user_last_edited_at,
       },
       current: {
         content: row.current_content,
@@ -196,6 +205,7 @@ export class NotesRepository {
         model: row.model,
         is_user_edited: row.is_user_edited,
         updated_at: row.current_updated_at,
+        last_revision_id: row.last_revision_id,
       },
     }
   }
@@ -328,13 +338,6 @@ export class NotesRepository {
    * revision before the new content is applied.
    */
   async update(id: string, input: NoteUpdateInput): Promise<NoteFull> {
-    // Determine the next revision number before entering the transaction
-    const countResult = await this.db.query<{ count: string }>(
-      `SELECT COUNT(*) AS count FROM note_revision WHERE note_id = $1`,
-      [id],
-    )
-    const nextRevision = parseInt(countResult.rows[0].count, 10) + 1
-
     await this.db.transaction(async (tx) => {
       // Build dynamic SET clause for note table fields
       const setClauses: string[] = ['updated_at = now()']
@@ -363,7 +366,7 @@ export class NotesRepository {
         const titleState = input.title === null ? 'null' : input.title === '' ? 'empty' : 'value'
         await tx.query(
           `UPDATE shard_field_presence SET state = $1
-            WHERE schema_version = '2.0.0' AND profile = 'core-v1'
+            WHERE schema_version = '2.0.0' AND profile IN ('core-v1', 'full-v1')
               AND component = 'notes' AND record_id = $2 AND field_path = '/title'`,
           [titleState, id],
         )
@@ -371,21 +374,32 @@ export class NotesRepository {
 
       // When content changes, archive the current content as a revision
       if (input.content !== undefined) {
-        const currentResult = await tx.query<{ content: string }>(
-          `SELECT content FROM note_revised_current WHERE note_id = $1`,
+        // UPDATE note above holds the owner row lock. Imported revision numbers
+        // can be sparse, so allocate after the maximum, not the row count.
+        const revisionResult = await tx.query<{ next_revision: number }>(
+          `SELECT COALESCE(MAX(revision_number), 0) + 1 AS next_revision FROM note_revision WHERE note_id = $1`,
           [id],
         )
-        if (currentResult.rows.length > 0) {
+        const nextRevision = Number(revisionResult.rows[0].next_revision)
+        const currentResult = await tx.query<{ content: string | null; generation_count: number }>(
+          `SELECT content, generation_count FROM note_revised_current WHERE note_id = $1`,
+          [id],
+        )
+        if (currentResult.rows[0]?.content != null) {
           await tx.query(
-            `INSERT INTO note_revision (id, note_id, revision_number, type, content)
-             VALUES ($1, $2, $3, 'user', $4)`,
-            [generateId(), id, nextRevision, currentResult.rows[0].content],
+            `INSERT INTO note_revision (id, note_id, revision_number, type, content, parent_revision_id,
+               is_user_edited, generation_count, user_last_edited_at)
+             VALUES ($1, $2, $3, 'user', $4,
+               (SELECT id FROM note_revision WHERE note_id = $2 ORDER BY revision_number DESC LIMIT 1), TRUE, $5,
+               to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'))`,
+            [generateId(), id, nextRevision, currentResult.rows[0].content, Math.max(1, currentResult.rows[0].generation_count)],
           )
         }
 
         await tx.query(
           `UPDATE note_revised_current
-           SET content = $1, is_user_edited = true, updated_at = now()
+           SET content = $1, is_user_edited = true, updated_at = now(),
+               last_revision_id = NULL, shard_export_present = TRUE
            WHERE note_id = $2`,
           [input.content, id],
         )
@@ -407,7 +421,7 @@ export class NotesRepository {
       )
       await tx.query(
         `UPDATE shard_field_presence SET state = 'value'
-          WHERE schema_version = '2.0.0' AND profile = 'core-v1'
+          WHERE schema_version = '2.0.0' AND profile IN ('core-v1', 'full-v1')
             AND component = 'notes' AND record_id = $1 AND field_path = '/deleted_at'`,
         [id],
       )
@@ -426,7 +440,7 @@ export class NotesRepository {
       )
       await tx.query(
         `UPDATE shard_field_presence SET state = 'null'
-          WHERE schema_version = '2.0.0' AND profile = 'core-v1'
+          WHERE schema_version = '2.0.0' AND profile IN ('core-v1', 'full-v1')
             AND component = 'notes' AND record_id = $1 AND field_path = '/deleted_at'`,
         [id],
       )
@@ -473,10 +487,22 @@ export class NotesRepository {
    */
   async getRevisions(noteId: string): Promise<NoteRevision[]> {
     const result = await this.db.query<NoteRevision>(
-      `SELECT id, note_id, revision_number, type, content, ai_metadata, model, created_at
+      `SELECT id, note_id, revision_number, type, content, ai_metadata, model, created_at,
+              parent_revision_id, summary, rationale, created_at_utc, ai_generated_at,
+              user_last_edited_at, is_user_edited, generation_count
        FROM note_revision
        WHERE note_id = $1
        ORDER BY revision_number DESC`,
+      [noteId],
+    )
+    return result.rows
+  }
+
+  /** User-authored original history is distinct from generated revision history. */
+  async getOriginalHistory(noteId: string): Promise<OriginalContentRevision[]> {
+    const result = await this.db.query<OriginalContentRevision>(
+      `SELECT id, note_id, version_number, content, hash, created_at_utc, created_by
+         FROM note_original_history WHERE note_id = $1 ORDER BY version_number DESC`,
       [noteId],
     )
     return result.rows

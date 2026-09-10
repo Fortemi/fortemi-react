@@ -10,7 +10,7 @@
  *   linking:            5  (find related notes, requires embeddings to exist)
  */
 
-import type { DatabaseClient } from './storage-backend.js'
+import type { DatabaseClient, QueryExecutor } from './storage-backend.js'
 import type { TypedEventBus } from './event-bus.js'
 import type { CapabilityManager, CapabilityName } from './capability-manager.js'
 import { getLlmFunction } from './capabilities/llm-handler.js'
@@ -84,7 +84,7 @@ export interface EnqueueJobInput {
 }
 
 /** Enqueue a job into the job_queue table. Returns the new job ID. */
-export async function enqueueJob(db: DatabaseClient, input: EnqueueJobInput): Promise<string> {
+export async function enqueueJob(db: QueryExecutor, input: EnqueueJobInput): Promise<string> {
   const id = generateId()
   const priority = input.priority ?? JOB_PRIORITIES[input.jobType] ?? 5
   const capability = input.requiredCapability !== undefined
@@ -391,13 +391,14 @@ export function aiRevisionHandler(job: Job, db: DatabaseClient): Promise<unknown
     const llmFn = getLlmFunction()
     if (!llmFn) return { skipped: true, reason: 'no LLM function registered' }
 
-    const result = await db.query<{ content: string }>(
+    const result = await db.query<{ content: string | null }>(
       `SELECT content FROM note_revised_current WHERE note_id = $1`,
       [job.note_id],
     )
     if (result.rows.length === 0) throw new Error(`No content found for note ${job.note_id}`)
 
     const content = result.rows[0].content
+    if (content === null) return { skipped: true, reason: 'null current content' }
 
     const prompt =
       `You are a knowledge management assistant. Enhance the following note by:\n` +
@@ -411,33 +412,41 @@ export function aiRevisionHandler(job: Job, db: DatabaseClient): Promise<unknown
     const revised = (await llmFn(prompt, { maxTokens: 2000, temperature: 0.4, task: 'chat.revision' })).trim()
     if (!revised || revised === content) return { skipped: true, reason: 'no changes from LLM' }
 
-    // Get next revision number
-    const revResult = await db.query<{ max_rev: number }>(
-      `SELECT COALESCE(MAX(revision_number), 0) as max_rev FROM note_revision WHERE note_id = $1`,
-      [job.note_id],
-    )
-    const nextRev = (revResult.rows[0]?.max_rev ?? 0) + 1
-
-    // Insert revision record (type='ai_enhancement' per server convention)
-    const revId = generateId()
-    await db.query(
-      `INSERT INTO note_revision (id, note_id, revision_number, type, content, ai_metadata, model, created_at)
-       VALUES ($1, $2, $3, 'ai_enhancement', $4, $5, 'llm', now())`,
-      [revId, job.note_id, nextRev, revised, JSON.stringify({ source: 'ai_revision', original_length: content.length, revised_length: revised.length })],
-    )
-
-    // Update note_revised_current
-    await db.query(
-      `UPDATE note_revised_current
-       SET content = $1, model = 'llm', ai_metadata = $2, generation_count = generation_count + 1, is_user_edited = false, updated_at = now()
-       WHERE note_id = $3`,
-      [revised, JSON.stringify({ source: 'ai_revision', revision_id: revId }), job.note_id],
-    )
-
-    // Chain: enqueue concept_tagging after ai_revision completes
-    await enqueueJob(db, { noteId: job.note_id, jobType: 'concept_tagging' })
-
-    return { revision_number: nextRev, revision_id: revId, model: 'llm' }
+    return db.transaction(async (tx) => {
+      // Inference runs outside the transaction. Lock the native owner before
+      // allocating history, and do not overwrite edits made during inference.
+      const owner = await tx.query('SELECT id FROM note WHERE id = $1 AND deleted_at IS NULL FOR UPDATE', [job.note_id])
+      if (owner.rows.length === 0) return { skipped: true, reason: 'note missing or deleted' }
+      const current = await tx.query<{ content: string; generation_count: number }>(
+        'SELECT content, generation_count FROM note_revised_current WHERE note_id = $1 FOR UPDATE', [job.note_id],
+      )
+      if (current.rows[0]?.content !== content) return { skipped: true, reason: 'content changed during inference' }
+      const revResult = await tx.query<{ max_rev: number }>(
+        'SELECT COALESCE(MAX(revision_number), 0) AS max_rev FROM note_revision WHERE note_id = $1', [job.note_id],
+      )
+      const nextRev = Number(revResult.rows[0].max_rev) + 1
+      const generation = current.rows[0].generation_count + 1
+      const revId = generateId()
+      await tx.query(
+        `INSERT INTO note_revision (id, note_id, revision_number, type, content, ai_metadata, model,
+           parent_revision_id, generation_count, ai_generated_at)
+         VALUES ($1, $2, $3, 'ai_enhancement', $4, $5::jsonb, 'llm',
+           (SELECT id FROM note_revision WHERE note_id = $2 ORDER BY revision_number DESC LIMIT 1), $6,
+           to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'))`,
+        [revId, job.note_id, nextRev, revised,
+          JSON.stringify({ source: 'ai_revision', original_length: content.length, revised_length: revised.length }), generation],
+      )
+      await tx.query(
+        `UPDATE note_revised_current
+         SET content = $1, model = 'llm', ai_metadata = $2::jsonb, generation_count = $4,
+           is_user_edited = false, updated_at = now(), last_revision_id = $5, shard_export_present = TRUE
+         WHERE note_id = $3`,
+        [revised, JSON.stringify({ source: 'ai_revision', revision_id: revId }), job.note_id, generation, revId],
+      )
+      await tx.query('UPDATE note SET updated_at = now() WHERE id = $1', [job.note_id])
+      await enqueueJob(tx, { noteId: job.note_id, jobType: 'concept_tagging' })
+      return { revision_number: nextRev, revision_id: revId, model: 'llm' }
+    })
   })()
 }
 

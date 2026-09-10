@@ -134,7 +134,8 @@ export async function projectNotes(
     await db.query(
       `INSERT INTO note_original (id, note_id, content, content_hash, created_at)
        VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (id) DO UPDATE SET
+       ON CONFLICT (note_id) DO UPDATE SET
+         id = EXCLUDED.id,
          content = EXCLUDED.content,
          content_hash = EXCLUDED.content_hash`,
       [o.id, o.note_id, o.content, o.content_hash, o.created_at],
@@ -153,6 +154,9 @@ export async function projectNotes(
          generation_count = EXCLUDED.generation_count,
          model = EXCLUDED.model,
          is_user_edited = EXCLUDED.is_user_edited,
+         last_revision_id = CASE WHEN note_revised_current.content IS NOT DISTINCT FROM EXCLUDED.content
+           THEN note_revised_current.last_revision_id ELSE NULL END,
+         shard_export_present = TRUE,
          updated_at = EXCLUDED.updated_at`,
       [
         r.id, r.content,

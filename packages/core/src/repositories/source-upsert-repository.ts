@@ -177,6 +177,7 @@ function duplicateReceipt(receipt: SourceUpsertResponse): SourceUpsertBatchResul
 
 async function insertNote(tx: QueryExecutor, input: SourceUpsertItem, noteId: string, digest: string): Promise<void> {
   const originalId = generateId()
+  const revisionId = generateId()
   if (input.source.archive_id) {
     await tx.query('INSERT INTO archive (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING', [input.source.archive_id, input.source.archive_id])
   }
@@ -189,12 +190,12 @@ async function insertNote(tx: QueryExecutor, input: SourceUpsertItem, noteId: st
   await tx.query(
     `INSERT INTO note_revision (id, note_id, revision_number, type, content, ai_metadata)
      VALUES ($1, $2, 1, 'source-import', $3, $4::jsonb)`,
-    [generateId(), noteId, input.content, JSON.stringify(input.metadata ?? null)],
+    [revisionId, noteId, input.content, JSON.stringify(input.metadata ?? null)],
   )
   await tx.query(
-    `INSERT INTO note_revised_current (note_id, content, ai_metadata)
-     VALUES ($1, $2, $3::jsonb)`,
-    [noteId, input.content, JSON.stringify(input.metadata ?? null)],
+    `INSERT INTO note_revised_current (note_id, content, ai_metadata, last_revision_id)
+     VALUES ($1, $2, $3::jsonb, $4)`,
+    [noteId, input.content, JSON.stringify(input.metadata ?? null), revisionId],
   )
 }
 
@@ -202,23 +203,42 @@ async function updateNote(tx: QueryExecutor, input: SourceUpsertItem, noteId: st
   if (input.source.archive_id) {
     await tx.query('INSERT INTO archive (id, name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING', [input.source.archive_id, input.source.archive_id])
   }
-  if (outcome === 'versioned') {
-    const count = await tx.query<{ count: string }>('SELECT COUNT(*) AS count FROM note_revision WHERE note_id = $1', [noteId])
-    await tx.query(
-      `INSERT INTO note_revision (id, note_id, revision_number, type, content, ai_metadata)
-       VALUES ($1, $2, $3, 'source-import', $4, $5::jsonb)`,
-      [generateId(), noteId, Number.parseInt(count.rows[0]?.count ?? '0', 10) + 1, input.content, JSON.stringify(input.metadata ?? null)],
-    )
-  } else {
-    await tx.query('UPDATE note_original SET content = $1, content_hash = $2 WHERE note_id = $3', [input.content, digest, noteId])
-  }
+  // Serialize native revision allocation with repository and worker edits.
   await tx.query(
     `UPDATE note SET title = $1, format = $2, visibility = $3, archive_id = $4, updated_at = now(), deleted_at = NULL WHERE id = $5`,
     [input.title ?? null, input.format ?? 'markdown', input.visibility ?? 'private', input.source.archive_id ?? null, noteId],
   )
+  let revisionId: string | null = null
+  if (outcome === 'versioned') {
+    const revision = await tx.query<{ next_revision: number }>(
+      'SELECT COALESCE(MAX(revision_number), 0) + 1 AS next_revision FROM note_revision WHERE note_id = $1', [noteId],
+    )
+    revisionId = generateId()
+    await tx.query(
+      `INSERT INTO note_revision (id, note_id, revision_number, type, content, ai_metadata, parent_revision_id)
+       VALUES ($1, $2, $3, 'source-import', $4, $5::jsonb,
+         (SELECT id FROM note_revision WHERE note_id = $2 ORDER BY revision_number DESC LIMIT 1))`,
+      [revisionId, noteId, Number(revision.rows[0].next_revision), input.content, JSON.stringify(input.metadata ?? null)],
+    )
+  } else {
+    await tx.query(
+      `INSERT INTO note_original_history (id, note_id, version_number, content, hash, created_at_utc, created_by)
+       SELECT $1, note_id, version_number, content, content_hash,
+         COALESCE(user_last_edited_at, to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')),
+         'source-import'
+       FROM note_original WHERE note_id = $2`, [generateId(), noteId],
+    )
+    await tx.query(
+      `UPDATE note_original SET content = $1, content_hash = $2, shard_export_present = TRUE,
+         version_number = version_number + 1,
+         user_last_edited_at = to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
+       WHERE note_id = $3`, [input.content, digest, noteId],
+    )
+  }
   await tx.query(
-    `UPDATE note_revised_current SET content = $1, ai_metadata = $2::jsonb, is_user_edited = false, updated_at = now() WHERE note_id = $3`,
-    [input.content, JSON.stringify(input.metadata ?? null), noteId],
+    `UPDATE note_revised_current SET content = $1, ai_metadata = $2::jsonb, is_user_edited = false,
+       updated_at = now(), last_revision_id = $4, shard_export_present = TRUE WHERE note_id = $3`,
+    [input.content, JSON.stringify(input.metadata ?? null), noteId, revisionId],
   )
 }
 
