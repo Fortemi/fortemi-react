@@ -1,8 +1,10 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-09-11T11:15:00Z"
-  record_count: 103
+  updated_at: "2026-09-11T12:54:26.980Z"
+  record_count: 104
 records:
+  - entity: "urn:aiwg:artifact:.gitea/workflows/ci.yml"
+    record: "records/lane-b-424-ci-coverage-budget.prov.yaml"
   - entity: "urn:aiwg:artifact:docs/content/releases/v2026.9.4.md"
     record: "records/release-prep-2026.9.4.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json"

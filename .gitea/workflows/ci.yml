@@ -36,7 +36,9 @@ jobs:
   unit-test:
     runs-on: ubuntu-latest
     container: node:22
-    timeout-minutes: 20
+    # Full coverage includes 1,188 clean-destination presence cases. Allow cold
+    # CI scheduling plus the downstream Graph/React checks without dropping cases.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - name: Enable pinned pnpm
@@ -44,9 +46,19 @@ jobs:
           corepack enable
           corepack prepare pnpm@10.6.5 --activate
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @fortemi/core exec vitest run --coverage
+      - run: pnpm --filter @fortemi/core exec vitest run --coverage --reporter=default --reporter=json --outputFile=test-results/core-unit.json
         env:
           VITEST_MAX_WORKERS: 2
+      - name: Retain Core unit and coverage evidence
+        if: always()
+        uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+        with:
+          name: core-unit-evidence
+          path: |
+            packages/core/test-results/core-unit.json
+            packages/core/coverage/coverage-summary.json
+          retention-days: 14
+          if-no-files-found: warn
       - name: Verify immutable remote producer fixture
         run: node packages/core/scripts/verify-remote-producer-fixture.mjs
       # @fortemi/graph now imports @fortemi/core by its published entry point
