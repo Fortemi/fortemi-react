@@ -1,0 +1,40 @@
+metadata:
+  schema_version: "1.0.0"
+  created_at: "2026-09-11T09:57:22Z"
+entity:
+  id: "urn:aiwg:artifact:packages/core/src/__tests__/shard/native-full-v1-public.test.ts"
+  type: test
+  created_at: "2026-09-11T09:57:22Z"
+  checksum: "sha256:0284ba97ca1e670b6c9cfbf2ebe61765892d767169c7ddab26212ff5f49e429b"
+  attributes:
+    status: draft
+    rationale: "CI58325 had two default 5000ms timeouts, not assertion failures. Apply the existing 30000ms integration-test convention only to the retained-relationship parameterization and link target-kind test."
+    verification: "All five affected cases pass on titan; every operation and assertion is unchanged. Full exact-head CI remains required."
+    limitations: "Test harness correction only, not runtime performance or released compatibility qualification. Suite NO-GO and all original Lane B acceptance remain."
+activity:
+  id: "urn:aiwg:activity:modification:lane-b-424-ci-timing:001"
+  type: modification
+  started_at: "2026-09-11T09:56:29Z"
+  ended_at: "2026-09-11T09:57:22Z"
+  description: "Bound multi-import relationship integration cases without changing assertions or global test configuration."
+agent:
+  id: "urn:aiwg:agent:codex"
+  name: Codex
+  type: ai_assistant
+relationships:
+  wasGeneratedBy:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/native-full-v1-public.test.ts"
+    activity: "urn:aiwg:activity:modification:lane-b-424-ci-timing:001"
+    time: "2026-09-11T09:57:22Z"
+  wasAttributedTo:
+    entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/native-full-v1-public.test.ts"
+    agent: "urn:aiwg:agent:codex"
+  wasAssociatedWith:
+    activity: "urn:aiwg:activity:modification:lane-b-424-ci-timing:001"
+    agent: "urn:aiwg:agent:codex"
+    role: primary_implementer
+  wasDerivedFrom:
+    - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/native-full-v1-public.test.ts"
+      source: "urn:gitea:issue:Fortemi/fortemi-react:424"
+      derivation_type: implements
+      activity: "urn:aiwg:activity:modification:lane-b-424-ci-timing:001"

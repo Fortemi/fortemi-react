@@ -257,7 +257,7 @@ describe('public native full-v1 restore, distinct from archival snapshots', () =
       expect((await current())[component]).toEqual([])
     }
     await expectPublicRoundTrip(await current())
-  })
+  }, 30_000)
 
   it('moves retained community assignments before omitted nested community cleanup', async () => {
     const source = structuredClone(records) as unknown as NativeState
@@ -344,7 +344,7 @@ describe('public native full-v1 restore, distinct from archival snapshots', () =
       expect((await current()).links).toHaveLength(source.links.length)
       await expectPublicRoundTrip(await current())
     }
-  })
+  }, 30_000)
 
   it('reconciles selected derivation omissions without deleting source-note references', async () => {
     const source = records as unknown as NativeState
