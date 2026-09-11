@@ -22,6 +22,108 @@ embedding-only set filters, and rejection of all scoped snapshot exports.
 Relationship/attachment closure is documented in the public API reference;
 snapshot persistence is not a native-restore or suite portability claim.
 
+The unreleased public #424 integration now dispatches all33 validated components
+to native PGlite storage transactionally and serializes current native state.
+Archive snapshots are used only by explicit archival APIs. Migration0031 retains
+per-record manifest lineage, not component snapshots; scoped exports preserve
+coherent lineage and reject incompatible histories with a typed loss. Native
+skip follows record ownership rather than reference endpoints, and retained
+embedding configs govern model/dimension projections. Required bytes, progress
+callbacks and failure compensation are part of the transaction coordinator.
+
+The required clean-installed Core package gate verifies scoped native export after
+import, persisted repository CRUD, text search, backlinks and repeated transfer
+into a second clean destination. It separately retains legacy null-confidence
+link round trips. This does not qualify released servers or all runtime platforms;
+the suite remains NO-GO and explicit archival APIs retain their own evidence.
+Selected unsupported state remains fail-closed. ADR-011 defines these rules;
+released producer/consumer and platform cells remain separate acceptance gates.
+The native presence matrix exercises all 198 distinct component inventory fields
+through validation and two clean destinations, separately from the generic
+presence-store matrix. Null timestamp ranges preserve their parent value without
+inventing required child-bound instances. This is an unchanged authority tuple.
+Replacement retains revision/activity identities to avoid cascading away
+unrelated captures' references. Omitted revisions are removed only after retained
+activities are reparented. Migration0032 defers revision-number uniqueness until
+commit, permitting atomic renumbering while rejecting final duplicates. Populated
+upgrade, normal writers, repeated owner-child omission and late-failure rollback
+are covered independently of archive-only persistence.
+Community assignment replacement follows set ownership, never the referenced
+note or source. Unrelated sets retain their assignments when selected notes are
+replaced, selected sets move to another source, or the graph family is empty.
+Producer Fortemi #1147 and consumer #424 coordinate this unchanged-wire rule.
+Retained originals/history/current rows and unified provenance records update
+in place, preserving external references. Omitted activities are removed after
+incoming captures have moved, and retained references reject cleanup. Derivation
+omissions require selected revision owners; source-note references confer no
+ownership. Revision cleanup follows current/provenance apply and checks remaining
+references. This adds no migration or authority tuple; alternate-key and released
+cross-runtime qualification remain required.
+
+Embedding membership omission requires both endpoint scopes: selected note and
+selected set. Retained coordinates update in place, preserving composite foreign
+key references. Either excluded endpoint prevents omission deletion. Shared-set
+dependency declarations do not convey whole-set ownership. ADR-102/#1147 and
+ADR-011/#424 coordinate this correction without changing wire/profile versions;
+shared fixture publication and released-runtime qualification remain open.
+
+Vector omission uses the same two-sided selection, with null endpoints treated
+as independent. Retained vector IDs and native membership pointers survive
+replacement. Coordinate cycles use transaction-local nullable staging on changed
+incoming IDs, leaving native unique indexes enforced. Failed restores roll back
+staging; referenced omissions reject. No schema or migration change is required.
+Concurrency and released/platform matrices remain separately gated.
+For note-owner changes, native membership ownership remains unchanged and only
+invalid optional vector pointers detach. Virtual materializations referencing
+vectors with changed note/set owners become stale so their live selectors can
+reevaluate criteria. Rollback restores pointers and freshness; unchanged
+imports preserve them. Producer #1147 uses the equivalent independent-note rule
+for token chunk references. No native adjunct wire fields or migrations are
+added. Incoming vector additions and owner changes also invalidate caches through
+their typed physical source dependencies (criteria, set operation, fallback,
+latest-compatible and snapshot), even when no cached member references the
+incoming vector. Both old/new source sets are considered; unrelated source sets
+and natively equivalent repeats preserve freshness. Native vector values and
+creation-time ordering are compared using pgvector/timestamptz semantics, including
+null changes without owner changes. Omission cleanup retains its two-selected-owner
+predicate; DELETE RETURNING captures removed rows' source dependencies, so uncached
+secondary-set omissions also invalidate dependent materializations. Referenced
+deletions still reject. This conservative source-set invalidation preserves cached
+membership and rolls back atomically. Public native import also compares transient
+live-result fingerprints before/after mutations, using the repository resolver
+for note fields, tags, collections, revisions/current metadata, attachment text,
+configuration models and source ordering. Changed rows or validation errors mark
+still-fresh existing caches stale; unchanged results preserve cache metadata.
+Explicit resolver-domain failures are comparable outcomes; SQL failures abort.
+The cost is up to two live resolutions per fresh virtual set during import.
+Refresh with validation errors keeps old members and remains stale, and metadata
+criteria recognize SQL NULL and JSON null as absent. Other writers, concurrency
+and large-set performance remain separate work; this is not general cache
+consistency proof or portable virtual-set support.
+
+Native link, graph-edge and community-assignment replacement excludes incoming
+primary keys from selected-owner omission cleanup. Retained native references
+survive repeat and payload edits. Graph/set IDs remain case-sensitive, edge kind
+is part of identity, and assignments move before nested-community deletion.
+Referenced omissions and referenced link target-kind transitions reject and roll
+back; unreferenced target-kind transitions retain their existing behavior.
+These are local consumer corrections, not new schema or release qualifications.
+
+Native public replace preserves retained SKOS child keys during cleanup rather
+than deleting and recreating them. Existing field maps define the four ID-keyed
+and three composite-keyed child families. Concept/note/collection ownership is
+unchanged; only omitted selected-owner keys are eligible for deletion. In-place
+upserts preserve native references, including insert-only note-assignment IDs.
+Referenced omissions abort; repeat, payload edits, skip, late rollback and clean
+re-export are covered. No portable identity or migration change is introduced;
+shared publication, real/released/platform and general alternate-key evidence
+remain separate gates.
+
+#### Historical Internal Stages
+
+The following stage records describe their original boundaries, superseded for
+public dispatch by the integration above. They are not release qualification.
+
 The first #424 implementation step exposes explicitly named archival snapshot
 APIs through the public Core entry point, with pre-mutation malformed-input
 reports and tuple-level conflict semantics. This does not yet repair the ordinary
@@ -86,6 +188,8 @@ composite assignment identities survive internal apply/read. Unrepresentable
 tombstones fail closed. Legacy archive writer adaptation and the complete
 public native dispatcher/exporter remain required; this stage does not change
 the producer authority or qualify a published-package matrix cell.
+
+#### Application Scope
 
 fortemi-react runs entirely in the browser (no server required after initial load). It:
 - Persists data in PGlite (PostgreSQL WASM) via OPFS

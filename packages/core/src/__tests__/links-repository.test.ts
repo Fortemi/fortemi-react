@@ -60,6 +60,7 @@ describe('LinksRepository', () => {
       expect(link.source_note_id).toBe('note-a')
       expect(link.target_note_id).toBe('note-b')
       expect(link.link_type).toBe('related')
+      expect(link.confidence).toBe(1)
       expect(link.deleted_at).toBeNull()
     })
 

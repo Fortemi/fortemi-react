@@ -4,6 +4,57 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+### Public native full-v1 restore (#424)
+
+- Restore all 33 `2.0.0/full-v1` components into native PGlite state and export
+  current repository values without implicit archival snapshot selection.
+- Preserve native skip ownership, selected-owner replacement, mandatory bytes,
+  migration-lineage presence and progress/rollback behavior. Report incompatible
+  selected lineage, virtual sets and unrepresentable native values as typed losses.
+- Preserve null provenance timestamp ranges through current-state export;
+  presence validation no longer requires child bounds under a null parent.
+- Preserve references from unrelated captures during revision/activity replacement,
+  including reparenting and atomic revision renumbering. Migration0032 keeps
+  revision-number uniqueness enforced at commit; failed restores roll back.
+- Preserve unrelated community sets' assignments when replacing referenced
+  notes, reparenting a selected set, or importing an empty graph family.
+- Limit membership omissions to selected note-and-set pairs and update retained
+  coordinates in place, preserving external references and either excluded endpoint.
+- Apply the same two-sided omission scope to vectors, preserving null endpoints,
+  retained IDs and native member vector pointers. Support retained chunk-coordinate
+  swaps transactionally; reject still-referenced vector omissions with rollback.
+- Preserve native membership ownership during vector reparenting; detach invalid
+  optional pointers and mark referenced virtual materializations stale, with
+  transactional rollback. Matching pointers and unchanged owners survive.
+- Invalidate virtual caches through their declared physical source sets when
+  imported vectors are added or change owners, including newly matching vectors
+  absent from empty/populated caches. Preserve unrelated-source freshness and
+  cached member identities; repeated unchanged-owner imports remain stable.
+- Include native vector values, creation-time ordering and successful scoped
+  omissions in cache invalidation. Preserve native-equivalent vector/timestamp
+  repeats, unrelated-source freshness, referenced-deletion rejection and rollback.
+- Reconcile native-import selector caches against live note/configuration results
+  within the import transaction. Preserve unchanged results and unrelated caches.
+  Retain validation errors after failed materialization refresh, and treat SQL
+  NULL and JSON null as absent AI metadata in selector criteria.
+- Preserve retained note/URL links, graph edges and community assignments with
+  native references during replacement. Move assignments before omitted nested
+  communities are deleted; retain selected-owner scope and referenced-deletion
+  rejection, including link target-kind transitions.
+- Preserve retained SKOS child IDs and membership coordinates during native
+  replacement, including native references and note-assignment IDs. Keep selected
+  ownership boundaries and reject referenced omissions with transaction rollback.
+- Update retained original/history/current and unified provenance rows in place.
+  Reconcile selected revision derivations and defer activity omissions until
+  incoming captures have moved; reject deletion of still-referenced activities
+  or revisions. Keep independent roots and source-note references intact.
+- Keep explicit archival byte preservation separate. This supersedes the internal
+  stage dispatch limitations below; released producer/consumer qualification is
+  still required and suite NO-GO remains.
+- Exercise scoped native export, persisted repository CRUD, search and backlinks
+  through the required clean-installed package gate, including repeat import into
+  a second clean destination. Remove its superseded archival-dispatch expectation.
+
 ### Native core storage (#424)
 
 - Preserve independent note metadata, exact timestamps and tombstone presence,

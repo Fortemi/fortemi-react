@@ -264,7 +264,7 @@ export type ConflictStrategy = 'skip' | 'replace' | 'error'
 /** Options for shard import. */
 export interface ImportOptions {
   conflictStrategy?: ConflictStrategy
-  /** Rows processed between cooperative yields. Defaults to 250. */
+  /** Rows processed between cooperative yields. Defaults to 250; 0 disables yields. */
   batchSize?: number
   /** Progress callback for long-running import phases. */
   onProgress?: (progress: ImportProgress) => void

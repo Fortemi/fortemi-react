@@ -18,6 +18,8 @@ const ATTACHMENT_TEXT_JOIN = `
        ) ax ON ax.note_id = n.id`
 const COMBINED_TEXT_VECTOR_SQL = `to_tsvector('english', (coalesce(c.content, '') || ' ' || coalesce(ax.extracted_text, '')))`
 
+class EmbeddingSetResolutionError extends Error {}
+
 export type EmbeddingSetKind = 'physical' | 'filter' | 'virtual'
 export type EmbeddingSetMode = 'auto' | 'manual' | 'mixed'
 
@@ -209,6 +211,7 @@ export interface EmbeddingSetRow extends Partial<Omit<NativeEmbeddingSet,
 export interface EmbeddingSetCreateInput {
   id?: string
   name: string
+  slug?: string | null
   purpose?: string | null
   model_name?: string
   dimensions?: number
@@ -261,7 +264,7 @@ export class EmbeddingSetsRepository {
 
   async getConfig(id: string): Promise<EmbeddingConfigRow> {
     const result = await this.db.query<EmbeddingConfigRow>('SELECT * FROM embedding_config WHERE id = $1', [id])
-    if (!result.rows[0]) throw new Error(`Embedding config not found: ${id}`)
+    if (!result.rows[0]) throw new EmbeddingSetResolutionError(`Embedding config not found: ${id}`)
     return result.rows[0]
   }
 
@@ -289,8 +292,8 @@ export class EmbeddingSetsRepository {
     await this.db.query(
       `INSERT INTO embedding_set (
          id, name, purpose, model_name, dimensions, kind, mode,
-         truncate_dimension, criteria_json
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)`,
+         truncate_dimension, criteria_json, slug
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10)`,
       [
         id,
         input.name,
@@ -298,9 +301,10 @@ export class EmbeddingSetsRepository {
         input.model_name ?? 'all-MiniLM-L6-v2',
         input.dimensions ?? 384,
         input.kind ?? 'physical',
-        input.mode ?? null,
+        input.mode === undefined ? 'auto' : input.mode,
         input.truncate_dimension ?? null,
         jsonParam(input.criteria ?? null),
+        input.slug === undefined ? `set-${id}` : input.slug,
       ],
     )
     return this.get(id)
@@ -357,7 +361,7 @@ export class EmbeddingSetsRepository {
       `SELECT * FROM embedding_set WHERE id = $1`,
       [id],
     )
-    if (result.rows.length === 0) throw new Error(`Embedding set not found: ${id}`)
+    if (result.rows.length === 0) throw new EmbeddingSetResolutionError(`Embedding set not found: ${id}`)
     return result.rows[0]
   }
 
@@ -459,6 +463,10 @@ export class EmbeddingSetsRepository {
       set,
       { forceLive: true },
     )
+    if (live.errors.length > 0) {
+      await this.markVirtualSetStale(setId, 'Live resolution contains validation errors')
+      return { ...live, freshness: { ...live.freshness, status: 'stale' } }
+    }
     await this.db.query(`DELETE FROM embedding_set_member WHERE embedding_set_id = $1`, [setId])
     for (const row of live.rows) {
       await this.db.query(
@@ -520,6 +528,38 @@ export class EmbeddingSetsRepository {
         jsonParam({ status: 'stale', sourceHash: definition.materialization?.inputHash, checkedAt: now, reason }),
       ],
     )
+  }
+
+  /** @internal The repository and mutation must use the same caller-owned transaction. */
+  async withMaterializationInvalidation<T>(mutate: () => Promise<T>): Promise<T> {
+    const freshSets = async () => (await this.db.query<EmbeddingSetRow>(
+      `SELECT * FROM embedding_set WHERE kind = 'virtual'
+       AND materialization_json->>'allowed' = 'true'
+       AND materialization_json->>'freshness' = 'fresh' ORDER BY id`,
+    )).rows
+    const before = new Map<string, string>()
+    for (const set of await freshSets()) before.set(set.id, await this.liveResolutionHash(set))
+    const result = await mutate()
+    if (before.size === 0) return result
+    for (const set of await freshSets()) {
+      if (before.has(set.id) && before.get(set.id) !== await this.liveResolutionHash(set)) {
+        await this.markVirtualSetStale(set.id, 'Native import changed live selector results')
+      }
+    }
+    return result
+  }
+
+  private async liveResolutionHash(set: EmbeddingSetRow): Promise<string> {
+    try {
+      const live = await this.resolveDefinition(
+        { kind: 'embedding-set', embeddingSetId: set.id }, this.definitionFromRow(set), set, { forceLive: true },
+      )
+      return hashJson({ rows: live.rows, errors: live.errors })
+    } catch (error) {
+      // Existing unsupported definitions must not block unrelated imports; SQL failures still abort.
+      if (error instanceof EmbeddingSetResolutionError) return hashJson({ error: error.message })
+      throw error
+    }
   }
 
   private async resolveDefinition(
@@ -596,7 +636,7 @@ export class EmbeddingSetsRepository {
   private async resolveCriteriaSource(source: CriteriaVirtualSource): Promise<ResolvedEmbeddingRow[]> {
     const criteria = source.criteria
     if (criteria.conceptIds && criteria.conceptIds.length > 0) {
-      throw new Error('Unsupported virtual embedding-set criteria field: conceptIds')
+      throw new EmbeddingSetResolutionError('Unsupported virtual embedding-set criteria field: conceptIds')
     }
     const conditions = ['e.embedding_set_id = $1', 'e.vector IS NOT NULL', 'n.deleted_at IS NULL']
     const params: unknown[] = [source.baseSetId]
@@ -644,7 +684,9 @@ export class EmbeddingSetsRepository {
       params.push(criteria.isUserEdited)
     }
     if (criteria.hasAiMetadata !== undefined) {
-      conditions.push(criteria.hasAiMetadata ? `c.ai_metadata IS NOT NULL` : `c.ai_metadata IS NULL`)
+      conditions.push(criteria.hasAiMetadata
+        ? `(c.ai_metadata IS NOT NULL AND c.ai_metadata <> 'null'::jsonb)`
+        : `(c.ai_metadata IS NULL OR c.ai_metadata = 'null'::jsonb)`)
     }
     if (criteria.hasRevisions !== undefined) {
       conditions.push(criteria.hasRevisions
@@ -811,7 +853,7 @@ export class EmbeddingSetsRepository {
 
   private definitionFromRow(row: EmbeddingSetRow): VirtualEmbeddingSetDefinition {
     const source = asObject<VirtualEmbeddingSetSource>(row.source_json)
-    if (!source) throw new Error(`Virtual embedding set has no source definition: ${row.id}`)
+    if (!source) throw new EmbeddingSetResolutionError(`Virtual embedding set has no source definition: ${row.id}`)
     return {
       id: row.id,
       name: row.name,

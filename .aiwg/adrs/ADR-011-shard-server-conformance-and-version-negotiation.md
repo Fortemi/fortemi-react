@@ -19,6 +19,195 @@ The Knowledge Shard (`shard/*`) is fortemi-react's interchange format with the R
 
 ## Decision
 
+### Public Native Integration (2026-09-10, Unreleased)
+
+The required clean-installed package verifier exercises native scoped export
+after import and persisted repository create/update/delete, text search, backlinks
+and repeated import into a second clean destination. It retains malformed-scope
+rejection and explicitly seeds legacy null link confidence for backward-compatibility
+coverage. This is a package acceptance gate, not released-server or all-platform
+qualification; archival byte-preservation evidence remains separate.
+
+The public `2.0.0/full-v1` dispatcher now applies all 33 components to native
+tables in one transaction after authority/trust/reference/geometry validation.
+Current-state export reads native values and selected dependencies; it never
+selects archived files. This supersedes the dispatcher limitations recorded in
+the historical implementation stages below, without widening their receipts.
+Explicit archival APIs retain exact logical-file/signature preservation; native
+exports preserve semantic records, presence, array order and mandatory bytes,
+but regenerate manifest producer/time/checksums and sign only newly produced bytes.
+
+Skip selection distinguishes ownership from a reference: note-owned children,
+concept-owned labels/notes/mappings/memberships and subject relations, SKOS
+collection members, revision derivations, graph-source edges and community-set
+assignments follow their skipped owner. New owners can reference existing notes,
+concepts, sets or graph sources. Attachment-only capture records follow the
+attachment's note. Retained embedding configurations supply native derived model/
+dimension values; incompatible affected vectors abort and roll back. Alternate
+unique collisions are not permission to regenerate identity or overwrite a
+different record.
+
+Embedding vectors remain note-owned for skip. Vector omission during replacement
+requires both non-null endpoints selected, just like memberships; null endpoints
+remain independent and an excluded endpoint grants no deletion authority.
+Retained vector IDs update in place. Changed incoming chunk coordinates are
+vacated transactionally using nullable set coordinates before upsert, permitting
+cycles without deleting IDs or weakening native uniqueness. Native member vector
+pointers are retained, not reset from an absent wire field; a still-referenced
+omission rejects and rolls back. These local checks do not qualify concurrency,
+released runtimes, or general alternate-key preview equivalence. Membership skip
+continues to follow note ownership, allowing new notes to join existing sets.
+Retained-vector note changes detach only native
+member.embedding_id pointers whose member note differs from the incoming vector
+note, including null destinations. Membership identities, notes, metadata and
+other references are retained. Virtual materializations referencing vectors
+with changed note or source-set owners are marked stale; existing live selectors
+reevaluate criteria instead of returning newly associated notes from cached IDs.
+Matching pointers survive, including membership in a different virtual set.
+Failed imports restore pointers and freshness metadata. Repeat imports do not
+invent absent associations, and otherwise unchanged imports preserve caches.
+Producer #1147 similarly detaches invalid token chunk pointers without deleting
+or reassigning note-owned tokens.
+
+Materialization invalidation also follows declared physical source dependencies
+for incoming vector additions and note/set owner changes, including old and new
+non-null source sets. Criteria, set operations, fallback, latest-compatible and
+snapshot definitions use the same source-set fields as the native resolver.
+This catches vectors absent from cached membership, including empty caches.
+Invalidation is conservative within an affected source set; unrelated source
+sets and natively equivalent repeat imports retain their freshness. It changes only
+freshness metadata, not definitions or cached member identities, and rolls back
+with the import. These are native consumer rules, not new portable virtual-set
+fields. Same-owner vector value and creation-time changes also invalidate these
+caches: native pgvector and timestamptz comparisons preserve equivalent numeric
+values and timestamp spellings without unnecessary invalidation. This covers
+null-to-usable membership changes and duplicate-vector ordering. Ordinary replace
+omissions retain the two-selected-owner predicate and use DELETE RETURNING to
+capture exactly the removed vectors' source dependencies in the same transaction.
+Referenced omissions still reject; failed deletion/import restores both data and
+freshness. Uncached secondary-set omissions invalidate set operations even when
+no materialized member references the removed vector. These are bounded importer
+corrections; arbitrary native writers and released/platform behavior remain
+unqualified. No new wire field or migration is introduced; NO-GO remains.
+
+Public native import additionally fingerprints live resolver rows and validation
+errors before and after its mutations, inside the same transaction. Changed
+results invalidate still-fresh preexisting materializations, including note fields,
+tags, collections, current/revision state, extracted attachment text, configuration
+models and latest-compatible set ordering. Unchanged results preserve their exact
+cache metadata; existing vector invalidation remains conservative within affected
+source sets. Fingerprints are transient, not wire fields or stored snapshots.
+Only explicit resolver-domain failures are fingerprinted as failure outcomes;
+database errors still abort and roll back. Existing unsupported definitions do not
+block unrelated imports. This adds up to two live resolutions per fresh virtual
+set during import; large-set performance and concurrent/native-writer behavior
+remain unqualified. Refresh with compatibility errors retains cached members and
+marks the set stale so subsequent reads do not hide those errors. Criteria treat
+both SQL NULL and JSON null as absent AI metadata, without changing stored JSON.
+Membership omission during replacement still requires both endpoints selected;
+retained composite coordinates update in place. Including a shared set in a
+scoped archive does not authorize deleting excluded notes' memberships, and an
+imported note does not authorize deletion from an unrelated set. Missing/empty
+endpoint selection grants no omission authority. This follows the corrected
+producer ADR-102/#1147 rule and supersedes both unreleased single-endpoint cleanup
+interpretations. No schema/profile tuple or migration changes. Published shared
+fixtures and released cross-runtime qualification remain required. Ownerless
+vector records remain independent roots; omission alone does not delete roots.
+Producer `tests/fixtures/shards/external/react-native-membership-2026-09-10`
+holds the fixed corpus also exercised by the clean-installed Core probe.
+Local membership/reference/rollback/repeat/clean-destination checks pass in
+both runtimes; publication, consumer pins and released matrix cells remain open.
+
+Community assignments are owned by their community set, not by the referenced
+note or graph source. Replacing selected notes, reparenting a selected set, or
+importing an empty graph family must preserve assignments from unrelated sets.
+Repeated replacement and late-failure rollback compare all native components
+and mandatory bytes through a second clean destination. This follows producer
+Fortemi #1147's independent-set rule and remains linked to consumer #424; no
+schema, profile or migration change is introduced.
+
+Selected link cleanup excludes incoming IDs in both native target tables;
+graph-edge and assignment cleanup excludes incoming full primary-key tuples.
+Retained rows update in place with native references intact. Source/set IDs
+remain case-sensitive, while note/link UUID coordinates normalize as before.
+Incoming assignments move before omitted nested communities are removed.
+Still-referenced omissions reject and roll back. A link target-kind change still
+removes its old native representation and may reject when that table is referenced;
+same-kind retention does not grant authority to invalidate those references.
+This consumer correction changes neither the wire schema nor migrations.
+
+Selected SKOS child cleanup excludes every incoming retained primary key before
+native upsert. Labels, notes, semantic relations and mapping relations retain
+their IDs; scheme memberships, note assignments and collection memberships retain
+their composite coordinates. Native note-assignment IDs remain insert-only.
+Ownership is unchanged: concept-owned children, note-owned assignments and
+collection-owned memberships. Omitted selected-owner rows are deleted only when
+their native references permit it; referenced omissions reject and roll back.
+Unchanged repeat and payload edits preserve native references and metadata, with
+late-failure rollback and clean re-export coverage. This is a consumer runtime
+correction under the existing authority, not a new portable identity, schema
+constraint, migration or general alternate-key/reparenting qualification.
+
+Replacement upserts retained revision and activity identities before removing
+omitted selected-owner revisions. This preserves unrelated capture references,
+including when retained activities move away from an omitted revision.
+Migration0032 makes revision-number uniqueness deferrable until commit so valid
+atomic renumbering does not fail on intermediate collisions. Final duplicate
+numbers still abort the transaction. Populated upgrade, ordinary revision
+writers, repeat replacement and late-failure rollback are regression-tested.
+This is a native storage correction, not a new wire tuple. Roll back failed
+imports transactionally; retain pre-upgrade data and use a forward correction
+for deployed migration changes rather than editing applied migration history.
+
+Retained originals, original history, current revisions and unified provenance
+records now also update in place. Original-history omissions exclude all incoming
+retained identities; activity omission cleanup follows incoming unified-record
+updates and rejects references from retained captures. Derivation omissions use
+selected revision owners, never source-note references. Remaining activity/current
+references prevent omitted-revision deletion. These rules follow producer #1147;
+no new migration or wire/profile tuple is introduced. Alternate-key exchanges and
+published producer/consumer qualification remain separately gated.
+
+Migration0031 stores only manifest lineage metadata, associated with canonical
+native record keys; component contents remain in their native tables. Equal
+histories deduplicate irrespective of JSON object key order. Deletion removes
+the key association. Ordinary native edits retain lineage. Empty archive lineage
+is anchored only for an otherwise empty portable destination; empty/no-op imports
+cannot overwrite populated state. One selected history preserves exact optional
+`migration_history` and `migrated_from`; multiple incompatible histories reject
+with `incompatible-native-migration-lineage`, never last-import-wins metadata.
+This local representation does not introduce a new wire envelope or schema tuple.
+
+Native progress counts declared component rows, awaiting callbacks and yielding
+every `batchSize` rows (250 by default, zero disables yielding). Precommit callback
+failure rolls back; final postcommit callback failure warns without reporting
+that a committed import failed. Unsigned `prefer` imports warn about unauthenticated
+publisher provenance. Newly promoted blobs are compensated on transaction failure;
+SQL reference counts remain non-authoritative under ADR013.
+
+Selected-state export reports virtual embedding sets and unsupported tombstones
+as typed losses, and excludes unrelated invalid geometry before decoding. Scoped
+ancestry/replacement closure must not silently discard required tombstones.
+Legacy SKOS imports write native label/note projections; direct projection drift
+rejects export instead of overwriting current values with stale records.
+
+The portable gate includes the public native regression alongside all family
+stages and archival tests. Current implementation receipts bind these sources;
+the native inventory matrix exercises 198 distinct component fields inherited
+from core-v1 and declared by full-v1, with six states per field. Schema-valid
+cases traverse public import/export and a second clean destination, comparing
+all component records and mandatory bytes. Invalid cases must reject before
+database access or blob mutation. Parent constraints remain authoritative:
+an empty object is not a valid timestamp range, and a null range has no child
+bound instances. Manifest lineage has its separate public matrix; producer
+metadata is regenerated. Each native case starts from a pristine migration-only
+database image, never a populated destination or an archival snapshot.
+Historical cross-repository releases are immutable evidence for their original
+cells. React #424 and producer Fortemi #1059 remain linked acceptance owners.
+Clean-installed, real producer/consumer, supported-platform and release checks
+remain required before qualification. Suite NO-GO, RecordStore `record-v1` and
+the three independent integration planes are unchanged.
+
 ### Native Core Stage (2026-09-10)
 
 Migration0030 and native-core map the five core families and nested attachment

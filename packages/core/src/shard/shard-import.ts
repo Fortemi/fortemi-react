@@ -60,7 +60,7 @@ import {
 } from './profile-registry.js'
 import { capturePresence, componentPresenceLosses, presenceLosses, presencePointers } from './presence.js'
 import { replaceStoredPresence } from './presence-store.js'
-import { importFullV1Snapshot } from './full-v1-store.js'
+import { importNativeFullV1 } from './native-full-v1-import.js'
 
 const decoder = new TextDecoder()
 const DEFAULT_BATCH_SIZE = 250
@@ -218,11 +218,11 @@ export async function importShard(
   const inputData = data instanceof ArrayBuffer ? new Uint8Array(data) : data
 
   // ── Step 1: Unpack tar.gz ─────────────────────────────────────────────
-  report?.({ phase: 'unpack', done: 0, total: 1 })
   let files: Map<string, Uint8Array>
   try {
+    await report?.({ phase: 'unpack', done: 0, total: 1 })
     files = unpackTarGz(inputData)
-    report?.({ phase: 'unpack', done: 1, total: 1 })
+    await report?.({ phase: 'unpack', done: 1, total: 1 })
   } catch (err) {
     return {
       success: false,
@@ -279,7 +279,7 @@ export async function importShard(
         duration_ms: performance.now() - start, capability_report: capabilityReport,
       }
     }
-    return importFullV1Snapshot(db, inputData, options)
+    return importNativeFullV1(db, inputData, options)
   }
 
   capabilityReport = createShardCapabilityReport({
@@ -1021,6 +1021,7 @@ export async function importShard(
             [concept.id, concept.scheme_id, concept.pref_label, altLabels, concept.definition, concept.created_at, concept.updated_at],
           )
         }
+        await replaceLegacyConceptProjection(tx, concept)
         counts.skos_concepts++
         report?.({ phase: 'skos', done: ++doneSkos, total: totalSkos })
         await maybeYield(doneSkos, batchSize)
@@ -1539,6 +1540,39 @@ export async function importShard(
 }
 
 // ── Parsing helpers ───────────────────────────────────────────────────────
+
+/** Explicit legacy bridge: flat concepts carry an English display projection,
+ * not the native multilingual label/note inventory of full-v1. */
+async function replaceLegacyConceptProjection(tx: QueryExecutor, concept: ShardSkosConcept): Promise<void> {
+  const labels = [{ type: 'pref_label', value: concept.pref_label }, ...(concept.alt_labels ?? []).map((value) => ({ type: 'alt_label', value }))]
+  const existing = (await tx.query<{ id: string; label_type: string; value: string }>(
+    "SELECT id, label_type, value FROM skos_concept_label WHERE concept_id = $1 AND language = 'en' ORDER BY id", [concept.id])).rows
+  const used = new Set<string>()
+  const incoming = labels.map((label) => {
+    const match = existing.find((row) => !used.has(row.id) && row.label_type === label.type && row.value === label.value)
+    const id = match?.id ?? generateId()
+    used.add(id)
+    return { ...label, id }
+  })
+  await tx.query("DELETE FROM skos_concept_label WHERE concept_id = $1 AND label_type IN ('pref_label', 'alt_label') AND NOT (id = ANY($2::text[]))", [concept.id, [...used]])
+  for (const label of incoming) await tx.query(`INSERT INTO skos_concept_label (id, concept_id, label_type, value, language, created_at, created_at_utc)
+    VALUES ($1, $2, $3, $4, 'en', $5::text::timestamptz, $5::text)
+    ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value, created_at = EXCLUDED.created_at, created_at_utc = EXCLUDED.created_at_utc`,
+  [label.id, concept.id, label.type, label.value, concept.created_at])
+  const definitions = (await tx.query<{ id: string; value: string }>(
+    "SELECT id, value FROM skos_concept_note WHERE concept_id = $1 AND note_type = 'definition' AND language = 'en' ORDER BY id", [concept.id])).rows
+  const definitionId = concept.definition == null ? null : definitions.find((row) => row.value === concept.definition)?.id ?? generateId()
+  await tx.query("DELETE FROM skos_concept_note WHERE concept_id = $1 AND note_type = 'definition' AND id IS DISTINCT FROM $2", [concept.id, definitionId])
+  if (definitionId !== null) await tx.query(`INSERT INTO skos_concept_note
+    (id, concept_id, note_type, value, language, created_at, created_at_utc, updated_at, updated_at_utc)
+    VALUES ($1, $2, 'definition', $3, 'en', $4::text::timestamptz, $4::text, $5::text::timestamptz, $5::text)
+    ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at, updated_at_utc = EXCLUDED.updated_at_utc`,
+  [definitionId, concept.id, concept.definition, concept.created_at, concept.updated_at])
+  await tx.query('DELETE FROM skos_scheme_membership WHERE concept_id = $1 AND scheme_id <> $2', [concept.id, concept.scheme_id])
+  await tx.query(`INSERT INTO skos_scheme_membership (concept_id, scheme_id, added_at, added_at_utc)
+    VALUES ($1, $2, $3::text::timestamptz, $3::text) ON CONFLICT DO NOTHING`, [concept.id, concept.scheme_id, concept.created_at])
+  await tx.query('SELECT refresh_skos_concept_display($1)', [concept.id])
+}
 
 async function resolveEmbeddingSetIdForServerEmbedding(
   db: QueryExecutor,

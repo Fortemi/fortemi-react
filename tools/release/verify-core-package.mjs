@@ -111,13 +111,25 @@ async function verifyFullV1Scope(core) {
         })
         assert.equal(returned.success, true, returned.errors.join('; '))
         assert.deepEqual(parseNotes(returned.archive).map((note) => note.id), expectedIds)
-        for (const snapshotScope of [{ tag: 'selected' }, { collectionId }, { embeddingSetIds: [randomUUID()] }]) {
-          const rejected = await core.exportShardWithReport(target, {
-            profile: 'full-v1', schemaVersion: '2.0.0', blobStore: targetBlobs, ...snapshotScope,
+        for (const nativeScope of [{ tag: 'selected' }, { collectionId }]) {
+          const scoped = await core.exportShardWithReport(target, {
+            profile: 'full-v1', schemaVersion: '2.0.0', blobStore: targetBlobs, ...nativeScope,
           })
-          assert.equal(rejected.success, false)
-          assert.equal(rejected.archive, null)
+          assert.equal(scoped.success, true, scoped.errors.join('; '))
+          assert.equal((await core.validateFullV1ShardArchive(scoped.archive)).valid, true)
+          assert.deepEqual(parseNotes(scoped.archive).map((note) => note.id), expectedIds)
+          assert.equal([...core.unpackTarGz(scoped.archive).keys()].some((path) => path.startsWith('blobs/')), false)
         }
+        const missingSet = await core.exportShardWithReport(target, {
+          profile: 'full-v1', schemaVersion: '2.0.0', blobStore: targetBlobs,
+          embeddingSetIds: [randomUUID()],
+        })
+        assert.equal(missingSet.success, true, missingSet.errors.join('; '))
+        assert.equal((await core.validateFullV1ShardArchive(missingSet.archive)).valid, true)
+        assert.deepEqual(parseNotes(missingSet.archive).map((note) => note.id), expectedIds)
+        const missingSetManifest = JSON.parse(new TextDecoder().decode(core.unpackTarGz(missingSet.archive).get('manifest.json')))
+        assert.equal(missingSetManifest.counts.embedding_sets, 0)
+        assert.equal(missingSetManifest.counts.embeddings, 0)
       } finally { await target.close() }
     }
     for (const scope of [{ tag: 'selected', collectionId }, { tag: '' }, { embeddingSetIds: [] }]) {
@@ -127,8 +139,80 @@ async function verifyFullV1Scope(core) {
       assert.equal(rejected.success, false)
       assert.equal(rejected.archive, null)
     }
-    console.log('Verified packed 2.0.0/full-v1 note-scope exclusions and clean snapshot roundtrip; not native restore')
+    console.log('Verified packed 2.0.0/full-v1 note-scope exclusions and scoped native export after clean import')
   } finally { await db.close() }
+}
+
+async function verifyFullV1NativeCurrentState(core) {
+  const databases = []
+  const createDb = async () => {
+    const db = await core.createPGliteInstance('memory', randomUUID())
+    databases.push(db)
+    await new core.MigrationRunner(db).apply(core.allMigrations)
+    assert.equal((await db.query('SELECT count(*)::int AS n FROM note')).rows[0].n, 0)
+    return db
+  }
+  const parse = (archive, path) => new TextDecoder().decode(core.unpackTarGz(archive).get(path))
+    .split('\n').filter(Boolean).map(JSON.parse)
+  const exportState = async (db, blobs) => {
+    const result = await core.exportShardWithReport(db, {
+      profile: 'full-v1', schemaVersion: '2.0.0', blobStore: blobs,
+    })
+    assert.equal(result.success, true, result.errors.join('; '))
+    assert.equal((await core.validateFullV1ShardArchive(result.archive)).valid, true)
+    return result.archive
+  }
+  try {
+    const source = await createDb()
+    const original = await new core.NotesRepository(source).create({ content: 'Package imported original' })
+    const initial = await exportState(source, new core.MemoryBlobStore())
+    const target = await createDb()
+    const blobs = new core.MemoryBlobStore()
+    const imported = await core.importShard(target, initial, { conflictStrategy: 'replace', blobStore: blobs })
+    assert.equal(imported.success, true, imported.errors.join('; '))
+    const notes = new core.NotesRepository(target)
+    assert.equal((await notes.get(original.id)).original.content, 'Package imported original')
+    await notes.update(original.id, { content: 'Package native edited', title: 'Updated after import' })
+    const created = await notes.create({ content: 'Package native searchable', tags: ['package-native'] })
+    const deleted = await notes.create({ content: 'Package native deleted' })
+    await notes.delete(deleted.id)
+    const link = await new core.LinksRepository(target).create(created.id, original.id)
+    const assertRepositories = async (db) => {
+      const repository = new core.NotesRepository(db)
+      assert.equal((await repository.get(original.id)).current.content, 'Package native edited')
+      assert.equal((await repository.get(created.id)).original.content, 'Package native searchable')
+      assert.ok((await repository.get(deleted.id)).deleted_at)
+      assert.deepEqual(await new core.LinksRepository(db).getBacklinks(original.id), [created.id])
+      assert.equal((await new core.LinksRepository(db).get(link.id)).target_note_id, original.id)
+      const search = new core.SearchRepository(db)
+      assert.deepEqual((await search.search('searchable', { mode: 'text' })).results.map((row) => row.id), [created.id])
+      assert.deepEqual((await search.search('deleted', { mode: 'text' })).results, [])
+    }
+    await assertRepositories(target)
+    const current = await exportState(target, blobs)
+    const currentNotes = parse(current, 'notes.jsonl')
+    assert.deepEqual(currentNotes.map((note) => note.id).sort(), [original.id, created.id, deleted.id].sort())
+    assert.equal(currentNotes.find((note) => note.id === original.id).revised_content, 'Package native edited')
+    assert.ok(currentNotes.find((note) => note.id === deleted.id).deleted_at)
+    assert.deepEqual(parse(current, 'links.jsonl').map((row) => row.id), [link.id])
+    const destination = await createDb()
+    const destinationBlobs = new core.MemoryBlobStore()
+    for (let pass = 0; pass < 2; pass++) {
+      const restored = await core.importShard(destination, current, {
+        conflictStrategy: 'replace', blobStore: destinationBlobs,
+      })
+      assert.equal(restored.success, true, restored.errors.join('; '))
+      await assertRepositories(destination)
+      const returned = await exportState(destination, destinationBlobs)
+      for (const path of ['notes.jsonl', 'links.jsonl']) {
+        const rows = (archive) => parse(archive, path).sort((a, b) => a.id.localeCompare(b.id))
+        assert.deepEqual(rows(returned), rows(current), path)
+      }
+    }
+    console.log('Verified packed 2.0.0/full-v1 persisted native CRUD, search, backlinks and repeated clean-destination export')
+  } finally {
+    for (const db of databases.reverse()) await db.close()
+  }
 }
 
 try {
@@ -151,6 +235,7 @@ try {
   const aiwgShard = await import(pathToFileURL(resolve(packageRoot, 'dist/aiwg-index-shard.js')).href)
   assert.equal(core.VERSION, expectedVersion)
   await verifyFullV1Scope(core)
+  await verifyFullV1NativeCurrentState(core)
   assert.equal(core.CURRENT_SHARD_VERSION, '1.2.0')
   assert.equal(typeof aiwg.createAiwgIndexController, 'function')
   assert.equal(aiwg.aiwgFortemiIndexToKnowledgeShard, undefined)
@@ -221,7 +306,10 @@ try {
     const sourceLinks = new core.LinksRepository(sourceDb)
     const firstNote = await sourceNotes.create({ content: 'Packed PGlite source' })
     const secondNote = await sourceNotes.create({ content: 'Packed PGlite target' })
-    const unscoredLink = await sourceLinks.create(firstNote.id, secondNote.id, 'related')
+    const authoredLink = await sourceLinks.create(firstNote.id, secondNote.id, 'related')
+    assert.equal(authoredLink.confidence, 1)
+    await sourceDb.query('UPDATE link SET confidence = NULL WHERE id = $1', [authoredLink.id])
+    const unscoredLink = await sourceLinks.get(authoredLink.id)
     const parentCollection = await sourceCollections.create({ name: 'Z parent' })
     const childCollection = await sourceCollections.create({
       name: 'A child',

@@ -1,7 +1,7 @@
 import type { QueryExecutor } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
-import { nativeUuid, selectNativeFields, upsertNativeFields, type NativeFields } from './native-fields.js'
-import { replaceValidatedNativeNoteHistory, type NativeNoteHistory } from './native-note-history.js'
+import { nativeUuid, selectNativeFields, upsertNativeFields, type NativeFields, type NativeApplyProgress } from './native-fields.js'
+import { replaceValidatedNativeNoteHistory, type NativeNoteHistory, type NativeHistoryApplyOptions } from './native-note-history.js'
 import { validateShardComponentRecord } from './schema-validator.js'
 
 export interface NativeAttachmentProjection {
@@ -64,15 +64,18 @@ const linkFields = {
 /** Internal stage: caller owns archive/signature/blob validation, conflicts and
  * the complete transaction. Only supplied records and selected-note children
  * are replaced; no jobs, archive rows or blob lifecycle decisions are made. */
-export async function applyValidatedNativeCore(tx: QueryExecutor, state: NativeCore, history: NativeNoteHistory): Promise<void> {
+export async function applyValidatedNativeCore(tx: QueryExecutor, state: NativeCore, history: NativeNoteHistory, progress?: NativeApplyProgress, historyOptions?: NativeHistoryApplyOptions): Promise<void> {
   for (const row of state.collections) await upsertNativeFields(tx, 'collection', row, collectionFields, ['id'], { deleted_at: null })
-  for (const row of state.tags) await upsertNativeFields(tx, 'tag', row, tagFields, ['name'], { shard_export_present: true })
+  for (const row of state.tags) {
+    await upsertNativeFields(tx, 'tag', row, tagFields, ['name'], { shard_export_present: true })
+    await progress?.('tags')
+  }
   for (const row of state.notes) {
     await upsertNativeFields(tx, 'note', { ...row, deleted_at: row.deleted_at ?? null }, noteFields, ['id'], { metadata_independent: true })
     // Explicit import presence wins after the ordinary tombstone-update trigger.
     await tx.query('UPDATE note SET shard_deleted_at_present = $2 WHERE id = $1', [nativeUuid(row.id), Object.hasOwn(row, 'deleted_at')])
   }
-  await replaceValidatedNativeNoteHistory(tx, state.notes, history)
+  await replaceValidatedNativeNoteHistory(tx, state.notes, history, progress, historyOptions)
   for (const row of state.notes) {
     const id = nativeUuid(row.id)
     await tx.query('DELETE FROM collection_note WHERE note_id = $1 AND collection_id IS DISTINCT FROM $2', [id, nativeUuid(row.collection_id)])
@@ -107,10 +110,17 @@ export async function applyValidatedNativeCore(tx: QueryExecutor, state: NativeC
       await tx.query('UPDATE attachment SET extraction_status = $2, extraction_reason = $3 WHERE id = $1',
         [nativeUuid(ref.id), projection.extraction_status, projection.reason])
     }
+    await progress?.('notes')
   }
   // Producer semantics: restore snapshot counts after membership mutations.
-  for (const row of state.collections) await tx.query('UPDATE collection SET shard_note_count = $2 WHERE id = $1', [nativeUuid(row.id), row.note_count])
-  for (const row of state.templates) await upsertNativeFields(tx, 'template', row, templateFields, ['id'])
+  for (const row of state.collections) {
+    await tx.query('UPDATE collection SET shard_note_count = $2 WHERE id = $1', [nativeUuid(row.id), row.note_count])
+    await progress?.('collections')
+  }
+  for (const row of state.templates) {
+    await upsertNativeFields(tx, 'template', row, templateFields, ['id'])
+    await progress?.('templates')
+  }
   for (const row of state.links) {
     const url = row.to_note_id === null
     if (url && !(await tx.query('SELECT 1 FROM note WHERE id = $1', [nativeUuid(row.from_note_id)])).rows.length) {
@@ -119,6 +129,7 @@ export async function applyValidatedNativeCore(tx: QueryExecutor, state: NativeC
     await tx.query(`DELETE FROM ${url ? 'link' : 'link_url_target'} WHERE id = $1`, [nativeUuid(row.id)])
     await upsertNativeFields(tx, url ? 'link_url_target' : 'link', row,
       url ? { ...linkFields, to_url: {} } : { ...linkFields, to_note_id: { column: 'target_note_id', kind: 'uuid' } }, ['id'], { deleted_at: null })
+    await progress?.('links')
   }
   // Reporting projection only. Manifest reachability, never this count, owns GC.
   await tx.query(`UPDATE attachment_blob ab SET reference_count = (SELECT COUNT(*) FROM attachment a
@@ -141,34 +152,38 @@ function byNote<T extends { note_id: string }>(rows: T[]): Map<string, T[]> {
   return result
 }
 
-export async function readNativeTags(tx: QueryExecutor): Promise<NativeTag[]> {
-  return checked('tags', (await tx.query<NativeTag>(`SELECT ${selectNativeFields(tagFields)} FROM tag WHERE shard_export_present ORDER BY name`)).rows)
+export async function readNativeTags(tx: QueryExecutor, deferValidation = false): Promise<NativeTag[]> {
+  const rows = (await tx.query<NativeTag>(`SELECT ${selectNativeFields(tagFields)} FROM tag WHERE shard_export_present ORDER BY name`)).rows
+  return deferValidation ? rows : checked('tags', rows)
 }
-export async function readNativeTemplates(tx: QueryExecutor, id?: string): Promise<NativeTemplate[]> {
-  return checked('templates', (await tx.query<NativeTemplate>(`SELECT ${selectNativeFields(templateFields)} FROM template
-    ${id === undefined ? '' : 'WHERE id = $1'} ORDER BY id`, id === undefined ? [] : [nativeUuid(id)])).rows)
+export async function readNativeTemplates(tx: QueryExecutor, id?: string, deferValidation = false): Promise<NativeTemplate[]> {
+  const rows = (await tx.query<NativeTemplate>(`SELECT ${selectNativeFields(templateFields)} FROM template
+    ${id === undefined ? '' : 'WHERE id = $1'} ORDER BY id`, id === undefined ? [] : [nativeUuid(id)])).rows
+  return deferValidation ? rows : checked('templates', rows)
 }
 
-export async function readNativeLinks(tx: QueryExecutor, id?: string): Promise<NativeLink[]> {
+export async function readNativeLinks(tx: QueryExecutor, id?: string, deferValidation = false): Promise<NativeLink[]> {
   const filter = id === undefined ? '' : ' AND id = $1'
   const links = (await tx.query<NativeLink>(`SELECT ${selectNativeFields(linkFields)}, target_note_id AS to_note_id, NULL::text AS to_url FROM link WHERE deleted_at IS NULL${filter}
     UNION ALL SELECT ${selectNativeFields(linkFields)}, NULL::text AS to_note_id, to_url FROM link_url_target WHERE deleted_at IS NULL${filter} ORDER BY id`,
   id === undefined ? [] : [nativeUuid(id)])).rows
+  if (deferValidation) return links
   if (new Set(links.map((link) => link.id)).size !== links.length) throw new Error('Duplicate native link identity')
   return checked('links', links)
 }
 
-export async function readNativeCollections(tx: QueryExecutor, id?: string): Promise<NativeCollection[]> {
-  return checked('collections', (await tx.query<NativeCollection>(`SELECT ${selectNativeFields(collectionFields)},
+export async function readNativeCollections(tx: QueryExecutor, id?: string, deferValidation = false): Promise<NativeCollection[]> {
+  const rows = (await tx.query<NativeCollection>(`SELECT ${selectNativeFields(collectionFields)},
     COALESCE(shard_note_count, (SELECT COUNT(*)::integer FROM collection_note WHERE collection_id = collection.id)) AS note_count
     FROM collection WHERE deleted_at IS NULL${id === undefined ? '' : ' AND id = $1'} ORDER BY id`,
-  id === undefined ? [] : [nativeUuid(id)])).rows)
+    id === undefined ? [] : [nativeUuid(id)])).rows
+  return deferValidation ? rows : checked('collections', rows)
 }
 
 /** Unscoped internal reader; the public serializer must apply validated scope
  * closure before checking selected state. No archived component is consulted. */
-export async function readNativeCore(tx: QueryExecutor): Promise<NativeCore> {
-  for (const table of ['collection', 'link', 'link_url_target', 'attachment']) {
+export async function readNativeCore(tx: QueryExecutor, options: { noteIds?: readonly string[]; deferValidation?: boolean } = {}): Promise<NativeCore> {
+  for (const table of options.deferValidation ? [] : ['collection', 'link', 'link_url_target', 'attachment']) {
     if ((await tx.query(`SELECT 1 FROM ${table} WHERE deleted_at IS NOT NULL LIMIT 1`)).rows.length) {
       throw new Error(`Native ${table} tombstone has no full-v1 representation`)
     }
@@ -176,7 +191,8 @@ export async function readNativeCore(tx: QueryExecutor): Promise<NativeCore> {
   const noteRows = (await tx.query<Omit<NativeNote, 'collection_id' | 'tags' | 'attachments'> & { shard_deleted_at_present: boolean }>(
     `SELECT ${selectNativeFields(noteFields)}, shard_deleted_at_present,
       (SELECT content FROM note_original WHERE note_id = note.id) AS original_content,
-      (SELECT content FROM note_revised_current WHERE note_id = note.id) AS revised_content FROM note ORDER BY id`)).rows
+      (SELECT content FROM note_revised_current WHERE note_id = note.id) AS revised_content FROM note
+      ${options.noteIds ? 'WHERE id = ANY($1::text[])' : ''} ORDER BY id`, options.noteIds ? [options.noteIds] : [])).rows
   const memberships = (await tx.query<{ note_id: string; collection_id: string }>('SELECT note_id, collection_id FROM collection_note ORDER BY note_id, collection_id')).rows
   const tags = (await tx.query<{ note_id: string; tag: string }>('SELECT note_id, tag FROM note_tag ORDER BY note_id, position NULLS LAST, tag')).rows
   const attachments = (await tx.query<Pick<NativeAttachmentProjection, 'extracted_text' | 'extraction_status' | 'reason'> & { id: string; note_id: string; path: string; mime: string; checksum: string; bytes: number }>(
@@ -201,6 +217,7 @@ export async function readNativeCore(tx: QueryExecutor): Promise<NativeCore> {
       })),
     }
   })
-  return { notes: checked('notes', notes), collections: await readNativeCollections(tx), tags: await readNativeTags(tx),
-    templates: await readNativeTemplates(tx), links: await readNativeLinks(tx) }
+  return { notes: options.deferValidation ? notes : checked('notes', notes),
+    collections: await readNativeCollections(tx, undefined, options.deferValidation), tags: await readNativeTags(tx, options.deferValidation),
+    templates: await readNativeTemplates(tx, undefined, options.deferValidation), links: await readNativeLinks(tx, undefined, options.deferValidation) }
 }

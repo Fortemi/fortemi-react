@@ -134,6 +134,20 @@ describe('native note-history apply stage, not full-v1 archive dispatch', () => 
     expect(await readNativeNoteHistory(db, [other.id])).toEqual(untouched)
   })
 
+  it('rejects omitted revisions referenced by a retained native activity', async () => {
+    await apply(db)
+    const revision = source.note_revisions[0]
+    await db.query(`INSERT INTO provenance_edge (id, entity_type, entity_id, activity, agent)
+      VALUES ($1, 'revision', $2, 'edited', NULL)`, [crypto.randomUUID(), revision.id])
+    const before = await readNativeNoteHistory(db)
+    const activity = (await db.query('SELECT * FROM provenance_edge')).rows
+    await expect(apply(db, { ...source, note_revisions: [],
+      note_revised_current: source.note_revised_current.map((row) => ({ ...row, last_revision_id: null })) }))
+      .rejects.toThrow('Omitted native revisions are referenced by retained live records')
+    expect(await readNativeNoteHistory(db)).toEqual(before)
+    expect((await db.query('SELECT * FROM provenance_edge')).rows).toEqual(activity)
+  })
+
   it('makes local edits usable after sparse imported revision numbers', async () => {
     const history = structuredClone(source)
     history.note_revisions[0].revision_number = 3

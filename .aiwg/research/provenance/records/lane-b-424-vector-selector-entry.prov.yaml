@@ -1,0 +1,122 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-11T03:15:57.047Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts",
+    "type": "code",
+    "created_at": "2026-09-11T03:15:57.047Z",
+    "checksum": "sha256:fe2ee27faddce584e271c3cabdd774b43ae42f6e3840251183c581b0b3e1e2fe",
+    "attributes": {
+      "status": "draft",
+      "artifacts": {
+        ".aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md": "671324ce5b86b948ea8b61fdb7f3d6831b4f60dfb9f2f61ec728ca139256cc87",
+        ".aiwg/architecture/SAD.md": "f61904f78122c5ea1b35ca134488a9d5f201cc343c7af19ad9289e76f23a6db5",
+        "CHANGELOG.md": "d769c4ca6703cbd3435a86408308ca2715298186a9425f426f86b1c81f8a6717",
+        "docs/content/api-reference.md": "b0bf0439fe3da6a76fefb7543bc530a12386e3e94d2a36857e3cd73031a6470d",
+        "packages/core/README.md": "984bb6deb41f346571b9e77d528546c8bd6b50fb0902089adec02171aa2b2841",
+        "packages/core/package.json": "df91c2721d7138114498e06030cd413a9ea16a95f2137e943ed6aaa0d000f07e",
+        "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "cc9442760d1b64af6acf7bf4962800c192b0e8b8b02299d6cabad3fac42f71f9",
+        "packages/core/schemas/knowledge-shard-v2.presence.receipt.json": "58366ac86761b2b0a874ae06a425d4ff98307a2e3c0e99adafd4b3dc112a5ec7",
+        "packages/core/scripts/generate-pglite-full-v1-receipt.mjs": "5f2b506ba103f7af8953a0c253934499f9b23612d88c9f930375251da89372c0",
+        "packages/core/scripts/generate-presence-receipt.mjs": "301c514ad3ab27405481f9570d6681229cbdde90cd99e30a3cfb50a1a82f5965",
+        "packages/core/src/__tests__/aiwg-index-full-shard.test.ts": "667dc52a51e4d2b1d32b88a2d70cab6c937fdfd20010bc8c4b468d21b803fb54",
+        "packages/core/src/__tests__/links-repository.test.ts": "7ff4e58017a4d6f57b0c867de89a2a0322ca5171c19876da5e7e733bf5fe8f92",
+        "packages/core/src/__tests__/shard/full-v1-store.test.ts": "071bdc5292306a468b4eb2ed5aa378c3e7b259619c61e58eec84233aa7243908",
+        "packages/core/src/__tests__/shard/profile-registry.test.ts": "98cf76033e999d586c148e239c3386383c304d817f050a7b652d86da9b9495a8",
+        "packages/core/src/__tests__/shard/shard-export.test.ts": "b5e340dfa91a81d39da48e1585e9878bf68e3f5ae494558c6d6fb4590e52b1c6",
+        "packages/core/src/migrations/index.ts": "e881a8fc7a00150133e7e60db41753cc331d310f6ed242e2ff30d6d383dff262",
+        "packages/core/src/repositories/embedding-sets-repository.ts": "970189c3dd24f084e281dac3b63d0d4d2fd89a54e31690c58563763832941b88",
+        "packages/core/src/repositories/links-repository.ts": "4b5034c6ba96cdbe94d5b327e222df7599b3498e872e5de4706963c72a76be51",
+        "packages/core/src/shard/live-full-v1.ts": "bfc49c7f464064029f9a4b89598abece37aafc9306e05a06a6449b2d7697bd69",
+        "packages/core/src/shard/native-core.ts": "148cb4ae1809c1c19f2ee7bf4be63cb8e7fbbd3734a8d757cb4734bf8baff0c8",
+        "packages/core/src/shard/native-embeddings.ts": "fe2ee27faddce584e271c3cabdd774b43ae42f6e3840251183c581b0b3e1e2fe",
+        "packages/core/src/shard/native-fields.ts": "dbf5e95c0924bc2b44f2bb57a15a31c6e98274d0ee1ae5a63da06aa40de499f8",
+        "packages/core/src/shard/native-graph.ts": "7e5aa929463a889f212e92085eb0a4f99c76a625dfdc206e869e8876d6c2b59c",
+        "packages/core/src/shard/native-note-history.ts": "aad32781506dc3f739918618023c73d12e033357d4ba9209dcf7e72766f68a5f",
+        "packages/core/src/shard/native-provenance.ts": "f89337a39e91b67fc708fd7020d57cc17cc1c747171802f6035436d991525663",
+        "packages/core/src/shard/native-skos.ts": "8765734d02181fbd85e102c8599a4eec931ba364a637131d2138e87eb85637a8",
+        "packages/core/src/shard/shard-export.ts": "0f1eb464bc41c7eeb6d4a5a23d9e07fed1fce36e71caf26bb9c6d81ff6e0dc58",
+        "packages/core/src/shard/shard-import.ts": "a7a60061ed549b94c54e562992fe2dce8692dfd63cdf427b25b51f779f877736",
+        "packages/core/src/shard/types.ts": "3425d84948028e596d7cd7a0d3c03cfbeff69610449f2dfd2fb7709d1d81b902",
+        "apps/standalone/e2e/fixtures/native-full-v1.html": "b4d163c0c29ae2705dba1040cd699661fda47cc45f8186d9775acc0a9ad030f7",
+        "apps/standalone/e2e/native-full-v1.test.ts": "c92cc710c240575dbcf96b8d22854298fce72caec4f5b905a31550ae5f019081",
+        "packages/core/src/__tests__/shard/native-full-v1-public.test.ts": "5d84deac563a2f2afaf68f0fa7a097c3aaa241b7b61898a8ca0117b0820179df",
+        "packages/core/src/migrations/0031_native_shard_lineage.ts": "6264f9684d7a22361b3220515ada3c752812a326f751bc0b6d1a3882720ac212",
+        "packages/core/src/shard/native-full-v1-import.ts": "5b73503eb74a6b672a872160855f1a5f7bd411bb7309709da0e0b9a7afa5da31",
+        "packages/core/src/shard/native-identities.ts": "d3ced44f6e8a471cda2410cfac759763da2e6b10873ea0301b54616785250d48",
+        "packages/core/src/shard/native-lineage.ts": "58e44db45c62e7b56c11672d53b5b77a3d70b25a854f0a3bd4ebf8dff5bbd82f",
+        "packages/core/src/shard/presence.ts": "228d0b55d39c719a43b91249f68a01a5bfa3306d9cc3835b239e9df766e079ea",
+        "packages/core/src/__tests__/shard/presence.test.ts": "d0943473e9d1c7199d222909772743fb9d76f7317e497932f052c493a64239b7",
+        "packages/core/src/__tests__/shard/native-full-v1-presence.test.ts": "74bc2afc85dd16e3d7746bcc59c4669752e3815407d6f801c4bdcbd0048453f5",
+        "packages/core/src/migrations/0032_native_revision_replace.ts": "e1bef0fb7a0cf338ea631c011b7889505d01872f0fd70aa5a2bae2baa965494e",
+        "packages/core/src/__tests__/shard/native-note-history.test.ts": "45862fbf9fb9e3537580ac921165303b01e0dcc843a523ed31e6ff27c503f0df"
+      },
+      "verification": {
+        "portable": 1802,
+        "repositories": 68,
+        "installed": 70,
+        "installedBeforePassed": 50,
+        "installedBeforeFailed": 20,
+        "unresolvedValueEntryRed": true
+      },
+      "limitations": [
+        "Unreleased dirty worktrees; inherited2026.9.3 metadata is not publication; suite NO-GO; exact2.0.0/full-v1.",
+        "Incoming vector additions and owner changes invalidate referenced and source-dependent virtual caches; conservative within affected physical source sets.",
+        "Five source types, empty/populated caches, move/insert, unchanged repeats, unrelated sources, rollback and clean installed native vector equality are covered. Source tests also cover same-set note and null-note entrance.",
+        "Installed fixtures are fixed synthetic archives, not a published authority corpus, live server capture or portable virtual definitions. No schema/profile tuple changes.",
+        "Producer source is unchanged; its116 shard and prior2934 Core results retain parent source boundaries and were not rerun. Browser/platform/CI gates were not rerun.",
+        "Actual unresolved RED: same-owner null-to-usable vector import succeeds but cached selector returns[] while live definition returns the expected note. Probe and fixed archives are preserved; this candidate is not release-ready.",
+        "Omissions, same-owner value/ordering changes, note/config dependencies, ordinary native writers, concurrency and complete cache consistency remain open.",
+        "SKOS/other families, shared fixture publication/pins, full original remote/HotM/search/purge/dataset/auth/public/worker/released/platform acceptance and repository delivery/cleanup/releases remain open."
+      ],
+      "issues": [
+        "Fortemi/fortemi#1147",
+        "Fortemi/fortemi-react#424"
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-424-vector-selector-entry:001",
+    "type": "modification",
+    "started_at": "2026-09-11T02:47:49.255Z",
+    "ended_at": "2026-09-11T03:15:57.047Z",
+    "description": "Invalidate materialized selectors for incoming uncached vectors through typed physical source dependencies, preserving unrelated caches and transaction rollback."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts",
+      "activity": "urn:aiwg:activity:modification:lane-b-424-vector-selector-entry:001",
+      "time": "2026-09-11T03:15:57.047Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-424-vector-selector-entry:001",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts",
+        "source": "urn:gitea:issue:Fortemi/fortemi:1147",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:modification:lane-b-424-vector-selector-entry:001"
+      },
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts",
+        "source": "urn:gitea:issue:Fortemi/fortemi-react:424",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:modification:lane-b-424-vector-selector-entry:001"
+      }
+    ]
+  }
+}

@@ -1,4 +1,7 @@
 import type { QueryExecutor } from '../storage-backend.js'
+import type { ShardComponent } from './types.js'
+
+export type NativeApplyProgress = (component: ShardComponent) => Promise<void>
 
 export type NativeField = { column?: string; kind?: 'json' | 'timestamp' | 'uuid' | 'vector' | 'range' }
 export type NativeFields<T> = { [K in keyof T]-?: NativeField }

@@ -512,8 +512,8 @@ revision changes. Legacy current-metadata writers retain their prior projection
 until independent note metadata is authored. Registered metadata predicates use
 the note field. This does not complete public full-v1 restore/export acceptance.
 `OriginalContentRevision` is exported by Core and preserves scalar timestamp
-precision. These reads do not imply that ordinary `full-v1` import restores
-native state: the all-component native dispatcher is still incomplete (#424).
+precision. The public `2.0.0/full-v1` dispatcher restores this native state;
+released and cross-runtime qualification remains tracked in #424.
 
 ---
 
@@ -696,7 +696,8 @@ record reads exclude soft-deleted rows.
 Concept creation writes English labels, an optional definition and a primary
 scheme membership transactionally. Label/note edits update flattened display
 fields, which are projections rather than rich record authority. These native
-reads do not imply public full-v1 native restoration; #424 remains incomplete.
+reads participate in public full-v1 native restoration; released qualification
+remains tracked in #424.
 
 | Method | Description |
 |--------|-------------|
@@ -752,9 +753,8 @@ objects to parse a second time. `useNoteProvenance` retains the same values.
 
 Capture records expose exact structured time ranges. Geometry getters emit EWKB
 from current native GeoJSON, retaining original byte order only for unchanged
-values. These APIs expose the internal native provenance stage, not completion
-of public `full-v1` restoration. Full archive transaction, export, and released
-producer/consumer qualification remain tracked in #424.
+values. These APIs expose the native provenance restored by public `full-v1`
+import. Released producer/consumer qualification remains tracked in #424.
 
 ---
 
@@ -813,7 +813,8 @@ metadata. `listMembers` includes declared memberships even without a vector.
 null vectors; selector resolution excludes rows without usable note vectors.
 `EmbeddingRow` exposes nullable owners/timestamps and explicit contract-fingerprint
 presence. `EmbeddingSetRow` also exposes stored index/refresh and agent metadata.
-These native reads do not yet imply public full-v1 native restoration (#424).
+These native reads expose public full-v1 restored state; released qualification
+remains tracked in #424.
 
 Semantic and hybrid queries compare vectors of the query dimension, exclude
 null vectors and rank each note once using its best matching chunk. An explicit
@@ -2064,8 +2065,7 @@ Produces the `.shard` archive bytes. With `includeBlobs`, attachment bytes are r
 
 Named profiles require `exportShardWithReport`; `exportShard` rejects a named
 profile so capability and loss evidence cannot be discarded. The exact
-`2.0.0/full-v1` PGlite path re-emits a complete, previously validated snapshot
-or produces a complete archive from representable live PGlite state and
+`2.0.0/full-v1` PGlite path produces an archive from current native state and
 requires a `BlobStore` for mandatory attachment bytes. The delivered local
 implementation receipt makes this exact-tuple path callable for producer and
 conformance use. It is not included in backend capability advertisements until
@@ -2078,8 +2078,8 @@ For live `2.0.0/full-v1`, select notes by a nonempty `tag` **or**
 use it with a note selector to limit both. Empty selectors/lists are rejected.
 A nonmatching note selector produces no notes or attachment bytes. A nonmatching
 embedding selector produces no embedding sets but does not remove selected notes.
-Stored snapshots reject every explicit scope selector instead of returning
-unfiltered bytes.
+Stored archival snapshots never participate in this dispatcher. Explicit
+archival export has no scope selectors and returns the stored logical files.
 
 Scoped note exports include their declared tags, histories, revisions, attachment
 projections and mandatory bytes. Note links require both endpoints to be selected;
@@ -2088,15 +2088,26 @@ revision. Graph edges and assignments are limited to selected notes and applicab
 embedding sets. Supporting collection ancestry, referenced graph/SKOS metadata,
 and shared templates remain profile dependencies, not additional selected notes.
 This is not an entire-database backup or an authorization boundary for shared
-metadata. Clean PGlite snapshot roundtrip is distinct from native restore (#424);
+metadata. Archival byte roundtrip is distinct from native restore (#424);
 released consumer qualification and suite NO-GO remain separately governed.
 
 #### `importShard(db, data, options?)`
 
-**Full-v1 limitation (#424):** this dispatcher currently stores an archival
-snapshot, not native repository state. Its matching export path can select that
-snapshot despite later native CRUD. Native restore/current-state export is not
-qualified. `core-v1` retains its native import path.
+For `2.0.0/full-v1`, this dispatcher validates the complete archive and restores
+all 33 declared components to native tables in one transaction. Native repository
+CRUD is visible to subsequent exports; archival records cannot shadow it.
+`skip` preserves existing identities and their owned state, but permits new
+records to reference existing targets. `replace` reconciles selected owners;
+`error` rejects an existing identity. Required sidecars are verified and newly
+promoted bytes are compensated after transaction failure. Released producer/
+consumer and platform qualification remains the separate #424 acceptance gate.
+
+Native migration lineage follows record identity and survives ordinary edits.
+Empty imports and no-op skips do not overwrite existing lineage. An export with
+incompatible selected histories returns `incompatible-native-migration-lineage`
+instead of silently replacing metadata; a coherent scope retains exact optional
+manifest key presence. Native exports regenerate producer/time/checksums and do
+not carry an imported signature over changed bytes.
 
 For intentionally archival operations, use the separately exported
 `importFullV1Snapshot(db, data, options?)` and
@@ -2123,7 +2134,7 @@ type ConflictStrategy = 'skip' | 'replace' | 'error'
 
 interface ImportOptions {
   conflictStrategy?: ConflictStrategy      // default 'skip'
-  batchSize?: number                       // rows between cooperative yields (default 250)
+  batchSize?: number                       // applied component rows between yields; default 250, zero disables yields
   onProgress?: (progress: ImportProgress) => void
   blobStore?: BlobStore                    // destination for hydrating sidecar attachment bytes
 }
@@ -2137,6 +2148,13 @@ interface ImportResult {
   duration_ms: number
 }
 ```
+
+Native progress counts declared component rows, including skipped rows as done;
+nested attachments and communities are fields of their owning row. Callbacks are
+awaited. Invalid batch sizes and precommit callback failures return a failed
+import without committed state. The final `index` notification follows commit;
+its rejection retains `success: true` and adds a warning. Unsigned imports under
+`verifySignature: 'prefer'` also warn that publisher provenance was not verified.
 
 Structured-error contract: a malformed manifest or component **resolves** to `{ success: false, errors: [...] }` — the promise does not reject. With `blobStore`, verified sidecar entries are promoted before the logical transaction; a failure rolls back newly promoted hashes and logical writes, while hashes that existed before import remain untouched. Custom stores without the optional `delete` capability fail before promotion. Without a blob store, attachments import as reference-only metadata. In legacy unprofiled `replace` mode, imported-note relationships converge to the archive and older live records cannot revive newer destination tombstones. These legacy semantics do not expand the named `core-v1` contract.
 

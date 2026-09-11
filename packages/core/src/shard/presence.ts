@@ -41,13 +41,14 @@ function pointerFromParts(parts: readonly string[]): string {
 
 /**
  * Expand authority wildcards to the concrete array-member paths present in a
- * document. A wildcard over an empty or missing collection has no field
- * instances; structural schema validation owns the collection itself.
+ * document. Children of absent/null objects and wildcards over empty or missing
+ * collections have no field instances; schema validation owns their parents.
  */
 export function concretePresencePointers(document: unknown, pointer: string): string[] {
   const parts = pointerParts(pointer)
   const visit = (value: unknown, index: number, concrete: string[]): string[] => {
     if (index === parts.length) return [pointerFromParts(concrete)]
+    if (value === null || typeof value !== 'object') return []
     const part = parts[index]
     if (part === '*') {
       if (!Array.isArray(value)) return []

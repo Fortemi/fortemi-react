@@ -153,7 +153,9 @@ describe('Knowledge Shard portability profiles (#355)', () => {
     })
     await notes.delete(deletedNote.id)
     const unscoredLink = await links.create(activeNote.id, deletedNote.id, 'related')
-    expect(unscoredLink.confidence).toBeNull()
+    // Existing unscored rows retain their legacy null projection.
+    await db.query('UPDATE link SET confidence = NULL WHERE id = $1', [unscoredLink.id])
+    expect((await links.get(unscoredLink.id)).confidence).toBeNull()
     const parentCollection = await collections.create({ name: 'Z parent' })
     const childCollection = await collections.create({
       name: 'A child',

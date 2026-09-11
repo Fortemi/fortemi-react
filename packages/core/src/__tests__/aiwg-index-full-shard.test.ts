@@ -184,7 +184,7 @@ describe('AIWG 2.0.0/full-v1 converter (#381)', () => {
     ]))
   })
 
-  it('imports through PGlite and converges on exact logical files', async () => {
+  it('restores through native PGlite and preserves exact logical records', async () => {
     const converted = await aiwgFortemiIndexToKnowledgeShardWithReport(sourceIndex(), {
       createdAt: '2026-07-22T12:00:00.000Z', matricVersion: '2026.7.13-test',
     })
@@ -203,8 +203,27 @@ describe('AIWG 2.0.0/full-v1 converter (#381)', () => {
       expect(exported.success, exported.errors.join('; ')).toBe(true)
       const expectedFiles = unpackTarGz(converted.archive!)
       const actualFiles = unpackTarGz(exported.archive!)
+      expect((await validateFullV1ShardArchive(actualFiles)).valid).toBe(true)
+      expect((await db.query('SELECT id FROM note')).rows).toHaveLength(2)
+      expect((await db.query('SELECT * FROM knowledge_shard_snapshot')).rows).toEqual([])
       expect([...actualFiles.keys()].sort()).toEqual([...expectedFiles.keys()].sort())
-      for (const [path, bytes] of expectedFiles) expect(actualFiles.get(path), path).toEqual(bytes)
+      for (const [path, bytes] of expectedFiles) {
+        if (path === 'manifest.json') {
+          const expected = JSON.parse(decoder.decode(bytes))
+          const actual = JSON.parse(decoder.decode(actualFiles.get(path)))
+          for (const key of ['version', 'profile', 'format', 'counts', 'min_reader_version', 'migration_history', 'migrated_from']) {
+            expect(Object.hasOwn(actual, key), key).toBe(Object.hasOwn(expected, key))
+            expect(actual[key], key).toEqual(expected[key])
+          }
+        } else if (path.endsWith('.json') || path.endsWith('.jsonl')) {
+          const parse = (value: Uint8Array | undefined): unknown[] => path.endsWith('.json')
+            ? JSON.parse(decoder.decode(value)) : decoder.decode(value).split('\n').filter(Boolean).map((line) => JSON.parse(line))
+          const expected = parse(bytes)
+          const actual = parse(actualFiles.get(path))
+          expect(actual, path).toHaveLength(expected.length)
+          expect(actual, path).toEqual(expect.arrayContaining(expected))
+        } else expect(actualFiles.get(path), path).toEqual(bytes)
+      }
     } finally {
       await db.close()
     }

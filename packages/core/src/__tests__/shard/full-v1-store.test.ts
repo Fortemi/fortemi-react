@@ -9,6 +9,8 @@ import { MigrationRunner } from '../../migration-runner.js'
 import { allMigrations } from '../../migrations/index.js'
 import { AttachmentsRepository } from '../../repositories/attachments-repository.js'
 import { NotesRepository } from '../../repositories/notes-repository.js'
+import { SkosRepository } from '../../repositories/skos-repository.js'
+import { importFullV1Snapshot, exportFullV1Snapshot } from '../../shard/full-v1-store.js'
 import { importShard } from '../../shard/shard-import.js'
 import { exportShardWithReport } from '../../shard/shard-export.js'
 import { packTarGz, unpackTarGz } from '../../shard/shard-tar.js'
@@ -96,11 +98,11 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
     }
   })
 
-  it('validates, persists all components and bytes, and converges on re-export', async () => {
+  it('explicitly archives all components and bytes and converges byte-for-byte on re-export', async () => {
     const archive = schema2Archive()
     expect((await validateFullV1ShardArchive(archive)).valid).toBe(true)
     const blobs = new MemoryBlobStore()
-    const imported = await importShard(db, archive, {
+    const imported = await importFullV1Snapshot(db, archive, {
       conflictStrategy: 'replace',
       blobStore: blobs,
     })
@@ -118,11 +120,7 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
     )
     expect(blobRefs.rows.map((row) => Number(row.ref_count))).toEqual([2])
 
-    const exported = await exportShardWithReport(db, {
-      profile: 'full-v1',
-      schemaVersion: '2.0.0',
-      blobStore: blobs,
-    })
+    const exported = await exportFullV1Snapshot(db, blobs)
     expect(
       exported.success,
       JSON.stringify({ errors: exported.errors, losses: exported.capability_report.losses }),
@@ -131,21 +129,17 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
 
     const destination = await createDb()
     const destinationBlobs = new MemoryBlobStore()
-    const first = await importShard(destination, exported.archive!, {
+    const first = await importFullV1Snapshot(destination, exported.archive!, {
       conflictStrategy: 'replace',
       blobStore: destinationBlobs,
     })
-    const second = await importShard(destination, exported.archive!, {
+    const second = await importFullV1Snapshot(destination, exported.archive!, {
       conflictStrategy: 'replace',
       blobStore: destinationBlobs,
     })
     expect(first.success).toBe(true)
     expect(second.success).toBe(true)
-    const returned = await exportShardWithReport(destination, {
-      profile: 'full-v1',
-      schemaVersion: '2.0.0',
-      blobStore: destinationBlobs,
-    })
+    const returned = await exportFullV1Snapshot(destination, destinationBlobs)
     expect(returned.success).toBe(true)
 
     const firstFiles = unpackTarGz(exported.archive!)
@@ -222,7 +216,7 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
     expect(first.success, first.errors.join('; ')).toBe(true)
     expect(second.success, second.errors.join('; ')).toBe(true)
     expect((await destination.query<{ ref_count: number }>(
-      'SELECT ref_count FROM knowledge_shard_blob_reference',
+      'SELECT reference_count AS ref_count FROM attachment_blob',
     )).rows.map((row) => Number(row.ref_count))).toEqual([1])
 
     const returned = await exportShardWithReport(destination, {
@@ -234,6 +228,7 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
     const returnedFiles = unpackTarGz(returned.archive!)
     expect([...returnedFiles.keys()].sort()).toEqual([...files.keys()].sort())
     for (const [path, bytes] of files) {
+      if (path === 'manifest.json') continue // A new native export has a new producer timestamp.
       expect(returnedFiles.get(path), path).toEqual(bytes)
     }
     await destination.close()
@@ -311,9 +306,7 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
     })
     expect(imported.success, imported.errors.join('; ')).toBe(true)
     const restoredNotes = await destination.query<{ id: string }>(
-      `SELECT record_json->>'id' AS id
-         FROM knowledge_shard_component_record
-        WHERE schema_version = '2.0.0' AND profile = 'full-v1' AND component = 'notes'`,
+      'SELECT id FROM note',
     )
     expect(restoredNotes.rows.map((row) => row.id)).toEqual([included.id])
     await destination.close()
@@ -368,13 +361,13 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
     const selectedSetId = crypto.randomUUID()
     const excludedSetId = crypto.randomUUID()
     await db.query(
-      `INSERT INTO embedding_set (id, model_name, dimensions, name)
-       VALUES ($1, 'model-a', 384, 'Selected set')`,
+      `INSERT INTO embedding_set (id, model_name, dimensions, name, slug, mode)
+       VALUES ($1, 'model-a', 384, 'Selected set', 'selected-set', 'manual')`,
       [selectedSetId],
     )
     await db.query(
-      `INSERT INTO embedding_set (id, model_name, dimensions, name)
-       VALUES ($1, 'model-b', 384, 'Excluded set')`,
+      `INSERT INTO embedding_set (id, model_name, dimensions, name, slug, mode)
+       VALUES ($1, 'model-b', 384, 'Excluded set', 'excluded-set', 'manual')`,
       [excludedSetId],
     )
     await db.query(
@@ -545,7 +538,6 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
     const configId = crypto.randomUUID()
     const embeddingSetId = crypto.randomUUID()
     const schemeId = crypto.randomUUID()
-    const conceptId = crypto.randomUUID()
     const graphId = crypto.randomUUID()
     const communitySetId = crypto.randomUUID()
     const communityId = crypto.randomUUID()
@@ -575,13 +567,9 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
        VALUES ($1, 'Portable taxonomy', 'Live SKOS state', $2, $2)`,
       [schemeId, timestamp],
     )
-    await db.query(
-      `INSERT INTO skos_concept (
-         id, scheme_id, pref_label, alt_labels, definition, created_at, updated_at
-       ) VALUES ($1, $2, 'Portability', '["Mobility"]'::jsonb,
-         'Data moves without semantic loss', $3, $3)`,
-      [conceptId, schemeId, timestamp],
-    )
+    const { id: conceptId } = await new SkosRepository(db).createConcept(schemeId, 'Portability', {
+      altLabels: ['Mobility'], definition: 'Data moves without semantic loss',
+    })
     await db.query(
       `INSERT INTO note_skos_tag (id, note_id, concept_id, created_at)
        VALUES ($1, $2, $3, $4)`,
@@ -649,7 +637,7 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
         : JSON.parse(text)
     }
     expect(parse('embedding_configs.json')).toEqual([
-      expect.objectContaining({ id: configId, created_at: timestamp, updated_at: timestamp }),
+      expect.objectContaining({ id: configId, created_at: '2026-07-22T18:00:00.000000Z', updated_at: '2026-07-22T18:00:00.000000Z' }),
     ])
     expect(parse('embedding_sets.json')).toEqual([
       expect.objectContaining({ id: embeddingSetId, slug: 'portable-set' }),
@@ -736,13 +724,11 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
     }])
     const signedArchive = packTarGz(files)
     const blobs = new MemoryBlobStore()
-    const imported = await importShard(db, signedArchive, {
+    const imported = await importFullV1Snapshot(db, signedArchive, {
       conflictStrategy: 'replace', blobStore: blobs, trustStore, verifySignature: 'require',
     })
     expect(imported.success, imported.errors.join('; ')).toBe(true)
-    const exported = await exportShardWithReport(db, {
-      profile: 'full-v1', schemaVersion: '2.0.0', blobStore: blobs,
-    })
+    const exported = await exportFullV1Snapshot(db, blobs)
     expect(exported.success, exported.errors.join('; ')).toBe(true)
     expect(await verifyShardSignature({
       files: unpackTarGz(exported.archive!), trustStore,
@@ -753,9 +739,9 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
     { tag: 'selected' },
     { collectionId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' },
     { embeddingSetIds: ['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'] },
-  ])('rejects scoped full-v1 export from persisted snapshots: %j', async (scope) => {
+  ])('keeps scoped native exports independent from persisted snapshots: %j', async (scope) => {
     const blobs = new MemoryBlobStore()
-    const imported = await importShard(db, schema2Archive(), {
+    const imported = await importFullV1Snapshot(db, schema2Archive(), {
       conflictStrategy: 'replace',
       blobStore: blobs,
     })
@@ -767,16 +753,18 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
       blobStore: blobs,
       ...scope,
     })
-    expect(exported.success).toBe(false)
-    expect(exported.archive).toBeNull()
-    expect(exported.errors.join('\n')).toContain(
-      'Persisted full-v1 snapshots cannot be filtered by collection, tag, or embedding set',
-    )
+    expect(exported.success, exported.errors.join('; ')).toBe(true)
+    expect(parseComponent(unpackTarGz(exported.archive!), 'notes.jsonl')).toEqual([])
+    const archived = await exportFullV1Snapshot(db, blobs)
+    expect(archived.success).toBe(true)
+    const originalFiles = unpackTarGz(schema2Archive())
+    const archivedFiles = unpackTarGz(archived.archive!)
+    for (const [path, bytes] of originalFiles) expect(archivedFiles.get(path), path).toEqual(bytes)
   }, 30_000)
 
   it('rebuilds a valid unsigned archive when persisted component rows change', async () => {
     const blobs = new MemoryBlobStore()
-    const imported = await importShard(db, schema2Archive(), {
+    const imported = await importFullV1Snapshot(db, schema2Archive(), {
       conflictStrategy: 'replace', blobStore: blobs,
     })
     expect(imported.success).toBe(true)
@@ -787,9 +775,7 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
           AND component = 'notes' AND ordinal = 0`,
     )
 
-    const exported = await exportShardWithReport(db, {
-      profile: 'full-v1', schemaVersion: '2.0.0', blobStore: blobs,
-    })
+    const exported = await exportFullV1Snapshot(db, blobs)
     expect(exported.success, exported.errors.join('; ')).toBe(true)
     const files = unpackTarGz(exported.archive!)
     expect(files.has(SIGNATURE_ENTRY)).toBe(false)
@@ -830,7 +816,7 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
 
   it('does not treat a different archive with the same tuple as identical', async () => {
     const blobs = new MemoryBlobStore()
-    const first = await importShard(db, schema2Archive(), {
+    const first = await importFullV1Snapshot(db, schema2Archive(), {
       conflictStrategy: 'replace', blobStore: blobs,
     })
     expect(first.success).toBe(true)
@@ -841,7 +827,7 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
     }
     manifest.created_at = '2026-07-22T23:59:59.000Z'
     files.set('manifest.json', new TextEncoder().encode(JSON.stringify(manifest, null, 2)))
-    const second = await importShard(db, packTarGz(files), {
+    const second = await importFullV1Snapshot(db, packTarGz(files), {
       conflictStrategy: 'skip', blobStore: blobs,
     })
     expect(second.success).toBe(false)
@@ -863,7 +849,7 @@ describe('complete PGlite 2.0.0/full-v1 persistence (#380)', () => {
       })),
     }
     const blobs = new MemoryBlobStore()
-    const result = await importShard(failingDb, schema2Archive(), {
+    const result = await importFullV1Snapshot(failingDb, schema2Archive(), {
       conflictStrategy: 'replace',
       blobStore: blobs,
     })

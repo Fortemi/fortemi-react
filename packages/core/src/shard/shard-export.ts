@@ -41,7 +41,6 @@ import {
 import type { BrowserNoteExport } from './field-mapper.js'
 import { restoreStoredPresence } from './presence.js'
 import { readStoredPresence } from './presence-store.js'
-import { exportFullV1Snapshot } from './full-v1-store.js'
 import { exportLiveFullV1 } from './live-full-v1.js'
 import type { LinkRow } from '../repositories/links-repository.js'
 import type { CollectionRow } from '../repositories/collections-repository.js'
@@ -107,12 +106,6 @@ function coreV1OptionErrors(options: ExportOptions): string[] {
     errors.push('core-v1 declares attachment references but not blob sidecar files')
   }
   return errors
-}
-
-function hasFullV1ScopeOptions(options: ExportOptions): boolean {
-  return options.collectionId !== undefined
-    || options.tag !== undefined
-    || options.embeddingSetIds !== undefined
 }
 
 function toCoreV1Note(note: ShardNote): ShardNote {
@@ -309,46 +302,7 @@ export async function exportShardWithReport(
       }
     }
     try {
-      const persisted = await db.query<{ present: boolean }>(
-        `SELECT EXISTS (
-           SELECT 1 FROM knowledge_shard_snapshot
-            WHERE schema_version = '2.0.0' AND profile = 'full-v1'
-         ) AS present`,
-      )
-      if (persisted.rows[0]?.present) {
-        if (hasFullV1ScopeOptions(options)) {
-          return {
-            success: false,
-            archive: null,
-            errors: [
-              'Persisted full-v1 snapshots cannot be filtered by collection, tag, or embedding set; use a live scoped export or export the complete persisted snapshot.',
-            ],
-            capability_report: capabilityReport,
-          }
-        }
-        return exportFullV1Snapshot(db, options.blobStore)
-      }
-      const coreArchive = await exportShardBytes(
-        db,
-        {
-          profile: 'core-v1',
-          schemaVersion: '2.0.0',
-          collectionId: options.collectionId,
-          tag: options.tag,
-        },
-        { nativeSchema2Presence: true },
-      )
-      const legacyArchive = await exportShardBytes(db, {
-        includeEmbeddings: true,
-        includeMaterializedSelectors: true,
-        collectionId: options.collectionId,
-        tag: options.tag,
-        embeddingSetIds: options.embeddingSetIds,
-      })
-      return exportLiveFullV1(db, coreArchive, legacyArchive, {
-        blobStore: options.blobStore,
-        signing: options.signing,
-      })
+      return await exportLiveFullV1(db, { ...options, blobStore: options.blobStore })
     } catch (error) {
       return {
         success: false,

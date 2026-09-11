@@ -1,6 +1,7 @@
 import type { QueryExecutor } from '../storage-backend.js'
+import type { VirtualEmbeddingSetSource } from '../repositories/embedding-sets-repository.js'
 import { nativeUuid as uuid, nativeUtc as utc, upsertNativeFields as upsertFields,
-  selectNativeFields as selectFields, type NativeFields as Fields } from './native-fields.js'
+  selectNativeFields as selectFields, type NativeFields as Fields, type NativeApplyProgress } from './native-fields.js'
 
 type JsonObject = Record<string, unknown>
 
@@ -112,13 +113,75 @@ const memberFields: Fields<NativeEmbeddingMember> = {
   added_at: { kind: 'timestamp' }, added_by: {},
 }
 
+function sourceSetIds(source: VirtualEmbeddingSetSource | null): string[] {
+  switch (source?.type) {
+    case 'criteria': return [source.baseSetId]
+    case 'set-operation': return source.setIds
+    case 'fallback': return source.preferredSetIds
+    case 'latest-compatible': return source.candidateSetIds
+    case 'snapshot': return [source.snapshotId]
+    default: return []
+  }
+}
+
+type NativeVectorChange = { id: string; old_set_id: string | null; new_set_id: string | null }
+
+async function invalidateIncomingVectorMaterializations(tx: QueryExecutor, rows: NativeEmbedding[]): Promise<void> {
+  const changed = await tx.query<NativeVectorChange>(`
+    SELECT incoming.id, e.embedding_set_id AS old_set_id, incoming.embedding_set_id AS new_set_id
+    FROM unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::text[])
+      incoming(id, note_id, embedding_set_id, vector_text, created_at)
+    LEFT JOIN embedding e ON e.id = incoming.id
+    WHERE e.id IS NULL OR
+      (e.note_id, e.embedding_set_id, e.vector, e.created_at) IS DISTINCT FROM
+      (incoming.note_id, incoming.embedding_set_id, incoming.vector_text::vector, incoming.created_at::timestamptz)`,
+  [rows.map((row) => uuid(row.id)), rows.map((row) => uuid(row.note_id)), rows.map((row) => uuid(row.embedding_set_id)),
+    rows.map((row) => row.vector === null ? null : JSON.stringify(row.vector)), rows.map((row) => row.created_at)])
+  await invalidateVectorMaterializations(tx, changed.rows)
+}
+
+/** Omission authority requires both selected owners; native references still
+ * reject deletion. RETURNING captures dependencies of exactly the removed rows. */
+export async function removeOmittedNativeEmbeddings(tx: QueryExecutor, noteIds: string[], setIds: string[], retainedIds: string[]): Promise<void> {
+  const deleted = await tx.query<NativeVectorChange>(`DELETE FROM embedding
+    WHERE note_id = ANY($1::text[]) AND embedding_set_id = ANY($2::text[])
+      AND NOT (id = ANY($3::text[]))
+    RETURNING id, embedding_set_id AS old_set_id, NULL::text AS new_set_id`, [noteIds, setIds, retainedIds])
+  await invalidateVectorMaterializations(tx, deleted.rows)
+}
+
+async function invalidateVectorMaterializations(tx: QueryExecutor, changed: NativeVectorChange[]): Promise<void> {
+  if (!changed.length) return
+  const changedSets = new Set(changed.flatMap((row) => [row.old_set_id, row.new_set_id].filter((id) => id !== null)))
+  const materializations = await tx.query<{ id: string; source_json: VirtualEmbeddingSetSource | null; referenced: boolean }>(`
+    SELECT s.id, s.source_json, EXISTS (
+      SELECT 1 FROM embedding_set_member m WHERE m.embedding_set_id = s.id
+        AND m.embedding_id = ANY($1::text[])) AS referenced
+    FROM embedding_set s WHERE s.kind = 'virtual' AND s.materialization_json IS NOT NULL`,
+  [changed.map((row) => row.id)])
+  // Cached members cannot reveal newly matching vectors, including empty results.
+  // Invalidate by declared physical source sets as well as existing references.
+  const affected = materializations.rows.filter((row) => row.referenced ||
+    sourceSetIds(row.source_json).some((id) => changedSets.has(id))).map((row) => row.id)
+  if (affected.length) await tx.query(`UPDATE embedding_set SET
+      materialization_json = materialization_json || jsonb_build_object('freshness', 'stale'),
+      freshness_json = jsonb_build_object('status', 'stale', 'sourceHash', materialization_json->'inputHash',
+        'checkedAt', now(), 'reason', 'Shard vector source state changed'), updated_at = now()
+    WHERE id = ANY($1::text[])`, [affected])
+}
+
 /** Internal stage. Caller validates the complete archive and resolves conflicts
  * in the enclosing transaction, including selected-owner replacement/deletion. */
-export async function applyValidatedNativeEmbeddings(tx: QueryExecutor, state: NativeEmbeddings): Promise<void> {
-  const configs = new Map(state.embedding_configs.map((row) => [uuid(row.id), row]))
-  for (const row of state.embedding_configs) await upsertFields(tx, 'embedding_config', row, configFields, ['id'], { shard_export_present: true })
+export async function applyValidatedNativeEmbeddings(tx: QueryExecutor, state: NativeEmbeddings, progress?: NativeApplyProgress): Promise<void> {
+  for (const row of state.embedding_configs) {
+    await upsertFields(tx, 'embedding_config', row, configFields, ['id'], { shard_export_present: true })
+    await progress?.('embedding_configs')
+  }
+  const configIds = state.embedding_sets.flatMap((row) => row.embedding_config_id === null ? [] : [uuid(row.embedding_config_id)!])
+  const configs = new Map((await tx.query<Pick<NativeEmbeddingConfig, 'id' | 'model' | 'dimension'>>(
+    'SELECT id, model, dimension FROM embedding_config WHERE id = ANY($1::text[])', [configIds])).rows.map((row) => [row.id, row]))
   for (const row of state.embedding_sets) {
-    const config = configs.get(uuid(row.embedding_config_id))
+    const config = row.embedding_config_id === null ? undefined : configs.get(uuid(row.embedding_config_id)!)
     const embedding = state.embeddings.find((record) => uuid(record.embedding_set_id) === uuid(row.id))
     await upsertFields(tx, 'embedding_set', row, setFields, ['id'], {
       kind: row.set_type === 'full' ? 'physical' : 'filter',
@@ -126,9 +189,30 @@ export async function applyValidatedNativeEmbeddings(tx: QueryExecutor, state: N
       dimensions: row.truncate_dim ?? config?.dimension ?? embedding?.vector?.length ?? 768,
       shard_export_present: true,
     })
+    await progress?.('embedding_sets')
   }
-  for (const row of state.embedding_set_members) await upsertFields(tx, 'embedding_set_member', row, memberFields,
-    ['embedding_set_id', 'note_id'], { embedding_id: null, shard_export_present: true })
+  for (const row of state.embedding_set_members) {
+    await upsertFields(tx, 'embedding_set_member', row, memberFields,
+      ['embedding_set_id', 'note_id'], { shard_export_present: true })
+    await progress?.('embedding_set_members')
+  }
+  if (state.embeddings.length) {
+    await invalidateIncomingVectorMaterializations(tx, state.embeddings)
+    await tx.query(`UPDATE embedding_set_member m SET embedding_id = NULL
+      FROM unnest($1::text[], $2::text[]) incoming(id, note_id)
+      WHERE m.embedding_id = incoming.id AND m.note_id IS DISTINCT FROM incoming.note_id`,
+    [state.embeddings.map((row) => uuid(row.id)), state.embeddings.map((row) => uuid(row.note_id))])
+  }
+  // Vacate only changed incoming coordinates, preserving IDs and native references.
+  // Nullable set coordinates keep the immediate unique index valid during cycles.
+  if (state.embeddings.length) await tx.query(`UPDATE embedding existing SET embedding_set_id = NULL
+    FROM unnest($1::text[], $2::text[], $3::text[], $4::integer[])
+      AS incoming(id, note_id, embedding_set_id, chunk_index)
+    WHERE existing.id = incoming.id AND existing.embedding_set_id IS NOT NULL
+      AND (existing.note_id, existing.embedding_set_id, existing.chunk_index)
+        IS DISTINCT FROM (incoming.note_id, incoming.embedding_set_id, incoming.chunk_index)`,
+  [state.embeddings.map((row) => uuid(row.id)), state.embeddings.map((row) => uuid(row.note_id)),
+    state.embeddings.map((row) => uuid(row.embedding_set_id)), state.embeddings.map((row) => row.chunk_index)])
   for (const row of state.embeddings) {
     await tx.query(`INSERT INTO embedding (id, note_id, embedding_set_id, chunk_index, text, vector, vector_values,
         model, contract_fingerprint, shard_contract_fingerprint_present, created_at, created_at_utc)
@@ -141,7 +225,21 @@ export async function applyValidatedNativeEmbeddings(tx: QueryExecutor, state: N
     [uuid(row.id), uuid(row.note_id), uuid(row.embedding_set_id), row.chunk_index, row.text,
       row.vector === null ? null : JSON.stringify(row.vector), row.vector, row.model,
       row.contract_fingerprint ?? null, Object.hasOwn(row, 'contract_fingerprint'), row.created_at])
+    await progress?.('embeddings')
   }
+  const changedConfigs = state.embedding_configs.map((row) => uuid(row.id))
+  // Retained sets also depend on a replaced config. These are native derived
+  // fields, not new portable metadata or a reason to delete existing vectors.
+  if (changedConfigs.length) await tx.query(`UPDATE embedding_set s SET model_name = c.model,
+      dimensions = COALESCE(s.truncate_dimension, c.dimension)
+    FROM embedding_config c WHERE s.embedding_config_id = c.id AND c.id = ANY($1::text[])`, [changedConfigs])
+  const incompatible = await tx.query(`SELECT e.id FROM embedding e
+    JOIN embedding_set s ON s.id = e.embedding_set_id
+    JOIN embedding_config c ON c.id = s.embedding_config_id
+    WHERE e.vector IS NOT NULL AND vector_dims(e.vector) <> COALESCE(s.truncate_dimension, c.dimension)
+      AND (c.id = ANY($1::text[]) OR s.id = ANY($2::text[]) OR e.id = ANY($3::text[])) LIMIT 1`,
+  [changedConfigs, state.embedding_sets.map((row) => uuid(row.id)), state.embeddings.map((row) => uuid(row.id))])
+  if (incompatible.rows.length) throw new Error('Native vector dimension conflicts with the retained set configuration')
 }
 
 /** Reads current typed native values, never an archival snapshot. */

@@ -29,6 +29,8 @@ import { migration0027 } from './0027_native_skos.js'
 import { migration0028 } from './0028_native_provenance.js'
 import { migration0029 } from './0029_native_graph.js'
 import { migration0030 } from './0030_native_core.js'
+import { migration0031 } from './0031_native_shard_lineage.js'
+import { migration0032 } from './0032_native_revision_replace.js'
 
 export const allMigrations: Migration[] = [
   migration0001,
@@ -61,4 +63,6 @@ export const allMigrations: Migration[] = [
   migration0028,
   migration0029,
   migration0030,
+  migration0031,
+  migration0032,
 ]

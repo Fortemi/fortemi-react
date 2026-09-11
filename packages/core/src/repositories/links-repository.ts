@@ -44,7 +44,7 @@ export class LinksRepository {
 
     const id = generateId()
     await this.db.query(
-      `INSERT INTO link (id, source_note_id, target_note_id, link_type) VALUES ($1, $2, $3, $4)`,
+      `INSERT INTO link (id, source_note_id, target_note_id, link_type, confidence) VALUES ($1, $2, $3, $4, 1)`,
       [id, sourceNoteId, targetNoteId, linkType],
     )
     return this.get(id)

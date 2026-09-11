@@ -233,7 +233,8 @@ describe('exportShard', () => {
   it('exports links with shard field names', async () => {
     const note1 = await notes.create({ content: 'Note A' })
     const note2 = await notes.create({ content: 'Note B' })
-    await links.create(note1.id, note2.id, 'related')
+    const legacyLink = await links.create(note1.id, note2.id, 'related')
+    await db.query('UPDATE link SET confidence = NULL WHERE id = $1', [legacyLink.id])
     await db.query(
       `INSERT INTO link_url_target (id, source_note_id, to_url, link_type, confidence, metadata_json, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,

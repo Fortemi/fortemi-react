@@ -1,5 +1,5 @@
 import type { QueryExecutor } from '../storage-backend.js'
-import { nativeUuid, selectNativeFields, upsertNativeFields, type NativeFields } from './native-fields.js'
+import { nativeUuid, selectNativeFields, upsertNativeFields, type NativeFields, type NativeApplyProgress } from './native-fields.js'
 import { currentGeometryEwkb, decodeWgs84Ewkb, type Wgs84Geometry, type Wgs84Point, type Wgs84Polygon } from './native-geometry.js'
 
 export interface NativeProvenanceActivity {
@@ -163,7 +163,7 @@ export function prepareNativeProvenanceGeometry(state: NativeProvenance): {
 
 /** Internal stage. Caller owns whole-archive validation, conflict/selection
  * decisions, dependent note/revision/attachment state and the enclosing transaction. */
-export async function applyValidatedNativeProvenance(tx: QueryExecutor, state: NativeProvenance): Promise<void> {
+export async function applyValidatedNativeProvenance(tx: QueryExecutor, state: NativeProvenance, progress?: NativeApplyProgress): Promise<void> {
   const geometry = prepareNativeProvenanceGeometry(state)
   async function apply<K extends Component>(component: K): Promise<void> {
     const { table, fields } = storage[component]
@@ -181,21 +181,23 @@ export async function applyValidatedNativeProvenance(tx: QueryExecutor, state: N
         extra.point = JSON.stringify(geometry.locations.get(nativeUuid(row.id)!))
       }
       await upsertNativeFields(tx, table, row, fields, ['id'], extra)
+      await progress?.(component)
     }
   }
   for (const component of Object.keys(storage) as Component[]) await apply(component)
 }
 
 export async function readNativeProvenanceComponent<K extends Component>(
-  tx: QueryExecutor, component: K, filter: Partial<Record<keyof RecordFor<K>, string>> = {},
+  tx: QueryExecutor, component: K, filter: Partial<Record<keyof RecordFor<K>, string | readonly string[]>> = {},
 ): Promise<RecordFor<K>[]> {
   const { table, fields } = storage[component]
   const params: unknown[] = []
   const predicates = Object.entries(filter).map(([name, value]) => {
     if (!Object.hasOwn(fields, name)) throw new Error(`Unknown provenance filter: ${name}`)
     const field = fields[name as keyof typeof fields]
-    params.push(field.kind === 'uuid' ? nativeUuid(value as string) : value)
-    return `${field.column ?? name} = $${params.length}`
+    const normalized = (item: string) => field.kind === 'uuid' ? nativeUuid(item) : item
+    params.push(Array.isArray(value) ? value.map(normalized) : normalized(value as string))
+    return Array.isArray(value) ? `${field.column ?? name} = ANY($${params.length}::text[])` : `${field.column ?? name} = $${params.length}`
   })
   const geometry = component === 'named_locations' ? ', point, boundary' : component === 'provenance_locations' ? ', point' : ''
   const rows = await tx.query<RecordFor<K> & { point?: Wgs84Geometry | null; boundary?: Wgs84Polygon | null }>(
@@ -210,9 +212,37 @@ export async function readNativeProvenanceComponent<K extends Component>(
 }
 
 /** Rich native records, not an archival snapshot or a synthetic empty projection. */
-export async function readNativeProvenance(tx: QueryExecutor): Promise<NativeProvenance> {
+export async function readNativeProvenance(tx: QueryExecutor, deferValidation = false, noteIds?: readonly string[]): Promise<NativeProvenance> {
   const unsupported = await tx.query('SELECT id FROM provenance_edge WHERE note_id IS NULL LIMIT 1')
-  if (unsupported.rows.length) throw new Error('unrepresentable-live-provenance-entity: activity has no native note owner')
+  if (!deferValidation && unsupported.rows.length) throw new Error('unrepresentable-live-provenance-entity: activity has no native note owner')
+  if (noteIds !== undefined) {
+    const selected = noteIds.map((id) => nativeUuid(id)!)
+    const attachments = (await tx.query<{ id: string }>('SELECT id FROM attachment WHERE note_id = ANY($1::text[])', [selected])).rows.map((row) => row.id)
+    const revisions = (await tx.query<{ id: string }>('SELECT id FROM note_revision WHERE note_id = ANY($1::text[])', [selected])).rows.map((row) => row.id)
+    const merge = <T extends { id: string }>(...groups: T[][]): T[] => [...new Map(groups.flat().map((row) => [row.id, row])).values()]
+    const activities = await readNativeProvenanceComponent(tx, 'provenance_activities', { note_id: selected })
+    const activityIds = new Set(activities.map((row) => row.id))
+    const records = merge(
+      await readNativeProvenanceComponent(tx, 'provenance_records', { note_id: selected }),
+      await readNativeProvenanceComponent(tx, 'provenance_records', { attachment_id: attachments }),
+    ).filter((row) => row.activity_id === null || activityIds.has(row.activity_id))
+    // Establish registry closure in SQL before decoding geometry or ranges.
+    // Invalid state outside the requested notes is not an export dependency.
+    const locationIds = [...new Set(records.flatMap((row) => [row.location_id, row.original_location_id].filter((id): id is string => id !== null)))]
+    const locations = await readNativeProvenanceComponent(tx, 'provenance_locations', { id: locationIds })
+    const namedIds = [...new Set(locations.flatMap((row) => row.named_location_id === null ? [] : [row.named_location_id]))]
+    const deviceIds = [...new Set(records.flatMap((row) => row.device_id === null ? [] : [row.device_id]))]
+    return {
+      provenance_activities: activities,
+      provenance_edges: merge(
+        await readNativeProvenanceComponent(tx, 'provenance_edges', { revision_id: revisions }),
+        await readNativeProvenanceComponent(tx, 'provenance_edges', { source_note_id: selected }),
+      ),
+      provenance_records: records, provenance_locations: locations,
+      named_locations: await readNativeProvenanceComponent(tx, 'named_locations', { id: namedIds }),
+      provenance_devices: await readNativeProvenanceComponent(tx, 'provenance_devices', { id: deviceIds }),
+    }
+  }
   return {
     provenance_activities: await readNativeProvenanceComponent(tx, 'provenance_activities'),
     provenance_edges: await readNativeProvenanceComponent(tx, 'provenance_edges'),

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="UTF-8"><title>Native full-v1 regression</title></head>
+  <body>
+    <main role="status">Loading</main>
+    <script type="module">
+      import * as core from '@fortemi/core'
+
+      window.runNativeFullV1 = async (bytes) => {
+        const db = await core.createPGliteInstance('memory', crypto.randomUUID())
+        const blobs = new core.MemoryBlobStore()
+        const options = { profile: 'full-v1', schemaVersion: '2.0.0', blobStore: blobs }
+        const requireSuccess = (result) => {
+          if (!result.success) throw new Error(JSON.stringify(result.errors))
+          return result
+        }
+        try {
+          await new core.MigrationRunner(db).apply(core.allMigrations)
+          const archive = new Uint8Array(bytes)
+          const imported = requireSuccess(await core.importShard(db, archive, { blobStore: blobs, conflictStrategy: 'replace' }))
+          const initial = requireSuccess(await core.exportShardWithReport(db, options))
+          const files = core.unpackTarGz(archive)
+          const source = new TextDecoder().decode(files.get('notes.jsonl')).split('\n').filter(Boolean).map(JSON.parse)
+          const notes = new core.NotesRepository(db)
+          const detail = await notes.get(source[0].id)
+          requireSuccess(await core.importFullV1Snapshot(db, archive, { blobStore: blobs }))
+          await notes.update(source[0].id, { content: 'BROWSER-NATIVE-EDIT-424' })
+          const created = await notes.create({ content: 'BROWSER-NATIVE-NEW-424', tags: ['browser-native-424'] })
+          await notes.delete(source[0].id)
+          const edited = requireSuccess(await core.exportShardWithReport(db, options))
+          const scoped = requireSuccess(await core.exportShardWithReport(db, { ...options, tag: 'browser-native-424' }))
+          const destination = await core.createPGliteInstance('memory', crypto.randomUUID())
+          let returned
+          try {
+            await new core.MigrationRunner(destination).apply(core.allMigrations)
+            const destinationBlobs = new core.MemoryBlobStore()
+            requireSuccess(await core.importShard(destination, edited.archive, { blobStore: destinationBlobs }))
+            returned = requireSuccess(await core.exportShardWithReport(destination, { ...options, blobStore: destinationBlobs }))
+          } finally { await destination.close() }
+          return {
+            importedNotes: imported.counts.notes,
+            detail: { id: detail.id, metadata: detail.metadata }, createdId: created.id,
+            initial: Array.from(initial.archive), edited: Array.from(edited.archive),
+            scoped: Array.from(scoped.archive), returned: Array.from(returned.archive),
+          }
+        } finally { await db.close() }
+      }
+      document.querySelector('main').textContent = 'Ready'
+    </script>
+  </body>
+</html>

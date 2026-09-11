@@ -172,19 +172,28 @@ zero; `component_counts` describes archival records. Native CRUD is intentionall
 excluded from an explicitly requested archival export. Native batching/progress
 options are not part of `FullV1SnapshotImportOptions`.
 
-Native `full-v1` restore remains tracked in #424. The current `importShard`
-full-v1 path still delegates to archival storage, and implicit snapshot selection
-can omit later native changes. Do not use that path as native recovery or as
-proof of a current-state backup. These explicit operations separate the archival
-guarantee; they do not complete the native restore repair or widen historical
-receipts. Reduced `core-v1` import uses its existing native path.
+The public `importShard` path restores `2.0.0/full-v1` records into native PGlite
+tables in one transaction. `exportShardWithReport` reads current native state,
+never an archival snapshot. Ordinary repository edits therefore affect subsequent
+exports. All 33 files are reconstructed with semantic field/presence/array and
+attachment-byte preservation; generated manifest time and producer identity are
+new, and only a newly requested publisher signature signs these bytes.
 
-PGlite uses the same rule for `2.0.0/full-v1`. A previously imported full
-snapshot re-exports its complete logical file set; otherwise the exporter
-materializes all 33 files from live domain tables, requires every referenced
-attachment byte, and can add an Ed25519 publisher signature. Live values that
-cannot satisfy the authority schema, including non-768-dimensional embedding
-vectors, return `archive: null` with a typed capability loss.
+`skip` preserves existing identities and their owned children, while new records
+may reference existing targets. `replace` reconciles selected owners; `error`
+rejects existing identities. Failed transactions compensate newly promoted blobs.
+`batchSize` defaults to 250 applied component rows; zero disables cooperative
+yields. Progress callbacks are awaited. Precommit callback failure rolls back;
+failure of the final notification after commit produces a warning, not a false
+failed-import result.
+
+Manifest migration lineage is stored per native record. Coherent scoped exports
+preserve its absent/empty/value distinctions; incompatible selected histories
+return a typed loss instead of choosing the last import. Selected virtual sets,
+unrepresentable tombstones or non-768-dimensional vectors also return
+`archive: null`. Required attachment bytes must be available and valid.
+Native restore qualification remains tracked in #424; source/candidate checks do
+not widen historical published-package or supported-platform receipts.
 
 PGlite advertises exact `2.0.0/full-v1` import and export only because
 `schemas/knowledge-shard-v2.cross-repository.receipt.json` binds the released

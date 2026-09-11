@@ -1,5 +1,5 @@
 import type { QueryExecutor } from '../storage-backend.js'
-import { nativeUuid, selectNativeFields, upsertNativeFields, type NativeField, type NativeFields } from './native-fields.js'
+import { nativeUuid, selectNativeFields, upsertNativeFields, type NativeField, type NativeFields, type NativeApplyProgress } from './native-fields.js'
 
 export interface NativeGraphSource {
   id: string
@@ -88,22 +88,36 @@ const assignmentFields: NativeFields<NativeCommunityAssignment> = {
 /** Internal stage. Caller owns whole-archive validation, selected-owner deletion,
  * conflict decisions, dependent notes and the enclosing transaction. Nested
  * communities are a complete field value of each included community set. */
-export async function applyValidatedNativeGraph(tx: QueryExecutor, state: NativeGraph): Promise<void> {
-  for (const row of state.graph_sources) await upsertNativeFields(tx, 'graph_source', row, sourceFields, ['id'])
-  for (const row of state.graph_edges) await upsertNativeFields(tx, 'graph_edge_artifact', row, edgeFields,
-    ['graph_source_id', 'from_note_id', 'to_note_id', 'kind'])
+export async function applyValidatedNativeGraph(tx: QueryExecutor, state: NativeGraph, progress?: NativeApplyProgress): Promise<void> {
+  for (const row of state.graph_sources) {
+    await upsertNativeFields(tx, 'graph_source', row, sourceFields, ['id'])
+    await progress?.('graph_sources')
+  }
+  for (const row of state.graph_edges) {
+    await upsertNativeFields(tx, 'graph_edge_artifact', row, edgeFields, ['graph_source_id', 'from_note_id', 'to_note_id', 'kind'])
+    await progress?.('graph_edges')
+  }
   for (const row of state.communities) {
     await upsertNativeFields(tx, 'community_set', row, setFields, ['id'])
-    await tx.query('DELETE FROM community WHERE community_set_id = $1 AND NOT (id = ANY($2::text[]))',
-      [row.id, row.communities.map((community) => community.id)])
     for (const [position, community] of row.communities.entries()) {
       await upsertNativeFields(tx, 'community', { ...community,
         representative_note_ids: community.representative_note_ids?.map((id) => nativeUuid(id)!) ?? null },
       communityFields, ['community_set_id', 'id'], { community_set_id: row.id, position })
     }
+    await progress?.('communities')
   }
-  for (const row of state.community_assignments) await upsertNativeFields(tx, 'community_assignment', row, assignmentFields,
-    ['community_set_id', 'note_id'])
+  const selectedChildren = new Map(state.communities.map((set) => [set.id, new Set(set.communities.map((child) => child.id))]))
+  for (const row of state.community_assignments) {
+    const children = selectedChildren.get(row.community_set_id)
+    if (children && !children.has(row.community_id)) throw new Error('Incoming assignment references an omitted native community')
+    await upsertNativeFields(tx, 'community_assignment', row, assignmentFields, ['community_set_id', 'note_id'])
+    await progress?.('community_assignments')
+  }
+  // Move retained assignments first, before omitted communities can cascade.
+  for (const row of state.communities) {
+    await tx.query('DELETE FROM community WHERE community_set_id = $1 AND NOT (id = ANY($2::text[]))',
+      [row.id, row.communities.map((community) => community.id)])
+  }
 }
 
 export async function readNativeCommunities(tx: QueryExecutor, setId: string): Promise<NativeCommunity[]> {

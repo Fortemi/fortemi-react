@@ -144,6 +144,21 @@ async function verifyRecordStoreRoundTrips(
 }
 
 describe('Knowledge Shard 2.0 presence semantics (#379)', () => {
+  it('does not require child fields of a null or absent optional object', () => {
+    for (const record of [{ capture_time: null }, {}]) {
+      expect(concretePresencePointers(record, '/capture_time/lower')).toEqual([])
+      expect(capturePresence(record, ['/capture_time', '/capture_time/lower']))
+        .toEqual({ '/capture_time': Object.hasOwn(record, 'capture_time') ? 'null' : 'absent' })
+      expect(presenceLosses('full-v1', 'provenance_records', record)
+        .filter((loss) => loss.field_path?.startsWith('/capture_time/'))).toEqual([])
+    }
+    expect(concretePresencePointers({ capture_time: {} }, '/capture_time/lower')).toEqual(['/capture_time/lower'])
+    expect(presenceLosses('full-v1', 'provenance_records', { capture_time: {} }))
+      .toEqual(expect.arrayContaining([expect.objectContaining({ field_path: '/capture_time/lower', source_state: 'absent' })]))
+    expect(concretePresencePointers({ entries: [null, {}, { value: null }] }, '/entries/*/value'))
+      .toEqual(['/entries/1/value', '/entries/2/value'])
+  })
+
   it('preserves own-property state through JSON serialization for canonical vectors', () => {
     for (const testCase of fixtures.cases) {
       const document = structuredClone(

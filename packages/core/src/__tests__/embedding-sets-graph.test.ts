@@ -263,6 +263,21 @@ describe('embedding sets and graph APIs', () => {
     expect(resolved.noteIds).toEqual(['note-a'])
   })
 
+  it.each([null, 'null', '{}', 'false', '0', '""', '[]'])(
+    'treats SQL and JSON null metadata as absent: %s', async (metadata) => {
+      const sets = new EmbeddingSetsRepository(db)
+      const base = await sets.create({ name: 'Metadata null semantics' })
+      await sets.putEmbedding({ note_id: 'note-a', embedding_set_id: base.id, vector: vec(1, 0) })
+      await db.query('UPDATE note_revised_current SET ai_metadata = $1::jsonb WHERE note_id = $2', [metadata, 'note-a'])
+      for (const hasAiMetadata of [true, false]) {
+        const result = await sets.resolveSelector({ kind: 'virtual-definition', definition: {
+          id: 'metadata-filter', name: 'Metadata filter', source: { type: 'criteria', baseSetId: base.id, criteria: { hasAiMetadata } },
+          compatibility: { model: 'require-same', dimension: 'require-same', duplicateVectors: 'prefer-set-order', missingVectors: 'omit' },
+        } })
+        expect(result.noteIds).toEqual(hasAiMetadata === (metadata !== null && metadata !== 'null') ? ['note-a'] : [])
+      }
+    })
+
   it('materializes, reuses, and invalidates criteria virtual embedding selectors', async () => {
     const sets = new EmbeddingSetsRepository(db)
     const base = await sets.create({ name: 'Materialized property vectors' })

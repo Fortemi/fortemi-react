@@ -1,6 +1,6 @@
 import type { QueryExecutor } from '../storage-backend.js'
 import { generateId } from '../uuid.js'
-import { nativeUuid, selectNativeFields, upsertNativeFields, type NativeFields } from './native-fields.js'
+import { nativeUuid, selectNativeFields, upsertNativeFields, type NativeFields, type NativeApplyProgress } from './native-fields.js'
 
 interface SkosEmbedding {
   embedding: number[] | null
@@ -188,9 +188,29 @@ const storage: { [K in Component]: { table: string; fields: NativeFields<RecordF
   } },
 }
 
+/** Remove only omitted selected-owner children; retained native references survive upsert. */
+export async function removeOmittedNativeSkos(tx: QueryExecutor, state: NativeSkos, selectedNoteIds: string[]): Promise<void> {
+  const concepts = state.skos_concepts.map((row) => nativeUuid(row.id)!)
+  const owned: Array<[Component, string, string[]]> = [
+    ['skos_labels', 'concept_id', concepts], ['skos_notes', 'concept_id', concepts],
+    ['skos_relations', 'source_concept_id', concepts], ['skos_mapping_relations', 'concept_id', concepts],
+    ['skos_scheme_memberships', 'concept_id', concepts], ['note_skos_tags', 'note_id', selectedNoteIds.map((id) => nativeUuid(id)!)],
+    ['skos_collection_members', 'collection_id', state.skos_collections.map((row) => nativeUuid(row.id)!)],
+  ]
+  for (const [component, owner, selected] of owned) {
+    if (selected.length === 0) continue
+    const { table, keys } = storage[component]
+    const incoming = state[component] as unknown as Record<string, string>[]
+    await tx.query(`DELETE FROM ${table} existing WHERE existing.${owner} = ANY($1::text[])
+      AND NOT EXISTS (SELECT 1 FROM UNNEST(${keys.map((_, index) => `$${index + 2}::text[]`).join(', ')}) incoming(${keys.join(', ')})
+        WHERE ${keys.map((key) => `incoming.${key} = existing.${key}`).join(' AND ')})`,
+    [selected, ...keys.map((key) => incoming.map((row) => nativeUuid(row[key])))])
+  }
+}
+
 /** Internal stage; caller validates the whole archive, resolves conflicts and
  * selected-row deletion, and owns the surrounding transaction. */
-export async function applyValidatedNativeSkos(tx: QueryExecutor, state: NativeSkos): Promise<void> {
+export async function applyValidatedNativeSkos(tx: QueryExecutor, state: NativeSkos, progress?: NativeApplyProgress): Promise<void> {
   async function apply<K extends Component>(component: K): Promise<void> {
     const { table, fields, keys } = storage[component]
     for (const row of state[component]) {
@@ -198,6 +218,7 @@ export async function applyValidatedNativeSkos(tx: QueryExecutor, state: NativeS
         : component === 'skos_concepts' ? { pref_label: (row as NativeSkosConcept).notation ?? (row as NativeSkosConcept).id, deleted_at: null }
           : component === 'skos_schemes' ? { deleted_at: null } : {}
       await upsertNativeFields(tx, table, row, fields, keys, extra, component === 'note_skos_tags' ? ['id'] : [])
+      await progress?.(component)
     }
   }
   for (const component of Object.keys(storage) as Component[]) await apply(component)
@@ -223,10 +244,10 @@ export async function readNativeSkosComponent<K extends Component>(
 }
 
 /** Unscoped internal reader fails on tombstones, which full-v1 cannot encode. */
-export async function readNativeSkos(tx: QueryExecutor): Promise<NativeSkos> {
+export async function readNativeSkos(tx: QueryExecutor, deferValidation = false): Promise<NativeSkos> {
   const tombstones = await tx.query(`SELECT id FROM skos_scheme WHERE deleted_at IS NOT NULL
     UNION ALL SELECT id FROM skos_concept WHERE deleted_at IS NOT NULL LIMIT 1`)
-  if (tombstones.rows.length) throw new Error('unrepresentable-live-tombstone: native SKOS full-v1')
+  if (!deferValidation && tombstones.rows.length) throw new Error('unrepresentable-live-tombstone: native SKOS full-v1')
   return {
     skos_schemes: await readNativeSkosComponent(tx, 'skos_schemes'),
     skos_concepts: await readNativeSkosComponent(tx, 'skos_concepts'),

@@ -1,0 +1,69 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-11T09:31:01.157Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:tools/release/verify-core-package.mjs",
+    "type": "code",
+    "created_at": "2026-09-11T09:31:01.157Z",
+    "checksum": "sha256:6d865deef277ac298e8aa630473de26ede3a7a9a8cef5a0559ee1b7922650db3",
+    "attributes": {
+      "status": "draft",
+      "artifacts": {
+        "tools/release/verify-core-package.mjs": "6d865deef277ac298e8aa630473de26ede3a7a9a8cef5a0559ee1b7922650db3",
+        "CHANGELOG.md": "70e4545be997a3871b58c1881b61f844e914d9ab32bc957d2d0555da8f2402be",
+        ".aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md": "b779a9fbaee7f7a1c6e2598b8dfcd140b79ec508430b425a388b8f0ebe2750de",
+        ".aiwg/architecture/SAD.md": "a8fb128a06844ec0970b2a50246ea1aded9e5545cc6db6b0f1966da480e1da68"
+      },
+      "verification": {
+        "packageGate": "PASS",
+        "typecheck": "PASS",
+        "lint": "PASS",
+        "exactHeadCi": "not yet submitted"
+      },
+      "limitations": [
+        "Unreleased candidate; suite NO-GO; exact 2.0.0/full-v1 only",
+        "Prior cycle20 covers 28 producer exports and 56 clean consumers; not rerun here",
+        "Package gate uses unchanged candidate170632fb, not a published package",
+        "Server, full Lane B, runtime/platform and release qualification remain open"
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-424-native-package-gate:001",
+    "type": "modification",
+    "started_at": "2026-09-11T09:25:48.198Z",
+    "ended_at": "2026-09-11T09:31:01.157Z",
+    "description": "Update required package gate from archival expectations to native scoped export and persisted CRUD/search/traversal while retaining legacy null links."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:tools/release/verify-core-package.mjs",
+      "activity": "urn:aiwg:activity:modification:lane-b-424-native-package-gate:001",
+      "time": "2026-09-11T09:31:01.157Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:tools/release/verify-core-package.mjs",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-424-native-package-gate:001",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:tools/release/verify-core-package.mjs",
+        "source": "urn:gitea:issue:Fortemi/fortemi-react:424",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:modification:lane-b-424-native-package-gate:001"
+      }
+    ]
+  }
+}
