@@ -1653,7 +1653,7 @@ describe('public native full-v1 restore, distinct from archival snapshots', () =
       expect(after.provenance_records.find((row) => row.id === capture.id)).toEqual(capture)
       await expectPublicRoundTrip(after)
     }
-  })
+  }, 30_000)
 
   it.each(['retained-source', 'independent-source', 'reparented-selected-set', 'empty-family'] as const)('preserves unrelated set assignments to imported notes during %s replacement', async (mode) => {
     const source = records as unknown as NativeState
@@ -1706,7 +1706,7 @@ describe('public native full-v1 restore, distinct from archival snapshots', () =
       }
       await expectPublicRoundTrip(after)
     }
-  })
+  }, 30_000)
 
   it.each(['history', 'skos', 'graph', 'embeddings', 'links', 'attachments'] as const)('reconciles omitted %s children repeatedly while preserving unrelated roots', async (family) => {
     const source = records as unknown as NativeState
@@ -1753,7 +1753,7 @@ describe('public native full-v1 restore, distinct from archival snapshots', () =
       if (family === 'attachments') for (const note of source.notes) expect(after.notes.find((row) => row.id === note.id)!.attachments).toEqual([])
       await expectPublicRoundTrip(after)
     }
-  })
+  }, 30_000)
 
   it('upgrades populated revision uniqueness without weakening commit-time constraints', async () => {
     const legacy = await PGlite.create({ extensions: { vector } })

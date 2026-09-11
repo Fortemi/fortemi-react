@@ -1,0 +1,122 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-11T11:15:11.593Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:docs/content/releases/v2026.9.4.md",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-11T11:15:11.593Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/reports/doc-sync-last-run.json",
+          "sha256": "cbd179e2de627a424069b1d9385c9a9dbc841f3cccf3fd36904479e58ae09720"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "sha256": "da15545ca81ae5f5d40ee31a72b4300727aa5e5e01d465f61c2b202ee2134fcc"
+        },
+        {
+          "path": "apps/standalone/package.json",
+          "sha256": "ed2ad48712cd09e05b0a5b27e25d5420fe19365194953530528809eda32af8ed"
+        },
+        {
+          "path": "docs/content/api-reference.md",
+          "sha256": "22c45eb44fe6f2e706a069ed1ec340bf97bc3b52dea867253037ec20238aec25"
+        },
+        {
+          "path": "package.json",
+          "sha256": "3b62c16066db49659b4fe31a946513dce966f88ce8f08a93bef160a0d53fcc7e"
+        },
+        {
+          "path": "packages/core/package.json",
+          "sha256": "69525fe835c9d03a6d89121b4b755066a35f08ff2e29e0649b4387e702be542a"
+        },
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+          "sha256": "2fe9bf994079265d6674ade4fee11773beb5333b53ae81ad3d1de59d6cdcf0aa"
+        },
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.presence.receipt.json",
+          "sha256": "fdafbbd33c457a5b275c70a8da2f8302d66a46d36e1f0de0b507d6283eb1a43b"
+        },
+        {
+          "path": "packages/core/src/__tests__/shard/native-full-v1-public.test.ts",
+          "sha256": "39d5e623e222df5f937045dd838691dad98ac572aaa80820ee4baeff2f93ad5a"
+        },
+        {
+          "path": "packages/core/src/index.ts",
+          "sha256": "c8f9ce8993c1d3ba2a90db649d1a6976329995a0f9e5968bf69aa0e60a34c308"
+        },
+        {
+          "path": "packages/graph/package.json",
+          "sha256": "cd5db7ec901e9ed11587cff2ecfd2ceaf66b3c2b306716aeff3b0845066df53e"
+        },
+        {
+          "path": "packages/graph/src/index.ts",
+          "sha256": "d94cfd92aadc25e0bdc032254173f133a8416ae15ad1a1b462cc1d0eadc61d56"
+        },
+        {
+          "path": "packages/react/package.json",
+          "sha256": "afd99235187169aae87c10fc6f76a8f50064edee1c3865a2dfcf4ac81b99a0d0"
+        },
+        {
+          "path": ".aiwg/reports/doc-sync-20260911-release-2026.9.4.md",
+          "sha256": "6b61d71fa5220596f1af58373aa1b90f308298bfd1743cd68fec642a0a8dce5d"
+        },
+        {
+          "path": "docs/content/releases/v2026.9.4.md",
+          "sha256": "eaa2fb38fff2097dcc97b92e093898fa53e36e173d416e13f5dcf9e92c1fc225"
+        }
+      ],
+      "boundaries": [
+        "Release metadata, docs and three bounded test budgets; no runtime or authority/profile change",
+        "Core2991 coverage and final clean-installed package pass; browser40pass/2skip",
+        "Exact-source CI/merge/publication and full Lane B qualification remain; suite NO-GO"
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:release-prep-2026.9.4:001",
+    "type": "modification",
+    "started_at": "2026-09-11T10:45:00Z",
+    "ended_at": "2026-09-11T11:15:11.593Z",
+    "description": "Prepare version2026.9.4 from merged native/remote work; correct coverage integration budgets and current receipts; verify local release gates."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:docs/content/releases/v2026.9.4.md",
+      "activity": "urn:aiwg:activity:modification:release-prep-2026.9.4:001",
+      "time": "2026-09-11T11:15:11.593Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:docs/content/releases/v2026.9.4.md",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:release-prep-2026.9.4:001",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:docs/content/releases/v2026.9.4.md",
+        "source": "urn:gitea:issue:Fortemi/fortemi-react:424",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:modification:release-prep-2026.9.4:001"
+      },
+      {
+        "entity": "urn:aiwg:artifact:docs/content/releases/v2026.9.4.md",
+        "source": "urn:gitea:issue:Fortemi/fortemi:1147",
+        "derivation_type": "derives_from",
+        "activity": "urn:aiwg:activity:modification:release-prep-2026.9.4:001"
+      }
+    ]
+  }
+}

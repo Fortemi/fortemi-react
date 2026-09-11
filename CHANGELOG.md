@@ -4,8 +4,22 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.9.4 - 2026-09-11
+
+### Product export and remote adapters (#423, #425, #417-421)
+
+- Use a reported `core-v1` default product export and reject ambiguous scopes
+  instead of silently broadening archives. Preserve explicit empty selections.
+- Validate remote note, directional-link, SKOS and provenance responses against
+  pinned producer fixtures; preserve empty revised content and UTC timestamps.
+- Send supported search and lifecycle requests. Return bounded typed failures
+  for denied, unavailable or malformed responses instead of disguising them as
+  missing notes. Released authentication/vector qualification remains separate.
+
 ### Public native full-v1 restore (#424)
 
+- Give repeated native-restore integration scenarios explicit bounded test budgets
+  under coverage without relaxing rollback or clean round-trip assertions.
 - Restore all 33 `2.0.0/full-v1` components into native PGlite state and export
   current repository values without implicit archival snapshot selection.
 - Preserve native skip ownership, selected-owner replacement, mandatory bytes,
@@ -48,9 +62,9 @@ All notable changes to fortemi-react are documented here.
   Reconcile selected revision derivations and defer activity omissions until
   incoming captures have moved; reject deletion of still-referenced activities
   or revisions. Keep independent roots and source-note references intact.
-- Keep explicit archival byte preservation separate. This supersedes the internal
-  stage dispatch limitations below; released producer/consumer qualification is
-  still required and suite NO-GO remains.
+- Keep explicit archival byte preservation separate. Public native dispatch
+  supersedes the earlier internal-stage limitations below. Exact released
+  producer/consumer qualification remains required; suite NO-GO remains.
 - Exercise scoped native export, persisted repository CRUD, search and backlinks
   through the required clean-installed package gate, including repeat import into
   a second clean destination. Remove its superseded archival-dispatch expectation.
@@ -65,8 +79,8 @@ All notable changes to fortemi-react are documented here.
   uses note metadata independently of current revision AI metadata.
 - Preserve legacy metadata authoring and unprofiled URL-only import behavior.
   Native byte access, edits, upgrade and rollback are tested; SQL blob counts
-  remain non-authoritative. Public full-v1 restore/export and released
-  qualification are still incomplete; suite NO-GO remains.
+  remain non-authoritative. Public dispatch is integrated above; released
+  cross-runtime qualification remains separate and suite NO-GO remains.
 
 ### Native graph storage (#424)
 
@@ -74,8 +88,8 @@ All notable changes to fortemi-react are documented here.
   order in actual native tables; expose rich source, edge, set and assignment reads.
 - Load a selected community set's stored memberships without recomputing them;
   create community sources and assignments atomically.
-- This internal stage does not complete public full-v1 restore/export or change
-  the suite NO-GO boundary.
+- This storage stage is now integrated into public native restore; it does not
+  change the suite NO-GO boundary.
 
 ### Native provenance storage (#424)
 
@@ -86,8 +100,8 @@ All notable changes to fortemi-react are documented here.
 - Include revision-owned activities in note provenance reads. Agents can be null;
   metadata is arbitrary JSON, so TypeScript consumers must narrow `unknown`
   before accessing properties. JSON strings are no longer parsed a second time.
-- This is an internal native restore stage. Public full-v1 import/export and
-  released producer/consumer acceptance are not yet complete; suite NO-GO remains.
+- This storage stage is now integrated into public native restore. Released
+  producer/consumer acceptance remains separate; suite NO-GO remains.
 
 ## v2026.9.3 - 2026-09-10
 

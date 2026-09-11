@@ -1,8 +1,10 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-09-11T10:07:38Z"
+  updated_at: "2026-09-11T11:15:00Z"
   record_count: 103
 records:
+  - entity: "urn:aiwg:artifact:docs/content/releases/v2026.9.4.md"
+    record: "records/release-prep-2026.9.4.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json"
     record: "records/lane-b-424-ci-receipts.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/native-full-v1-public.test.ts"
