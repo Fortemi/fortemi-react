@@ -1,0 +1,58 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-11T10:07:38Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+    "type": "data",
+    "created_at": "2026-09-11T10:07:38Z",
+    "checksum": "sha256:142b2e691eb88db5160cfebdf87a461d21eadceda7ad4efdeceb308342ee03db",
+    "attributes": {
+      "status": "draft",
+      "artifacts": {
+        "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "142b2e691eb88db5160cfebdf87a461d21eadceda7ad4efdeceb308342ee03db",
+        "packages/core/schemas/knowledge-shard-v2.presence.receipt.json": "4dc003c9f2f70f928f06f1b5d7473da2872f1ffffa8e6368c4a8391110503f9e"
+      },
+      "rationale": "Refresh only native-full-v1-public.test.ts implementation hashes after the bounded timeout correction. CI58336 correctly rejected the omitted receipt update before Vitest.",
+      "verification": "Strict contract verifier reproduced RED then passed after both test-hash updates. Full portable run and new exact-head CI required.",
+      "limitations": "No authority/schema/profile or immutable historical receipt change. No released qualification; full original Lane B and suite NO-GO remain."
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-424-ci-receipts:001",
+    "type": "modification",
+    "started_at": "2026-09-11T10:06:00Z",
+    "ended_at": "2026-09-11T10:07:38Z",
+    "description": "Bind the unchanged assertion corpus with bounded test budgets in the two current implementation receipts."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-424-ci-receipts:001",
+      "time": "2026-09-11T10:07:38Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-424-ci-receipts:001",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+        "source": "urn:gitea:issue:Fortemi/fortemi-react:424",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:modification:lane-b-424-ci-receipts:001"
+      }
+    ]
+  }
+}

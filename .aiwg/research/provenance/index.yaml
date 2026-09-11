@@ -1,8 +1,10 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-09-11T09:57:22Z"
-  record_count: 102
+  updated_at: "2026-09-11T10:07:38Z"
+  record_count: 103
 records:
+  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json"
+    record: "records/lane-b-424-ci-receipts.prov.yaml"
   - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/native-full-v1-public.test.ts"
     record: "records/lane-b-424-ci-timing.prov.yaml"
   - entity: "urn:aiwg:artifact:tools/release/verify-core-package.mjs"
