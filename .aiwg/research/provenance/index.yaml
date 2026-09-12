@@ -1,8 +1,10 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-09-12T09:21:00Z"
-  record_count: 110
+  updated_at: "2026-09-12T10:03:00Z"
+  record_count: 111
 records:
+  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-419-native-operations.json"
+    record: "records/lane-b-419-native-operations.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-421-negative-consumer.json"
     record: "records/lane-b-421-negative-consumer.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-421-native-replay.json"

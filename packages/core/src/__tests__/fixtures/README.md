@@ -1,5 +1,27 @@
 # Remote Producer Fixture
 
+## Native Operations (#419/#420)
+
+`native-remote-operations.json` and its verbatim receipt are pinned from
+producer commit `36c1b8779166af712afd588dd00dec871a6a9e30`. The producer-owned
+capture ran23 checks/86 real private HTTP calls using clean-installed published
+Core2026.9.4 and native Linux AMD64 server2026.9.9. It covers required personal
+identity, FTS q/AND-tags/limits/projections, all8 mutation actions and persisted
+readback,20 actual401 denials, legacy400/mutation404 and synthetic cleanup.
+
+Current source tests replay exact methods, URLs, request JSON and raw response
+bytes, including204 without a response body. They inspect the producer-only
+legacy missing-q400 separately; the corrected consumer never emits that request.
+This is offline replay, not another live or published-consumer run. The upstream
+verifier independently binds fixture, receipt and capture-script hashes to the
+immutable producer commit. All historical fixture pins remain unchanged.
+
+Semantic/hybrid fallback is explicit; array-only semantic rejects degradation.
+Positive vector retrieval remains unqualified. Personal AllowAllPolicy is not
+hosted role/tenant denial or read-only mutation enforcement. Historical cleanup
+does not prove current host state; exact CI, release and full Lane B acceptance
+remain separate gates. Suite NO-GO is unchanged.
+
 `remote-adapter.json` is a verbatim capture owned by Fortemi, not a
 consumer-invented success mock. `remote-adapter.producer-pin.json` separates the
 immutable fixture-source commit from the released server runtime that produced

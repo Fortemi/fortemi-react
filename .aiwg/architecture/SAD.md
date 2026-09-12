@@ -709,6 +709,16 @@ All operations work without network access. The only network-dependent features 
 
 ## 11. Architectural Risks (Residual)
 
+Producer `36c1b877` supplies a separately pinned native operation capture and
+published-Core2026.9.4/server2026.9.9 receipt:23 checks/86 real HTTP requests for
+required personal identity, FTS projections, all8 mutation actions and cleanup.
+Consumer source replays exact request methods/URLs/bodies and raw responses;
+upstream fixture, receipt and capture-script identities are verified in CI.
+Neither source replay nor the historical receipt proves positive vector
+retrieval, hosted role/tenant enforcement or a newer published consumer.
+Historical fixtures, REST authority and separate persistence planes remain
+unchanged; CI/delivery/release gates and suite NO-GO remain in force.
+
 Remote read projection amendment (#417/#418/#421): server HTTP envelopes are
 validated before projection, independently of PGlite and shard schemas. The
 server revision/activity graph is exposed through `provenanceGraphOf` and

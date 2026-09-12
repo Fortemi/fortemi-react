@@ -123,6 +123,22 @@ placeholders accompanied by `unavailableFields`, not a claim of known absence.
 
 ### Remote Search and Mutation Amendment (#419/#420)
 
+The supplemental native operation fixture from producer
+`36c1b8779166af712afd588dd00dec871a6a9e30` adds historical qualification of
+actually published Core2026.9.4 against published native Linux AMD64
+server2026.9.9:23 checks/86 real HTTP requests. Required personal identity,
+FTS projections, each advertised note mutation with state readback, actual
+401/400/404 and synthetic cleanup are captured. Current source replay requires
+exact methods, URLs and JSON request bodies, preserving raw response mappings.
+Fixture, receipt and capture-script hashes are independently pinned upstream.
+
+This closes the earlier candidate-versus-published evidence gap for those
+operations only. Positive vector retrieval remains NOT_RUN; explicit semantic/
+hybrid fallback is not semantic success. Personal AllowAllPolicy is not hosted
+role/tenant denial. Historical receipts cannot qualify later releases or
+current host cleanup. Remaining consumer delivery/CI and full lane release
+gates still apply; no authority/schema/profile or suite NO-GO change follows.
+
 The remote adapter sends `q` through the producer search endpoint, admitting
 explicit fts/semantic/hybrid modes, bounded limits and comma-joined AND tags.
 Nonzero offset and source filters are not implemented by this producer contract

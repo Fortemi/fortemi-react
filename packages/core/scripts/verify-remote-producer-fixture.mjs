@@ -139,3 +139,55 @@ for (const check of negativeReceipt.checks) {
 }
 console.log(JSON.stringify({ fixtureCommit: negativePin.fixtureCommit, sha256: negativePin.sha256,
   upstreamBytesVerified: true, receiptVerified: true, scriptAndHelperVerified: true, boundary: negativePin.boundary }))
+
+const operationsPin = JSON.parse(readFileSync(new URL('native-remote-operations.producer-pin.json', directory), 'utf8'))
+assert.equal(operationsPin.fixturePath, 'contracts/openapi/fixtures/native-remote-operations.json')
+assert.equal(operationsPin.receipt.path, 'contracts/openapi/fixtures/native-remote-operations.receipt.json')
+assert.equal(operationsPin.captureScript.path, 'scripts/ci/capture-native-remote-operations.mjs')
+const operationsFixture = await verifyCopy(operationsPin, operationsPin.fixturePath, operationsPin.sha256, 'native-remote-operations.json')
+const operationsReceipt = await verifyCopy(operationsPin, operationsPin.receipt.path, operationsPin.receipt.sha256, 'native-remote-operations.receipt.json')
+await upstreamBytes(operationsPin, operationsPin.captureScript.path, operationsPin.captureScript.sha256)
+assert.equal(operationsFixture.schemaVersion, 'fortemi.native-remote-operations.v1')
+assert.equal(operationsReceipt.schemaVersion, 'fortemi.native-remote-operations-receipt.v1')
+assert.equal(operationsFixture.status, 'PASS')
+assert.equal(operationsFixture.artifact.commit, operationsPin.runtimeCommit)
+assert.equal(operationsFixture.artifact.kind, operationsPin.runtimeArtifact.kind)
+assert.equal(operationsFixture.artifact.sha256, operationsPin.runtimeArtifact.sha256)
+assert.equal(operationsFixture.executableSha256, operationsPin.runtimeArtifact.sha256)
+assert.equal(operationsFixture.packageVersion, operationsPin.publishedConsumer.version)
+assert.equal(operationsFixture.packageCommit, operationsPin.publishedConsumer.commit)
+assert.equal(operationsFixture.packageSha256, operationsPin.publishedConsumer.sha256)
+assert.equal(operationsFixture.probeSha256, operationsPin.captureScript.sha256)
+assert.equal(operationsReceipt.captureScriptPath, operationsPin.captureScript.path)
+assert.equal(operationsReceipt.captureScriptSha256, operationsPin.captureScript.sha256)
+assert.equal(operationsReceipt.fixturePath, operationsPin.fixturePath)
+assert.equal(operationsReceipt.fixtureSha256, operationsPin.sha256)
+assert.equal(operationsReceipt.unit, operationsFixture.boundedUnit)
+assert.equal(operationsReceipt.terminal.unit, operationsReceipt.unit)
+for (const [field, value] of Object.entries({ Result: 'success', ActiveState: 'inactive',
+  exitCode: 'exited', exitStatus: '0', MemoryMax: '8589934592', MemorySwapMax: '0', CPUQuotaPerSecUSec: '2s' })) {
+  assert.equal(operationsReceipt.terminal[field], value)
+}
+for (const field of ['cgroupAbsent', 'apiPidAbsent', 'postmasterPidAbsent', 'postgresStopped', 'postgresRemoved']) {
+  assert.equal(operationsReceipt.cleanup[field], true)
+}
+assert.deepEqual(operationsReceipt.claims, {
+  realHttp: true, publishedConsumer: true, personalRequiredAuthentication: true, allAdvertisedMutations: true,
+  hostedRoleDenial: false, positiveVectorRetrieval: false, suiteParity: false,
+})
+assert.equal(operationsFixture.initialPhysicalNotes, 0)
+assert.equal(operationsFixture.syntheticCleanup.visibleNotes, 0)
+assert.equal(operationsFixture.syntheticCleanup.deletedNotes, 2)
+assert.equal(operationsFixture.checks.length, 23)
+assert.equal(operationsFixture.calls.length, 86)
+const historicalOperationsPin = JSON.parse(readFileSync(new URL('remote-operations.producer-pin.json', directory), 'utf8'))
+assert.equal(operationsFixture.producerFixture.commit, historicalOperationsPin.fixtureCommit)
+assert.equal(operationsFixture.producerFixture.sha256, historicalOperationsPin.sha256)
+for (const call of operationsFixture.calls) {
+  assert.equal(digest(call.rawBody), call.responseSha256)
+  let body
+  try { body = JSON.parse(call.rawBody) } catch { body = call.rawBody }
+  assert.deepEqual(body, call.body)
+}
+console.log(JSON.stringify({ fixtureCommit: operationsPin.fixtureCommit, sha256: operationsPin.sha256,
+  upstreamBytesVerified: true, receiptVerified: true, captureScriptVerified: true, boundary: operationsPin.boundary }))
