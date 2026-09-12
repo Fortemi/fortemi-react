@@ -123,7 +123,7 @@ export async function execute(args, { coreRoot = core, repositoryRoot = repo } =
     const blobPath = join(output, 'blob.json')
     const reportPath = join(output, 'report.json')
     run(coreRoot, ['run', '--maxWorkers=2', '--coverage', '--coverage.thresholds.statements=0', '--coverage.reporter=json-summary',
-      '--reporter=blob', '--reporter=json', '--outputFile.blob=' + blobPath, '--outputFile.json=' + reportPath,
+      '--reporter=default', '--reporter=blob', '--reporter=json', '--outputFile.blob=' + blobPath, '--outputFile.json=' + reportPath,
       '--shard=' + partition + '/' + partitionCount])
     const reportBytes = readFileSync(reportPath)
     const cases = reportCases(JSON.parse(reportBytes), coreRoot)

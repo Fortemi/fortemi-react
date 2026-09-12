@@ -41,7 +41,7 @@
     "src/shard/geometry-buffer.ts": "ebc060cbc31a4630a641aeac727d546eec51a92bac11cdf9915e4c2fb57bbb5d",
     "src/shard/geometry-util.js": "a76563db9aafbe442d6c1f0a2a8c2cb86d381825e75525b56e10627ef316a3ab",
     "tsup.config.ts": "7af07789a3f3b559e9da4aa0ee5697ab3532e93a4591fa49871b8a69e666bb99",
-    "package.json": "2432cb58ba413cafe8804471728c7477ec76f5f15e5e224310ae773960875294",
+    "package.json": "4fc0540e37f71aadc87c296e639ca91aacf8fdd2ddb55dc540f89f341e55e134",
     "src/shard/shard-import.ts": "a7a60061ed549b94c54e562992fe2dce8692dfd63cdf427b25b51f779f877736",
     "src/shard/shard-export.ts": "0f1eb464bc41c7eeb6d4a5a23d9e07fed1fce36e71caf26bb9c6d81ff6e0dc58",
     "src/shard/profile-registry.ts": "ea4cdb7a3c865e1be6340a48cb13aeeb8849f47b31a1983d473834168f9e3ba6",

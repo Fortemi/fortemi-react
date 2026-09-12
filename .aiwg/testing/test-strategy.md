@@ -14,8 +14,11 @@ Core pins Vitest and coverage-v8 together at4.1.1. Other workspace packages reta
 their existing tool versions. No runtime, schema, fixture authority or maturity
 change is implied by this CI-only correction for #422 / PR #449.
 
-`core-unit-partition` executes all discovered Core files using Vitest's own
-three-way sequencer, one matrix job at a time and two test workers per job.
+`core-unit-partition-1/2/3` execute all discovered Core files using Vitest's own
+three-way sequencer and two test workers per job. Explicit `needs` dependencies
+serialize these jobs: the deployed Gitea runner did not serialize the original
+matrix despite `max-parallel: 1`. A failed predecessor prevents subsequent
+partitions and the aggregate from being accepted; no matrix setting is relied on.
 File isolation and the existing30-minute per-job ceiling stay intact. The two
 measured heavy native full-v1 suites must remain in different partitions.
 `list --filesOnly` supplies full discovery but does not apply `--shard` in Vitest4;
@@ -36,6 +39,9 @@ the required aggregate job, including immutable producer-fixture verification,
 Core/Graph builds and Graph/React tests. Build still depends on typecheck, lint,
 unit-test and portable-contract. Partition failure cannot yield a green aggregate.
 Gitea-compatible artifact actions are commit-pinned; no shared host runner is added.
+The default console reporter remains enabled alongside JSON/blob diagnostics.
+The fast tooling checks also verify the Core manifest's implementation-receipt
+digest, including dev-tool-only manifest changes, before heavy conformance work.
 
 Focused harness verification is `node --test packages/core/scripts/ci-unit-partitions.test.mjs`.
 It includes actual miniature partition/merge execution and coverage-threshold

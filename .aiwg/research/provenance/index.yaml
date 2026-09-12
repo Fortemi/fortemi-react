@@ -1,8 +1,10 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-09-12T11:44:00Z"
-  record_count: 113
+  updated_at: "2026-09-12T11:54:00Z"
+  record_count: 114
 records:
+  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-followup.json"
+    record: "records/lane-b-422-ci-followup.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-partitions.json"
     record: "records/lane-b-422-ci-partitions.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-422-installed-capability-gate.json"

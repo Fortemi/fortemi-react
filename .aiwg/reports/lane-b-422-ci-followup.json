@@ -1,0 +1,33 @@
+{
+  "status": "LOCAL_CORRECTION_PASS_CI_PENDING",
+  "sourceBase": "bccc501abb5e2f79cdba54ffceb52c2c669a67bd",
+  "issues": ["https://git.integrolabs.net/Fortemi/fortemi-react/issues/422", "https://git.integrolabs.net/Fortemi/fortemi/issues/1128"],
+  "failedCi": 58966,
+  "observations": [
+    "Gitea started multiple matrix partitions despite max-parallel1; do not claim the original scheduling was serial",
+    "portable-contract rejected the stale package.json implementation digest after dev-tool alignment",
+    "partition3 contains the same receipt check; its test failure is not independently identified from console-only JSON/blob reporters",
+    "partition3 upload log reports two artifacts, but the run artifact listing returned no entries while the run was active; transport remains unqualified"
+  ],
+  "corrections": [
+    "Explicit partition1 -> partition2 -> partition3 needs chain; aggregate depends on all three",
+    "Only the current implementation receipt package.json digest changed; historical released receipts and upstream contracts preserved",
+    "Fast tooling test detects future manifest/receipt drift before heavy conformance runs",
+    "Default console reporter restored alongside blob and JSON diagnostics"
+  ],
+  "tests": {
+    "manifestRegressionRedThenGreen": true,
+    "node24Tooling": 82,
+    "knowledgeShardReceiptVerifier": "PASS",
+    "focusedPgliteReceiptCase": "PASS",
+    "workflowDependencyGraph": "PASS",
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "fullCoreRunLocally": false
+  },
+  "execution": {"host": "titan", "serialDetachedBounded": true, "jobs": 2, "expectedRed": 1, "peakBytes": 1332219904},
+  "evidence": "/home/roctinam/dev/fortemi-suite/.aiwg/working/lane-b/evidence/lane-b-delivery-20260912-cycle63",
+  "remaining": ["Exact-head CI, actual artifact transport and full aggregate coverage", "Main merge, original issue acceptance and release sweep"],
+  "published": false,
+  "suiteAudit": "NO-GO"
+}

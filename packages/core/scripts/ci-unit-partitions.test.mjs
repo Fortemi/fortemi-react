@@ -7,6 +7,11 @@ import test from 'node:test'
 import { execute, plan, relativeFile, reportCases, verifyPartitions } from './ci-unit-partitions.mjs'
 
 const digest = bytes => createHash('sha256').update(bytes).digest('hex')
+test('Core package manifest remains bound to the implementation receipt', () => {
+  const core = resolve(import.meta.dirname, '..')
+  const receipt = JSON.parse(readFileSync(join(core, 'schemas/knowledge-shard-v2.implementation.receipt.json')))
+  assert.equal(receipt.implementation['package.json'], digest(readFileSync(join(core, 'package.json'))))
+})
 function sample() {
   const identity = { root: '/core', source: 'a'.repeat(40), vitest: '4.1.1', node: '22', lockSha256: 'lock', configSha256: 'config' }
   const partitions = [['src/a.test.ts'], ['src/b.test.ts'], ['src/c.test.ts']]
@@ -99,4 +104,3 @@ test('actual merged coverage enforces the unchanged config threshold', { timeout
     await assert.rejects(execute(['merge'], { coreRoot: root }), /Vitest failed/)
   } finally { rmSync(root, { recursive: true }) }
 })
-

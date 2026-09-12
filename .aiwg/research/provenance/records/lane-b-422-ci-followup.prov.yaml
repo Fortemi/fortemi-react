@@ -1,0 +1,82 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T11:54:53.754Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-followup.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T11:54:53.754Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".gitea/workflows/ci.yml",
+          "sha256": "e1eae228fa0cf37c00cdfc9063aa27a0116ae5b0a8ac6b0ffdf7e90f3405a56e"
+        },
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+          "sha256": "4d0dcd7c2ba5fe8edb6ce6d0a69b8fe223e4807a6cca134e149b47f15286a2db"
+        },
+        {
+          "path": "packages/core/scripts/ci-unit-partitions.mjs",
+          "sha256": "1c4a289234a48f9a3986bae5ff9423c64786a9ea23d35a23d1a8162992397db6"
+        },
+        {
+          "path": "packages/core/scripts/ci-unit-partitions.test.mjs",
+          "sha256": "7e84f454ef0382c267c9def85d032e56c96be261a5b85a8870f8f97400c836f4"
+        },
+        {
+          "path": ".aiwg/testing/test-strategy.md",
+          "sha256": "5a712fa5fb6daf089ce3f8748a53750a85aa60a934248017ff199eec94e3f2b1"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-422-ci-followup.json",
+          "sha256": "4834c48495b037c38cd2758a82b3562ea013f4dda786a6983957d0176e424840"
+        }
+      ],
+      "boundaries": [
+        "CI58966 failed; full new CI/transport pending",
+        "Current implementation digest only; historical authority/released receipts unchanged",
+        "Suite NO-GO"
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-422-ci-followup:063",
+    "type": "modification",
+    "started_at": "2026-09-12T11:49:00Z",
+    "ended_at": "2026-09-12T11:54:53.754Z",
+    "description": "Correct manifest receipt and enforce explicit CI dependency serialization after observed Gitea execution."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-followup.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-422-ci-followup:063"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-followup.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-422-ci-followup:063",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-followup.json",
+        "source": "urn:gitea:issue:Fortemi/fortemi-react:422",
+        "derivation_type": "implements"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-followup.json",
+        "source": "urn:gitea:ci:Fortemi/fortemi-react:58966",
+        "derivation_type": "derives_from"
+      }
+    ]
+  }
+}
