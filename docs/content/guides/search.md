@@ -88,6 +88,34 @@ await search('machine learning', {
 })
 ```
 
+### Typed Metadata Candidate (PGlite)
+
+The unreleased #405 correction applies to `SearchRepository`, not every search
+adapter. `metadataPredicates` accepts at most eight AND clauses over `provider`,
+`model`, `role`, `event_kind`, `sensitivity`, and `import_run_id`. Operators are
+`eq`, `in` (at most 32 values), inclusive `range`, and `exists` (default true).
+Unknown paths/operators/fields and malformed input fail with
+`METADATA_PREDICATES_INVALID`; reversed ranges use `METADATA_RANGE_INVALID`.
+
+Equality preserves JSON scalar types. Present null differs from a missing key.
+Ranges require same-type numeric or string bounds and use numeric or Unicode
+scalar order. Request strings are bounded to 256 characters without NUL; numbers
+must be finite within the JavaScript safe-integer magnitude. Import-run values
+must be nonempty strings of at most 200 characters.
+
+Five paths read author metadata, not generated AI metadata. Import runs read
+source identity using the supplied `tenant_id` (default `default`) and the note's
+archive. All positive run clauses must match one identity. Explicit `archive_id`
+selects the note archive; explicit tenant selection uses matching source identity
+and admits identity-free native notes only for the default tenant. These options
+do not authenticate users or establish hosted authorization.
+
+Migration 33 installs bounded typed indexes without modifying stored metadata.
+Source locator projections exclude foreign tenants/archives and nonmatching runs.
+Complete chunk/span citation reproducibility, RecordStore/pluggable/static adapter
+conformance and released producer compatibility are still pending. This candidate
+does not advertise cross-backend parity or change any Knowledge Shard profile.
+
 ### Phrase Search
 
 Wrap terms in double quotes for exact phrase matching:

@@ -16,6 +16,15 @@ This Software Architecture Document (SAD) describes the architecture of fortemi-
 
 ### 1.2 Scope
 
+The #405 PGlite typed-metadata candidate is governed by ADR-016. It validates
+the Fortemi-owned candidate schema before database work, uses bounded typed
+author-metadata indexes with exact rechecks, and quantifies import-run clauses
+over one scoped source identity before ranking. Locator source projections use
+the same scope. Local tenant/archive selection is not hosted authorization.
+RecordStore/adapter capability conformance, complete citation locators, immutable
+producer pins and released cross-runtime acceptance remain open; suite NO-GO
+and all named-profile boundaries are unchanged.
+
 The #425 scope amendment in ADR-011 governs live `2.0.0/full-v1` exports:
 nonempty note selectors, rejection of combined tag/collection selectors,
 embedding-only set filters, and rejection of all scoped snapshot exports.

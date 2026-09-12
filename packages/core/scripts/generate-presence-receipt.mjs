@@ -24,6 +24,7 @@ const implementationPaths = [
   'src/shard/live-full-v1.ts',
   'src/migrations/0031_native_shard_lineage.ts',
   'src/migrations/0032_native_revision_replace.ts',
+  'src/migrations/0033_typed_metadata_search.ts',
   'src/__tests__/shard/native-full-v1-public.test.ts',
   'src/__tests__/shard/native-full-v1-presence.test.ts',
   'src/records/types.ts',

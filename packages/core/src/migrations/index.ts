@@ -31,6 +31,7 @@ import { migration0029 } from './0029_native_graph.js'
 import { migration0030 } from './0030_native_core.js'
 import { migration0031 } from './0031_native_shard_lineage.js'
 import { migration0032 } from './0032_native_revision_replace.js'
+import { migration0033 } from './0033_typed_metadata_search.js'
 
 export const allMigrations: Migration[] = [
   migration0001,
@@ -65,4 +66,5 @@ export const allMigrations: Migration[] = [
   migration0030,
   migration0031,
   migration0032,
+  migration0033,
 ]

@@ -7,7 +7,7 @@ import type { DatabaseClient } from '../storage-backend.js'
 import type { SearchResponse, SearchOptions, SearchFacets, SearchResult } from './types.js'
 import { buildNoteConditions } from './condition-builder.js'
 import { EmbeddingSetsRepository, type EmbeddingSetSelector, type ResolvedEmbeddingSet } from './embedding-sets-repository.js'
-import { buildMetadataPredicateConditions, type EvidenceLocator, type RegisteredMetadataPath } from './metadata-predicates.js'
+import { buildMetadataPredicateConditions, buildMetadataSourceConditions, validateMetadataPredicates, type EvidenceLocator, type RegisteredMetadataPath } from './metadata-predicates.js'
 
 const ATTACHMENT_TEXT_JOIN = `
        LEFT JOIN (
@@ -115,10 +115,12 @@ export class SearchRepository {
 
   private async fetchLocatorMap(
     noteIds: string[],
-    metadataPaths: readonly RegisteredMetadataPath[] = [],
+    options: SearchOptions,
   ): Promise<Map<string, EvidenceLocator[]>> {
     const locators = new Map<string, EvidenceLocator[]>()
     if (noteIds.length === 0) return locators
+    const metadataPaths = this.metadataPaths(options)
+    const source = buildMetadataSourceConditions(options, 2)
     const result = await this.db.query<{
       note_id: string
       namespace: string
@@ -126,11 +128,11 @@ export class SearchRepository {
       import_run_id: string
       source_schema_version: string
     }>(
-      `SELECT note_id, namespace, external_id_hash, import_run_id, source_schema_version
-       FROM source_identity
-       WHERE note_id = ANY($1)
-       ORDER BY created_at ASC`,
-      [noteIds],
+      `SELECT si.note_id, si.namespace, si.external_id_hash, si.import_run_id, si.source_schema_version
+       FROM source_identity si JOIN note n ON n.id = si.note_id
+       WHERE n.id = ANY($1) AND ${source.conditions.join(' AND ')}
+       ORDER BY si.created_at ASC, si.id ASC`,
+      [noteIds, ...source.params],
     )
     for (const row of result.rows) {
       const existing = locators.get(row.note_id) ?? []
@@ -164,6 +166,7 @@ export class SearchRepository {
     options: SearchOptions = {},
     queryEmbedding?: number[],
   ): Promise<SearchResponse> {
+    validateMetadataPredicates(options.metadataPredicates === undefined ? [] : options.metadataPredicates)
     const { limit = 20, offset = 0 } = options
     const mode = options.mode ?? 'auto'
 
@@ -263,7 +266,7 @@ export class SearchRepository {
       facets = await this.fetchFacets(idsResult.rows.map((r) => r.id))
     }
 
-    const locatorMap = await this.fetchLocatorMap(resultIds, this.metadataPaths(options))
+    const locatorMap = await this.fetchLocatorMap(resultIds, options)
     const baseResults = result.rows.map((r) => ({
       id: r.id,
       title: r.title,
@@ -288,6 +291,7 @@ export class SearchRepository {
   }
 
   async semanticSearch(queryEmbedding: number[], options: SearchOptions = {}): Promise<SearchResponse> {
+    validateMetadataPredicates(options.metadataPredicates === undefined ? [] : options.metadataPredicates)
     const { limit = 20, offset = 0 } = options
     const vector = vectorColumn(queryEmbedding)
     const vectorStr = `[${queryEmbedding.join(',')}]`
@@ -349,7 +353,7 @@ export class SearchRepository {
           params,
         )).rows.map((r) => r.id))
       : undefined
-    const locatorMap = await this.fetchLocatorMap(result.rows.map((r) => r.id), this.metadataPaths(options))
+    const locatorMap = await this.fetchLocatorMap(result.rows.map((r) => r.id), options)
 
     return {
       results: result.rows.map((r) => ({
@@ -378,6 +382,7 @@ export class SearchRepository {
     queryEmbedding: number[],
     options: SearchOptions = {},
   ): Promise<SearchResponse> {
+    validateMetadataPredicates(options.metadataPredicates === undefined ? [] : options.metadataPredicates)
     const { limit = 20, offset = 0 } = options
     const vectorStr = `[${queryEmbedding.join(',')}]`
     const k = 60
@@ -473,7 +478,7 @@ export class SearchRepository {
       this.fetchTagMap(pageIds),
       this.fetchEmbeddingStatus(pageIds, resolvedEmbeddingSet, options.embeddingSetId),
     ])
-    const locatorMap = await this.fetchLocatorMap(pageIds, this.metadataPaths(options))
+    const locatorMap = await this.fetchLocatorMap(pageIds, options)
     const facets = options.include_facets ? await this.fetchFacets(sortedIds) : undefined
 
     return {
@@ -546,7 +551,7 @@ export class SearchRepository {
 
     const resultIds = result.rows.map((r) => r.id)
     const embeddingSet = await this.fetchEmbeddingStatus(resultIds, resolvedEmbeddingSet, options.embeddingSetId)
-    const locatorMap = await this.fetchLocatorMap(resultIds, this.metadataPaths(options))
+    const locatorMap = await this.fetchLocatorMap(resultIds, options)
 
     return {
       results: result.rows.map((r) => ({

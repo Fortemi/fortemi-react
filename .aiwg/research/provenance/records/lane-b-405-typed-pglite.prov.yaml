@@ -1,0 +1,134 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T13:54:46.348Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-typed-pglite.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T13:54:46.348Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "sha256": "b882b426da9d685573b1d440670b91f1b7463cec631b3ad934d6514e525c87cd"
+        },
+        {
+          "path": ".aiwg/architecture/SAD.md",
+          "sha256": "14a2e98d3564e24d11e110cb82dc4f85f321d3130dd506670d878ddfe610f086"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-typed-pglite.json",
+          "sha256": "6fb2a044606ba70302e1f5f321261572b1a24c26fbaa22ad90f4f771c76691e0"
+        },
+        {
+          "path": "docs/content/guides/search.md",
+          "sha256": "484f8ade9ba9bb06a69784020cfe0644915057c490095b666dca364131ef1291"
+        },
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+          "sha256": "3ff0239984e0e1b624ff5e8b188c8732af139919599b5110834e89e566f62471"
+        },
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.presence.receipt.json",
+          "sha256": "6f6d4d7233d502873378b202b1a9ceefdb776130c9fcefe4cc764d52ac99cdb7"
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/README.md",
+          "sha256": "d566ac947596de006f702ea69a90510fda897ffb121bcd5399297a42d50acdaf"
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/contract.receipt.json",
+          "sha256": "607ca7c6ccaa8f983e05ae1ffcf69e3267a2b8b01e46d1a2f935762782d854aa"
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/predicate-vectors.json",
+          "sha256": "df9e129cab4708db71c3e22f87efd252fbcac144daa45a53ee1716f4a1a05ae7"
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/predicates.schema.json",
+          "sha256": "e325707ce20abb88ef3a8f4bbb0d02ab09501b1ffe9b48b0c92a96e97dda00c3"
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/sql-scope-vectors.json",
+          "sha256": "dcd35298a3bc485a6f1c87c6c87f136ee98121dad3f2b1c8b590b2e5381aa4d5"
+        },
+        {
+          "path": "packages/core/scripts/generate-pglite-full-v1-receipt.mjs",
+          "sha256": "e704fd2112827ee75e4d923a245549700a470f2db50d10bd9fc68fce846e469d"
+        },
+        {
+          "path": "packages/core/scripts/generate-presence-receipt.mjs",
+          "sha256": "2ae734ba48e59ed1eaef4a617d02f740321b7ba17f08b86d423fa43a323d9ea5"
+        },
+        {
+          "path": "packages/core/src/__tests__/metadata-predicates.test.ts",
+          "sha256": "6e8423e3cb10f15f5fe9506a9e263503a3bfe859162eb9c13fe58f8fee5a0df0"
+        },
+        {
+          "path": "packages/core/src/__tests__/source-metadata-purge.test.ts",
+          "sha256": "4765b80435d774a10aa0743227d3a943058852f282010bbe3a171c0975965e79"
+        },
+        {
+          "path": "packages/core/src/migrations/0033_typed_metadata_search.ts",
+          "sha256": "700d239c8cf130a1fd2222388174ad119c8eb2e6a8c661550d06416fae050f9b"
+        },
+        {
+          "path": "packages/core/src/migrations/index.ts",
+          "sha256": "78e9278439fc6b8b6da191acaf81e26445e21a0823f0b8cd6aad6a54f4bf8ada"
+        },
+        {
+          "path": "packages/core/src/repositories/metadata-predicates.ts",
+          "sha256": "c94cc5331964fa3428c6c71677f3594367aa2bdae1c3a8c41e4cc9864fd3d5c5"
+        },
+        {
+          "path": "packages/core/src/repositories/search-repository.ts",
+          "sha256": "533d214ae71c9e2de9fe477da4842363b63298bc7f087a85b9ebf2d5df7a9ea7"
+        }
+      ],
+      "boundaries": [
+        "Candidate authority uncommitted; no promotion",
+        "184 focused regressions; full CI and cross-runtime acceptance pending",
+        "Local source selection is not hosted authorization; suite NO-GO"
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-405:068",
+    "type": "modification",
+    "started_at": "2026-09-12T13:35:00Z",
+    "ended_at": "2026-09-12T13:54:46.348Z",
+    "description": "Correct PGlite typed predicates, bounded indexes and scoped source projection against the unchanged authority candidate."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-typed-pglite.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-405:068"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-typed-pglite.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-405:068",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-typed-pglite.json",
+        "source": "urn:gitea:issue:Fortemi/fortemi-react:405",
+        "derivation_type": "implements"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-typed-pglite.json",
+        "source": "urn:gitea:issue:Fortemi/fortemi:1091",
+        "derivation_type": "derives_from"
+      }
+    ]
+  }
+}

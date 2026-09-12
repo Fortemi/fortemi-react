@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "status": "candidate-unpublished",
+  "authority": {
+    "repository": "Fortemi/fortemi",
+    "issue": 1091,
+    "baseCommit": "a701847db779a0a3adfa36a09dfa1055a10a0a0a",
+    "sourceState": "uncommitted candidate; base is not the contract revision",
+    "path": "contracts/metadata-search/candidate/1.0.0/",
+    "files": {
+      "predicates.schema.json": "e325707ce20abb88ef3a8f4bbb0d02ab09501b1ffe9b48b0c92a96e97dda00c3",
+      "predicate-vectors.json": "df9e129cab4708db71c3e22f87efd252fbcac144daa45a53ee1716f4a1a05ae7",
+      "sql-scope-vectors.json": "dcd35298a3bc485a6f1c87c6c87f136ee98121dad3f2b1c8b590b2e5381aa4d5"
+    }
+  },
+  "consumer": {
+    "repository": "Fortemi/fortemi-react",
+    "issue": 405,
+    "backend": "pglite",
+    "test": "src/__tests__/metadata-predicates.test.ts"
+  },
+  "scopeMapping": {
+    "owningTenant": "tenant-a -> default",
+    "foreignTenant": "tenant-b -> tenant-b",
+    "authorizationEvidence": false
+  },
+  "claims": {
+    "promotedContract": false,
+    "fullIssueAcceptance": false,
+    "suiteParity": false
+  }
+}

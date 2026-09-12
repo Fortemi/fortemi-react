@@ -21,7 +21,7 @@
     "sha256": "054da5528276806b9be69dcfff364a6969b72344045f05f9f6fcbeaca82a7a59"
   },
   "implementation": {
-    "scripts/generate-pglite-full-v1-receipt.mjs": "27fda812ec324e6a4d4b278da3d6d513790e5e055c1a4a66394dd8eafb229708",
+    "scripts/generate-pglite-full-v1-receipt.mjs": "e704fd2112827ee75e4d923a245549700a470f2db50d10bd9fc68fce846e469d",
     "src/shard/full-v1-store.ts": "82b12d5a614c88c93889f5e441c851b1c9a88f7fe32e0b57050b1652e13b44df",
     "src/shard/live-full-v1.ts": "bfc49c7f464064029f9a4b89598abece37aafc9306e05a06a6449b2d7697bd69",
     "src/shard/schema-validator.ts": "c5cd3021af96f12fed41408580cc20bf4ca1310f48758d45ce261e88a6fee810",
@@ -58,7 +58,7 @@
     "src/migrations/0030_native_core.ts": "9096380e0c4d01108f5243b4702bda8f9041458808f57253233c2f54311f5eb5",
     "src/migrations/0031_native_shard_lineage.ts": "6264f9684d7a22361b3220515ada3c752812a326f751bc0b6d1a3882720ac212",
     "src/migrations/0032_native_revision_replace.ts": "e1bef0fb7a0cf338ea631c011b7889505d01872f0fd70aa5a2bae2baa965494e",
-    "src/migrations/index.ts": "e881a8fc7a00150133e7e60db41753cc331d310f6ed242e2ff30d6d383dff262",
+    "src/migrations/index.ts": "78e9278439fc6b8b6da191acaf81e26445e21a0823f0b8cd6aad6a54f4bf8ada",
     "src/repositories/notes-repository.ts": "4516f20e5280de65199f9620fc5dd1ec8078421e9db87b5e1b10f954f91fe28a",
     "src/repositories/embedding-sets-repository.ts": "4bad042047f0a2400440f1b6df8246fbe85bbbadf064bbfd1491287ed515dba0",
     "src/repositories/skos-repository.ts": "38967027add33cf7190094b03f3c84e41e304a5b6269ce445ab15cc95a39d5f2",
@@ -69,9 +69,9 @@
     "src/repositories/tags-repository.ts": "177d279ab940c45c192542f0e8253d9f8c36c686152b79ce37a3d8409604cade",
     "src/repositories/templates-repository.ts": "df3423635d0ed2edbd504e3f3816315a293fd2276aea807659e345263443902c",
     "src/repositories/links-repository.ts": "4b5034c6ba96cdbe94d5b327e222df7599b3498e872e5de4706963c72a76be51",
-    "src/repositories/metadata-predicates.ts": "6e620e16a8615f10653e435c6607deca30063e97b6eda253522ed047f9f62295",
+    "src/repositories/metadata-predicates.ts": "c94cc5331964fa3428c6c71677f3594367aa2bdae1c3a8c41e4cc9864fd3d5c5",
     "src/data-backend.ts": "91fec6cfc5d7c5677da6d760b78114f38715d539fe1b0e39958038fbc9cb8aa0",
-    "src/repositories/search-repository.ts": "1e3372a809aaaed2aa3c37f2ac3e459fe24e91a6f4ad58b43ab44c17967cfbe8",
+    "src/repositories/search-repository.ts": "533d214ae71c9e2de9fe477da4842363b63298bc7f087a85b9ebf2d5df7a9ea7",
     "src/repositories/source-upsert-repository.ts": "d8c63548a104306a118e5127b6212ad4357f6e966ef062b7e57a97ac342026b6",
     "src/repositories/types.ts": "6b035a0e9e6499f8e6b8fcdef7f9e04e14a89fc3e51895228d406af00e25ed48",
     "src/records/record-projection.ts": "479b6558535d0e14035924289466eae7d909e48e33f6a2927beef32520a47c84",
@@ -86,7 +86,7 @@
     "src/__tests__/shard/native-provenance.test.ts": "4a17e354808eeda2e801cddbc656a73dccf02078e5b10e825850f35ed3bc1ee9",
     "src/__tests__/shard/native-graph.test.ts": "ca6a385da1c404d1ca487591797829970791a77868df6baf23a0f47bafb0ba30",
     "src/__tests__/shard/native-core.test.ts": "b6d3b212c705ae1f142b3278469b7a99346fabd21bd814a1ae1aaa19b335136e",
-      "src/__tests__/shard/native-full-v1-public.test.ts": "0f296503509a29220a6ea49e6e9c2bd58d1d4bee973216dd6a99b71765edb884",
+    "src/__tests__/shard/native-full-v1-public.test.ts": "0f296503509a29220a6ea49e6e9c2bd58d1d4bee973216dd6a99b71765edb884",
     "src/__tests__/embedding-sets-graph.test.ts": "43a4d3902082179072f69d827062026cef2a840a4328c7f3185979f15e11f2a3",
     "src/__tests__/shard/native-full-v1-presence.test.ts": "74bc2afc85dd16e3d7746bcc59c4669752e3815407d6f801c4bdcbd0048453f5",
     "src/__tests__/storage-backend.test.ts": "9be58b1daf162a03377574f7839059fd78c3a10f1116effc8484c243ae7018be",
@@ -94,7 +94,9 @@
     "src/__tests__/db-table-parity/db-table-parity.test.ts": "1eaef6aa85527d6b12aa28cd916da5ad8638bb6542292250cc57966c3185070d",
     "src/__tests__/shard/fixtures/full-v1/reference-conformance.json": "904ae4286fd5595473280d1e85727be38540763e5bf5b39ec5b886b21ef0d0fe",
     "src/__tests__/shard/fixtures/full-v1/reference-conformance.receipt.json": "c964b1d0d5c74c2f44e39cf185e43ffd06b33f605d9e8e33ad0362cd78638fb0",
-    "schemas/knowledge-shard-v2.schema.receipt.json": "70657d6bcd501b684d0a143bcbf7c2a0d41fe909ef3aff32b1fb1f542506a53a"
+    "schemas/knowledge-shard-v2.schema.receipt.json": "70657d6bcd501b684d0a143bcbf7c2a0d41fe909ef3aff32b1fb1f542506a53a",
+    "src/migrations/0033_typed_metadata_search.ts": "700d239c8cf130a1fd2222388174ad119c8eb2e6a8c661550d06416fae050f9b",
+    "schemas/metadata-search/candidate/1.0.0/predicates.schema.json": "e325707ce20abb88ef3a8f4bbb0d02ab09501b1ffe9b48b0c92a96e97dda00c3"
   },
   "evidence": {
     "command": "pnpm --filter @fortemi/core test:portable-contract",

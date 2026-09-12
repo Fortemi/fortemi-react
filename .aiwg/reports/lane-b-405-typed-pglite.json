@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "status": "local-pglite-candidate-passed",
+  "issue": "Fortemi/fortemi-react#405",
+  "producerIssue": "Fortemi/fortemi#1091",
+  "base": "7d8a28e56fbceb80ffdbed2b6ae65df08c71843e",
+  "authorityReceipt": "packages/core/schemas/metadata-search/candidate/1.0.0/contract.receipt.json",
+  "verification": {
+    "baseline": {
+      "total": 66,
+      "passed": 17,
+      "failed": 49
+    },
+    "regressions": {
+      "files": 9,
+      "passed": 184,
+      "failed": 0,
+      "metadataTests": 93,
+      "authorityCases": 66,
+      "retrievalChecks": 54,
+      "naturalIndexPlans": 3
+    },
+    "coreTypecheck": "PASS",
+    "lint": "PASS",
+    "coreBuild": "PASS",
+    "contractHashes": "PASS",
+    "platform": "Titan Linux x64 PGlite; synthetic vectors; private offline runner",
+    "evidence": "fortemi-suite/.aiwg/working/lane-b/evidence/lane-b-delivery-20260912-cycle68/"
+  },
+  "compatibility": {
+    "migration": 33,
+    "storedMetadataUnchanged": true,
+    "sourceScopeNotAuthorization": true,
+    "authorityPromoted": false,
+    "recordStoreQualified": false,
+    "citationChunkSpanQualified": false,
+    "fullCI": "PENDING",
+    "release": "PENDING",
+    "suiteDecision": "NO-GO"
+  },
+  "remaining": [
+    "Producer request/result authority and immutable pins",
+    "RecordStore and pluggable/static capability conformance",
+    "Stable reproducible note/chunk/span citation authority",
+    "Full pre-ranking deletion/purge and verified hosted authorization/cache matrices",
+    "Clean installed and released producer/consumer qualification",
+    "Protected merge, exact CI and full lane release sweep"
+  ]
+}

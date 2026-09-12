@@ -28,7 +28,7 @@
     ]
   },
   "implementation": {
-    "scripts/generate-presence-receipt.mjs": "301c514ad3ab27405481f9570d6681229cbdde90cd99e30a3cfb50a1a82f5965",
+    "scripts/generate-presence-receipt.mjs": "2ae734ba48e59ed1eaef4a617d02f740321b7ba17f08b86d423fa43a323d9ea5",
     "scripts/verify-knowledge-shard-contract.mjs": "2877c18c7eaca041ace5f395ef478f4658c5fed233416e913b356c3619b02f8f",
     "src/shard/presence.ts": "228d0b55d39c719a43b91249f68a01a5bfa3306d9cc3835b239e9df766e079ea",
     "src/shard/presence-store.ts": "99163e2d3e60a97bffa5bb6fa73d456e81ca0d6113cf21317ea661d40f22d35c",
@@ -48,10 +48,11 @@
     "src/records/record-shard.ts": "f57d93d789bbbcf5866eb28edd82bf1e644aa8281839be1304dbf0f320ad802a",
     "src/migrations/0019_shard_field_presence.ts": "7410ed0ef405970ce040f347644c1da7e438a5f62cc1d743a2dff09c15a20cf9",
     "src/migrations/0021_attachment_extraction_projection.ts": "681c4569e8067b745c97851e66aaf779d411ef5738a90cdefbea1744fdc5a6b1",
-    "src/migrations/index.ts": "e881a8fc7a00150133e7e60db41753cc331d310f6ed242e2ff30d6d383dff262",
+    "src/migrations/index.ts": "78e9278439fc6b8b6da191acaf81e26445e21a0823f0b8cd6aad6a54f4bf8ada",
     "src/__tests__/shard/presence.test.ts": "d0943473e9d1c7199d222909772743fb9d76f7317e497932f052c493a64239b7",
     "src/__tests__/records/record-store.test.ts": "5ebd62d0b656cd19894fe12a203a8aad59103eb05e5b8577d0411f0089b2e005",
-    "src/__tests__/records/record-shard.test.ts": "896b9e9fedf74dd28fe5a8e9bbe6b6f99938ab5589c05488e1e077e0f24bfac6"
+    "src/__tests__/records/record-shard.test.ts": "896b9e9fedf74dd28fe5a8e9bbe6b6f99938ab5589c05488e1e077e0f24bfac6",
+    "src/migrations/0033_typed_metadata_search.ts": "700d239c8cf130a1fd2222388174ad119c8eb2e6a8c661550d06416fae050f9b"
   },
   "evidence": {
     "command": "pnpm --filter @fortemi/core test:portable-contract",

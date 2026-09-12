@@ -166,7 +166,7 @@ describe('source-addressed upsert, metadata locators, and purge receipts', () =>
 
     await expect(search.search('needle', {
       metadataPredicates: [{ path: 'unindexed' as never, op: 'eq', value: 'x' }],
-    })).rejects.toThrow(/Unsupported metadata predicate path/)
+    })).rejects.toThrow('METADATA_PREDICATES_INVALID')
   })
 
   it('purges graph/search state atomically and replays one content-free deletion receipt', async () => {
