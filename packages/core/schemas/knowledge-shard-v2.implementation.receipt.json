@@ -86,7 +86,7 @@
     "src/__tests__/shard/native-provenance.test.ts": "4a17e354808eeda2e801cddbc656a73dccf02078e5b10e825850f35ed3bc1ee9",
     "src/__tests__/shard/native-graph.test.ts": "ca6a385da1c404d1ca487591797829970791a77868df6baf23a0f47bafb0ba30",
     "src/__tests__/shard/native-core.test.ts": "b6d3b212c705ae1f142b3278469b7a99346fabd21bd814a1ae1aaa19b335136e",
-      "src/__tests__/shard/native-full-v1-public.test.ts": "39d5e623e222df5f937045dd838691dad98ac572aaa80820ee4baeff2f93ad5a",
+      "src/__tests__/shard/native-full-v1-public.test.ts": "0f296503509a29220a6ea49e6e9c2bd58d1d4bee973216dd6a99b71765edb884",
     "src/__tests__/embedding-sets-graph.test.ts": "43a4d3902082179072f69d827062026cef2a840a4328c7f3185979f15e11f2a3",
     "src/__tests__/shard/native-full-v1-presence.test.ts": "74bc2afc85dd16e3d7746bcc59c4669752e3815407d6f801c4bdcbd0048453f5",
     "src/__tests__/storage-backend.test.ts": "9be58b1daf162a03377574f7839059fd78c3a10f1116effc8484c243ae7018be",

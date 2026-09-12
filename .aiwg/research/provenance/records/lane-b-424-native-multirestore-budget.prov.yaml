@@ -1,0 +1,81 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T02:40:00.579Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-424-native-multirestore-budget.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T02:40:00.579Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": "packages/core/src/__tests__/shard/native-full-v1-public.test.ts",
+          "sha256": "0f296503509a29220a6ea49e6e9c2bd58d1d4bee973216dd6a99b71765edb884"
+        },
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+          "sha256": "0f97462f38bfaf2a85aa25e96d9bfc06f8f8405018f58ec672c53ad710b9710a"
+        },
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.presence.receipt.json",
+          "sha256": "53bf024845b38f27f36216dd02bf169e90fe925c899818d3ae688ee1d6fcaa66"
+        },
+        {
+          "path": ".aiwg/activity.log",
+          "sha256": "6dcbc02d5ed6ca51449b7372c909b960a95d7bef13eef05cdbb67af5879ef5c5"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-424-native-multirestore-budget.json",
+          "sha256": "a127701bb0583f575ee6e333f9e98eb21d561338732affcaaf40f48e9429f516"
+        }
+      ],
+      "boundaries": [
+        "Not full Core or portable CI acceptance.",
+        "No contract/profile/platform/native claim expansion; suite NO-GO remains.",
+        "Complete exact-head PR CI and release publication/readback remain required."
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-424-native-multirestore-budget:001",
+    "type": "modification",
+    "started_at": "2026-09-12T02:35:00Z",
+    "ended_at": "2026-09-12T02:40:00.579Z",
+    "description": "Apply existing bounded multi-restore test timeout to three affected declarations and refresh source-only receipt hashes."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-424-native-multirestore-budget.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-424-native-multirestore-budget:001",
+      "time": "2026-09-12T02:40:00.579Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-424-native-multirestore-budget.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-424-native-multirestore-budget:001",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-424-native-multirestore-budget.json",
+        "source": "urn:gitea:issue:Fortemi/fortemi-react:424",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:modification:lane-b-424-native-multirestore-budget:001"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-424-native-multirestore-budget.json",
+        "source": "urn:gitea:actions:Fortemi/fortemi-react:58729:160202",
+        "derivation_type": "derives_from",
+        "activity": "urn:aiwg:activity:modification:lane-b-424-native-multirestore-budget:001"
+      }
+    ]
+  }
+}

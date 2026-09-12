@@ -40,7 +40,7 @@
     "src/shard/live-full-v1.ts": "bfc49c7f464064029f9a4b89598abece37aafc9306e05a06a6449b2d7697bd69",
     "src/migrations/0031_native_shard_lineage.ts": "6264f9684d7a22361b3220515ada3c752812a326f751bc0b6d1a3882720ac212",
     "src/migrations/0032_native_revision_replace.ts": "e1bef0fb7a0cf338ea631c011b7889505d01872f0fd70aa5a2bae2baa965494e",
-    "src/__tests__/shard/native-full-v1-public.test.ts": "39d5e623e222df5f937045dd838691dad98ac572aaa80820ee4baeff2f93ad5a",
+    "src/__tests__/shard/native-full-v1-public.test.ts": "0f296503509a29220a6ea49e6e9c2bd58d1d4bee973216dd6a99b71765edb884",
     "src/__tests__/shard/native-full-v1-presence.test.ts": "74bc2afc85dd16e3d7746bcc59c4669752e3815407d6f801c4bdcbd0048453f5",
     "src/records/types.ts": "82b8d014ec8f91376bcf459fb08d8ecd5668ecaf273bce2df821f4bf8e196a31",
     "src/records/memory-record-store.ts": "6fb02714f1c7258de7ef25f346683e910404d2030d2f652ffeb3823f917c48ee",

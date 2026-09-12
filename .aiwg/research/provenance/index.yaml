@@ -1,8 +1,10 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-09-12T02:29:13.270Z"
-  record_count: 106
+  updated_at: "2026-09-12T02:40:00.579Z"
+  record_count: 107
 records:
+  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-424-native-multirestore-budget.json"
+    record: "records/lane-b-424-native-multirestore-budget.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-424-immutable-release-assets.json"
     record: "records/lane-b-424-immutable-release-assets.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-424-deterministic-pack.json"
