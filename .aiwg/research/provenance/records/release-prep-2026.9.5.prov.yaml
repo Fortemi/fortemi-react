@@ -1,0 +1,115 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T13:17:41.925Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:docs/content/releases/v2026.9.5.md",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T13:17:41.925Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/reports/doc-sync-20260912-release-2026.9.5.md",
+          "sha256": "f238742552f202302541d952b90ea2ccbb78c2a875c3dacacfb76f658ddd0841"
+        },
+        {
+          "path": ".aiwg/reports/doc-sync-last-run.json",
+          "sha256": "da4f292e72e9a4f2dbbbb7993d93053050568be9f444004da68df06e95b92966"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "sha256": "e16d35d43c07a0c246abd560b4657f5d899e2a5d5e6267fa3402c2567e46cc96"
+        },
+        {
+          "path": "apps/standalone/package.json",
+          "sha256": "4fde73b9e40f2e63693f4db3770fe659bcc3eff980d1621da19dafe154505293"
+        },
+        {
+          "path": "docs/content/api-reference.md",
+          "sha256": "f89efd8c7b2941aa59297ea3543e69bda6812e4e1e7dc1103b0fb0912b48a55c"
+        },
+        {
+          "path": "docs/content/releases/v2026.9.5.md",
+          "sha256": "024fc5d2e88208b6c266418235b3060188fd4fa82f493986184b767ad4091979"
+        },
+        {
+          "path": "package.json",
+          "sha256": "519b5bcb4fdf95b43cd9f7a2b73280de46e7202743df541496e7effab47e78e2"
+        },
+        {
+          "path": "packages/core/package.json",
+          "sha256": "664b6e4b1517113c86d6d3e80573f1283cdbd43978fcea7da6d38958476887ba"
+        },
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+          "sha256": "b88671d9e34ca04dc08e17725ad2f696f41f584867b80f535b9e767dce602515"
+        },
+        {
+          "path": "packages/core/src/index.ts",
+          "sha256": "9171f8bb41983cb6aeacd2468444a6f3a9ca40e385666e592e48d5320c5213fd"
+        },
+        {
+          "path": "packages/graph/package.json",
+          "sha256": "4262e571e70d0700f29ed3ce4720f7e78d78448f695f7a73545a5f07aa777804"
+        },
+        {
+          "path": "packages/graph/src/index.ts",
+          "sha256": "d66f83a9e0dc1f29be7dbcf2f2c079d86e01c2c98a371883adb2f81a936ef08c"
+        },
+        {
+          "path": "packages/react/package.json",
+          "sha256": "8fbd122d381111a9d7f02b594de5aafebef61d44363beff9b13bcfe8688827ae"
+        }
+      ],
+      "boundaries": [
+        "Release metadata and documentation only; dependency/authority/fixture/lock bytes unchanged",
+        "Base CI58989 all11 PASS; final release-source CI/main/tag/publication remain gated",
+        "Search candidate excluded; suite NO-GO and original acceptance scope retained"
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:release-prep-2026.9.5:067",
+    "type": "modification",
+    "started_at": "2026-09-12T13:12:00Z",
+    "ended_at": "2026-09-12T13:17:41.925Z",
+    "description": "Prepare lockstep2026.9.5 from merged capability/CI/publication work, with current version hash and documentation reconciliation."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:docs/content/releases/v2026.9.5.md",
+      "activity": "urn:aiwg:activity:modification:release-prep-2026.9.5:067"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:docs/content/releases/v2026.9.5.md",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:release-prep-2026.9.5:067",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:docs/content/releases/v2026.9.5.md",
+        "source": "urn:gitea:issue:Fortemi/fortemi-react:422",
+        "derivation_type": "implements"
+      },
+      {
+        "entity": "urn:aiwg:artifact:docs/content/releases/v2026.9.5.md",
+        "source": "urn:gitea:pull:Fortemi/fortemi-react:449",
+        "derivation_type": "derives_from"
+      },
+      {
+        "entity": "urn:aiwg:artifact:docs/content/releases/v2026.9.5.md",
+        "source": "urn:gitea:ci:Fortemi/fortemi-react:58989",
+        "derivation_type": "derives_from"
+      }
+    ]
+  }
+}

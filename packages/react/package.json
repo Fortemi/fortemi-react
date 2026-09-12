@@ -1,6 +1,6 @@
 {
   "name": "@fortemi/react",
-  "version": "2026.9.4",
+  "version": "2026.9.5",
   "description": "React 19 hooks, accessible dataset workflows, inference routing, and FortemiProvider for the @fortemi/core browser-only knowledge management system.",
   "keywords": [
     "fortemi",

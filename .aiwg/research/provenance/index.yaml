@@ -1,8 +1,10 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-09-12T12:34:00Z"
-  record_count: 115
+  updated_at: "2026-09-12T13:17:41.925Z"
+  record_count: 116
 records:
+  - entity: "urn:aiwg:artifact:docs/content/releases/v2026.9.5.md"
+    record: "records/release-prep-2026.9.5.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-worktree.json"
     record: "records/lane-b-422-ci-worktree.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-followup.json"
