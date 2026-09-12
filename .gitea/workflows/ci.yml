@@ -196,5 +196,15 @@ jobs:
           (cd packages/core && pnpm pack --pack-destination "$PACK_DIR")
           node tools/release/verify-core-package.mjs \
             "$PACK_DIR/fortemi-core-${CORE_VERSION}.tgz" \
-            "$CORE_VERSION"
+            "$CORE_VERSION" "$PACK_DIR/core-package-receipt.json"
+      - name: Retain installed package acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+        with:
+          name: core-package-acceptance
+          path: |
+            /tmp/fortemi-core-ci-pack/core-package-receipt.json
+            /tmp/fortemi-core-ci-pack/fortemi-core-*.tgz
+          retention-days: 14
+          if-no-files-found: warn
       - run: pnpm report:bundle

@@ -1,14 +1,15 @@
 import { strict as assert } from 'node:assert'
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { execFileSync } from 'node:child_process'
+import { verifyInstalledCapabilities } from './verify-installed-capabilities.mjs'
 
-const [tarballArgument, expectedVersion] = process.argv.slice(2)
+const [tarballArgument, expectedVersion, receiptPath] = process.argv.slice(2)
 if (!tarballArgument || !expectedVersion) {
-  throw new Error('usage: verify-core-package.mjs <core.tgz> <expected-version>')
+  throw new Error('usage: verify-core-package.mjs <core.tgz> <expected-version> [receipt.json]')
 }
 
 const tarball = resolve(tarballArgument)
@@ -229,6 +230,8 @@ try {
   const packageRoot = resolve(installRoot, 'node_modules/@fortemi/core')
   const packageJson = JSON.parse(readFileSync(resolve(packageRoot, 'package.json'), 'utf8'))
   assert.equal(packageJson.version, expectedVersion)
+  const capabilities = verifyInstalledCapabilities(installRoot, expectedVersion)
+  console.log(`Verified installed capability negotiation: ${capabilities.wireCases} wire and ${capabilities.versionCases} version vectors`)
 
   const core = await import(pathToFileURL(resolve(packageRoot, 'dist/index.js')).href)
   const aiwg = await import(pathToFileURL(resolve(packageRoot, 'dist/aiwg-index.js')).href)
@@ -417,6 +420,16 @@ try {
   )
 
   console.log(`Verified clean-installed @fortemi/core@${expectedVersion} canonical shard behavior`)
+  if (receiptPath) {
+    const digest = (path) => createHash('sha256').update(readFileSync(path)).digest('hex')
+    writeFileSync(receiptPath, JSON.stringify({
+      status: 'PASS', packageVersion: expectedVersion, packageSha256: digest(tarball),
+      capabilities,
+      verifierSha256: digest(fileURLToPath(import.meta.url)),
+      capabilityVerifierSha256: digest(fileURLToPath(new URL('./verify-installed-capabilities.mjs', import.meta.url))),
+      scope: 'Clean-installed candidate capability and registered shard package checks; not published/live server, AIWG or suite parity acceptance',
+    }, null, 2) + '\n', { flag: 'wx' })
+  }
 } finally {
   rmSync(installRoot, { recursive: true, force: true })
 }

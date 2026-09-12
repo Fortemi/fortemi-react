@@ -761,6 +761,13 @@ Core source/built-entry tests do not prove server, AIWG, published-package or
 live adapter conformance. Those pins and execution receipts remain required;
 alpha remote maturity and suite NO-GO are unchanged.
 
+The clean-installed candidate gate now executes the shared capability corpus
+through installed public ESM exports before the registered shard checks. Its
+optional receipt binds candidate/authority/verifier bytes; CI retains that
+receipt and tarball with the source run. It is independent of source-unit
+tests but does not qualify published bytes or server/AIWG/live consumers.
+No schema, fixture, wire contract or consumer pin changes are introduced.
+
 **SAD Version History**:
 
 | Version | Date | Author | Change |

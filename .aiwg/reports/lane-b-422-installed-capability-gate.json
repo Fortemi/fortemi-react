@@ -1,0 +1,38 @@
+{
+  "status": "LOCAL_CANDIDATE_PASS",
+  "sourceBase": "35edcd9f8429fcd91a417021cbe4c427f900ed73",
+  "issues": ["https://git.integrolabs.net/Fortemi/fortemi-react/issues/422", "https://git.integrolabs.net/Fortemi/fortemi/issues/1128"],
+  "scope": "Linux x64 unpublished Core candidate clean install and registered package checks, not released or live consumer acceptance",
+  "packageVersion": "2026.9.4",
+  "packageSha256": "170d97c96a4ea32966c3fc966e76118c1066f5c6dc00d52cae8948b484f2ee7f",
+  "immutablePublishedVersionReplaced": false,
+  "validationRevision": "1.0.1",
+  "authorityManifestSha256": "20b59bb871c3afc9bb972896b2a2da718970c6fe7ef54b49000418f62a5701c0",
+  "contractBytesChanged": false,
+  "consumerPinsChanged": false,
+  "tests": {
+    "releaseToolsNode24_12_0": 59,
+    "releaseToolsNode22_22_2": 59,
+    "gateTestsIncludedInEach": 18,
+    "cleanInstalledWireVectorsEach": 11,
+    "cleanInstalledVersionVectorsEach": 20,
+    "completePackageVerifierBothRuntimes": "PASS",
+    "focusedLint": "PASS"
+  },
+  "localExecution": {
+    "host": "titan",
+    "serialDetachedOffline": true,
+    "jobs": 8,
+    "capturedFailures": 4,
+    "failureCauses": ["Expected CI-wiring RED", "Duplicate empty npm config paths", "Operator cache lacked wkx metadata", "Previously cleaned Node22 scratch copy missing"],
+    "peakBytes": 1644867584,
+    "activeJobsAtCapture": 0,
+    "vllmPid": 223555,
+    "vllmRestarts": 0,
+    "modelLoaded": false,
+    "cleanup": "Captured all terminal receipts/logs and removed owned dependency links, copied runtime and failed markers; preserved caches and shared services"
+  },
+  "evidence": "/home/roctinam/dev/fortemi-suite/.aiwg/working/lane-b/evidence/lane-b-delivery-20260912-cycle47",
+  "remaining": ["Exact-head PR CI and main delivery", "Registry/release/mirror byte qualification", "Actual server descriptor-to-Core acceptance", "Authorized AIWG adoption", "Full original Lane B acceptance and release/cleanup sweep"],
+  "suiteAudit": "NO-GO"
+}

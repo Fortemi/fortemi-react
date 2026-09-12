@@ -96,6 +96,13 @@ Server and AIWG adoption, source/digest pins, clean installed-package checks and
 actual server descriptor evidence are required before cross-runtime claims.
 See `docs/architecture/dataset-execution-capability-contract.md`.
 
+The candidate package verifier executes the shared capability corpus against
+public exports after a clean npm install. It compares packaged authority bytes
+with the checkout, rather than allowing the installed package to define its own
+oracle. CI retains digest-bound evidence only after all registered package
+checks pass. This gate changes no contract bytes or pins, and does not replace
+released-artifact or actual server/AIWG consumer qualification.
+
 ## References
 
 - @.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md - Profile and enforcement requirements.

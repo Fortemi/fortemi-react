@@ -1,0 +1,93 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T07:02:00Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-installed-capability-gate.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T07:02:00Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".gitea/workflows/ci.yml",
+          "sha256": "5c2ae7c8549471b1c9c97f4c5c6a79a28b2b96d1b053b521bbaaa85f15cd225e"
+        },
+        {
+          "path": "tools/release/verify-core-package.mjs",
+          "sha256": "ac497466dad42a95b2e6d14d809a0eb63c2ecc9603a640e0172e03ae1f71d5bf"
+        },
+        {
+          "path": "tools/release/verify-installed-capabilities.mjs",
+          "sha256": "f4fdeb770e3329297559edc7dbb31d1f45d8c203757e7a7acf057d1dc1b87c2b"
+        },
+        {
+          "path": "tools/release/verify-installed-capabilities.test.mjs",
+          "sha256": "e38dd9e83f9e9fcf7d09ee69d0c712f55d0bd8acf0a0e78ce5602714c48800f2"
+        },
+        {
+          "path": "docs/architecture/dataset-execution-capability-contract.md",
+          "sha256": "e117a84a01a32425e5809f5345adc2c3913f85ef3a3ed2e812db9a4f6526a5ce"
+        },
+        {
+          "path": ".aiwg/architecture/SAD.md",
+          "sha256": "f314db69fd4afc343e750ef096ee569e9a53bf483015663cc1410d4d26bae85b"
+        },
+        {
+          "path": ".aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md",
+          "sha256": "f839bfc0e756ac6fde92efcfc8a5fb542bbcf4f072b1a6f512c0659b154af415"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-422-installed-capability-gate.json",
+          "sha256": "ec8c4604045deb03347699542506017551ea4a47412c6786676f794895006977"
+        }
+      ],
+      "boundaries": [
+        "Candidate Linux x64 only",
+        "No contract byte or consumer pin change",
+        "Published/live/AIWG acceptance and suite NO-GO remain"
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-422-installed-capability-gate:001",
+    "type": "modification",
+    "started_at": "2026-09-12T06:40:00Z",
+    "ended_at": "2026-09-12T07:02:00Z",
+    "description": "Add clean-installed public ESM capability corpus gate and digest-bound CI evidence."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-installed-capability-gate.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-422-installed-capability-gate:001",
+      "time": "2026-09-12T07:02:00Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-installed-capability-gate.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-422-installed-capability-gate:001",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-installed-capability-gate.json",
+        "source": "urn:gitea:issue:Fortemi/fortemi-react:422",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:modification:lane-b-422-installed-capability-gate:001"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-installed-capability-gate.json",
+        "source": "urn:gitea:issue:Fortemi/fortemi:1128",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:modification:lane-b-422-installed-capability-gate:001"
+      }
+    ]
+  }
+}

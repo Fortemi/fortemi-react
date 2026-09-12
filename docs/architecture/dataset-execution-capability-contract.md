@@ -108,3 +108,25 @@ No validation or negotiation call performs network I/O or execution.
 Source tests do not qualify the server, published package, AIWG consumer, or
 live DatasetWorkflowApi adapter. Revision/source/digest pins and those independent
 acceptance receipts remain required before issue closure or release claims.
+
+## Clean-installed candidate gate
+
+`node tools/release/verify-core-package.mjs <core.tgz> <version> [receipt.json]`
+installs the candidate into a new temporary npm project with lifecycle scripts
+disabled. Before the registered shard checks, a separate ESM process resolves
+the installed public Core entry, package manifest and validation schema export.
+It compares five bundled authority files with the checkout and manifest digests,
+then executes all 11 wire and 20 version vectors through the installed API.
+Rejected wire input must carry diagnostics without a typed result; inputs must
+remain unchanged. The gate tests deliberately broken packages as well as a
+fixture double; only the real clean install qualifies the candidate.
+
+The optional receipt is created exclusively after all package checks pass and
+binds the tarball, public entry, manifest, authority files and verifier scripts
+by SHA-256. CI retains the receipt and candidate tarball for 14 days, associated
+with the exact source run. The receipt does not independently identify a source
+commit; retain the CI run or source snapshot alongside it. Never reuse an old
+receipt path. This is not acceptance of registry bytes, actual server
+descriptors, the AIWG consumer, or every platform. Alpha maturity, named shard
+profile boundaries and suite NO-GO remain unchanged. No contract bytes changed,
+so this gate alone does not require authority or consumer pin updates.

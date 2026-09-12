@@ -1,8 +1,10 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-09-12T04:12:02Z"
-  record_count: 108
+  updated_at: "2026-09-12T07:02:00Z"
+  record_count: 109
 records:
+  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-422-installed-capability-gate.json"
+    record: "records/lane-b-422-installed-capability-gate.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-422-capability-validation.json"
     record: "records/lane-b-422-capability-validation.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-424-native-multirestore-budget.json"
