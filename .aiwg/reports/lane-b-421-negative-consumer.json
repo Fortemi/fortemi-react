@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "fortemi.lane-b.negative-consumer.v1",
+  "observedAt": "2026-09-12T09:21:00Z",
+  "status": "SOURCE_VERIFIED_DELIVERY_PENDING",
+  "baseCommit": "5d29230aff360cdea1f8b3107c4493831dc7244f",
+  "baseDelivery": "PR450 merged fast-forward after all8 exact-head CI58902 gates and review/status checks",
+  "producerCommit": "bb0c8509f7d5586ec34dfb40c0af58aa1bfd604d",
+  "issues": ["https://git.integrolabs.net/Fortemi/fortemi-react/issues/421", "https://git.integrolabs.net/Fortemi/fortemi/issues/1146"],
+  "pin": "packages/core/src/__tests__/fixtures/remote-negative-controls.producer-pin.json",
+  "verification": {
+    "tests": { "passed": 129, "failed": 0, "files": 5, "newTests": 32, "faultReplays": 31 },
+    "lint": "PASS",
+    "coreTypecheck": "PASS after a test-only optional-method call correction; initial failure retained",
+    "upstreamPins": "PASS: four corpora, native/negative receipts, capture scripts and negative helper",
+    "tamperControlsRejected": 8,
+    "peakMemoryBytes": 828403712,
+    "jobs": [
+      { "unit": "fortemi-local-test-1000-dc908754-3549-4ccc-a32d-afdd08842657.service", "status": "RETAINED_FAILURE: first typecheck detected optional test method;129 tests passed" },
+      { "unit": "fortemi-local-test-1000-b995196f-1cd1-44ba-9309-f6328df028f0.service", "status": "PASS:129 tests/lint/typecheck" },
+      { "unit": "fortemi-local-test-1000-b1a7ee54-f2e8-4f26-8816-738642be771d.service", "status": "PASS: upstream pins plus8 negative controls" }
+    ],
+    "execution": "Serial detached offline Titan jobs; cached Core/toolchain dependencies, not a clean install; exact owned symlinks and scratch removed, cgroups absent. Failed marker reset after preservation.",
+    "evidence": "fortemi-suite/.aiwg/working/lane-b/evidence/lane-b-delivery-20260912-cycle55/"
+  },
+  "acceptanceMap": [
+    { "criterion": "Only authoritative note-not-found returns null; other failures typed", "evidence": "remote-errors, remote-native-capture and remote-negative-corpus tests; published native and negative receipts", "boundary": "Personal required-authentication, tested operations only" },
+    { "criterion": "Bounded producer diagnostics; explicit enrichment contract", "evidence": "Status/problem/request-ID/Retry-After assertions and redaction checks; getNoteFull rejects enrichment errors, no partial success", "boundary": "No response content or credential retention" },
+    { "criterion": "Producer-owned401/403/404/429/5xx/malformed/network/composed fixtures", "evidence": "Native capture plus21 negative controls at bb0c8509; current31 replays; historical published31 checks over61 private-loopback requests", "boundary": "Operator403 reassignment and malformed/socket faults are explicitly injection, not live Fortemi output" },
+    { "criterion": "Bounded real server permitted/not-found/denied resources and UI contract", "evidence": "Native published server2026.9.9/Core2026.9.4 receipt: permitted reads, authoritative404 and missing/invalid identity401 on actual note routes; fixture/example/ADR docs", "boundary": "401 denial is personal API-identity enforcement. Authenticated role/tenant403 and hosted behavior remain unqualified, not silently substituted" }
+  ],
+  "remaining": "This source change still needs its own signed PR, exact-head CI and merge; producer CI remains capacity-gated. Full Lane B operations and release sweep remain incomplete. No issue closure is claimed here.",
+  "releaseDisposition": "RELEASE_PENDING_ACCEPTANCE: published Core2026.9.4 unchanged, no runtime source/version/tag/asset changes in this patch",
+  "suite": "NO-GO"
+}

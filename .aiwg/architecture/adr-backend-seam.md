@@ -123,6 +123,22 @@ placeholders accompanied by `unavailableFields`, not a claim of known absence.
 
 ### Remote Search and Mutation Amendment (#419/#420)
 
+The supplemental native operation fixture from producer
+`36c1b8779166af712afd588dd00dec871a6a9e30` adds historical qualification of
+actually published Core2026.9.4 against published native Linux AMD64
+server2026.9.9:23 checks/86 real HTTP requests. Required personal identity,
+FTS projections, each advertised note mutation with state readback, actual
+401/400/404 and synthetic cleanup are captured. Current source replay requires
+exact methods, URLs and JSON request bodies, preserving raw response mappings.
+Fixture, receipt and capture-script hashes are independently pinned upstream.
+
+This closes the earlier candidate-versus-published evidence gap for those
+operations only. Positive vector retrieval remains NOT_RUN; explicit semantic/
+hybrid fallback is not semantic success. Personal AllowAllPolicy is not hosted
+role/tenant denial. Historical receipts cannot qualify later releases or
+current host cleanup. Remaining consumer delivery/CI and full lane release
+gates still apply; no authority/schema/profile or suite NO-GO change follows.
+
 The remote adapter sends `q` through the producer search endpoint, admitting
 explicit fts/semantic/hybrid modes, bounded limits and comma-joined AND tags.
 Nonzero offset and source filters are not implemented by this producer contract
@@ -149,6 +165,38 @@ bytes remain unchanged. Fixture/source tests are not released-package
 qualification; successful vector retrieval, auth/error runtime evidence, live
 published-consumer execution and release closeout remain gates. Suite NO-GO is
 unchanged.
+
+### Native HTTP Evidence Amendment (#417/#418/#421, Producer #1146)
+
+Producer commit `bb0c8509f7d5586ec34dfb40c0af58aa1bfd604d` additionally owns
+21 controlled negative cases and a31-check/61-request published-Core receipt.
+The consumer pins corpus, receipt and producer runner/helper independently,
+then replays31 faults against current source. Socket reset/abort/truncation and
+malformed/enrichment responses are injected; historical real loopback execution
+is not a live Fortemi server run. Real native missing/invalid-identity401 already
+proves note-route denial in personal required-authentication mode. Authenticated
+role/tenant403 remains unqualified, not an implicit hosted implementation goal.
+These supplements change neither wire semantics nor the separate persistence
+planes. See the fixture README for the bounded UI-facing error contract.
+
+The supplemental native capture at producer commit
+`912c0636a6d2273e5663a977e0182bfe874c3bd3` adds historical real HTTP evidence for
+published Linux AMD64 server 2026.9.9 and clean-installed published Core 2026.9.4.
+Its 13 checks/86 calls include required API identity, 401/404/429/500 responses,
+directional relationships and seeded provenance composition. The consumer pins
+fixture, receipt and capture-script bytes separately from runtime executable and
+published tarball identities. Existing 25/37-case pins and storage contracts do
+not change. Server runtime handlers/models and ADR-102 remain authoritative.
+
+Current consumer tests replay raw responses offline with exact note-route
+method/path matching. The actual 403 came from operator inventory; injecting it
+into note transports verifies error mapping only, not live note denial. Personal
+AllowAllPolicy permits authenticated MCP-scoped note reads in this capture.
+Hosted OIDC/JWT, multi-tenant denial, read-only mutation enforcement, successful
+inference, full-operation qualification and other platforms remain outside this
+evidence. Historical receipt cleanup is not current host-state proof. Source
+replay does not qualify a new published consumer. Suite NO-GO and lane release
+gates remain unchanged.
 
 - `DataBackend`, `BackendCapabilities`, `selectBackend` live in core (`src/data-backend.ts`).
 - PGlite adapter wraps the repositories/tools; static-file adapter wraps `ShardReader` (#189).

@@ -1,0 +1,25 @@
+{
+  "repository": "Fortemi/fortemi",
+  "fixtureCommit": "36c1b8779166af712afd588dd00dec871a6a9e30",
+  "fixturePath": "contracts/openapi/fixtures/native-remote-operations.json",
+  "sha256": "71347753ce83568ab2028e63a28c809d81086c37815eec583f844d27227c2a59",
+  "runtimeCommit": "e91c595a896275f835cb7ed1aef173cb26056206",
+  "runtimeArtifact": {
+    "kind": "published-native-linux-amd64",
+    "sha256": "19b98d48d7c92e8e9d3d7d514fd60a8817f144926c1a4270adf6e0a052c39bc9"
+  },
+  "publishedConsumer": {
+    "version": "2026.9.4",
+    "commit": "9f74c0bab0cce5ef8e2433e8944a4efda5575eb4",
+    "sha256": "4a126d59bc18af4fb981d5bdbf19a761402e246b7d85cf3e6445de4eacf92897"
+  },
+  "receipt": {
+    "path": "contracts/openapi/fixtures/native-remote-operations.receipt.json",
+    "sha256": "6216ed53ba579526ba1d4104d325c6312a04abfbc3596aeb324b40d3b1c6d939"
+  },
+  "captureScript": {
+    "path": "scripts/ci/capture-native-remote-operations.mjs",
+    "sha256": "0cc9a2dc22e10dc78b51831b4d2db63fa3690acbf91402e148bca5b1e1f04b24"
+  },
+  "boundary": "Historical published Core2026.9.4/native server2026.9.9 Linux AMD64 execution; current source tests replay bytes. Required personal identity and all8 mutation actions, not hosted role/tenant denial. Semantic/hybrid fallback is not positive vector retrieval. Suite NO-GO."
+}

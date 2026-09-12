@@ -1,0 +1,25 @@
+{
+  "repository": "Fortemi/fortemi",
+  "fixtureCommit": "912c0636a6d2273e5663a977e0182bfe874c3bd3",
+  "fixturePath": "contracts/openapi/fixtures/native-remote-auth.json",
+  "sha256": "96a4955315108cd83473d66c8b9a7626e0b97ab9784e761375707c1da3f5efb3",
+  "runtimeCommit": "e91c595a896275f835cb7ed1aef173cb26056206",
+  "runtimeArtifact": {
+    "kind": "published-native-linux-amd64",
+    "sha256": "19b98d48d7c92e8e9d3d7d514fd60a8817f144926c1a4270adf6e0a052c39bc9"
+  },
+  "publishedConsumer": {
+    "version": "2026.9.4",
+    "commit": "9f74c0bab0cce5ef8e2433e8944a4efda5575eb4",
+    "sha256": "4a126d59bc18af4fb981d5bdbf19a761402e246b7d85cf3e6445de4eacf92897"
+  },
+  "receipt": {
+    "path": "contracts/openapi/fixtures/native-remote-auth.receipt.json",
+    "sha256": "0250216e84a9d32ce89ec375f15410bd32c0eac25c88658bb114857ed93263f8"
+  },
+  "captureScript": {
+    "path": "scripts/ci/capture-native-remote-fixture.mjs",
+    "sha256": "61efc8abcf70dc97856f96528dad92d65286bd8290df20fc0f05e8a2bcda5816"
+  },
+  "boundary": "Historical Linux AMD64 native HTTP with published Core2026.9.4; current source tests replay captured bytes. Personal required identity, not hosted note denial. Operator403 replay is transport injection. No inference or suite parity."
+}

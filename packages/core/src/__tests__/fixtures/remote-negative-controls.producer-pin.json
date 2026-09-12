@@ -1,0 +1,26 @@
+{
+  "repository": "Fortemi/fortemi",
+  "fixtureCommit": "bb0c8509f7d5586ec34dfb40c0af58aa1bfd604d",
+  "fixturePath": "contracts/openapi/fixtures/remote-negative-controls.json",
+  "sha256": "264e6b23f76405586ad62c4705b08829b58ea240a91d890caf735f091c5ba094",
+  "basisSha256": "96a4955315108cd83473d66c8b9a7626e0b97ab9784e761375707c1da3f5efb3",
+  "receipt": {
+    "path": "contracts/openapi/fixtures/remote-negative-package.receipt.json",
+    "sha256": "5052f58e9c89850d65bfba70b71d07c362b1e153a42202f435bdf97d70689cfb"
+  },
+  "captureScript": {
+    "path": "scripts/ci/verify-remote-negative-package.mjs",
+    "sha256": "b5b4ab2b14329025a8c0d85dbae203f0bfa2ea343dcaff399bce856eb86fceeb"
+  },
+  "helper": {
+    "path": "scripts/ci/remote-negative-controls.mjs",
+    "sha256": "2eb609a7dfdecbe609bdb092b35581e03a7051206647a784cb6ac46c7fb171b2"
+  },
+  "publishedConsumer": {
+    "version": "2026.9.4",
+    "commit": "9f74c0bab0cce5ef8e2433e8944a4efda5575eb4",
+    "sha256": "4a126d59bc18af4fb981d5bdbf19a761402e246b7d85cf3e6445de4eacf92897"
+  },
+  "classification": "producer-owned-controlled-fault-injection",
+  "boundary": "Current source tests replay injected faults. Historical published-Core receipt proves real private-loopback controls, not live Fortemi output, hosted note denial or inference."
+}

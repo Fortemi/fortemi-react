@@ -1,0 +1,71 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T10:03:25.446Z",
+    "description": "Consumer native operation pins and exact request/response replay"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-419-native-operations.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T10:03:25.446Z",
+    "checksum": "sha256:a9720139a781d3021a4e5a637c792fc3e6aa1a6ece158c3314c959060d387788",
+    "attributes": {
+      "baseCommit": "3feb1426aa487a18722e2fd4d5d46bb97c6b2bcc",
+      "producerFixtureCommit": "36c1b8779166af712afd588dd00dec871a6a9e30",
+      "artifacts": {
+        ".aiwg/architecture/SAD.md": "sha256:453d6bc754b756395c013c68e792de4cb4c5a18cc7f110aa25119fa23970c3ba",
+        ".aiwg/architecture/adr-backend-seam.md": "sha256:769818ab0dbd1f69e34bc91c41f0348c2b6f536d3c0604e18e72d2b349412d63",
+        "examples/remote-backend/README.md": "sha256:aa4a4a32435765d34c1bb09af6898b79850438b2a28e1e3a2f3db671a0dfa432",
+        "packages/core/scripts/verify-remote-producer-fixture.mjs": "sha256:cd7fc8e9e53e741be09587122600f8f7838bdcc64588a312cf7346f65f953423",
+        "packages/core/src/__tests__/fixtures/README.md": "sha256:fa545faca0bff71e222defd3453f95f37bd00f6a7a2f955901223f357a7961c2",
+        ".aiwg/reports/lane-b-419-native-operations.json": "sha256:a9720139a781d3021a4e5a637c792fc3e6aa1a6ece158c3314c959060d387788",
+        "packages/core/src/__tests__/fixtures/native-remote-operations.json": "sha256:71347753ce83568ab2028e63a28c809d81086c37815eec583f844d27227c2a59",
+        "packages/core/src/__tests__/fixtures/native-remote-operations.producer-pin.json": "sha256:31532515233fc0f2527abbce63e7e63c0f5cee996aa5640009105cf2a6db12f5",
+        "packages/core/src/__tests__/fixtures/native-remote-operations.receipt.json": "sha256:6216ed53ba579526ba1d4104d325c6312a04abfbc3596aeb324b40d3b1c6d939",
+        "packages/core/src/__tests__/remote-native-operations.test.ts": "sha256:8459947b0ac02f50b0aaefb4e9040a26d260007caf81a89db4f95111e83b008f"
+      }
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:testing:lane-b-419-native-operations:058",
+    "type": "testing",
+    "started_at": "2026-09-12T09:54:00Z",
+    "ended_at": "2026-09-12T10:03:25.446Z",
+    "description": "24 new replay tests;153 tests/lint/typecheck and14 pin checks pass; initial test-library mismatch retained"
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-419-native-operations.json",
+      "activity": "urn:aiwg:activity:testing:lane-b-419-native-operations:058",
+      "time": "2026-09-12T10:03:25.446Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-419-native-operations.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:testing:lane-b-419-native-operations:058",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-419-native-operations.json",
+        "source": "urn:aiwg:artifact:packages/core/src/__tests__/fixtures/native-remote-operations.producer-pin.json",
+        "activity": "urn:aiwg:activity:testing:lane-b-419-native-operations:058",
+        "derivation_type": "tests"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-419-native-operations.json",
+        "source": "urn:aiwg:artifact:.aiwg/architecture/adr-backend-seam.md",
+        "activity": "urn:aiwg:activity:testing:lane-b-419-native-operations:058",
+        "derivation_type": "conforms_to"
+      }
+    ]
+  }
+}

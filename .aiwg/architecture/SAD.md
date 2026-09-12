@@ -709,6 +709,16 @@ All operations work without network access. The only network-dependent features 
 
 ## 11. Architectural Risks (Residual)
 
+Producer `36c1b877` supplies a separately pinned native operation capture and
+published-Core2026.9.4/server2026.9.9 receipt:23 checks/86 real HTTP requests for
+required personal identity, FTS projections, all8 mutation actions and cleanup.
+Consumer source replays exact request methods/URLs/bodies and raw responses;
+upstream fixture, receipt and capture-script identities are verified in CI.
+Neither source replay nor the historical receipt proves positive vector
+retrieval, hosted role/tenant enforcement or a newer published consumer.
+Historical fixtures, REST authority and separate persistence planes remain
+unchanged; CI/delivery/release gates and suite NO-GO remain in force.
+
 Remote read projection amendment (#417/#418/#421): server HTTP envelopes are
 validated before projection, independently of PGlite and shard schemas. The
 server revision/activity graph is exposed through `provenanceGraphOf` and
@@ -721,6 +731,25 @@ Mutation intents map to specific REST methods; unsupported fields reject before
 dispatch, and merge capability is false. Source fixture coverage is not provider
 readiness, auth qualification or published-consumer acceptance. Those live/release
 gates remain open; the suite audit is still NO-GO.
+
+The supplemental native fixture adds a bounded historical published-Core 2026.9.4
+run against published Linux AMD64 server 2026.9.9: 13 checks/86 HTTP calls,
+required personal-mode API identity, 401/404/429/500 and relationship composition.
+Current raw-response replay is offline source testing, not a new live run.
+The operator-inventory 403 remains distinct from note denial; injecting that
+response into note transports does not qualify hosted authorization. Its pin
+also verifies the producer receipt and capture script at immutable source
+commit `912c0636a6d2273e5663a977e0182bfe874c3bd3`. The historical 25/37-case
+captures, server authority, separate persistence planes and suite NO-GO remain
+unchanged. See the backend ADR's Native HTTP Evidence Amendment for limits.
+
+The producer-owned negative corpus at `bb0c8509` adds explicit malformed-body,
+socket and enrichment controls. Consumer source replays are separate from the
+historical31-check published-Core private-loopback receipt. The latter is fault
+injection, not a live Fortemi/hosted run. Personal-mode real note-route401 covers
+missing/invalid identity denial; role/tenant403 remains outside that evidence.
+Full-detail enrichment rejects on failure rather than returning partial success.
+See the backend ADR and fixture README; suite NO-GO remains unchanged.
 
 After Elaboration Iteration 1 PoC:
 

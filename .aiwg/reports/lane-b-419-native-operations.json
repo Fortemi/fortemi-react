@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "fortemi.consumer-native-operation-acceptance.v1",
+  "issues": [
+    419,
+    420
+  ],
+  "producerIssue": "https://git.integrolabs.net/Fortemi/fortemi/issues/1146",
+  "baseCommit": "3feb1426aa487a18722e2fd4d5d46bb97c6b2bcc",
+  "parentPR": 451,
+  "producerFixtureCommit": "36c1b8779166af712afd588dd00dec871a6a9e30",
+  "fixture": {
+    "path": "packages/core/src/__tests__/fixtures/native-remote-operations.json",
+    "sha256": "71347753ce83568ab2028e63a28c809d81086c37815eec583f844d27227c2a59",
+    "receiptSha256": "6216ed53ba579526ba1d4104d325c6312a04abfbc3596aeb324b40d3b1c6d939",
+    "captureScriptSha256": "0cc9a2dc22e10dc78b51831b4d2db63fa3690acbf91402e148bca5b1e1f04b24"
+  },
+  "currentSourceEvidence": {
+    "tests": 153,
+    "newTests": 24,
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "pinChecks": 14,
+    "upstreamGitBytes": "PASS",
+    "tamperControlsRejected": 13,
+    "liveRuntime": "NOT_RUN",
+    "dependencyMode": "Existing cached Core/toolchain dependencies, not a clean install",
+    "initialFailure": "Tests/lint passed; test toSorted not in configured TS library, corrected to copy-and-sort; original source/results preserved"
+  },
+  "historicalPublishedEvidence": {
+    "coreVersion": "2026.9.4",
+    "coreCommit": "9f74c0bab0cce5ef8e2433e8944a4efda5575eb4",
+    "coreTarballSha256": "4a126d59bc18af4fb981d5bdbf19a761402e246b7d85cf3e6445de4eacf92897",
+    "serverVersion": "2026.9.9",
+    "serverCommit": "e91c595a896275f835cb7ed1aef173cb26056206",
+    "serverNativeSha256": "19b98d48d7c92e8e9d3d7d514fd60a8817f144926c1a4270adf6e0a052c39bc9",
+    "platform": "linux-amd64",
+    "checks": 23,
+    "httpCalls": 86,
+    "auth": "Required personal API identity; AllowAllPolicy for authenticated roles",
+    "vector": "Explicit FTS fallback; positive vector retrieval NOT_RUN"
+  },
+  "acceptance": {
+    "419": [
+      {
+        "criterion": 1,
+        "evidence": "Pinned request JSON/URL replay covers q, fts/semantic/hybrid, comma-joined AND tags, bounded limits; unsupported source/nonzero offset rejected before HTTP."
+      },
+      {
+        "criterion": 2,
+        "evidence": "Actual EnhancedSearchHit score/title/tags/snippet and UTC detail enrichment are replayed; requested/effective mode and degradation retained."
+      },
+      {
+        "criterion": 3,
+        "evidence": "Producer-owned immutable old37-case and supplemental native86-request fixtures cover empty/nonempty/filters/errors/degradation. Fixture, receipt and script verified upstream."
+      },
+      {
+        "criterion": 4,
+        "evidence": "Producer receipt binds clean-installed actually published Core2026.9.4 and native server2026.9.9, exact source/artifact/fixture digests and cleanup. Current source is replay only."
+      }
+    ],
+    "420": [
+      {
+        "criterion": 1,
+        "evidence": "Supported search endpoint handles semantic/hybrid with explicit projection/degradation. Positive vector success remains unqualified."
+      },
+      {
+        "criterion": 2,
+        "evidence": "Create/update/star/unstar/archive/unarchive/delete/restore exact REST methods, paths and bodies match producer capture; all eight have live historical success/readback."
+      },
+      {
+        "criterion": 3,
+        "evidence": "merge=false and unsupported/invalid intents reject before dispatch. semantic=server describes dispatch, not provider readiness or vector success."
+      },
+      {
+        "criterion": 4,
+        "evidence": "Pinned producer request/response/error captures; historical published-package execution includes every advertised mutation, actual401/400/404 and synthetic cleanup. Source tests replay bytes."
+      }
+    ]
+  },
+  "remaining": [
+    "exact PR CI and merge, including parent451",
+    "positive vector retrieval qualification",
+    "producer CI and full Lane B release sweep"
+  ],
+  "boundary": "No issue closure, new wire/schema/profile or full-parity claim. Historical cleanup does not prove current host state. Hosted role/tenant denial remains unqualified; suite NO-GO."
+}
