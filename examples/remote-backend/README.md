@@ -41,6 +41,14 @@ Producer-captured fixture tests are not published-package/live-server acceptance
 Errors preserve bounded HTTP status and problem codes without exposing response
 content. A failed relationship request does not turn an existing note into null.
 
+The supplemental native fixture records a historical published Core 2026.9.4
+run against published Linux AMD64 server 2026.9.9 with required API identity.
+Current tests replay those bytes offline; they do not contact your server.
+Personal-mode authenticated note reads use AllowAllPolicy. The captured operator
+403 is not proof of note-scope denial; its note-method test is explicitly
+transport injection. Hosted authorization and inference remain unqualified.
+See the [fixture boundaries](../../packages/core/src/__tests__/fixtures/README.md).
+
 | | Local (EX-06/07) | Remote (this) |
 |---|---|---|
 | Backend | PGlite in the tab | Fortémi server |

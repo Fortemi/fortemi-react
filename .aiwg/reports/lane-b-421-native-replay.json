@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "fortemi.lane-b.native-replay.v1",
+  "observedAt": "2026-09-12T08:48:10Z",
+  "status": "SOURCE_CHECKS_PASS",
+  "issues": [
+    "https://git.integrolabs.net/Fortemi/fortemi-react/issues/417",
+    "https://git.integrolabs.net/Fortemi/fortemi-react/issues/418",
+    "https://git.integrolabs.net/Fortemi/fortemi-react/issues/421",
+    "https://git.integrolabs.net/Fortemi/fortemi/issues/1146"
+  ],
+  "baseCommit": "35edcd9f8429fcd91a417021cbe4c427f900ed73",
+  "producerFixtureCommit": "912c0636a6d2273e5663a977e0182bfe874c3bd3",
+  "pin": "packages/core/src/__tests__/fixtures/native-remote-auth.producer-pin.json",
+  "verification": {
+    "remoteTests": { "passed": 97, "failed": 0, "files": 4, "newNativeReplayTests": 15 },
+    "lint": "PASS",
+    "coreTypecheck": "PASS",
+    "upstreamGitBytes": "PASS: all three fixtures, native receipt and capture script",
+    "negativePinChecks": {
+      "passed": 5,
+      "cases": ["changed fixture bytes", "changed receipt bytes", "wrong capture script digest", "wrong runtime commit", "wrong published consumer digest"]
+    },
+    "units": [
+      {
+        "unit": "fortemi-local-test-1000-3313a72c-1bbe-4750-b196-eb1110f0f56e.service",
+        "result": "success", "activeState": "inactive", "exitCode": "exited", "exitStatus": "0", "memoryPeakBytes": 881823744
+      },
+      {
+        "unit": "fortemi-local-test-1000-e979a4ec-5f30-470a-9e08-35cedbaa0156.service",
+        "result": "success", "activeState": "inactive", "exitCode": "exited", "exitStatus": "0", "memoryPeakBytes": 42598400
+      }
+    ],
+    "execution": "Serial detached offline Titan jobs, 2 CPU, 6GiB memory-high/8GiB maximum, zero additional swap, private network/devices, no daemon-backed work",
+    "dependencies": "Reused existing Core/toolchain cache, not a clean install. Lockfiles differ only by root tar7.5.13 importer. Owned dependency symlinks removed; cache preserved.",
+    "evidence": "fortemi-suite/.aiwg/working/lane-b/evidence/lane-b-delivery-20260912-cycle53"
+  },
+  "boundaries": [
+    "Current source replay is not a new live HTTP run or a newly published consumer.",
+    "Historical native receipt: published Linux AMD64 server2026.9.9 and clean-installed published Core2026.9.4, 13 checks/86 real HTTP calls.",
+    "Personal required identity with AllowAllPolicy; actual403 is operator inventory, not note denial. Note-method403 replay is transport injection.",
+    "Hosted OIDC/JWT, multi-tenant note denial, read-only mutation enforcement, inference, all REST operations and other platforms remain outside this evidence.",
+    "No runtime wire/schema change, no old25/37 fixture replacement, suite NO-GO retained."
+  ],
+  "releaseDisposition": "UNRELEASED source tests/docs pending PR review, exact-head green CI and remaining lane acceptance. No version/tag change or immutable asset overwrite."
+}

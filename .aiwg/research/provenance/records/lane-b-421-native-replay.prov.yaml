@@ -1,0 +1,71 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T08:50:00Z",
+    "description": "Consumer native HTTP fixture pin and offline raw-response replay"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-421-native-replay.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T08:50:00Z",
+    "checksum": "sha256:6ad9077dd6fd26d233bd9f8c31b6177678a5702a5e19da3d8579c5dd7d0168c3",
+    "attributes": {
+      "baseCommit": "35edcd9f8429fcd91a417021cbe4c427f900ed73",
+      "producerFixtureCommit": "912c0636a6d2273e5663a977e0182bfe874c3bd3",
+      "artifacts": {
+        ".aiwg/architecture/SAD.md": "sha256:cc3a4acd1522a37666e88e610fbd81a127ea0d7aaa1c7b7ed4d8a90970dad616",
+        ".aiwg/architecture/adr-backend-seam.md": "sha256:2666448dfaf7dc9c1e7008011464e55a25616e6b414813720d3e372ab23e1634",
+        "examples/remote-backend/README.md": "sha256:53413ec9c60796d775b07dc26de8b68f10daf589c6b0cdcc6348d2155858a438",
+        "packages/core/scripts/verify-remote-producer-fixture.mjs": "sha256:da61f9a9d516a4507e23cb84609e7bb0cfea95ede70882bf0ea8c6aadaac6d04",
+        "packages/core/src/__tests__/fixtures/README.md": "sha256:c19fdccbf68916b900a634fb41fb0d7739856deceab1315261acb1f4a8446475",
+        ".aiwg/reports/lane-b-421-native-replay.json": "sha256:6ad9077dd6fd26d233bd9f8c31b6177678a5702a5e19da3d8579c5dd7d0168c3",
+        "packages/core/src/__tests__/fixtures/native-remote-auth.json": "sha256:96a4955315108cd83473d66c8b9a7626e0b97ab9784e761375707c1da3f5efb3",
+        "packages/core/src/__tests__/fixtures/native-remote-auth.producer-pin.json": "sha256:267c38cb91891ba9cbb64398d99056d70041581ee61e1bfbbcfec5c0cb69f16e",
+        "packages/core/src/__tests__/fixtures/native-remote-auth.receipt.json": "sha256:0250216e84a9d32ce89ec375f15410bd32c0eac25c88658bb114857ed93263f8",
+        "packages/core/src/__tests__/remote-native-capture.test.ts": "sha256:99b37265e25577b6d8d9ea8d78ee3de35ee59e984b404c6632114b4cc9e9e603"
+      }
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:testing:lane-b-421-native-replay:053",
+    "type": "testing",
+    "started_at": "2026-09-12T08:40:00Z",
+    "ended_at": "2026-09-12T08:50:00Z",
+    "description": "Pin supplemental producer fixture/receipt/capture script; replay raw note and relationship responses with explicit operator403 injection boundary; 97 tests and six pin checks passed"
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-421-native-replay.json",
+      "activity": "urn:aiwg:activity:testing:lane-b-421-native-replay:053",
+      "time": "2026-09-12T08:50:00Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-421-native-replay.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:testing:lane-b-421-native-replay:053",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-421-native-replay.json",
+        "source": "urn:aiwg:artifact:packages/core/src/__tests__/fixtures/native-remote-auth.producer-pin.json",
+        "derivation_type": "tests",
+        "activity": "urn:aiwg:activity:testing:lane-b-421-native-replay:053"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-421-native-replay.json",
+        "source": "urn:aiwg:artifact:.aiwg/architecture/adr-backend-seam.md",
+        "derivation_type": "conforms_to",
+        "activity": "urn:aiwg:activity:testing:lane-b-421-native-replay:053"
+      }
+    ]
+  }
+}

@@ -150,6 +150,27 @@ qualification; successful vector retrieval, auth/error runtime evidence, live
 published-consumer execution and release closeout remain gates. Suite NO-GO is
 unchanged.
 
+### Native HTTP Evidence Amendment (#417/#418/#421, Producer #1146)
+
+The supplemental native capture at producer commit
+`912c0636a6d2273e5663a977e0182bfe874c3bd3` adds historical real HTTP evidence for
+published Linux AMD64 server 2026.9.9 and clean-installed published Core 2026.9.4.
+Its 13 checks/86 calls include required API identity, 401/404/429/500 responses,
+directional relationships and seeded provenance composition. The consumer pins
+fixture, receipt and capture-script bytes separately from runtime executable and
+published tarball identities. Existing 25/37-case pins and storage contracts do
+not change. Server runtime handlers/models and ADR-102 remain authoritative.
+
+Current consumer tests replay raw responses offline with exact note-route
+method/path matching. The actual 403 came from operator inventory; injecting it
+into note transports verifies error mapping only, not live note denial. Personal
+AllowAllPolicy permits authenticated MCP-scoped note reads in this capture.
+Hosted OIDC/JWT, multi-tenant denial, read-only mutation enforcement, successful
+inference, full-operation qualification and other platforms remain outside this
+evidence. Historical receipt cleanup is not current host-state proof. Source
+replay does not qualify a new published consumer. Suite NO-GO and lane release
+gates remain unchanged.
+
 - `DataBackend`, `BackendCapabilities`, `selectBackend` live in core (`src/data-backend.ts`).
 - PGlite adapter wraps the repositories/tools; static-file adapter wraps `ShardReader` (#189).
 - Depends on #187 (snapshot/PGlite backend) and #189 (static-file backend) being available — implement after both land.
