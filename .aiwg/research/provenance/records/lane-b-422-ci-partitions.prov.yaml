@@ -1,0 +1,80 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T11:39:44.292Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-partitions.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T11:39:44.292Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".gitea/workflows/ci.yml",
+          "sha256": "ff89b1f9b7ba8c4a93a1957f183a99361496212089dbf82b55b0847c261f33ef"
+        },
+        {
+          "path": "packages/core/package.json",
+          "sha256": "4fc0540e37f71aadc87c296e639ca91aacf8fdd2ddb55dc540f89f341e55e134"
+        },
+        {
+          "path": "pnpm-lock.yaml",
+          "sha256": "70309249ffe42c4f9baae3c54567117332fb383fd5bb5e1c6859c1c4f98ab438"
+        },
+        {
+          "path": "packages/core/scripts/ci-unit-partitions.mjs",
+          "sha256": "2e8c94a29331fd2d6fb13634802441305e3879fc323619b0f5939388cfe298e0"
+        },
+        {
+          "path": "packages/core/scripts/ci-unit-partitions.test.mjs",
+          "sha256": "962721141c7703c2b788fe7f5c4ea94f6d038127d0d6bcf69185b0910de6c413"
+        },
+        {
+          "path": ".aiwg/testing/test-strategy.md",
+          "sha256": "e6a0a77a3fe219bf13fb338185f303a8a8521ad9f111580c737f613def9dc541"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-422-ci-partitions.json",
+          "sha256": "9cfde18eb2dfd77c0861cb6eec31905fab2e375940c52bd89adbd6ea027bea0a"
+        }
+      ],
+      "boundaries": [
+        "Unpublished Linux x64 candidate; exact-head CI pending",
+        "No schema or consumer pin changes; suite NO-GO"
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-422-ci-partitions:062",
+    "type": "modification",
+    "started_at": "2026-09-12T11:00:00Z",
+    "ended_at": "2026-09-12T11:39:44.292Z",
+    "description": "Bound Core CI work and verify exhaustive merged test/coverage evidence."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-partitions.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-422-ci-partitions:062"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-partitions.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-422-ci-partitions:062",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-partitions.json",
+        "source": "urn:gitea:issue:Fortemi/fortemi-react:422",
+        "derivation_type": "implements"
+      }
+    ]
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "status": "LOCAL_CANDIDATE_PASS_CI_PENDING",
+  "sourceBase": "087f0bd0bc695fae979043d4bd872c2b10f1200d",
+  "issues": ["https://git.integrolabs.net/Fortemi/fortemi-react/issues/422", "https://git.integrolabs.net/Fortemi/fortemi/issues/1128"],
+  "pullRequest": "https://git.integrolabs.net/Fortemi/fortemi-react/pulls/449",
+  "scope": "CI scheduling and evidence completeness; no contract or runtime API change",
+  "changes": [
+    "Three serial two-worker Core partitions using installed Vitest BaseSequencer, with default test-file isolation",
+    "Exactly matched Core Vitest and V8 coverage 4.1.1; other workspace importers unchanged",
+    "Source, lock, config, root and runtime-bound receipts; raw report and blob hashes; exact file and case multiplicity",
+    "Original unit-test aggregate gate merges native coverage and enforces unchanged 79 percent statement floor",
+    "Graph, React, package verifier and immutable fixture gates retained"
+  ],
+  "tests": {
+    "partitionControlsNode24": 22,
+    "partitionAndReleaseToolsNode22": 81,
+    "capabilitySourceTests": 70,
+    "scopedLint": "PASS",
+    "coreTypecheck": "PASS",
+    "coreBuild": "PASS",
+    "structuredWorkflowAndLockAudit": "PASS",
+    "frozenOfflineInstall": "PASS",
+    "cleanInstalledPackageNode22": "PASS",
+    "cleanInstalledWireCases": 11,
+    "cleanInstalledVersionCases": 20,
+    "actualThreePartMiniatureMerge": "PASS",
+    "actualUnreachableCoverageThresholdRejects": "PASS"
+  },
+  "candidatePackage": {
+    "version": "2026.9.4",
+    "sha256": "536eda6fa1c521e8909c25bc6354990668183ceea65b887a9a1b90f75ae38f46",
+    "published": false,
+    "replacesPublishedArtifact": false
+  },
+  "localExecution": {
+    "host": "titan",
+    "serialDetachedBounded": true,
+    "ordinaryNetwork": "private/offline",
+    "gpuVisible": false,
+    "fullCoreSuiteRunLocally": false,
+    "maximumObservedVerificationPeakBytes": 1600913408,
+    "runnerLifecycleChecks": 6,
+    "runnerLifecycleStatus": "PASS"
+  },
+  "evidence": "/home/roctinam/dev/fortemi-suite/.aiwg/working/lane-b/evidence/lane-b-delivery-20260912-cycle62",
+  "remaining": ["Current-main reconciliation and exact-head CI artifact transport/full coverage", "PR merge and next immutable release qualification", "Original issue acceptance and suite release sweep"],
+  "suiteAudit": "NO-GO"
+}

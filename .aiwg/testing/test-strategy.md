@@ -6,6 +6,45 @@
 **Frameworks**: Vitest 4.x (unit/integration), Playwright 1.x (E2E) <!-- Errata #4: Vitest 2.x → 4.x -->
 **CI**: Gitea Actions
 
+## Core CI Partition Gate (2026-09-12)
+
+The executable Core coverage floor remains79-percent statements in
+`packages/core/vitest.config.ts`; the older targets and counts below are historical.
+Core pins Vitest and coverage-v8 together at4.1.1. Other workspace packages retain
+their existing tool versions. No runtime, schema, fixture authority or maturity
+change is implied by this CI-only correction for #422 / PR #449.
+
+`core-unit-partition` executes all discovered Core files using Vitest's own
+three-way sequencer, one matrix job at a time and two test workers per job.
+File isolation and the existing30-minute per-job ceiling stay intact. The two
+measured heavy native full-v1 suites must remain in different partitions.
+`list --filesOnly` supplies full discovery but does not apply `--shard` in Vitest4;
+the sequencer API supplies partition membership. No tests are filtered by name.
+
+Each successful partition retains a blob report, JSON test report and exclusive
+receipt for14 days. Receipts bind source commit, lock/config digests, exact Node/
+Vitest versions, absolute checkout root, file inventory, test names/statuses and
+report hashes. The aggregate rejects missing/extra/duplicate partitions and files,
+case/count drift, errors, tampering and source/runtime/root mismatches. Different
+checkout roots are rejected rather than silently remapped. Repeated legitimate
+case names retain their multiplicity. Skipped/todo cases remain explicitly counted.
+
+Only partial runs override the statement threshold to zero. Vitest's built-in
+blob merger then enforces the unchanged ordinary config threshold on combined
+coverage, and its full case inventory must match the receipts. `unit-test` remains
+the required aggregate job, including immutable producer-fixture verification,
+Core/Graph builds and Graph/React tests. Build still depends on typecheck, lint,
+unit-test and portable-contract. Partition failure cannot yield a green aggregate.
+Gitea-compatible artifact actions are commit-pinned; no shared host runner is added.
+
+Focused harness verification is `node --test packages/core/scripts/ci-unit-partitions.test.mjs`.
+It includes actual miniature partition/merge execution and coverage-threshold
+failure, without running the large PGlite suites. On Titan, run it through the
+suite's detached local-test-runner with existing resource/network/device limits.
+Temporary Vitest fixtures belong in runner-private temporary storage, avoiding
+unrelated ancestor package/config files. Full CI and published-package acceptance
+remain required before merge/release; local harness evidence does not clear NO-GO.
+
 ---
 
 ## 1. Testing Philosophy

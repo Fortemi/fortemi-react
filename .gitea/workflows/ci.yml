@@ -33,12 +33,15 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
 
-  unit-test:
+  core-unit-partition:
     runs-on: ubuntu-latest
     container: node:22
-    # Full coverage includes 1,188 clean-destination presence cases. Allow cold
-    # CI scheduling plus the downstream Graph/React checks without dropping cases.
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        partition: [1, 2, 3]
     steps:
       - uses: actions/checkout@v4
       - name: Enable pinned pnpm
@@ -46,9 +49,42 @@ jobs:
           corepack enable
           corepack prepare pnpm@10.6.5 --activate
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @fortemi/core exec vitest run --coverage --reporter=default --reporter=json --outputFile=test-results/core-unit.json
-        env:
-          VITEST_MAX_WORKERS: 2
+      - run: node packages/core/scripts/ci-unit-partitions.mjs run ${{ matrix.partition }}
+      - name: Retain partition reports and receipt
+        if: always()
+        uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+        with:
+          name: core-unit-partition-${{ matrix.partition }}
+          path: packages/core/test-results/core-shards/${{ matrix.partition }}/
+          retention-days: 14
+          if-no-files-found: error
+
+  unit-test:
+    runs-on: ubuntu-latest
+    container: node:22
+    needs: [core-unit-partition]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.6.5 --activate
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        with:
+          name: core-unit-partition-1
+          path: packages/core/test-results/core-shards/1
+      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        with:
+          name: core-unit-partition-2
+          path: packages/core/test-results/core-shards/2
+      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        with:
+          name: core-unit-partition-3
+          path: packages/core/test-results/core-shards/3
+      - name: Verify complete test inventory and merge coverage
+        run: node packages/core/scripts/ci-unit-partitions.mjs merge
       - name: Retain Core unit and coverage evidence
         if: always()
         uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
@@ -56,6 +92,7 @@ jobs:
           name: core-unit-evidence
           path: |
             packages/core/test-results/core-unit.json
+            packages/core/test-results/core-unit-completeness.json
             packages/core/coverage/coverage-summary.json
           retention-days: 14
           if-no-files-found: warn
@@ -89,6 +126,8 @@ jobs:
           tools/release/cut-tag.test.sh
       - name: Release artifact and publication handoff tests
         run: node --test tools/release/*.test.mjs
+      - name: Core partition completeness and coverage gate tests
+        run: node --test packages/core/scripts/ci-unit-partitions.test.mjs
       - name: OpenBao Git credential bootstrap tests
         run: tools/git/openbao-approle.test.sh
       - name: Shard + AIWG index conformance gate
