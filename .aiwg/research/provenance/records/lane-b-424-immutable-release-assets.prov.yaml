@@ -1,0 +1,85 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T02:29:13.270Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-424-immutable-release-assets.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T02:29:13.270Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": "tools/release/create-repo-release.mjs",
+          "sha256": "345927f38bc6d0590efffeceef0ff843ba0d21b09ca76c889d185bc34882d2af"
+        },
+        {
+          "path": "tools/release/create-repo-release-immutable.test.mjs",
+          "sha256": "f8fc5a064435dca64fd512cb77a7a2e53c215050a6ee4c2fbd7bcc761469e5dc"
+        },
+        {
+          "path": "tools/release/fixtures/release-asset-fetch-mock.mjs",
+          "sha256": "03eb258ed8e41037658d226f68b2a12108ec924faeb173484beda75b68133e52"
+        },
+        {
+          "path": "tools/release/README.md",
+          "sha256": "c483a833345fbba522bac76e077b820bb071c24c00b82f5ad3dec883a56eebd0"
+        },
+        {
+          "path": ".aiwg/activity.log",
+          "sha256": "fba89fa22a6719eca51a86df517bb2a7a9a51c299a0103b1556a4d7b2fc7096a"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-424-immutable-release-assets.json",
+          "sha256": "5fb9735fc0cf0e50275781b495e04f523c5e1129dd20feb047a16d385115caed"
+        }
+      ],
+      "boundaries": [
+        "PR447 and its running CI58729 remain unchanged.",
+        "No release version bump, tag, asset overwrite, or new platform/runtime qualification.",
+        "Actual next-release CI/publication/readback and full Lane B acceptance remain required; suite NO-GO."
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-424-immutable-release-assets:001",
+    "type": "modification",
+    "started_at": "2026-09-12T02:20:00Z",
+    "ended_at": "2026-09-12T02:29:13.270Z",
+    "description": "Preserve immutable release assets and validate all existing bytes before uploading missing assets."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-424-immutable-release-assets.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-424-immutable-release-assets:001",
+      "time": "2026-09-12T02:29:13.270Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-424-immutable-release-assets.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-424-immutable-release-assets:001",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-424-immutable-release-assets.json",
+        "source": "urn:gitea:issue:Fortemi/fortemi-react:424",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:modification:lane-b-424-immutable-release-assets:001"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-424-immutable-release-assets.json",
+        "source": "urn:git:5950ea2ec4e422af876922a7699277415d6e794a",
+        "derivation_type": "extends",
+        "activity": "urn:aiwg:activity:modification:lane-b-424-immutable-release-assets:001"
+      }
+    ]
+  }
+}

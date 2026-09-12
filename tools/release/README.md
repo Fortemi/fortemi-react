@@ -40,3 +40,19 @@ pass `verify-published-artifacts.mjs` and the coordinated release readback. Sema
 metadata equality is not exact artifact equality. Package reproducibility is not
 native restore/runtime/platform conformance; named-profile evidence and suite
 NO-GO remain unchanged. A new qualified release is required for changed artifacts.
+
+## Immutable Release Assets
+
+`create-repo-release.mjs` validates local packages before creating a release.
+For an existing release, it checks every same-named asset before uploading any
+missing asset. Identical bytes are preserved; mismatches, duplicate asset names,
+failed downloads and oversized responses abort without remote mutation. Neither
+publisher deletes or replaces an asset. A conflict requires a new version, not
+an overwrite of a previously published package or checksum manifest.
+
+Existing-asset comparisons use a20-second request deadline, enforce the expected
+byte length while reading, and emit bounded SHA-256/size diagnostics. Local
+packages must be regular files no larger than32MiB. The subsequent publication
+verifier remains required, including after resuming an incomplete upload.
+Regression tests exercise both GitHub and Gitea create/reuse/resume paths and
+fail-before-mutation behavior; they do not perform live publication.
