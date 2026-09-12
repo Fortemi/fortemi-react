@@ -1,5 +1,5 @@
 import Ajv2020 from 'ajv/dist/2020.js'
-import schema from '../../schemas/metadata-search/candidate/1.0.0/predicates.schema.json'
+import schema from '../../schemas/metadata-search/candidate/1.0.0/predicates.schema.json' with { type: 'json' }
 import type { SearchOptions } from './types.js'
 
 export const REGISTERED_METADATA_PATHS = [

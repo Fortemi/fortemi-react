@@ -4,6 +4,32 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.9.5 - 2026-09-12
+
+### Capability validation and remote evidence (#422, #419-421)
+
+- Validate untrusted capability descriptors and requests before negotiation;
+  reject unknown states, malformed versions and unsupported contract versions.
+  Preserve SemVer prerelease precedence and bounded typed diagnostics.
+- Run the authority-owned wire/version corpus through clean-installed public
+  exports. Pin producer-owned native HTTP read, negative and mutation fixtures
+  without promoting remote alpha maturity or hosted/vector qualification.
+
+### Release and test reliability
+
+- Preserve immutable published assets, verify registry/release bytes and
+  normalize packed workspace dependency ordering for deterministic artifacts.
+- Partition Core tests serially with bounded workers and fixed-path disposable
+  worktrees. Verify complete source/runtime/file/case and raw artifact identities
+  before native coverage merge; retain the existing global coverage threshold.
+- Bound multi-restore test scenarios without weakening native state assertions.
+
+This release does not deliver the uncommitted typed-metadata search candidate or
+repair its separately observed published-server tag-filter failures. Named shard
+profiles, existing authority receipts, remote alpha boundaries and suite NO-GO
+remain unchanged. Final release CI, tag authority and actual registry/mirror
+verification are required before publication is considered complete.
+
 ## v2026.9.4 - 2026-09-11
 
 ### Product export and remote adapters (#423, #425, #417-421)

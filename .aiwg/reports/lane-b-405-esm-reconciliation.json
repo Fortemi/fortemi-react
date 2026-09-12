@@ -1,0 +1,49 @@
+{
+  "status": "local-verification-passed",
+  "at": "2026-09-12T14:31:43.111Z",
+  "issues": [
+    "Fortemi/fortemi-react#405",
+    "Fortemi/fortemi#1091"
+  ],
+  "parents": [
+    "3b8b376f889be43481e89cde3729837bc09c4956",
+    "01b4a9c923af9cde24dc6a2d293d96194b6a6d7d"
+  ],
+  "change": "Add native ESM JSON import attribute and reconcile merged release version/current hashes without changing candidate authority bytes.",
+  "red": {
+    "ciRun": 59018,
+    "job": 160774,
+    "error": "ERR_IMPORT_ATTRIBUTE_MISSING",
+    "localDiscoveryTests": 0,
+    "localExit": 1
+  },
+  "green": {
+    "discoveryTests": 42,
+    "discoveryFiles": 5,
+    "coreTests": 184,
+    "coreFiles": 9,
+    "workspaceTypecheck": true,
+    "workspaceLint": true,
+    "workspaceBuild": true,
+    "currentContractHashes": true,
+    "chromium": {
+      "startTime": "2026-09-12T14:30:25.065Z",
+      "duration": 61326.337,
+      "expected": 13,
+      "skipped": 1,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "installedPackageSha256": "a34ed7e90a37ce10b9023600e7f83e446260463919e19030005f98c2cabb4c8f",
+    "installedWireCases": 11,
+    "installedVersionCases": 20
+  },
+  "evidence": ".aiwg/working/lane-b/evidence/lane-b-delivery-20260912-cycle69/",
+  "limitations": [
+    "Local Chromium only; Firefox/WebKit and full exact-source CI remain required.",
+    "Local package built from checked working bytes before commit, not a published artifact.",
+    "Adapter RED corpus remains 2/332 passing; implementation still pending on separate branch.",
+    "Producer authority remains candidate-unpublished; full citations, hosted authorization/cache, clean cross-runtime acceptance and release remain pending.",
+    "Suite NO-GO and original Lane B scope remain unchanged."
+  ]
+}

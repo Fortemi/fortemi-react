@@ -67,6 +67,12 @@ version-32 upgrade with metadata preservation, uncompressible post-upgrade write
 duplicate/foreign source locators, and validation before selector resolution.
 Vectors in these tests are explicitly synthetic, not inference qualification.
 
+The schema import uses the standard JSON import attribute so native Node ESM
+and browser bundlers load the same candidate bytes. Bundled builds and Vitest
+alone do not qualify source-level Node loading: the standalone Playwright tests
+import Core through the source alias, so test collection and actual browser
+execution remain distinct required checks.
+
 This is the PGlite correction, not completion of #405 or #1091. Remaining work:
 the promoted producer request/result authority and immutable pins; RecordStore
 and pluggable/static adapter conformance or explicit capability rejection;
