@@ -155,7 +155,7 @@ describe('public native full-v1 restore, distinct from archival snapshots', () =
       expect((await db.query('SELECT * FROM protected_restore_reference ORDER BY reference')).rows).toEqual(references)
     }
     await expectPublicRoundTrip(before)
-  })
+  }, 30_000)
 
   it.each([
     ['skos_labels', 'skos_concept_label', ['id'], { value: 'Updated retained label' }],
@@ -545,7 +545,7 @@ describe('public native full-v1 restore, distinct from archival snapshots', () =
     expect(state.templates.some((row) => row.id === original.id)).toBe(false)
     expect(state.templates).toContainEqual(created)
     await expectPublicRoundTrip(state)
-  })
+  }, 30_000)
 
   it('exports newly attached bytes and extraction changes, and reports attachment tombstones', async () => {
     expect((await importShard(db, archive, { blobStore: blobs })).success).toBe(true)
@@ -649,7 +649,7 @@ describe('public native full-v1 restore, distinct from archival snapshots', () =
     expect(after.graph_sources.some((row) => row.id === source.graph_sources[0].id)).toBe(false)
     expect(after.communities).toEqual(expect.arrayContaining([expect.objectContaining({ id: created.id })]))
     await expectPublicRoundTrip(after)
-  })
+  }, 30_000)
 
   it('closes native tag scope without exporting excluded notes, relationships or sidecars', async () => {
     expect((await importShard(db, archive, { blobStore: blobs, conflictStrategy: 'replace' })).success).toBe(true)

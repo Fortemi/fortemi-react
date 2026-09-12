@@ -1,0 +1,67 @@
+{
+  "at": "2026-09-12T02:40:00.406Z",
+  "status": "LOCAL_GATES_PASS_DELIVERY_PENDING",
+  "parent": "c52ed511ea780b9dd7078a30566b9c970056834f",
+  "issue": 424,
+  "failure": {
+    "run": 58729,
+    "job": 160202,
+    "head": "5950ea2ec4e422af876922a7699277415d6e794a",
+    "corePassed": 2987,
+    "coreFailed": 4,
+    "reason": "Four native-public tests exceeded default5000ms per-test limits; complete report emitted. Not a whole-job deadline kill.",
+    "totalSeconds": 1841.08
+  },
+  "localReplay": {
+    "passed": 4,
+    "failed": 0,
+    "changedSource": false,
+    "milliseconds": [
+      2313.191978,
+      1721.925961,
+      2400.292084,
+      2376.280466
+    ],
+    "memoryPeak": 1631989760
+  },
+  "change": {
+    "declarations": 3,
+    "affectedCases": 10,
+    "timeoutMs": 30000,
+    "sourceReceipts": 2,
+    "assertionsChanged": false,
+    "runtimeChanged": false,
+    "workersChanged": false,
+    "globalJobTimeoutChanged": false
+  },
+  "verification": {
+    "passed": 11,
+    "failed": 0,
+    "includes": "All10 cases in the3 changed declarations plus the implementation receipt test",
+    "memoryPeak": 1588674560,
+    "containment": "Detached offline2CPU/8GiB/no-swap; one Vitest worker;3-minute deadline"
+  },
+  "boundaries": [
+    "Not full Core or portable CI acceptance.",
+    "No contract/profile/platform/native claim expansion; suite NO-GO remains.",
+    "Complete exact-head PR CI and release publication/readback remain required."
+  ],
+  "artifacts": [
+    {
+      "path": "packages/core/src/__tests__/shard/native-full-v1-public.test.ts",
+      "sha256": "0f296503509a29220a6ea49e6e9c2bd58d1d4bee973216dd6a99b71765edb884"
+    },
+    {
+      "path": "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+      "sha256": "0f97462f38bfaf2a85aa25e96d9bfc06f8f8405018f58ec672c53ad710b9710a"
+    },
+    {
+      "path": "packages/core/schemas/knowledge-shard-v2.presence.receipt.json",
+      "sha256": "53bf024845b38f27f36216dd02bf169e90fe925c899818d3ae688ee1d6fcaa66"
+    },
+    {
+      "path": ".aiwg/activity.log",
+      "sha256": "6dcbc02d5ed6ca51449b7372c909b960a95d7bef13eef05cdbb67af5879ef5c5"
+    }
+  ]
+}

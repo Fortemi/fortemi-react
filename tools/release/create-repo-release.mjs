@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// Create (or update) a repository Release on GitHub or Gitea and attach the
+// Create (or resume) a repository Release on GitHub or Gitea and attach the
 // packaged npm tarballs as release assets, so each repo carries the release
 // packages alongside the npm publishes.
 //
-// Idempotent: re-running for an existing tag reuses the release and re-uploads
-// assets (deleting any same-named asset first). Runs inside the publish job's
+// Idempotent: existing assets must match exactly and are never replaced.
+// Only missing assets are uploaded. Runs inside the publish job's
 // container using only Node built-ins (global fetch/FormData/Blob) — no gh CLI,
 // no jq, no curl required.
 //
@@ -18,12 +18,15 @@
 //   RELEASE_NOTES_DIR  dir holding <tag>.md release notes (default docs/releases,
 //                      fallback docs/content/releases)
 
-import { readFileSync, existsSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, lstatSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { createChecksumManifest } from './checksum-manifest.mjs';
 
 const PACKAGES = ['core', 'graph', 'react'];
 const CHECKSUM_MANIFEST = 'SHA256SUMS';
+const MAX_ASSET_BYTES = 32 * 1024 ** 2;
+const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
 function env(name, required = true, fallback = '') {
   const v = process.env[name] ?? fallback;
@@ -84,12 +87,38 @@ async function createRelease() {
   return readJson(res);
 }
 
-async function deleteGithubAsset(assetId) {
-  await fetch(`${api}/repos/${repo}/releases/assets/${assetId}`, { method: 'DELETE', headers: jsonHeaders });
-}
-
-async function deleteGiteaAsset(releaseId, assetId) {
-  await fetch(`${api}/repos/${repo}/releases/${releaseId}/assets/${assetId}`, { method: 'DELETE', headers: jsonHeaders });
+async function verifyExistingAsset(asset, expected) {
+  if (!Number.isSafeInteger(asset.id) || asset.id < 1) throw new Error('Invalid existing asset identity');
+  const location = platform === 'github'
+    ? new URL(`${api}/repos/${repo}/releases/assets/${asset.id}`)
+    : new URL(asset.browser_download_url);
+  if (location.protocol !== 'https:' || location.origin !== new URL(api).origin || location.username || location.password) {
+    throw new Error('Existing asset must be downloaded through its HTTPS release authority');
+  }
+  const response = await fetch(location.href, {
+    headers: { ...jsonHeaders, Accept: 'application/octet-stream' },
+    signal: globalThis.AbortSignal.timeout(20000),
+  });
+  if (!response.ok || !response.body) throw new Error(`Existing asset ${asset.name}: HTTP ${response.status}`);
+  const reader = response.body.getReader();
+  const chunks = [];
+  let size = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.length;
+      if (size > expected.length) throw new Error(`Immutable asset ${asset.name} exceeds expected ${expected.length} bytes; refusing publication`);
+      chunks.push(value);
+    }
+  } finally {
+    await reader.cancel();
+    reader.releaseLock();
+  }
+  const actual = Buffer.concat(chunks, size);
+  if (!actual.equals(expected)) {
+    throw new Error(`Immutable asset ${asset.name} differs: expected ${expected.length} bytes sha256=${sha256(expected)}, received ${size} bytes sha256=${sha256(actual)}; use a new release version`);
+  }
 }
 
 async function uploadGithubAsset(release, name, bytes, contentType) {
@@ -112,20 +141,12 @@ async function uploadGiteaAsset(releaseId, name, bytes, contentType) {
 }
 
 async function main() {
-  let release = await getReleaseByTag();
-  if (release) {
-    console.log(`Release ${tag} already exists on ${platform}; reusing and refreshing assets.`);
-  } else {
-    release = await createRelease();
-    console.log(`Created ${platform} release ${tag}: ${release.html_url ?? '(no url)'}`);
-  }
-
-  const existing = new Map((release.assets ?? []).map((a) => [a.name, a.id]));
-
   const assets = PACKAGES.map((pkg) => {
     const name = `fortemi-${pkg}-${version}.tgz`;
     const file = join(packDir, name);
     if (!existsSync(file)) throw new Error(`missing packed tarball: ${file}`);
+    const info = lstatSync(file);
+    if (!info.isFile() || info.size > MAX_ASSET_BYTES) throw new Error(`Expected regular packed tarball no larger than32MiB: ${name}`);
     const bytes = readFileSync(file);
     return { name, bytes, contentType: 'application/gzip' };
   });
@@ -138,11 +159,28 @@ async function main() {
     contentType: 'text/plain; charset=utf-8',
   });
 
-  for (const { name, bytes, contentType } of assets) {
+  let release = await getReleaseByTag();
+  const existing = new Map();
+  if (release) {
+    if (release.tag_name !== tag) throw new Error('Existing release tag does not match');
+    for (const asset of release.assets ?? []) {
+      if (existing.has(asset.name)) throw new Error(`Duplicate existing release asset: ${asset.name}`);
+      existing.set(asset.name, asset);
+    }
+    // Validate the complete existing set before any remote mutation, including partial releases.
+    for (const { name, bytes } of assets) {
+      if (existing.has(name)) await verifyExistingAsset(existing.get(name), bytes);
+    }
+    console.log(`Release ${tag} already exists on ${platform}; matching assets will be preserved.`);
+  } else {
+    release = await createRelease();
+    console.log(`Created ${platform} release ${tag}: ${release.html_url ?? '(no url)'}`);
+  }
 
+  for (const { name, bytes, contentType } of assets) {
     if (existing.has(name)) {
-      if (platform === 'github') await deleteGithubAsset(existing.get(name));
-      else await deleteGiteaAsset(release.id, existing.get(name));
+      console.log(`  preserved ${name} (${bytes.length} verified bytes)`);
+      continue;
     }
 
     if (platform === 'github') await uploadGithubAsset(release, name, bytes, contentType);
@@ -150,7 +188,7 @@ async function main() {
     console.log(`  attached ${name} (${bytes.length} bytes)`);
   }
 
-  console.log(`${platform} release ${tag} ready with ${assets.length} verified assets.`);
+  console.log(`${platform} release ${tag} has ${assets.length} preserved or uploaded assets; publication readback remains required.`);
 }
 
 main().catch((err) => {

@@ -1,0 +1,94 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T01:59:00.598Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-424-deterministic-pack.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T01:59:00.598Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": "package.json",
+          "sha256": "37c40e27d97eaaf494144985c9933195cf54f8cfbdd3ed6067487f315620c403"
+        },
+        {
+          "path": "pnpm-lock.yaml",
+          "sha256": "9f92b2f9db76c4f4a961378d6d2b42b0a92d62bec2b9501456684bc9b27eb8ea"
+        },
+        {
+          "path": ".gitea/workflows/publish.yml",
+          "sha256": "650fcd4a939df3b8619855fe81b70b7fbb15882adfa5cc7c937dfce8472b41a0"
+        },
+        {
+          "path": ".github/workflows/npm-publish.yml",
+          "sha256": "90fbc71e94f773db2fbd70d6422bf006bf1603bcc0c79fe4bb867b251548a497"
+        },
+        {
+          "path": "tools/release/normalize-packed-manifest.mjs",
+          "sha256": "04ece2b9be4d98c9f14b75e1353f4a227374637ecca612b40806b97be25fdf70"
+        },
+        {
+          "path": "tools/release/normalize-packed-manifest.test.mjs",
+          "sha256": "a2ae3e234d9c0e9a7356b3269e07d700c54bbf4654dbcc7e193ac5a420a9211f"
+        },
+        {
+          "path": "tools/release/publish-workflows.test.mjs",
+          "sha256": "923a003b1d76c79c982bc49eb566486c3b09ac519fe1c459cec11f3bdb6587ff"
+        },
+        {
+          "path": "tools/release/README.md",
+          "sha256": "faf694e595a43e56ed2e46cbbb3732821d5661b78c094f6868f6df13be7a851f"
+        },
+        {
+          "path": ".aiwg/activity.log",
+          "sha256": "45a02d4193ac21dd7eefbfcba7abe2937716bfc5aa87424810d0168b7ecaa8b1"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-424-deterministic-pack.json",
+          "sha256": "cfa992c947bba6b96720d6e3eda8d0159cd1ba08452e63864616d21218f2a247"
+        }
+      ],
+      "boundaries": [
+        "Normalized copies are local test derivatives, not replacements for immutable 2026.9.4 assets.",
+        "No application runtime or contract/profile schema behavior changed; suite NO-GO retained."
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-424-deterministic-pack:001",
+    "type": "modification",
+    "started_at": "2026-09-12T01:46:00Z",
+    "ended_at": "2026-09-12T01:59:00.598Z",
+    "description": "Normalize unpublished manifests after asynchronous workspace version resolution; verify deterministic packing without payload changes."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-424-deterministic-pack.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-424-deterministic-pack:001",
+      "time": "2026-09-12T01:59:00.598Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-424-deterministic-pack.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-424-deterministic-pack:001",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-424-deterministic-pack.json",
+        "source": "urn:gitea:issue:Fortemi/fortemi-react:424",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:modification:lane-b-424-deterministic-pack:001"
+      }
+    ]
+  }
+}

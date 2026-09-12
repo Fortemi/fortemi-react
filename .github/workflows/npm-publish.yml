@@ -177,6 +177,10 @@ jobs:
           test -s "$GRAPH_TGZ"
           test -s "$REACT_TGZ"
 
+          for artifact in "$CORE_TGZ" "$GRAPH_TGZ" "$REACT_TGZ"; do
+            node tools/release/normalize-packed-manifest.mjs "$artifact" "$TAG_VERSION"
+          done
+
           tar -tzf "$CORE_TGZ" > "$PACK_DIR/core-files.txt"
           tar -tzf "$GRAPH_TGZ" > "$PACK_DIR/graph-files.txt"
           tar -tzf "$REACT_TGZ" > "$PACK_DIR/react-files.txt"

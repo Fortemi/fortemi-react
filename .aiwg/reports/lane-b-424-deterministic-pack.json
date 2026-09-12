@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-09-12T01:59:00.598Z",
+  "status": "LOCAL_PASS_CI_AND_NEW_RELEASE_PENDING",
+  "baseCommit": "9f74c0bab0cce5ef8e2433e8944a4efda5575eb4",
+  "issue": "https://git.integrolabs.net/Fortemi/fortemi-react/issues/424",
+  "artifacts": [
+    {
+      "path": "package.json",
+      "sha256": "37c40e27d97eaaf494144985c9933195cf54f8cfbdd3ed6067487f315620c403"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "sha256": "9f92b2f9db76c4f4a961378d6d2b42b0a92d62bec2b9501456684bc9b27eb8ea"
+    },
+    {
+      "path": ".gitea/workflows/publish.yml",
+      "sha256": "650fcd4a939df3b8619855fe81b70b7fbb15882adfa5cc7c937dfce8472b41a0"
+    },
+    {
+      "path": ".github/workflows/npm-publish.yml",
+      "sha256": "90fbc71e94f773db2fbd70d6422bf006bf1603bcc0c79fe4bb867b251548a497"
+    },
+    {
+      "path": "tools/release/normalize-packed-manifest.mjs",
+      "sha256": "04ece2b9be4d98c9f14b75e1353f4a227374637ecca612b40806b97be25fdf70"
+    },
+    {
+      "path": "tools/release/normalize-packed-manifest.test.mjs",
+      "sha256": "a2ae3e234d9c0e9a7356b3269e07d700c54bbf4654dbcc7e193ac5a420a9211f"
+    },
+    {
+      "path": "tools/release/publish-workflows.test.mjs",
+      "sha256": "923a003b1d76c79c982bc49eb566486c3b09ac519fe1c459cec11f3bdb6587ff"
+    },
+    {
+      "path": "tools/release/README.md",
+      "sha256": "faf694e595a43e56ed2e46cbbb3732821d5661b78c094f6868f6df13be7a851f"
+    },
+    {
+      "path": ".aiwg/activity.log",
+      "sha256": "45a02d4193ac21dd7eefbfcba7abe2937716bfc5aa87424810d0168b7ecaa8b1"
+    }
+  ],
+  "reproducer": {
+    "at": "2026-09-12T01:54:51.844Z",
+    "pnpmSha256": "75a7f1c70d3ce7ff7f6f0a0815010246ff14142418f66126a2c2be83a65f284d",
+    "runs": [
+      {
+        "index": 0,
+        "dependencyOrder": [
+          "@fortemi/core",
+          "@fortemi/graph"
+        ],
+        "before": "e42fd36dbd0416bc4fbfe375c7b0ebcdc29ec534b9f883402b239d7d3fa2bdfc",
+        "after": "5d786ee9ac4a39858ebf492764ffc3e319bfcfbae4b9b2a36ece1d26a61764a5"
+      },
+      {
+        "index": 1,
+        "dependencyOrder": [
+          "@fortemi/core",
+          "@fortemi/graph"
+        ],
+        "before": "e42fd36dbd0416bc4fbfe375c7b0ebcdc29ec534b9f883402b239d7d3fa2bdfc",
+        "after": "5d786ee9ac4a39858ebf492764ffc3e319bfcfbae4b9b2a36ece1d26a61764a5"
+      },
+      {
+        "index": 2,
+        "dependencyOrder": [
+          "@fortemi/core",
+          "@fortemi/graph"
+        ],
+        "before": "e42fd36dbd0416bc4fbfe375c7b0ebcdc29ec534b9f883402b239d7d3fa2bdfc",
+        "after": "5d786ee9ac4a39858ebf492764ffc3e319bfcfbae4b9b2a36ece1d26a61764a5"
+      },
+      {
+        "index": 3,
+        "dependencyOrder": [
+          "@fortemi/core",
+          "@fortemi/graph"
+        ],
+        "before": "e42fd36dbd0416bc4fbfe375c7b0ebcdc29ec534b9f883402b239d7d3fa2bdfc",
+        "after": "5d786ee9ac4a39858ebf492764ffc3e319bfcfbae4b9b2a36ece1d26a61764a5"
+      },
+      {
+        "index": 4,
+        "dependencyOrder": [
+          "@fortemi/core",
+          "@fortemi/graph"
+        ],
+        "before": "e42fd36dbd0416bc4fbfe375c7b0ebcdc29ec534b9f883402b239d7d3fa2bdfc",
+        "after": "5d786ee9ac4a39858ebf492764ffc3e319bfcfbae4b9b2a36ece1d26a61764a5"
+      },
+      {
+        "index": 5,
+        "dependencyOrder": [
+          "@fortemi/core",
+          "@fortemi/graph"
+        ],
+        "before": "e42fd36dbd0416bc4fbfe375c7b0ebcdc29ec534b9f883402b239d7d3fa2bdfc",
+        "after": "5d786ee9ac4a39858ebf492764ffc3e319bfcfbae4b9b2a36ece1d26a61764a5"
+      },
+      {
+        "index": 6,
+        "dependencyOrder": [
+          "@fortemi/core",
+          "@fortemi/graph"
+        ],
+        "before": "e42fd36dbd0416bc4fbfe375c7b0ebcdc29ec534b9f883402b239d7d3fa2bdfc",
+        "after": "5d786ee9ac4a39858ebf492764ffc3e319bfcfbae4b9b2a36ece1d26a61764a5"
+      },
+      {
+        "index": 7,
+        "dependencyOrder": [
+          "@fortemi/core",
+          "@fortemi/graph"
+        ],
+        "before": "e42fd36dbd0416bc4fbfe375c7b0ebcdc29ec534b9f883402b239d7d3fa2bdfc",
+        "after": "5d786ee9ac4a39858ebf492764ffc3e319bfcfbae4b9b2a36ece1d26a61764a5"
+      },
+      {
+        "index": 8,
+        "dependencyOrder": [
+          "@fortemi/core",
+          "@fortemi/graph"
+        ],
+        "before": "e42fd36dbd0416bc4fbfe375c7b0ebcdc29ec534b9f883402b239d7d3fa2bdfc",
+        "after": "5d786ee9ac4a39858ebf492764ffc3e319bfcfbae4b9b2a36ece1d26a61764a5"
+      },
+      {
+        "index": 9,
+        "dependencyOrder": [
+          "@fortemi/core",
+          "@fortemi/graph"
+        ],
+        "before": "e42fd36dbd0416bc4fbfe375c7b0ebcdc29ec534b9f883402b239d7d3fa2bdfc",
+        "after": "5d786ee9ac4a39858ebf492764ffc3e319bfcfbae4b9b2a36ece1d26a61764a5"
+      },
+      {
+        "index": 10,
+        "dependencyOrder": [
+          "@fortemi/graph",
+          "@fortemi/core"
+        ],
+        "before": "7ea6b6e3ee17a06996817d8f116e50533edb2c0243fd42e434e1d6bda069172d",
+        "after": "5d786ee9ac4a39858ebf492764ffc3e319bfcfbae4b9b2a36ece1d26a61764a5"
+      },
+      {
+        "index": 11,
+        "dependencyOrder": [
+          "@fortemi/core",
+          "@fortemi/graph"
+        ],
+        "before": "e42fd36dbd0416bc4fbfe375c7b0ebcdc29ec534b9f883402b239d7d3fa2bdfc",
+        "after": "5d786ee9ac4a39858ebf492764ffc3e319bfcfbae4b9b2a36ece1d26a61764a5"
+      }
+    ],
+    "distinctBefore": 2,
+    "distinctAfter": 1,
+    "status": "REPRODUCED_AND_CORRECTED"
+  },
+  "realArtifacts": {
+    "status": "PASS",
+    "at": "2026-09-12T01:58:21.473Z",
+    "scope": "Copied immutable 2026.9.4 packages normalized locally, not new published artifacts or runtime qualification",
+    "packages": [
+      {
+        "name": "core",
+        "records": [
+          {
+            "platform": "gitea",
+            "name": "@fortemi/core",
+            "version": "2026.9.4",
+            "files": 43,
+            "before": "4a126d59bc18af4fb981d5bdbf19a761402e246b7d85cf3e6445de4eacf92897",
+            "after": "f516579e8665fe926373cd4f41f3790b3952b100e10e39507499115dc15bbb2b",
+            "originalStillUnchanged": true
+          },
+          {
+            "platform": "npm",
+            "name": "@fortemi/core",
+            "version": "2026.9.4",
+            "files": 43,
+            "before": "4a126d59bc18af4fb981d5bdbf19a761402e246b7d85cf3e6445de4eacf92897",
+            "after": "f516579e8665fe926373cd4f41f3790b3952b100e10e39507499115dc15bbb2b",
+            "originalStillUnchanged": true
+          }
+        ]
+      },
+      {
+        "name": "graph",
+        "records": [
+          {
+            "platform": "gitea",
+            "name": "@fortemi/graph",
+            "version": "2026.9.4",
+            "files": 10,
+            "before": "2006ef815c1c72d2bdd459a3fd0d5260a7b9980319f3afd56ece96af5744e50d",
+            "after": "5d371975b9cb8f1a511712cd4ba1fae931842b14b941e6634d7181bfa45f18ab",
+            "originalStillUnchanged": true
+          },
+          {
+            "platform": "npm",
+            "name": "@fortemi/graph",
+            "version": "2026.9.4",
+            "files": 10,
+            "before": "2006ef815c1c72d2bdd459a3fd0d5260a7b9980319f3afd56ece96af5744e50d",
+            "after": "5d371975b9cb8f1a511712cd4ba1fae931842b14b941e6634d7181bfa45f18ab",
+            "originalStillUnchanged": true
+          }
+        ]
+      },
+      {
+        "name": "react",
+        "records": [
+          {
+            "platform": "gitea",
+            "name": "@fortemi/react",
+            "version": "2026.9.4",
+            "files": 18,
+            "before": "44cf91333f5fb821e379c626e639cc08bdc2911c91a34080cd4476fb231e0fd4",
+            "after": "77626ebc1de9cae9023912cee9a9a2166f68b4d3fcc39403f344d0a8878f54eb",
+            "originalStillUnchanged": true
+          },
+          {
+            "platform": "npm",
+            "name": "@fortemi/react",
+            "version": "2026.9.4",
+            "files": 18,
+            "before": "b1b95e6d189a621e5ecfe98f8cfdc78a43701fec51896e69d47408db3cf9044e",
+            "after": "77626ebc1de9cae9023912cee9a9a2166f68b4d3fcc39403f344d0a8878f54eb",
+            "originalStillUnchanged": true
+          }
+        ]
+      }
+    ]
+  },
+  "verification": {
+    "releaseTools": 14,
+    "lint": "PASS",
+    "frozenOfflineLockfile": "PASS",
+    "profile": "Detached offline 2-CPU/8-GiB/no-swap jobs, no GPU/host network",
+    "broaderAcceptance": "Exact-head CI, actual next-version publication and original Lane B native/runtime/platform gates remain required"
+  },
+  "limitations": [
+    "Normalized copies are local test derivatives, not replacements for immutable 2026.9.4 assets.",
+    "No application runtime or contract/profile schema behavior changed; suite NO-GO retained."
+  ]
+}

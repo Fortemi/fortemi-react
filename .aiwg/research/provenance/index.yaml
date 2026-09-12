@@ -1,10 +1,16 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-09-12T03:19:48.282Z"
-  record_count: 105
+  updated_at: "2026-09-12T04:12:02Z"
+  record_count: 108
 records:
   - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-422-capability-validation.json"
     record: "records/lane-b-422-capability-validation.prov.yaml"
+  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-424-native-multirestore-budget.json"
+    record: "records/lane-b-424-native-multirestore-budget.prov.yaml"
+  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-424-immutable-release-assets.json"
+    record: "records/lane-b-424-immutable-release-assets.prov.yaml"
+  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-424-deterministic-pack.json"
+    record: "records/lane-b-424-deterministic-pack.prov.yaml"
   - entity: "urn:aiwg:artifact:.gitea/workflows/ci.yml"
     record: "records/lane-b-424-ci-coverage-budget.prov.yaml"
   - entity: "urn:aiwg:artifact:docs/content/releases/v2026.9.4.md"
