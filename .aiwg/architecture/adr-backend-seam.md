@@ -152,6 +152,17 @@ unchanged.
 
 ### Native HTTP Evidence Amendment (#417/#418/#421, Producer #1146)
 
+Producer commit `bb0c8509f7d5586ec34dfb40c0af58aa1bfd604d` additionally owns
+21 controlled negative cases and a31-check/61-request published-Core receipt.
+The consumer pins corpus, receipt and producer runner/helper independently,
+then replays31 faults against current source. Socket reset/abort/truncation and
+malformed/enrichment responses are injected; historical real loopback execution
+is not a live Fortemi server run. Real native missing/invalid-identity401 already
+proves note-route denial in personal required-authentication mode. Authenticated
+role/tenant403 remains unqualified, not an implicit hosted implementation goal.
+These supplements change neither wire semantics nor the separate persistence
+planes. See the fixture README for the bounded UI-facing error contract.
+
 The supplemental native capture at producer commit
 `912c0636a6d2273e5663a977e0182bfe874c3bd3` adds historical real HTTP evidence for
 published Linux AMD64 server 2026.9.9 and clean-installed published Core 2026.9.4.

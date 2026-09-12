@@ -49,6 +49,14 @@ Personal-mode authenticated note reads use AllowAllPolicy. The captured operator
 transport injection. Hosted authorization and inference remain unqualified.
 See the [fixture boundaries](../../packages/core/src/__tests__/fixtures/README.md).
 
+Producer-owned negative controls additionally cover malformed responses,
+socket failures and failed enrichment. The historical published-package check
+used private loopback fault injection; current source tests replay it offline.
+Only recognized note-not-found404 becomes null. Missing/invalid credentials were
+denied with401 by the real personal-mode server; this does not prove hosted or
+authenticated role/tenant403 enforcement. Full-detail enrichment failures reject
+the request rather than return a partial note.
+
 | | Local (EX-06/07) | Remote (this) |
 |---|---|---|
 | Backend | PGlite in the tab | Fortémi server |

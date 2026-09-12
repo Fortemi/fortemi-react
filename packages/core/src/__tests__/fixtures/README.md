@@ -62,6 +62,36 @@ OIDC/JWT, multi-tenant note denial, read-only mutation enforcement, inference,
 all REST operations or other platforms. Current source replay is not a new live
 run or a new published-consumer release. Suite NO-GO remains in effect.
 
+## Producer-Owned Negative Controls (#421)
+
+`remote-negative-controls.json` and `remote-negative-package.receipt.json` are
+verbatim files from producer commit `bb0c8509f7d5586ec34dfb40c0af58aa1bfd604d`.
+Their pin also binds the producer runner/helper hashes and the unchanged native
+fixture used for valid responses. The upstream verifier checks immutable bytes
+for both local files and both producer scripts without executing fetched code.
+
+The21 controls cover malformed JSON/envelopes, before-header socket reset/abort,
+truncated bodies, unrecognized/mismatched404 and enrichment401/403/404/429/500.
+`remote-negative-corpus.test.ts` executes31 source-adapter fault replays and a
+pin/receipt alignment test. Its reset/abort/truncation paths are explicit fetch
+injection, not a real network run. The separate historical receipt records31
+checks/61 actual private-loopback requests with clean-installed published
+Core2026.9.4. That loopback server deliberately injects faults; it is not Fortemi.
+
+Both public reads throw typed errors for note failures. Failed enrichment rejects
+the full-detail request instead of yielding partial success or note absence.
+The separately read note remains accessible. Bounded status/problem code/request
+ID/Retry-After are retained; response content, URLs and credentials are not.
+Before-header socket errors map to `transport`, cancellation to `aborted`, and
+failed body decoding/projection to `invalid-response`. Only recognized producer
+note-not-found404 maps to null; proxy404 or mismatched Problem Details do not.
+
+For #421's real-server denial evidence, the native fixture proves note-route401
+for missing/invalid API identities, alongside permitted reads and authoritative
+not-found404. This is personal required-authentication evidence. Authenticated
+role/tenant403 remains unqualified; the operator403 reassignment in negative
+tests is injection. No hosted-product implementation or parity claim is implied.
+
 `tools/release/verify-remote-package.mjs <core.tgz> <version> <loopback-url>
 <lane-container> <receipt.json>` clean-installs the supplied tarball and exercises
 its public remote adapter against an exact-image, zero-physical-notes disposable

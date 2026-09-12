@@ -1,0 +1,71 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T09:21:00Z",
+    "description": "Consumer negative corpus pin, fault replay and literal acceptance mapping"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-421-negative-consumer.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T09:21:00Z",
+    "checksum": "sha256:4ed44e42e34b80f6ca6b25e707b9b0a4dee690d9b064e062c06c04bebf1b3bd3",
+    "attributes": {
+      "baseCommit": "5d29230aff360cdea1f8b3107c4493831dc7244f",
+      "producerFixtureCommit": "bb0c8509f7d5586ec34dfb40c0af58aa1bfd604d",
+      "artifacts": {
+        ".aiwg/architecture/SAD.md": "sha256:c966576b523116238cf3e22a7eef9b43255ebeda33c569f7b341f0c6042118c2",
+        ".aiwg/architecture/adr-backend-seam.md": "sha256:939ec148d5c24a36bcba894cb3abec662bed505d171a2abaede4d376c2a6d8d8",
+        "examples/remote-backend/README.md": "sha256:8f6bf0834ded852488aa75c3805c0efff4f0fc5e02938b12a95a9df6b1caff42",
+        "packages/core/scripts/verify-remote-producer-fixture.mjs": "sha256:f20579cd9fb7f16041c875d5c634a46e59016c3bcf31411da5f304456401d519",
+        "packages/core/src/__tests__/fixtures/README.md": "sha256:85d3ff5a9f930a0b157da992c9e0e53f433f04cdc05d9bd4c4d55dc8310dae53",
+        ".aiwg/reports/lane-b-421-negative-consumer.json": "sha256:4ed44e42e34b80f6ca6b25e707b9b0a4dee690d9b064e062c06c04bebf1b3bd3",
+        "packages/core/src/__tests__/fixtures/remote-negative-controls.json": "sha256:264e6b23f76405586ad62c4705b08829b58ea240a91d890caf735f091c5ba094",
+        "packages/core/src/__tests__/fixtures/remote-negative-controls.producer-pin.json": "sha256:bc201eac6548216f0d0a07d0516f1ddc2382042fca7b789ed22fb2da94fb214c",
+        "packages/core/src/__tests__/fixtures/remote-negative-package.receipt.json": "sha256:5052f58e9c89850d65bfba70b71d07c362b1e153a42202f435bdf97d70689cfb",
+        "packages/core/src/__tests__/remote-negative-corpus.test.ts": "sha256:ccb2d2f897498e0846d3e01f63f5cbde13b3dcb774b3178f6295710630a35da1"
+      }
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:testing:lane-b-421-negative-consumer:055",
+    "type": "testing",
+    "started_at": "2026-09-12T09:14:00Z",
+    "ended_at": "2026-09-12T09:21:00Z",
+    "description": "Pin producer-controlled negative corpus/receipt/scripts, replay31 faults,129 tests/lint/typecheck and9 pin checks pass; initial test typing failure retained"
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-421-negative-consumer.json",
+      "activity": "urn:aiwg:activity:testing:lane-b-421-negative-consumer:055",
+      "time": "2026-09-12T09:21:00Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-421-negative-consumer.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:testing:lane-b-421-negative-consumer:055",
+      "agent": "urn:aiwg:agent:codex",
+      "role": "primary_implementer"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-421-negative-consumer.json",
+        "source": "urn:aiwg:artifact:packages/core/src/__tests__/fixtures/remote-negative-controls.producer-pin.json",
+        "activity": "urn:aiwg:activity:testing:lane-b-421-negative-consumer:055",
+        "derivation_type": "tests"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-421-negative-consumer.json",
+        "source": "urn:aiwg:artifact:.aiwg/architecture/adr-backend-seam.md",
+        "activity": "urn:aiwg:activity:testing:lane-b-421-negative-consumer:055",
+        "derivation_type": "conforms_to"
+      }
+    ]
+  }
+}

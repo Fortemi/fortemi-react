@@ -733,6 +733,14 @@ commit `912c0636a6d2273e5663a977e0182bfe874c3bd3`. The historical 25/37-case
 captures, server authority, separate persistence planes and suite NO-GO remain
 unchanged. See the backend ADR's Native HTTP Evidence Amendment for limits.
 
+The producer-owned negative corpus at `bb0c8509` adds explicit malformed-body,
+socket and enrichment controls. Consumer source replays are separate from the
+historical31-check published-Core private-loopback receipt. The latter is fault
+injection, not a live Fortemi/hosted run. Personal-mode real note-route401 covers
+missing/invalid identity denial; role/tenant403 remains outside that evidence.
+Full-detail enrichment rejects on failure rather than returning partial success.
+See the backend ADR and fixture README; suite NO-GO remains unchanged.
+
 After Elaboration Iteration 1 PoC:
 
 | Risk | Residual Concern | Mitigation |
