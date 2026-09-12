@@ -1,0 +1,39 @@
+{
+  "scope": "CI checkout-path correction for Core422 / PR449; no runtime or contract change",
+  "baseline": "7d67e12f080f3cd498465457bdbe86c133b24f84",
+  "observedRun": 58971,
+  "failedJob": 160681,
+  "observedResult": {
+    "passedJobs": 9,
+    "failedJobs": ["unit-test"],
+    "skippedJobs": ["build"],
+    "reason": "All three artifacts downloaded; strict aggregate identity verification rejected /build/gitea-runner/data/workdir versus /data/workdir roots"
+  },
+  "changes": [
+    "Three partition jobs and aggregate create a detached worktree at /tmp/fortemi-core-unit inside their disposable job containers",
+    "Run defaults use that worktree; preparation explicitly uses the action checkout and artifact actions use absolute worktree paths",
+    "Existing destination fails closed; original checkout remains available for action cleanup",
+    "Real miniature worktrees from two distinct checkout locations merge unmodified reports into three files, three cases and 100 percent coverage"
+  ],
+  "unchanged": [
+    "ci-unit-partitions.mjs source/runtime/root/hash/inventory guards and native blob merger",
+    "Core79-percent coverage threshold, file isolation, two workers, explicit dependency ordering and job timeouts",
+    "Core manifest, implementation receipt, lockfile, schemas, producer fixtures and consumer pins"
+  ],
+  "verification": {
+    "node24": "83 tooling tests PASS on Node24.12.0",
+    "node22": "83 tooling tests PASS on cached pinned Node22.22.2; not the observed CI22.23.2 patch",
+    "workflow": "11 jobs, four fixed worktrees, preparation order, run/action paths and unchanged dependencies/timeouts verified",
+    "additional": ["knowledge-shard contract verifier", "focused lint", "Core typecheck", "git diff --check"],
+    "localJobs": 2,
+    "peakBytes": 933851136,
+    "evidence": "suite .aiwg/working/lane-b/evidence/lane-b-delivery-20260912-cycle65"
+  },
+  "remaining": [
+    "New exact-source CI, actual aggregate coverage/completeness and downstream Graph/React gates",
+    "Protected PR merge, original issue acceptance and repository release sweep",
+    "Published vector tag-exclusion failure retained in Cycle64; search WIP preserved, not repaired by this CI change",
+    "Authorization holds, named-profile/platform limitations and suite NO-GO"
+  ],
+  "released": false
+}

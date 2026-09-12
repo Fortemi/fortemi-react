@@ -1,0 +1,74 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T12:34:00Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-worktree.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T12:34:00Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".gitea/workflows/ci.yml",
+          "sha256": "d2542eb9e4951679bb20a694128a6c5b9f8c330746e28f29bb8b94752365c9e7"
+        },
+        {
+          "path": "packages/core/scripts/ci-unit-partitions.test.mjs",
+          "sha256": "8420c9f20bc9215bf66e0c39ec12f703776f5c1845a2a62fb7bc9f5b564176f1"
+        },
+        {
+          "path": ".aiwg/testing/test-strategy.md",
+          "sha256": "672b614a29575bd32cbfdb4f5f83dcacf98846ddbb8365854748d79155fcd817"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-422-ci-worktree.json",
+          "sha256": "0e5cbe265761a47cce4bb85ee1c4879fa61062842080022004f659fbdf9bc01c"
+        }
+      ],
+      "boundaries": [
+        "CI58971 aggregate failed on runner path drift; new full CI pending",
+        "No blob rewrite, identity relaxation, threshold change or published-vector repair",
+        "Suite NO-GO"
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-422-ci-worktree:065",
+    "type": "modification",
+    "started_at": "2026-09-12T12:25:00Z",
+    "ended_at": "2026-09-12T12:34:00Z",
+    "description": "Use fixed-path disposable CI worktrees and verify native cross-checkout report/coverage merging."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-worktree.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-422-ci-worktree:065"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-worktree.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-422-ci-worktree:065",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-worktree.json",
+        "source": "urn:gitea:issue:Fortemi/fortemi-react:422",
+        "derivation_type": "implements"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-worktree.json",
+        "source": "urn:gitea:ci:Fortemi/fortemi-react:58971",
+        "derivation_type": "derives_from"
+      }
+    ]
+  }
+}

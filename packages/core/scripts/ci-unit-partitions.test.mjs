@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { copyFileSync, constants, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import test from 'node:test'
@@ -103,4 +104,75 @@ test('actual merged coverage enforces the unchanged config threshold', { timeout
     for (const i of [1, 2, 3]) await execute(['run', String(i)], { coreRoot: root })
     await assert.rejects(execute(['merge'], { coreRoot: root }), /Vitest failed/)
   } finally { rmSync(root, { recursive: true }) }
+})
+
+test('fixed-path worktrees merge unmodified blobs from different checkout locations', { timeout: 90000 }, async () => {
+  const source = fixture(100)
+  const scratch = mkdtempSync(join(tmpdir(), 'fortemi-ci-worktrees-'))
+  const alternate = join(scratch, 'alternate-checkout')
+  const workspace = join(scratch, 'unit-worktree')
+  const artifacts = join(scratch, 'artifacts')
+  const core = resolve(import.meta.dirname, '..')
+  const git = (cwd, args) => execFileSync('git', ['-c', 'commit.gpgsign=false', ...args], {
+    cwd, encoding: 'utf8', timeout: 10000, stdio: ['ignore', 'pipe', 'pipe'],
+  })
+  const options = { coreRoot: workspace, repositoryRoot: workspace }
+  let owner
+  const removeWorkspace = () => {
+    if (owner) {
+      git(workspace, ['diff', '--exit-code', 'HEAD'])
+      // Only this test's untracked dependency link and retained report copies remain.
+      git(owner, ['worktree', 'remove', '--force', workspace])
+      owner = undefined
+    }
+  }
+  const prepare = checkout => {
+    git(checkout, ['worktree', 'add', '--detach', workspace, 'HEAD'])
+    owner = checkout
+    symlinkSync(join(core, 'node_modules'), join(workspace, 'node_modules'))
+  }
+  try {
+    writeFileSync(join(source, 'pnpm-lock.yaml'), 'lockfileVersion: 9\n')
+    git(source, ['init', '--quiet'])
+    git(source, ['add', 'package.json', 'vitest.config.ts', 'subject.mjs', 'a.test.mjs', 'b.test.mjs', 'c.test.mjs', 'pnpm-lock.yaml'])
+    git(source, ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@invalid.example', 'commit', '--quiet', '-m', 'private fixture'])
+    git(scratch, ['clone', '--no-hardlinks', '--quiet', source, alternate])
+    const sourceId = git(source, ['rev-parse', 'HEAD']).trim()
+    assert.equal(git(alternate, ['rev-parse', 'HEAD']).trim(), sourceId)
+    for (const i of [1, 2, 3]) {
+      prepare(i === 2 ? alternate : source)
+      assert.throws(() => git(owner, ['worktree', 'add', '--detach', workspace, 'HEAD']))
+      await execute(['run', String(i)], options)
+      const output = join(artifacts, String(i))
+      mkdirSync(output, { recursive: true })
+      for (const name of ['blob.json', 'receipt.json', 'report.json']) {
+        copyFileSync(join(workspace, 'test-results/core-shards', String(i), name), join(output, name), constants.COPYFILE_EXCL)
+      }
+      const receipt = JSON.parse(readFileSync(join(output, 'receipt.json')))
+      assert.equal(receipt.identity.root, workspace)
+      assert.equal(receipt.identity.source, sourceId)
+      removeWorkspace()
+    }
+    prepare(alternate)
+    for (const i of [1, 2, 3]) {
+      const output = join(workspace, 'test-results/core-shards', String(i))
+      mkdirSync(output, { recursive: true })
+      for (const name of ['blob.json', 'receipt.json', 'report.json']) {
+        const sourceFile = join(artifacts, String(i), name)
+        copyFileSync(sourceFile, join(output, name), constants.COPYFILE_EXCL)
+        assert.equal(digest(readFileSync(join(output, name))), digest(readFileSync(sourceFile)))
+      }
+    }
+    await execute(['merge'], options)
+    const receipt = JSON.parse(readFileSync(join(workspace, 'test-results/core-unit-completeness.json')))
+    assert.equal(receipt.status, 'PASS')
+    assert.equal(receipt.files, 3)
+    assert.equal(receipt.tests, 3)
+    assert.equal(receipt.coverage.statements.pct, 100)
+    assert.deepEqual(receipt.partitions, [1, 1, 1])
+  } finally {
+    removeWorkspace()
+    rmSync(source, { recursive: true })
+    rmSync(scratch, { recursive: true })
+  }
 })

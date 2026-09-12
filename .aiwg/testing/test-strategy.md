@@ -32,6 +32,16 @@ case/count drift, errors, tampering and source/runtime/root mismatches. Differen
 checkout roots are rejected rather than silently remapped. Repeated legitimate
 case names retain their multiplicity. Skipped/todo cases remain explicitly counted.
 
+CI58971 downloaded all three partition artifacts, but its aggregate correctly
+rejected a runner checkout-root mismatch (`/build/gitea-runner/data/workdir/...`
+versus `/data/workdir/...`). Each partition and the aggregate now creates a
+detached Git worktree at `/tmp/fortemi-core-unit` inside its own job container,
+then installs and runs there. The original action checkout stays available for
+checkout cleanup; the additional worktree belongs to the disposable container.
+An existing destination fails closed. Upload/download paths are explicit absolute
+paths under that worktree because action steps do not inherit run-step defaults.
+No blobs, coverage paths or identity guards are rewritten or relaxed.
+
 Only partial runs override the statement threshold to zero. Vitest's built-in
 blob merger then enforces the unchanged ordinary config threshold on combined
 coverage, and its full case inventory must match the receipts. `unit-test` remains
@@ -45,7 +55,9 @@ digest, including dev-tool-only manifest changes, before heavy conformance work.
 
 Focused harness verification is `node --test packages/core/scripts/ci-unit-partitions.test.mjs`.
 It includes actual miniature partition/merge execution and coverage-threshold
-failure, without running the large PGlite suites. On Titan, run it through the
+failure, plus worktrees originating from two different checkout paths whose
+unchanged reports merge into complete100-percent miniature coverage, without
+running the large PGlite suites. On Titan, run it through the
 suite's detached local-test-runner with existing resource/network/device limits.
 Temporary Vitest fixtures belong in runner-private temporary storage, avoiding
 unrelated ancestor package/config files. Full CI and published-package acceptance

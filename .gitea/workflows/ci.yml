@@ -37,8 +37,14 @@ jobs:
     runs-on: ubuntu-latest
     container: node:22
     timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: /tmp/fortemi-core-unit
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare fixed-path disposable unit worktree
+        working-directory: ${{ github.workspace }}
+        run: git worktree add --detach /tmp/fortemi-core-unit HEAD
       - name: Enable pinned pnpm
         run: |
           corepack enable
@@ -50,7 +56,7 @@ jobs:
         uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
         with:
           name: core-unit-partition-1
-          path: packages/core/test-results/core-shards/1/
+          path: /tmp/fortemi-core-unit/packages/core/test-results/core-shards/1/
           retention-days: 14
           if-no-files-found: error
 
@@ -59,8 +65,14 @@ jobs:
     container: node:22
     needs: [core-unit-partition-1]
     timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: /tmp/fortemi-core-unit
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare fixed-path disposable unit worktree
+        working-directory: ${{ github.workspace }}
+        run: git worktree add --detach /tmp/fortemi-core-unit HEAD
       - name: Enable pinned pnpm
         run: |
           corepack enable
@@ -72,7 +84,7 @@ jobs:
         uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
         with:
           name: core-unit-partition-2
-          path: packages/core/test-results/core-shards/2/
+          path: /tmp/fortemi-core-unit/packages/core/test-results/core-shards/2/
           retention-days: 14
           if-no-files-found: error
 
@@ -81,8 +93,14 @@ jobs:
     container: node:22
     needs: [core-unit-partition-2]
     timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: /tmp/fortemi-core-unit
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare fixed-path disposable unit worktree
+        working-directory: ${{ github.workspace }}
+        run: git worktree add --detach /tmp/fortemi-core-unit HEAD
       - name: Enable pinned pnpm
         run: |
           corepack enable
@@ -94,7 +112,7 @@ jobs:
         uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
         with:
           name: core-unit-partition-3
-          path: packages/core/test-results/core-shards/3/
+          path: /tmp/fortemi-core-unit/packages/core/test-results/core-shards/3/
           retention-days: 14
           if-no-files-found: error
 
@@ -103,8 +121,14 @@ jobs:
     container: node:22
     needs: [core-unit-partition-1, core-unit-partition-2, core-unit-partition-3]
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: /tmp/fortemi-core-unit
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare fixed-path disposable unit worktree
+        working-directory: ${{ github.workspace }}
+        run: git worktree add --detach /tmp/fortemi-core-unit HEAD
       - name: Enable pinned pnpm
         run: |
           corepack enable
@@ -113,15 +137,15 @@ jobs:
       - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
         with:
           name: core-unit-partition-1
-          path: packages/core/test-results/core-shards/1
+          path: /tmp/fortemi-core-unit/packages/core/test-results/core-shards/1
       - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
         with:
           name: core-unit-partition-2
-          path: packages/core/test-results/core-shards/2
+          path: /tmp/fortemi-core-unit/packages/core/test-results/core-shards/2
       - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
         with:
           name: core-unit-partition-3
-          path: packages/core/test-results/core-shards/3
+          path: /tmp/fortemi-core-unit/packages/core/test-results/core-shards/3
       - name: Verify complete test inventory and merge coverage
         run: node packages/core/scripts/ci-unit-partitions.mjs merge
       - name: Retain Core unit and coverage evidence
@@ -130,9 +154,9 @@ jobs:
         with:
           name: core-unit-evidence
           path: |
-            packages/core/test-results/core-unit.json
-            packages/core/test-results/core-unit-completeness.json
-            packages/core/coverage/coverage-summary.json
+            /tmp/fortemi-core-unit/packages/core/test-results/core-unit.json
+            /tmp/fortemi-core-unit/packages/core/test-results/core-unit-completeness.json
+            /tmp/fortemi-core-unit/packages/core/coverage/coverage-summary.json
           retention-days: 14
           if-no-files-found: warn
       - name: Verify immutable remote producer fixture
