@@ -1,8 +1,10 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-09-12T14:31:43.111Z"
-  record_count: 118
+  updated_at: "2026-09-12T15:28:17.160Z"
+  record_count: 119
 records:
+  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-405-search-adapters.json"
+    record: "records/lane-b-405-search-adapters.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-405-esm-reconciliation.json"
     record: "records/lane-b-405-esm-reconciliation.prov.yaml"
   - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-405-typed-pglite.json"

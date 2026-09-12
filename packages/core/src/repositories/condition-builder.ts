@@ -23,7 +23,7 @@ export interface ConditionResult {
  * @param includeDeleted - Whether to include soft-deleted notes (default: false)
  */
 export function buildNoteConditions(
-  options: Pick<SearchOptions, 'tags' | 'collection_id' | 'date_from' | 'date_to' | 'is_starred' | 'is_archived' | 'format' | 'source' | 'visibility'>,
+  options: Pick<SearchOptions, 'tags' | 'tagsAll' | 'collection_id' | 'date_from' | 'date_to' | 'is_starred' | 'is_archived' | 'format' | 'source' | 'sources' | 'visibility'>,
   startIdx: number,
   includeDeleted = false,
 ): ConditionResult {
@@ -40,6 +40,11 @@ export function buildNoteConditions(
       `EXISTS (SELECT 1 FROM note_tag nt WHERE nt.note_id = n.id AND nt.tag = ANY($${idx++}))`,
     )
     params.push(options.tags)
+  }
+  if (options.tagsAll?.length) {
+    conditions.push(`NOT EXISTS (SELECT 1 FROM unnest($${idx++}::text[]) wanted(tag)
+      WHERE NOT EXISTS (SELECT 1 FROM note_tag nt WHERE nt.note_id = n.id AND nt.tag = wanted.tag))`)
+    params.push(options.tagsAll)
   }
 
   if (options.collection_id) {
@@ -77,6 +82,10 @@ export function buildNoteConditions(
   if (options.source) {
     conditions.push(`n.source = $${idx++}`)
     params.push(options.source)
+  }
+  if (options.sources?.length) {
+    conditions.push(`n.source = ANY($${idx++}::text[])`)
+    params.push(options.sources)
   }
 
   if (options.visibility) {

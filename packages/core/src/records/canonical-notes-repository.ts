@@ -167,7 +167,7 @@ export class CanonicalNotesRepository {
    * Bounded substring scan over title + revised content (case-insensitive).
    * This is deliberately not ranked FTS — see `store.capabilities`.
    */
-  async searchText(query: string, limit = 20): Promise<NoteRecord[]> {
+  async searchText(query: string, limit = 20, accept?: (note: NoteRecord) => boolean): Promise<NoteRecord[]> {
     const needle = query.toLowerCase()
     const revised = new Map(
       (await this.store.list('note_revised_current')).map((r) => [r.id, r.content]),
@@ -175,6 +175,7 @@ export class CanonicalNotesRepository {
     const hits: NoteRecord[] = []
     for (const note of await this.store.list('note')) {
       if (note.deleted_at !== null) continue
+      if (accept && !accept(note)) continue
       const haystack = `${note.title ?? ''}\n${revised.get(note.id) ?? ''}`.toLowerCase()
       if (haystack.includes(needle)) {
         hits.push(note)

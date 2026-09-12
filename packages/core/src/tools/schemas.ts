@@ -7,6 +7,7 @@
  */
 
 import { z } from 'zod'
+import { validateMetadataPredicates } from '../repositories/metadata-predicates.js'
 
 // ---------------------------------------------------------------------------
 // capture_knowledge
@@ -62,6 +63,12 @@ export type ManageNoteInput = z.infer<typeof ManageNoteInputSchema>
 
 export const SearchInputSchema = z.object({
   query: z.string(),
+  metadataPredicates: z.unknown().transform(value => {
+    validateMetadataPredicates(value)
+    return value
+  }).optional(),
+  tenant_id: z.string().min(1).optional(),
+  archive_id: z.string().min(1).nullable().optional(),
   mode: z.enum(['text', 'semantic', 'hybrid', 'auto']).default('text'),
   query_embedding: z.array(z.number()).optional(),
   embeddingSetId: z.string().optional(),

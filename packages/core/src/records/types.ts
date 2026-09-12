@@ -262,7 +262,7 @@ export interface RecordStoreCapabilities {
   sourceAddressedUpsert?: true
   deletionReceipts?: true
   typedMetadataPredicates?: false
-  evidenceLocators?: true
+  evidenceLocators?: false
   fullTextSearch: false
   vectorSearch: false
   sqlJoins: false
@@ -276,7 +276,7 @@ export const RECORD_STORE_CAPABILITIES: RecordStoreCapabilities = {
   sourceAddressedUpsert: true,
   deletionReceipts: true,
   typedMetadataPredicates: false,
-  evidenceLocators: true,
+  evidenceLocators: false,
   fullTextSearch: false,
   vectorSearch: false,
   sqlJoins: false,

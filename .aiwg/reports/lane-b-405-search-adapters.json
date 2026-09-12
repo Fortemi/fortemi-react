@@ -1,0 +1,113 @@
+{
+  "status": "local-verification-passed",
+  "at": "2026-09-12T15:28:17.160Z",
+  "parent": "ab39b7f6699f2604b4aeb1d9c9cc17898dff0f3d",
+  "issues": [
+    "Fortemi/fortemi-react#405",
+    "Fortemi/fortemi#1091"
+  ],
+  "dependency": "Fortemi/fortemi-react#454",
+  "change": "Expose candidate typed metadata through indexed PGlite and tool search; explicit unsupported adapter gates; truthful local capability flags and pre-ranking public tag/source filters.",
+  "verification": {
+    "total": 2431,
+    "passed": 2431,
+    "files": 23,
+    "workspaceTypecheck": true,
+    "workspaceLint": true,
+    "workspaceBuild": true,
+    "currentReceiptHashes": true,
+    "installedPackageSha256": "cca74e3b7552f0bc14d811337e79c7c518215caea925432863ea9b2440dea4d2",
+    "installedAdapterChecks": 29,
+    "installedWireCases": 11,
+    "installedVersionCases": 20,
+    "nativeESMCollection": {
+      "tests": 42,
+      "files": 5
+    },
+    "chromium": {
+      "startTime": "2026-09-12T15:26:46.661Z",
+      "duration": 58343.089,
+      "expected": 13,
+      "skipped": 1,
+      "unexpected": 0,
+      "flaky": 0
+    }
+  },
+  "corpus": {
+    "authorityCases": 66,
+    "pgliteAndToolModes": 396,
+    "unsupportedAdapterRejections": 198,
+    "capabilityCases": 2,
+    "modeAndBoundaryTests": 46,
+    "scopeRankingRetrievalCalls": 108,
+    "syntheticVectors": true,
+    "authority": {
+      "repository": "Fortemi/fortemi",
+      "issue": 1091,
+      "baseCommit": "a701847db779a0a3adfa36a09dfa1055a10a0a0a",
+      "sourceState": "uncommitted candidate; base is not the contract revision",
+      "path": "contracts/metadata-search/candidate/1.0.0/",
+      "files": {
+        "predicates.schema.json": "e325707ce20abb88ef3a8f4bbb0d02ab09501b1ffe9b48b0c92a96e97dda00c3",
+        "predicate-vectors.json": "df9e129cab4708db71c3e22f87efd252fbcac144daa45a53ee1716f4a1a05ae7",
+        "sql-scope-vectors.json": "dcd35298a3bc485a6f1c87c6c87f136ee98121dad3f2b1c8b590b2e5381aa4d5"
+      }
+    }
+  },
+  "redHistory": [
+    {
+      "stage": "initial adapter corpus",
+      "cycle": 69,
+      "passed": 2,
+      "failed": 330
+    },
+    {
+      "stage": "ranking setup",
+      "passed": 712,
+      "failed": 39,
+      "cause": "Synthetic note_tag fixture omitted required id; fixture fixed without weakening assertions."
+    },
+    {
+      "stage": "malformed embedder",
+      "failed": 1,
+      "cause": "undefined escaped adapter validation; guard now rejects undefined and sparse arrays before SQL."
+    },
+    {
+      "stage": "broad 23-file regression command",
+      "signal": "SIGTERM",
+      "timeoutSeconds": 480,
+      "passed": false,
+      "recovery": "Same 23 files pass in three serial bounded batches; successful typecheck/lint reused only after exact source-hash equality."
+    }
+  ],
+  "source": {
+    ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md": "08e335c084fa1ab09d8ff0352c7b313dc5b59c5eafbf61b35c3ff438490b524c",
+    ".aiwg/architecture/SAD.md": "5da60ce3758ff52bba074c0879e07bc5b891f7642c95cd743ff27316411aad73",
+    "docs/content/guides/search.md": "230e10c8809c99ed284f56b121c8a6cbf064448353126a7f7dc872b6b945ae4b",
+    "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "909382d32f8031a46fe0cc49dc03831db8377ee9e395ac9a523d17f09248e472",
+    "packages/core/schemas/knowledge-shard-v2.presence.receipt.json": "25040c3cfb232069733c7633ea40a5cb324a3867954a9ac96a301ba681bf9761",
+    "packages/core/src/__tests__/records/record-backend.test.ts": "cb1487ef65e328860098b2af5a094e0517c3c76aaf21d3119ae4f09afa54a21a",
+    "packages/core/src/data-backend.ts": "6af25319fcf03807c10657778886d4a00e13234aac92be480a2632b6f8e1d3a4",
+    "packages/core/src/records/canonical-notes-repository.ts": "560e1c7d37113f45eeb431bcd78ac905d14c2b594af839ed2844eeb6f84ee22a",
+    "packages/core/src/records/record-backend.ts": "27e58f4024a22cbe14c6c814be8c7bdb0a759aaf026443f528414fbed49d277d",
+    "packages/core/src/records/types.ts": "f9bfdc2bc31c632680ff1de39feaafaf1e769cf7ece98609a211e6670569324b",
+    "packages/core/src/repositories/condition-builder.ts": "5b42c50327028444d519dbd667f3cb3e3ee63b66192fec46b477a5de8a1d1570",
+    "packages/core/src/repositories/types.ts": "29f1b6ca50e88283bb469730344e5ba84959d783e6b96ec5099ab3cfd6172a8e",
+    "packages/core/src/tools/schemas.ts": "25864005cedeb04e6a076f5147184ae97ac8fb595117f69ad1aaa7c0b519e1df",
+    "packages/core/src/tools/search.ts": "be16ecf1f61b02948596bc839b56cb9c6422d59433641ac26b88293707526ae4",
+    "packages/core/src/__tests__/metadata-search-adapters.test.ts": "ed0ef0eaee6bd57ecc7616654519b8b7151a21d86827a064c8ef773234506351",
+    "packages/core/src/__tests__/metadata-search-modes.test.ts": "1d42a4bccfe360cb7e1abdffcaa398044d8fdabb4aff5ab0b92b98e49cb4dcae",
+    "packages/core/src/backend-search-options.ts": "893eb6530dd4ad9e9225297eb1a866d08fad21d0a87cfe2f4708e43d8b78e5f9",
+    "pnpm-lock.yaml": "70309249ffe42c4f9baae3c54567117332fb383fd5bb5e1c6859c1c4f98ab438"
+  },
+  "evidence": ".aiwg/working/lane-b/evidence/lane-b-delivery-20260912-cycle70/",
+  "limitations": [
+    "Candidate-unpublished authority; local operation flags do not negotiate server compatibility.",
+    "All full evidenceLocators flags remain false; forwarded PGlite sources are partial, not stable note/chunk/span citation qualification.",
+    "Local tenant/archive selection is not hosted authorization. JWT/JWKS, cache and released cross-runtime acceptance remain pending.",
+    "Record/static/remote typed predicates intentionally reject; no metadata scan fallback. Third-party implementation conformance is not established.",
+    "Package built from frozen working bytes at inherited version2026.9.5 before commit; not a registry publication.",
+    "Full exact-source CI and release remain required; local Chromium is not Firefox/WebKit qualification.",
+    "No model/GPU load or shared vLLM/Ollama changes. Suite NO-GO and original Lane B scope remain unchanged."
+  ]
+}

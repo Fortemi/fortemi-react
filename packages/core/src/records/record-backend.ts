@@ -25,6 +25,7 @@ import type { RecordStore, NoteRecord0, LinkRecord0 } from './types.js'
 import { CanonicalNotesRepository } from './canonical-notes-repository.js'
 import type { CanonicalNoteView } from './canonical-notes-repository.js'
 import { ManageNoteInputSchema } from '../tools/schemas.js'
+import { validateBackendSearchOptions } from '../backend-search-options.js'
 
 export interface RecordBackendOptions {
   id?: string
@@ -91,6 +92,8 @@ export function createRecordBackend(
       merge: true, // via importShardToRecords (record-shard.ts)
       multiUser: false,
       semantic: 'none',
+      typedMetadataPredicates: false,
+      evidenceLocators: false,
       startupCost: 'instant',
     },
 
@@ -113,19 +116,15 @@ export function createRecordBackend(
     },
 
     async search(query, o) {
+      validateBackendSearchOptions(o, { metadata: false, scope: false, modes: ['fts'] })
       // Bounded substring scan (RECORD_STORE_CAPABILITIES.boundedTextScan) —
       // deliberately unranked, so hits carry no rank/snippet.
       const offset = o?.offset ?? 0
       const limit = o?.limit ?? 20
-      let matched = await notes.searchText(query, offset + limit)
-      if (o?.tags?.length) {
-        const tags = await tagsByNote()
-        matched = matched.filter((n) => o.tags!.every((t) => (tags.get(n.id) ?? []).includes(t)))
-      }
-      if (o?.source?.length) {
-        matched = matched.filter((n) => o.source!.includes(n.source))
-      }
       const tags = await tagsByNote()
+      const matched = await notes.searchText(query, offset + limit, n =>
+        (!o?.tags?.length || o.tags.every(t => (tags.get(n.id) ?? []).includes(t)))
+        && (!o?.source?.length || o.source.includes(n.source)))
       const hits: BackendSearchHit[] = matched
         .slice(offset, offset + limit)
         .map((n) => ({ note: noteToBackend(n, tags.get(n.id) ?? []) }))

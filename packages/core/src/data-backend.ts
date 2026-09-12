@@ -23,6 +23,8 @@ import type { ShardLink, ShardProvenanceEdge, ShardSkosConcept } from './shard/t
 import { RemoteBackendError, isRemoteNoteNotFound, remoteHttpError } from './remote-error.js'
 import { parseRemoteConcepts, parseRemoteCreated, parseRemoteLinks, parseRemoteManageInput, parseRemoteNoteDetail, parseRemoteNoteList, parseRemoteProvenance, parseRemoteRestored, parseRemoteSearch, remoteNoteId, remoteSearchParameters } from './remote-contract.js'
 import type { RemoteProvenanceGraph, RemoteSearchDegradation, RemoteSearchMetadata, RemoteSearchMode } from './remote-contract.js'
+import type { MetadataPredicate, EvidenceLocator } from './repositories/metadata-predicates.js'
+import { validateBackendSearchOptions } from './backend-search-options.js'
 
 // ── Capabilities ──────────────────────────────────────────────────────────
 
@@ -41,6 +43,10 @@ export type BackendStartupCost = 'instant' | 'index-build' | 'network'
 
 /** What a backend can do — the unit of capability negotiation. */
 export interface BackendCapabilities {
+  /** Local candidate-v1 indexed predicate operations, not server contract negotiation. */
+  typedMetadataPredicates?: boolean
+  /** Complete reproducible citations, not merely partial source projections. */
+  evidenceLocators?: boolean
   /** Can answer list / get / search read operations. */
   read: boolean
   /** Can mutate notes (manageNote). */
@@ -132,6 +138,8 @@ export interface BackendSearchHit {
   snippet?: string
   /** Original remote search metadata; detail enrichment is a separate read. */
   remoteSearch?: RemoteSearchMetadata
+  /** Partial local source projections; does not imply complete citation capability. */
+  locators?: EvidenceLocator[]
 }
 
 /** Search response with optional facet counts. */
@@ -154,6 +162,11 @@ export interface BackendSearchQueryOptions extends BackendListOptions {
   tags?: string[]
   /** OR-filter on note source. */
   source?: string[]
+  mode?: 'fts' | 'semantic' | 'hybrid'
+  metadataPredicates?: readonly MetadataPredicate[]
+  /** Local source-identity selection, never a grant of authorization. */
+  tenant_id?: string
+  archive_id?: string | null
 }
 
 // ── The uniform operation interface ───────────────────────────────────────
@@ -191,6 +204,8 @@ export interface DataBackend {
 
 /** What a caller needs. Booleans require `true`; `semantic` is a minimum tier. */
 export interface BackendRequest {
+  typedMetadataPredicates?: boolean
+  evidenceLocators?: boolean
   read?: boolean
   write?: boolean
   merge?: boolean
@@ -230,6 +245,8 @@ const STARTUP_RANK: Record<BackendStartupCost, number> = {
 
 function missingFor(request: BackendRequest, caps: BackendCapabilities): string[] {
   const missing: string[] = []
+  if (request.typedMetadataPredicates && !caps.typedMetadataPredicates) missing.push('typedMetadataPredicates')
+  if (request.evidenceLocators && !caps.evidenceLocators) missing.push('evidenceLocators')
   if (request.read && !caps.read) missing.push('read')
   if (request.write && !caps.write) missing.push('write')
   if (request.merge && !caps.merge) missing.push('merge')
@@ -418,18 +435,48 @@ export interface PGliteBackendOptions {
   id?: string
   /** Whether embeddings exist so search can use the semantic path. */
   semanticAvailable?: boolean
+  /** Host-owned query embedding, required to expose semantic/hybrid operations. */
+  embedQuery?: (query: string) => Promise<number[]>
 }
 
 /**
  * Wrap a PGlite-backed `DatabaseClient` as a `DataBackend`. Read ops delegate to
  * the repositories; writes go through the `manageNote` tool. Advertises full
- * read+write+merge with `ann-full` semantic when embeddings are present.
+ * read+write+merge with `ann-full` only when vector storage and a query embedder
+ * are configured. Typed predicates refer to the local unpublished candidate.
  */
 export function createPGliteBackend(db: DatabaseClient, options: PGliteBackendOptions = {}): DataBackend {
   const semanticAvailable = options.semanticAvailable ?? false
+  const embedQuery = options.embedQuery
+  const canEmbed = semanticAvailable && typeof embedQuery === 'function'
   const notes = new NotesRepository(db)
   const search = new SearchRepository(db, semanticAvailable)
   const links = new LinksRepository(db)
+
+  async function searchNotes(query: string, o?: BackendSearchQueryOptions): Promise<BackendSearchResult> {
+    validateBackendSearchOptions(o, {
+      metadata: true, scope: true, modes: canEmbed ? ['fts', 'semantic', 'hybrid'] : ['fts'],
+    })
+    const mode = o?.mode ?? 'fts'
+    const vector = mode === 'fts' ? undefined : await embedQuery!(query)
+    if (mode !== 'fts' && (!Array.isArray(vector) || !vector.length
+      || !Array.from(vector).every(value => typeof value === 'number' && Number.isFinite(value)))) {
+      throw new Error('BACKEND_QUERY_EMBEDDING_INVALID')
+    }
+    const r = await search.search(query, {
+      limit: o?.limit, offset: o?.offset, tagsAll: o?.tags, sources: o?.source,
+      mode: mode === 'fts' ? 'text' : mode,
+      metadataPredicates: o?.metadataPredicates, tenant_id: o?.tenant_id, archive_id: o?.archive_id,
+      include_facets: true,
+    }, vector)
+    return {
+      hits: r.results.map(res => ({
+        note: searchResultToBackend(res), rank: res.rank, snippet: res.snippet, locators: res.locators,
+      })),
+      total: r.total,
+      facets: r.facets ? { tags: Object.fromEntries(r.facets.tags.map(t => [t.tag, t.count])) } : undefined,
+    }
+  }
 
   async function linksOf(id: string): Promise<BackendLink[]> {
     const result = await links.listForNote(id)
@@ -499,7 +546,9 @@ export function createPGliteBackend(db: DatabaseClient, options: PGliteBackendOp
       write: true,
       merge: true,
       multiUser: false,
-      semantic: semanticAvailable ? 'ann-full' : 'none',
+      typedMetadataPredicates: true,
+      evidenceLocators: false,
+      semantic: canEmbed ? 'ann-full' : 'none',
       startupCost: 'index-build',
     },
 
@@ -517,26 +566,9 @@ export function createPGliteBackend(db: DatabaseClient, options: PGliteBackendOp
       }
     },
 
-    async search(query, o) {
-      const r = await search.search(query, {
-        limit: o?.limit,
-        offset: o?.offset,
-        tags: o?.tags,
-        source: o?.source?.[0],
-        include_facets: true,
-      })
-      const hits: BackendSearchHit[] = r.results.map((res) => ({
-        note: searchResultToBackend(res),
-        rank: res.rank,
-        snippet: res.snippet,
-      }))
-      const facets = r.facets
-        ? {
-            tags: Object.fromEntries(r.facets.tags.map((t) => [t.tag, t.count])),
-          }
-        : undefined
-      return { hits, total: r.total, facets }
-    },
+    search: searchNotes,
+    ...(canEmbed ? { semantic: async (query: string, k?: number) =>
+      (await searchNotes(query, { mode: 'semantic', limit: k })).hits } : {}),
 
     async getNoteFull(id) {
       try {
@@ -695,6 +727,7 @@ export function createRemoteBackend(config: RemoteBackendConfig): RemoteDataBack
   }
 
   async function searchRemote(query: string, options?: RemoteSearchOptions, requireSemantic = false): Promise<RemoteSearchResult> {
+    validateBackendSearchOptions(options, { metadata: false, scope: false })
     const params = remoteSearchParameters(query, options)
     const result = parseRemoteSearch(await getJson<unknown>(paths.search, params), query, params.limit)
     if (requireSemantic && result.degraded) throw new RemoteBackendError('degraded-search')
@@ -760,6 +793,8 @@ export function createRemoteBackend(config: RemoteBackendConfig): RemoteDataBack
       merge: false,
       multiUser: true,
       semantic: 'server',
+      typedMetadataPredicates: false,
+      evidenceLocators: false,
       startupCost: 'network',
     },
 
@@ -873,6 +908,8 @@ export function createShardBackend(reader: ShardReader, options: ShardBackendOpt
       merge: false,
       multiUser: false,
       semantic,
+      typedMetadataPredicates: false,
+      evidenceLocators: false,
       startupCost: 'instant',
     },
 
@@ -887,6 +924,7 @@ export function createShardBackend(reader: ShardReader, options: ShardBackendOpt
     },
 
     async search(query, o) {
+      validateBackendSearchOptions(o, { metadata: false, scope: false, modes: ['fts'] })
       // Request ranking + snippets so hits carry rank/snippet uniformly with the
       // PGlite backend (whose ts_rank always ranks).
       const r = await reader.search(query, { ...o, rank: true, snippets: true })

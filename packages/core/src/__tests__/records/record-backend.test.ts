@@ -35,6 +35,8 @@ describe('createRecordBackend (DB-free)', () => {
       merge: true,
       multiUser: false,
       semantic: 'none',
+      typedMetadataPredicates: false,
+      evidenceLocators: false,
       startupCost: 'instant',
     })
     // SKOS / provenance are not canonical collections — the methods are

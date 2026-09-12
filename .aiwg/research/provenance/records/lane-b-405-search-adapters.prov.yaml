@@ -1,0 +1,125 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T15:28:17.160Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-search-adapters.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T15:28:17.160Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "sha256": "08e335c084fa1ab09d8ff0352c7b313dc5b59c5eafbf61b35c3ff438490b524c"
+        },
+        {
+          "path": ".aiwg/architecture/SAD.md",
+          "sha256": "5da60ce3758ff52bba074c0879e07bc5b891f7642c95cd743ff27316411aad73"
+        },
+        {
+          "path": "docs/content/guides/search.md",
+          "sha256": "230e10c8809c99ed284f56b121c8a6cbf064448353126a7f7dc872b6b945ae4b"
+        },
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+          "sha256": "909382d32f8031a46fe0cc49dc03831db8377ee9e395ac9a523d17f09248e472"
+        },
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.presence.receipt.json",
+          "sha256": "25040c3cfb232069733c7633ea40a5cb324a3867954a9ac96a301ba681bf9761"
+        },
+        {
+          "path": "packages/core/src/__tests__/records/record-backend.test.ts",
+          "sha256": "cb1487ef65e328860098b2af5a094e0517c3c76aaf21d3119ae4f09afa54a21a"
+        },
+        {
+          "path": "packages/core/src/data-backend.ts",
+          "sha256": "6af25319fcf03807c10657778886d4a00e13234aac92be480a2632b6f8e1d3a4"
+        },
+        {
+          "path": "packages/core/src/records/canonical-notes-repository.ts",
+          "sha256": "560e1c7d37113f45eeb431bcd78ac905d14c2b594af839ed2844eeb6f84ee22a"
+        },
+        {
+          "path": "packages/core/src/records/record-backend.ts",
+          "sha256": "27e58f4024a22cbe14c6c814be8c7bdb0a759aaf026443f528414fbed49d277d"
+        },
+        {
+          "path": "packages/core/src/records/types.ts",
+          "sha256": "f9bfdc2bc31c632680ff1de39feaafaf1e769cf7ece98609a211e6670569324b"
+        },
+        {
+          "path": "packages/core/src/repositories/condition-builder.ts",
+          "sha256": "5b42c50327028444d519dbd667f3cb3e3ee63b66192fec46b477a5de8a1d1570"
+        },
+        {
+          "path": "packages/core/src/repositories/types.ts",
+          "sha256": "29f1b6ca50e88283bb469730344e5ba84959d783e6b96ec5099ab3cfd6172a8e"
+        },
+        {
+          "path": "packages/core/src/tools/schemas.ts",
+          "sha256": "25864005cedeb04e6a076f5147184ae97ac8fb595117f69ad1aaa7c0b519e1df"
+        },
+        {
+          "path": "packages/core/src/tools/search.ts",
+          "sha256": "be16ecf1f61b02948596bc839b56cb9c6422d59433641ac26b88293707526ae4"
+        },
+        {
+          "path": "packages/core/src/__tests__/metadata-search-adapters.test.ts",
+          "sha256": "ed0ef0eaee6bd57ecc7616654519b8b7151a21d86827a064c8ef773234506351"
+        },
+        {
+          "path": "packages/core/src/__tests__/metadata-search-modes.test.ts",
+          "sha256": "1d42a4bccfe360cb7e1abdffcaa398044d8fdabb4aff5ab0b92b98e49cb4dcae"
+        },
+        {
+          "path": "packages/core/src/backend-search-options.ts",
+          "sha256": "893eb6530dd4ad9e9225297eb1a866d08fad21d0a87cfe2f4708e43d8b78e5f9"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-search-adapters.json",
+          "sha256": "295776b0137e42572a0613fc674b25b4dd02e98d5040e352b68d8fb330ebb751"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-405:070",
+    "type": "modification",
+    "started_at": "2026-09-12T14:39:00Z",
+    "ended_at": "2026-09-12T15:28:17.160Z",
+    "description": "Expose candidate typed metadata through indexed PGlite and tool search; explicit unsupported adapter gates; truthful local capability flags and pre-ranking public tag/source filters."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-search-adapters.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-405:070"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-search-adapters.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-405:070",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-search-adapters.json",
+        "source": "urn:git:commit:ab39b7f6699f2604b4aeb1d9c9cc17898dff0f3d",
+        "derivation_type": "derives_from"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-search-adapters.json",
+        "source": "urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/contract.receipt.json",
+        "derivation_type": "derives_from"
+      }
+    ]
+  }
+}

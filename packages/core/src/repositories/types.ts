@@ -125,6 +125,8 @@ export interface SearchOptions {
   limit?: number
   offset?: number
   tags?: string[]
+  /** Require every tag; the existing tags option retains its ANY semantics. */
+  tagsAll?: string[]
   collection_id?: string
   date_from?: Date
   date_to?: Date
@@ -132,6 +134,8 @@ export interface SearchOptions {
   is_archived?: boolean
   format?: string
   source?: string
+  /** Match any listed source before ranking. */
+  sources?: string[]
   visibility?: string
   tenant_id?: string
   archive_id?: string | null

@@ -42,7 +42,7 @@
     "src/migrations/0032_native_revision_replace.ts": "e1bef0fb7a0cf338ea631c011b7889505d01872f0fd70aa5a2bae2baa965494e",
     "src/__tests__/shard/native-full-v1-public.test.ts": "0f296503509a29220a6ea49e6e9c2bd58d1d4bee973216dd6a99b71765edb884",
     "src/__tests__/shard/native-full-v1-presence.test.ts": "74bc2afc85dd16e3d7746bcc59c4669752e3815407d6f801c4bdcbd0048453f5",
-    "src/records/types.ts": "82b8d014ec8f91376bcf459fb08d8ecd5668ecaf273bce2df821f4bf8e196a31",
+    "src/records/types.ts": "f9bfdc2bc31c632680ff1de39feaafaf1e769cf7ece98609a211e6670569324b",
     "src/records/memory-record-store.ts": "6fb02714f1c7258de7ef25f346683e910404d2030d2f652ffeb3823f917c48ee",
     "src/records/idb-record-store.ts": "0f47ee1ce02e2edf07fbb8b3c6e6dcfa4cebe87a15fc5acd34c65dba75a13d1f",
     "src/records/record-shard.ts": "f57d93d789bbbcf5866eb28edd82bf1e644aa8281839be1304dbf0f320ad802a",

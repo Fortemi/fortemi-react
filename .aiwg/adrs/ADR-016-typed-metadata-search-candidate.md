@@ -12,7 +12,7 @@
 Consume byte-identical candidate schema and truth corpora through a hash-bound
 candidate receipt. The upstream source is uncommitted work on a named base;
 hashes identify those bytes, not a published producer revision. Do not advertise
-the candidate as a negotiated capability or silently promote its receipt.
+the candidate as a negotiated server/wire capability or silently promote its receipt.
 
 PGlite compiles validated predicates into typed SQL over author `note.metadata`.
 Numbers, strings, booleans and present JSON null remain distinct; absence is not
@@ -73,9 +73,34 @@ alone do not qualify source-level Node loading: the standalone Playwright tests
 import Core through the source alias, so test collection and actual browser
 execution remain distinct required checks.
 
+## Public Adapter Operations
+
+`BackendCapabilities.typedMetadataPredicates` describes local candidate-v1
+operations only. It is not a compatibility-discovery revision, server response,
+or promoted authority receipt. PGlite supports it through the same indexed
+repository implementation; RecordStore, static shards and the current remote
+adapter explicitly report false and reject supplied predicates before I/O.
+Absent flags on third-party providers mean unsupported to `selectBackend`.
+Local source scope is likewise rejected where unsupported rather than ignored.
+
+The PGlite adapter and search tool forward metadata and tenant/archive selection.
+The adapter uses fts/semantic/hybrid modes; the tool retains text/semantic/hybrid/
+auto. PGlite advertises semantic operations only with both vector availability
+and an injected query embedder. Predicates are validated before embedding or SQL;
+an invalid embedding fails before SQL, and unsupported modes do not fall back.
+Public tag-AND/source-OR filters apply before ranking. Existing repository/tool
+tags retain ANY semantics. RecordStore's existing tag/source scan filters now
+apply before its result limit; this is not an authorized metadata slow path.
+
+All built-in `evidenceLocators` capability flags remain false. PGlite forwards
+its partial scoped source projections, but they do not qualify complete stable
+note/chunk/span citations. The local candidate corpus is tested through PGlite
+and the tool in every supported forced mode; unsupported adapters run the same
+corpus as rejection-before-I/O checks, not equivalent retrieval implementations.
+
 This is the PGlite correction, not completion of #405 or #1091. Remaining work:
 the promoted producer request/result authority and immutable pins; RecordStore
-and pluggable/static adapter conformance or explicit capability rejection;
+and third-party adapter conformance beyond the tested built-in gates;
 reproducible note/chunk/span citation semantics (legacy current-chunk projection
 is not yet qualified); full deletion/purge, verified hosted authorization and
 cache matrices; clean installed and released cross-runtime acceptance; CI and

@@ -90,8 +90,8 @@ await search('machine learning', {
 
 ### Typed Metadata Candidate (PGlite)
 
-The unreleased #405 correction applies to `SearchRepository`, not every search
-adapter. `metadataPredicates` accepts at most eight AND clauses over `provider`,
+The unreleased #405 correction applies to `SearchRepository`, the PGlite
+`DataBackend`, and `searchTool`. `metadataPredicates` accepts at most eight AND clauses over `provider`,
 `model`, `role`, `event_kind`, `sensitivity`, and `import_run_id`. Operators are
 `eq`, `in` (at most 32 values), inclusive `range`, and `exists` (default true).
 Unknown paths/operators/fields and malformed input fail with
@@ -112,9 +112,24 @@ do not authenticate users or establish hosted authorization.
 
 Migration 33 installs bounded typed indexes without modifying stored metadata.
 Source locator projections exclude foreign tenants/archives and nonmatching runs.
-Complete chunk/span citation reproducibility, RecordStore/pluggable/static adapter
+Complete chunk/span citation reproducibility, third-party adapter
 conformance and released producer compatibility are still pending. This candidate
 does not advertise cross-backend parity or change any Knowledge Shard profile.
+
+The PGlite backend accepts `mode: 'fts' | 'semantic' | 'hybrid'`. Semantic and
+hybrid require both `semanticAvailable: true` and a host-owned `embedQuery`
+function in `createPGliteBackend`; missing support fails before reads instead
+of falling back. The tool retains its existing mode names and `query_embedding`.
+The backend's tags require every listed tag and sources match any listed source,
+before ranking; repository/tool tags retain their existing ANY behavior.
+
+`typedMetadataPredicates` in local backend selection is a candidate-v1 operation
+flag, not a promoted server contract. RecordStore, static and current remote
+adapters reject predicates with `BACKEND_METADATA_PREDICATES_UNSUPPORTED` and
+tenant/archive selection with `BACKEND_SEARCH_SCOPE_UNSUPPORTED` before I/O.
+Malformed predicates retain the shared validation errors above. Third-party
+backends with absent flags are unsupported. Complete `evidenceLocators` remains
+false even when partial source projections are returned.
 
 ### Phrase Search
 

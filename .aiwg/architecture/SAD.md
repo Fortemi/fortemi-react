@@ -21,7 +21,11 @@ the Fortemi-owned candidate schema before database work, uses bounded typed
 author-metadata indexes with exact rechecks, and quantifies import-run clauses
 over one scoped source identity before ranking. Locator source projections use
 the same scope. Local tenant/archive selection is not hosted authorization.
-RecordStore/adapter capability conformance, complete citation locators, immutable
+The PGlite public adapter and tool forward the same predicates/scope before
+ranking. Local candidate operation flags are separate from server negotiation;
+RecordStore/static/current remote adapters reject unsupported predicates/scope
+before I/O. PGlite semantic operations require an injected embedder and vector
+availability. Complete citation locators, third-party adapter conformance, immutable
 producer pins and released cross-runtime acceptance remain open; suite NO-GO
 and all named-profile boundaries are unchanged.
 

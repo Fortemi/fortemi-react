@@ -25,6 +25,9 @@ export async function searchTool(db: DatabaseClient, rawInput: unknown): Promise
 
   const repo = new SearchRepository(db, semanticAvailable)
   return repo.search(input.query, {
+    metadataPredicates: input.metadataPredicates,
+    tenant_id: input.tenant_id,
+    archive_id: input.archive_id,
     limit: input.limit,
     offset: input.offset,
     mode: input.mode,
