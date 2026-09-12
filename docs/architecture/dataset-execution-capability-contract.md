@@ -64,3 +64,47 @@ Contract major `v1` and descriptor schema major `1` are the only accepted
 majors. Additive capability identifiers or fields require a compatible schema
 revision. Removing or changing an identifier, diagnostic, guarantee, or field
 meaning requires a new contract major and explicit migration.
+
+## Validation revision 1.0.1
+
+Core remains the capability semantic authority (original #408, correction
+[#422](https://git.integrolabs.net/Fortemi/fortemi-react/issues/422)).
+Fortemi's MCP adapter is a consumer of those semantics and a producer of concrete
+runtime descriptors; its server-owned execution/receipt envelopes remain separate.
+Coordinate adoption through
+[Fortemi #1128](https://git.integrolabs.net/Fortemi/fortemi/issues/1128) and the
+declared AIWG consumer before claiming cross-runtime conformance.
+
+The historical v1 schema and golden fixtures are retained unchanged. The corrected
+validation schema and language-neutral negotiation vectors live in
+`schemas/dataset-execution-capabilities/validation/1.0.1/`. This is a validation
+revision, not a new wire contract or runtime maturity claim.
+
+Version comparison follows [SemVer 2.0.0](https://semver.org/spec/v2.0.0.html):
+prereleases sort below their stable release, numeric identifiers compare
+numerically, numeric identifiers sort below text, and build metadata is ignored.
+The validation profile rejects noncanonical syntax, leading zeros in core or
+numeric prerelease identifiers, versions longer than256 characters, and core
+integers above Number.MAX_SAFE_INTEGER. Numeric prerelease identifiers are
+compared exactly as decimal strings, without lossy Number conversion.
+Stable schema major1 revisions with the accepted structure remain compatible;
+schema prereleases and other majors are unsupported. Runtime/capability
+prereleases remain valid when their minimum-version comparison succeeds.
+
+`negotiateDatasetExecutionCapabilitiesFromWire(descriptor, request)` is the
+public unknown-JSON boundary. It validates both objects against the corrected
+JSON Schema and semantic rules before negotiation. Invalid input returns
+`{ valid: false, diagnostics }` with no typed result or invented runtime.
+Valid input returns `{ valid: true, result }`; check `result.accepted` separately
+because a valid request can still ask for an unavailable capability.
+
+The existing typed negotiator also validates structure and fails closed.
+Callers already validating against the historical schema did not expose the
+unknown-status defect; malformed unvalidated statuses no longer count as support.
+Malformed optional requirements reject validation rather than being converted
+into a fallback. Valid optional mismatches retain explicit degradation.
+No validation or negotiation call performs network I/O or execution.
+
+Source tests do not qualify the server, published package, AIWG consumer, or
+live DatasetWorkflowApi adapter. Revision/source/digest pins and those independent
+acceptance receipts remain required before issue closure or release claims.

@@ -1,0 +1,52 @@
+{
+  "status": "CORE_SOURCE_VERIFIED_CONSUMERS_PENDING",
+  "issue": "Fortemi/fortemi-react#422",
+  "producerCoordination": "Fortemi/fortemi#1128",
+  "base": "9f74c0bab0cce5ef8e2433e8944a4efda5575eb4",
+  "validationRevision": "1.0.1",
+  "tests": {
+    "dataset": 110,
+    "currentReceipt": 1,
+    "sharedVersionCases": 20,
+    "sharedWireCases": 11,
+    "normativeChainComparisons": 64,
+    "independentSemverComparisons": 1296,
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "coreBuild": "PASS",
+    "builtEntry": "PASS"
+  },
+  "red": {
+    "passes": 8,
+    "failures": 13
+  },
+  "historicalSchema": {
+    "unchanged": true,
+    "sha256": "e06021d7b94cd507df9892c6268746228c2080288dcb2f71b6a84fb9456c35e8"
+  },
+  "currentShardReceiptOnlyChanges": [
+    "src/index.ts",
+    "package.json"
+  ],
+  "safety": {
+    "jobs": 16,
+    "successes": 10,
+    "failuresPreserved": 6,
+    "peakMemoryBytes": 1494200320,
+    "sharedVllmUnchanged": true,
+    "dependencyInstalls": 0,
+    "temporaryLinksRemoved": true
+  },
+  "remaining": [
+    "Exact-head CI and main delivery",
+    "Fortemi MCP strict comparison/request validation and pinned shared corpus",
+    "AIWG consumer adoption and pinned corpus",
+    "Clean installed/released Core plus actual server-descriptor acceptance",
+    "Full original Lane B and release/cleanup sweep"
+  ],
+  "boundaries": [
+    "No wire contract major or runtime maturity promotion",
+    "No published model inference or shared-service change",
+    "Suite NO-GO retained"
+  ]
+}

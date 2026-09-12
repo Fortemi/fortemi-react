@@ -81,6 +81,8 @@ export {
   DATASET_EXECUTION_CAPABILITY_IDS,
   validateDatasetExecutionDescriptor,
   negotiateDatasetExecutionCapabilities,
+  negotiateDatasetExecutionCapabilitiesFromWire,
+  validateDatasetExecutionRequest,
 } from './dataset-execution-capabilities.js'
 export type {
   DatasetExecutionCapabilityId,
@@ -99,6 +101,7 @@ export type {
   DatasetCapabilityDiagnostic,
   DatasetCapabilityDegradation,
   DatasetCapabilityNegotiationResult,
+  DatasetCapabilityWireResult,
 } from './dataset-execution-capabilities.js'
 export {
   FORTEMI_BROWSER_LOCAL_DATASET_EXECUTION_DESCRIPTOR,

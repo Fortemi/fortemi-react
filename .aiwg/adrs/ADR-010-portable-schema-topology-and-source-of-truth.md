@@ -84,6 +84,18 @@ import gate. The MCP adapter is not part of that proof.
 - **Make fortemi-react the schema authority** — rejected; AIWG owns generation and already publishes a JSON Schema with a canonical `$id`; inverting ownership would fork the ecosystem.
 - **Codegen the shard format from the server's Rust models** — attractive but the server itself hand-rolls the shard separately from its models, so model-codegen would not match the shard; a committed schema + golden fixtures is the pragmatic authority (ADR-011).
 
+### Dataset capability authority clarification (2026-09-12)
+
+Dataset capability negotiation is an additional live-plane contract, not a
+Knowledge Shard or static-index schema. Core #408/#422 owns its semantics;
+Fortemi ADR-107 explicitly consumes that authority while owning MCP execution
+and receipt envelopes. Validation revision1.0.1 preserves the historical wire
+artifacts and supplies a corrected schema plus shared positive/negative vectors.
+The public unknown-JSON boundary validates both inputs before negotiation.
+Server and AIWG adoption, source/digest pins, clean installed-package checks and
+actual server descriptor evidence are required before cross-runtime claims.
+See `docs/architecture/dataset-execution-capability-contract.md`.
+
 ## References
 
 - @.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md - Profile and enforcement requirements.

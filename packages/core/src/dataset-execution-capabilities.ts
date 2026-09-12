@@ -5,6 +5,10 @@
  * not inferred from a package/backend name and it does not establish liveness.
  */
 
+import Ajv2020 from 'ajv/dist/2020.js'
+import type { ValidateFunction } from 'ajv'
+import validationSchema from '../schemas/dataset-execution-capabilities/validation/1.0.1/schema.json' with { type: 'json' }
+
 export const DATASET_EXECUTION_CONTRACT = 'fortemi.dataset-execution-capabilities/v1' as const
 export const DATASET_EXECUTION_SCHEMA_VERSION = '1.0.0' as const
 
@@ -118,39 +122,87 @@ export interface DatasetCapabilityNegotiationResult {
   diagnostics: DatasetCapabilityDiagnostic[]
 }
 
+export type DatasetCapabilityWireResult =
+  | { valid: false; diagnostics: DatasetCapabilityDiagnostic[] }
+  | { valid: true; result: DatasetCapabilityNegotiationResult }
+
 const ID_SET = new Set<string>(DATASET_EXECUTION_CAPABILITY_IDS)
 const LIMIT_KEYS = ['maxInputBytes', 'maxRecordBytes', 'maxBatchRecords', 'maxConcurrency', 'maxPageSize', 'maxTraversalDepth'] as const
 
+const versionPattern = new RegExp(validationSchema.$defs.semver.pattern)
+const ajv = new Ajv2020({ strict: true, allErrors: false })
+ajv.addSchema(validationSchema)
+const descriptorStructure = ajv.compile<DatasetExecutionCapabilityDescriptor>({ $ref: validationSchema.$id + '#/$defs/descriptor' })
+const requestStructure = ajv.compile<DatasetCapabilityNegotiationRequest>({ $ref: validationSchema.$id + '#/$defs/request' })
+
+function parseVersion(value: unknown): { core: number[]; prerelease: string[] } | null {
+  if (typeof value !== 'string' || value.length > 256) return null
+  const match = versionPattern.exec(value)
+  if (!match || match[0] !== value) return null
+  const core = match.slice(1, 4).map(Number)
+  if (!core.every(Number.isSafeInteger)) return null
+  return { core, prerelease: match[4]?.split('.') ?? [] }
+}
+
 function major(version: string): number | null {
-  const match = /^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/.exec(version)
-  return match ? Number(match[1]) : null
+  const parsed = parseVersion(version)
+  return parsed && parsed.prerelease.length === 0 ? parsed.core[0]! : null
 }
 
 function compareVersions(left: string, right: string): number | null {
-  const parse = (value: string) => {
-    const match = /^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/.exec(value)
-    return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null
-  }
-  const a = parse(left)
-  const b = parse(right)
+  const a = parseVersion(left)
+  const b = parseVersion(right)
   if (!a || !b) return null
   for (let index = 0; index < 3; index++) {
-    if (a[index] !== b[index]) return a[index]! > b[index]! ? 1 : -1
+    if (a.core[index] !== b.core[index]) return a.core[index]! > b.core[index]! ? 1 : -1
+  }
+  if (!a.prerelease.length || !b.prerelease.length) {
+    return a.prerelease.length ? -1 : b.prerelease.length ? 1 : 0
+  }
+  for (let index = 0; index < Math.max(a.prerelease.length, b.prerelease.length); index++) {
+    const leftPart = a.prerelease[index]
+    const rightPart = b.prerelease[index]
+    if (leftPart === rightPart) continue
+    if (leftPart === undefined) return -1
+    if (rightPart === undefined) return 1
+    const leftNumeric = /^[0-9]+$/.test(leftPart)
+    const rightNumeric = /^[0-9]+$/.test(rightPart)
+    if (leftNumeric !== rightNumeric) return leftNumeric ? -1 : 1
+    // Length then ASCII preserves arbitrary-precision numeric prerelease order.
+    if (leftNumeric && leftPart.length !== rightPart.length) return leftPart.length > rightPart.length ? 1 : -1
+    return leftPart > rightPart ? 1 : -1
   }
   return 0
 }
 
 function isSupported(capability: DatasetCapabilityDeclaration | undefined): capability is DatasetCapabilityDeclaration {
-  return capability !== undefined && capability.status !== 'unsupported'
+  return capability !== undefined && (capability.status === 'supported' || capability.status === 'experimental')
 }
 
-export function validateDatasetExecutionDescriptor(descriptor: DatasetExecutionCapabilityDescriptor): DatasetCapabilityDiagnostic[] {
+function structuralDiagnostics(validate: ValidateFunction, prefix = ''): DatasetCapabilityDiagnostic[] {
+  return (validate.errors ?? []).slice(0, 8).map(error => ({
+    code: 'DESCRIPTOR_INVALID',
+    path: (prefix + error.instancePath).slice(0, 256),
+    message: 'Invalid capability wire structure: ' + error.keyword,
+  }))
+}
+
+export function validateDatasetExecutionDescriptor(descriptor: unknown): DatasetCapabilityDiagnostic[] {
+  if (!descriptorStructure(descriptor)) {
+    if (descriptor && typeof descriptor === 'object' && 'contract' in descriptor && descriptor.contract !== DATASET_EXECUTION_CONTRACT) {
+      return [{ code: 'CONTRACT_MAJOR_UNSUPPORTED', path: '/contract', message: 'Unsupported descriptor contract' }]
+    }
+    return structuralDiagnostics(descriptorStructure)
+  }
   const diagnostics: DatasetCapabilityDiagnostic[] = []
   if (descriptor.contract !== DATASET_EXECUTION_CONTRACT) {
     diagnostics.push({ code: 'CONTRACT_MAJOR_UNSUPPORTED', path: '/contract', message: `Unsupported contract ${String(descriptor.contract)}` })
   }
   if (major(descriptor.schemaVersion) !== 1) {
     diagnostics.push({ code: 'SCHEMA_VERSION_UNSUPPORTED', path: '/schemaVersion', message: `Unsupported descriptor schema version ${descriptor.schemaVersion}` })
+  }
+  if (!parseVersion(descriptor.runtime.version)) {
+    diagnostics.push({ code: 'DESCRIPTOR_INVALID', path: '/runtime/version', message: 'Invalid runtime semantic version' })
   }
   const capabilities = new Map<DatasetExecutionCapabilityId, DatasetCapabilityDeclaration>()
   descriptor.capabilities.forEach((capability, index) => {
@@ -173,7 +225,7 @@ export function validateDatasetExecutionDescriptor(descriptor: DatasetExecutionC
     }
     for (const evidenceId of capability.evidence) {
       if (!descriptor.evidence.some(evidence => evidence.id === evidenceId)) {
-        diagnostics.push({ code: 'DESCRIPTOR_INVALID', capability: capability.id, path: `/capabilities/${index}/evidence`, message: `Unknown evidence ${evidenceId}` })
+        diagnostics.push({ code: 'DESCRIPTOR_INVALID', capability: capability.id, path: `/capabilities/${index}/evidence`, message: 'Capability references undeclared evidence' })
       }
     }
   })
@@ -202,6 +254,34 @@ export function validateDatasetExecutionDescriptor(descriptor: DatasetExecutionC
   return diagnostics
 }
 
+export function validateDatasetExecutionRequest(request: unknown): DatasetCapabilityDiagnostic[] {
+  if (!requestStructure(request)) {
+    if (request && typeof request === 'object' && 'contract' in request && request.contract !== DATASET_EXECUTION_CONTRACT) {
+      return [{ code: 'CONTRACT_MAJOR_UNSUPPORTED', path: '/request/contract', message: 'Unsupported request contract' }]
+    }
+    return structuralDiagnostics(requestStructure, '/request')
+  }
+  const diagnostics: DatasetCapabilityDiagnostic[] = []
+  for (const [group, requirements] of [['required', request.required], ['optional', request.optional ?? []]] as const) {
+    requirements.forEach((requirement, index) => {
+      if (requirement.minimumVersion !== undefined && !parseVersion(requirement.minimumVersion)) {
+        diagnostics.push({ code: 'DESCRIPTOR_INVALID', path: '/request/' + group + '/' + index + '/minimumVersion', message: 'Invalid required semantic version' })
+      }
+    })
+  }
+  return diagnostics
+}
+
+/** Validate untrusted JSON before exposing a typed negotiation result. */
+export function negotiateDatasetExecutionCapabilitiesFromWire(descriptor: unknown, request: unknown): DatasetCapabilityWireResult {
+  const diagnostics = [...validateDatasetExecutionDescriptor(descriptor), ...validateDatasetExecutionRequest(request)]
+  if (diagnostics.length) return { valid: false, diagnostics }
+  return {
+    valid: true,
+    result: negotiateDatasetExecutionCapabilities(descriptor as DatasetExecutionCapabilityDescriptor, request as DatasetCapabilityNegotiationRequest),
+  }
+}
+
 function assessRequirement(
   requirement: DatasetCapabilityRequirement,
   capabilities: Map<DatasetExecutionCapabilityId, DatasetCapabilityDeclaration>,
@@ -210,7 +290,7 @@ function assessRequirement(
   if (!isSupported(capability)) {
     return { ok: false, reason: 'unsupported', diagnostics: [{ code: 'REQUIRED_CAPABILITY_MISSING', capability: requirement.id, message: `Capability ${requirement.id} is unsupported` }] }
   }
-  if (requirement.minimumVersion) {
+  if (requirement.minimumVersion !== undefined) {
     const comparison = compareVersions(capability.version, requirement.minimumVersion)
     if (comparison === null || comparison < 0) {
       return { ok: false, reason: 'version-insufficient', diagnostics: [{ code: 'CAPABILITY_VERSION_INSUFFICIENT', capability: requirement.id, message: `${capability.version} does not satisfy ${requirement.minimumVersion}` }] }
@@ -230,11 +310,8 @@ export function negotiateDatasetExecutionCapabilities(
   descriptor: DatasetExecutionCapabilityDescriptor,
   request: DatasetCapabilityNegotiationRequest,
 ): DatasetCapabilityNegotiationResult {
-  const diagnostics = validateDatasetExecutionDescriptor(descriptor)
-  if (request.contract !== DATASET_EXECUTION_CONTRACT) {
-    diagnostics.push({ code: 'CONTRACT_MAJOR_UNSUPPORTED', path: '/contract', message: `Unsupported request contract ${String(request.contract)}` })
-  }
-  const capabilities = new Map(descriptor.capabilities.map(capability => [capability.id, capability]))
+  const diagnostics = [...validateDatasetExecutionDescriptor(descriptor), ...validateDatasetExecutionRequest(request)]
+  const capabilities = new Map(diagnostics.length ? [] : descriptor.capabilities.map(capability => [capability.id, capability]))
   const selected: DatasetExecutionCapabilityId[] = []
   const degradations: DatasetCapabilityDegradation[] = []
 
@@ -266,7 +343,7 @@ export function negotiateDatasetExecutionCapabilities(
   return {
     contract: DATASET_EXECUTION_CONTRACT,
     accepted: diagnostics.length === 0,
-    runtime: { ...descriptor.runtime },
+    runtime: { ...descriptor?.runtime },
     selected: [...new Set(selected)],
     degradations,
     diagnostics,

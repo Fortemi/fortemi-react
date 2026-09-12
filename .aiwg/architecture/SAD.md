@@ -745,6 +745,22 @@ After Elaboration Iteration 1 PoC:
 
 ---
 
+## Dataset Capability Validation
+
+Core owns the dataset capability semantics from #408/#422. Fortemi's MCP
+adapter consumes those semantics and produces a runtime descriptor; its
+execution and receipt envelopes remain server-owned under Fortemi ADR-107.
+This negotiation boundary is separate from static indexing and shard transfer.
+
+Validation revision1.0.1 adds strict SemVer precedence and schema-before-semantics
+validation for descriptors and requests, including the public unknown-JSON
+entry. Historical wire schemas/fixtures remain unchanged. See
+`docs/architecture/dataset-execution-capability-contract.md` and the versioned
+validation schema/vectors for the accepted numeric and revision bounds.
+Core source/built-entry tests do not prove server, AIWG, published-package or
+live adapter conformance. Those pins and execution receipts remain required;
+alpha remote maturity and suite NO-GO are unchanged.
+
 **SAD Version History**:
 
 | Version | Date | Author | Change |

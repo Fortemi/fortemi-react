@@ -1,0 +1,125 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T03:19:48.282Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-capability-validation.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T03:19:48.282Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/activity.log",
+          "sha256": "8d2c2d508d429a1267fde364812d45c7a139554c2caecc2374218b687831dfbc"
+        },
+        {
+          "path": ".aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md",
+          "sha256": "55d09a6d2c5b2c26724740d18c823a724712fff45fc65cb30fc6952c9734da54"
+        },
+        {
+          "path": ".aiwg/architecture/SAD.md",
+          "sha256": "d4b28cc330409cc5788fd6fdce82c7aa8e92653876b9c043c44b295c54527c61"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-422-capability-validation.json",
+          "sha256": "b29602ad38bceb6ee6a1a040b476d12a49d5faf7b774b69711a2fc3554d87630"
+        },
+        {
+          "path": "docs/architecture/dataset-execution-capability-contract.md",
+          "sha256": "42c7132048c5c3c09440a5878b17e9a87955b43e32c9c3443f3c9acca58883b2"
+        },
+        {
+          "path": "packages/core/package.json",
+          "sha256": "2432cb58ba413cafe8804471728c7477ec76f5f15e5e224310ae773960875294"
+        },
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+          "sha256": "166179a86ac7c32038b6c2b7a2c93ce953671f72f88aa335de06e123e1490438"
+        },
+        {
+          "path": "packages/core/src/dataset-execution-capabilities.ts",
+          "sha256": "f17598e0302404a02bae97c43ddd7f46792c4ccb6cdbb2787b2f26626facc159"
+        },
+        {
+          "path": "packages/core/src/index.ts",
+          "sha256": "310d456491c225dcd3e9ce525a756541968016cbd792a6894f12bbb5224bb98e"
+        },
+        {
+          "path": "packages/core/src/__tests__/dataset-capability-wire.test.ts",
+          "sha256": "25515509ae5f6405ebda0ed38f949880e16f9ae0b2ca6132c98f532941224edb"
+        },
+        {
+          "path": "packages/core/schemas/dataset-execution-capabilities/validation/1.0.1/schema.json",
+          "sha256": "a4e9b427da669a02e83db00d39f48c2e106770d6cd2ec1b717938c57793b754c"
+        },
+        {
+          "path": "packages/core/schemas/dataset-execution-capabilities/validation/1.0.1/negotiation-vectors.json",
+          "sha256": "2793990a842d5969f1f64c90170ab97ca4ffc4b93d1302a2f358fae54631a6dc"
+        },
+        {
+          "path": "packages/core/schemas/dataset-execution-capabilities/validation/1.0.1/wire-vectors.json",
+          "sha256": "c52d32d0b1d0d312cf8b242f11fc116c47d104a74112cbd5d0019e6d39df9744"
+        },
+        {
+          "path": "packages/core/schemas/dataset-execution-capabilities/validation/1.0.1/manifest.json",
+          "sha256": "20b59bb871c3afc9bb972896b2a2da718970c6fe7ef54b49000418f62a5701c0"
+        }
+      ],
+      "boundaries": [
+        "Exact-head CI and main delivery",
+        "Fortemi MCP strict comparison/request validation and pinned shared corpus",
+        "AIWG consumer adoption and pinned corpus",
+        "Clean installed/released Core plus actual server-descriptor acceptance",
+        "Full original Lane B and release/cleanup sweep"
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-422-capability-validation:001",
+    "type": "modification",
+    "started_at": "2026-09-12T03:02:00Z",
+    "ended_at": "2026-09-12T03:19:48.282Z",
+    "description": "Correct Core capability SemVer and compose structural/semantic validation with shared versioned fixtures; consumer qualification remains separate."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-capability-validation.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-422-capability-validation:001",
+      "time": "2026-09-12T03:19:48.282Z"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-capability-validation.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-422-capability-validation:001",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-capability-validation.json",
+        "source": "urn:gitea:issue:Fortemi/fortemi-react:422",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:modification:lane-b-422-capability-validation:001"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-capability-validation.json",
+        "source": "urn:gitea:issue:Fortemi/fortemi:1128",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:modification:lane-b-422-capability-validation:001"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-422-capability-validation.json",
+        "source": "https://semver.org/spec/v2.0.0.html",
+        "derivation_type": "implements",
+        "activity": "urn:aiwg:activity:modification:lane-b-422-capability-validation:001"
+      }
+    ]
+  }
+}
