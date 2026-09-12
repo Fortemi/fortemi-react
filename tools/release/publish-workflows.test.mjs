@@ -118,6 +118,11 @@ function runPublishStepInFreshEnvironment(workflowPath) {
 test('publish workflows publish the exact packed tarballs', () => {
   for (const workflowPath of workflowPaths) {
     const workflow = readFileSync(workflowPath, 'utf8');
+    const pack = extractRunBlock(workflow, 'Pack and inspect artifacts');
+    const normalize = pack.indexOf('node tools/release/normalize-packed-manifest.mjs "$artifact" "$TAG_VERSION"');
+    assert.ok(normalize > pack.indexOf('(cd packages/react && pnpm pack'), `${workflowPath}: normalize only after pack`);
+    assert.ok(normalize < pack.indexOf('tar -tzf "$CORE_TGZ"'), `${workflowPath}: normalize before inspection/checksums/publication`);
+    assert.match(pack, /for artifact in "\$CORE_TGZ" "\$GRAPH_TGZ" "\$REACT_TGZ"; do/);
     assert.doesNotMatch(
       workflow,
       /\(cd "\$package_dir" && pnpm publish\b/,

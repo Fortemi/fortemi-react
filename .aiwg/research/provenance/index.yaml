@@ -1,8 +1,10 @@
 metadata:
   schema_version: "1.0.0"
-  updated_at: "2026-09-11T12:54:26.980Z"
-  record_count: 104
+  updated_at: "2026-09-12T01:59:00.598Z"
+  record_count: 105
 records:
+  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-424-deterministic-pack.json"
+    record: "records/lane-b-424-deterministic-pack.prov.yaml"
   - entity: "urn:aiwg:artifact:.gitea/workflows/ci.yml"
     record: "records/lane-b-424-ci-coverage-budget.prov.yaml"
   - entity: "urn:aiwg:artifact:docs/content/releases/v2026.9.4.md"

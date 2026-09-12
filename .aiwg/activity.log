@@ -53,3 +53,4 @@
 ## [2026-09-11 10:08] update | Lane B cycle24: refresh two current test receipt hashes; strict contract RED/GREEN; full portable run pending.
 ## [2026-09-11 10:54] update | Prepare 2026.9.4: version/doc sync and current receipt hashes; release checks pending; NO-GO retained.
 ## [2026-09-11 11:15] update | Cycle26 release preparation: local workspace/build, Core2991 coverage, lint, strict current receipts, final packed Core clean-install and browser40pass/2skip. Three integration timeout budgets only; exact-head PR CI, merge and actual publication remain required. No release or suite parity claim.
+## [2026-09-12 01:57] update | Lane B424: pnpm12 packs reproduce two hashes; normalizer converges6 actual artifacts without payload changes.
