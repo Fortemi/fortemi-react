@@ -1,7 +1,7 @@
 metadata:
   schema_version: 1.0.0
-  updated_at: '2026-09-13T19:17:09.490Z'
-  record_count: 145
+  updated_at: '2026-09-13T20:42:06.870Z'
+  record_count: 146
 records:
   - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
     record: records/lane-b-core-context-owned-views-cycle96.prov.yaml
@@ -602,3 +602,9 @@ records:
     record: records/lane-b-metadata-source-pin-cycle100.prov.yaml
   - entity: urn:aiwg:artifact:packages/core/scripts/verify-metadata-search-source.test.mjs
     record: records/lane-b-metadata-source-pin-cycle100.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json
+    record: records/lane-b-native-fixture-cycle102.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json
+    record: records/lane-b-native-fixture-cycle102.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/shard/native-full-v1-public.test.ts
+    record: records/lane-b-native-fixture-cycle102.prov.yaml

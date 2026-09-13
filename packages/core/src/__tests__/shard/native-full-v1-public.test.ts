@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { PGlite } from '@electric-sql/pglite'
 import { vector } from '@electric-sql/pglite/vector'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MigrationRunner } from '../../migration-runner.js'
 import { allMigrations } from '../../migrations/index.js'
 import { MemoryBlobStore } from '../../blob-store.js'
@@ -45,10 +45,27 @@ const records = Object.fromEntries(Object.entries(FULL_V1_COMPONENT_FILES).map((
 describe('public native full-v1 restore, distinct from archival snapshots', () => {
   let db: PGlite
   let blobs: MemoryBlobStore
+  let pristine: Blob
+  beforeAll(async () => {
+    const initial = await PGlite.create({ extensions: { vector } })
+    try {
+      await initial.exec('CREATE EXTENSION vector')
+      await new MigrationRunner(initial).apply(allMigrations)
+      pristine = await initial.dumpDataDir('none')
+    } finally { await initial.close() }
+  })
+  async function cleanDatabase() {
+    // Clone only the empty migrated schema; imported state is never reused.
+    const clean = await PGlite.create({ extensions: { vector }, loadDataDir: pristine })
+    try {
+      for (const table of ['note', 'native_shard_record_lineage', 'knowledge_shard_component_record', 'job_queue']) {
+        expect((await clean.query(`SELECT * FROM ${table}`)).rows).toEqual([])
+      }
+      return clean
+    } catch (error) { await clean.close(); throw error }
+  }
   beforeEach(async () => {
-    db = await PGlite.create({ extensions: { vector } })
-    await db.exec('CREATE EXTENSION IF NOT EXISTS vector')
-    await new MigrationRunner(db).apply(allMigrations)
+    db = await cleanDatabase()
     blobs = new MemoryBlobStore()
   })
   afterEach(async () => { vi.unstubAllGlobals(); await db.close() })
@@ -61,10 +78,8 @@ describe('public native full-v1 restore, distinct from archival snapshots', () =
     const exported = await exportShardWithReport(db, { profile: 'full-v1', schemaVersion: '2.0.0', blobStore: blobs })
     expect(exported.errors, JSON.stringify(exported.capability_report.losses)).toEqual([])
     expect(exported.success).toBe(true)
-    const destination = await PGlite.create({ extensions: { vector } })
+    const destination = await cleanDatabase()
     try {
-      await destination.exec('CREATE EXTENSION vector')
-      await new MigrationRunner(destination).apply(allMigrations)
       const destinationBlobs = new MemoryBlobStore()
       const restored = await importShard(destination, exported.archive!, { blobStore: destinationBlobs, conflictStrategy: 'replace' })
       expect(restored.errors).toEqual([])

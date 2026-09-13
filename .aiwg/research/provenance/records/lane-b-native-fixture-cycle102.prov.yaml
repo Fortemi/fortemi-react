@@ -1,0 +1,74 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-13T20:42:06.870Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:packages/core/src/__tests__/shard/native-full-v1-public.test.ts",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-13T20:42:06.870Z",
+    "checksum": "sha256:4d8a8fd5b49b9f605d05fe53f0010501858b12f2c73e5d9f38fcb670bca4b55f",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+          "sha256": "da661fa231fc75999e7a9baf282b5b07770eee218ae7d284e6362a0e0d084def"
+        },
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.presence.receipt.json",
+          "sha256": "263667399b7fbd2bd9bf2a75db3a2024d31623d51d7a2b2149f634222b8f5629"
+        },
+        {
+          "path": "packages/core/src/__tests__/shard/native-full-v1-public.test.ts",
+          "sha256": "4d8a8fd5b49b9f605d05fe53f0010501858b12f2c73e5d9f38fcb670bca4b55f"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:native-fixture:102",
+    "type": "modification",
+    "started_at": "2026-09-13T20:34:34.680Z",
+    "ended_at": "2026-09-13T20:42:06.870Z",
+    "description": "Reuse a clean migrated schema for independent native test databases; retain all145 cases, explicit empty-state checks and unchanged contract claims."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:packages/core/src/__tests__/shard/native-full-v1-public.test.ts",
+      "activity": "urn:aiwg:activity:modification:native-fixture:102"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:native-fixture:102",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:packages/core/src/__tests__/shard/native-full-v1-public.test.ts",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:packages/core/src/__tests__/shard/native-full-v1-public.test.ts",
+        "source": "git:Fortemi/fortemi-react@271f038eb02b3adca4f8f009c46051748bcf5b9a:packages/core/src/__tests__/shard/native-full-v1-presence.test.ts",
+        "derivation_type": "extends"
+      }
+    ]
+  },
+  "verification": {
+    "unit": "fortemi-local-test-1000-9a7944e3-5448-412e-b0f2-7ad537d00dec.service",
+    "nativeUnit": "fortemi-local-test-1000-c4c7c8d3-5fb5-4c95-9eaa-e2eec68326e6.service",
+    "nativeTests": 145,
+    "originalInventoryPreserved": true,
+    "focusedBeforeMs": 12478,
+    "focusedAfterMs": 8397,
+    "contractBuildTypecheckLint": "PASS",
+    "partitionVerifierTests": 24,
+    "sourcePinTests": 27,
+    "originalCI": "59999 terminal partition2 timeout",
+    "remoteCI": "PENDING"
+  }
+}

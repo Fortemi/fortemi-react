@@ -40,7 +40,8 @@
     "src/shard/live-full-v1.ts": "bfc49c7f464064029f9a4b89598abece37aafc9306e05a06a6449b2d7697bd69",
     "src/migrations/0031_native_shard_lineage.ts": "6264f9684d7a22361b3220515ada3c752812a326f751bc0b6d1a3882720ac212",
     "src/migrations/0032_native_revision_replace.ts": "e1bef0fb7a0cf338ea631c011b7889505d01872f0fd70aa5a2bae2baa965494e",
-    "src/__tests__/shard/native-full-v1-public.test.ts": "0f296503509a29220a6ea49e6e9c2bd58d1d4bee973216dd6a99b71765edb884",
+    "src/migrations/0033_typed_metadata_search.ts": "700d239c8cf130a1fd2222388174ad119c8eb2e6a8c661550d06416fae050f9b",
+    "src/__tests__/shard/native-full-v1-public.test.ts": "4d8a8fd5b49b9f605d05fe53f0010501858b12f2c73e5d9f38fcb670bca4b55f",
     "src/__tests__/shard/native-full-v1-presence.test.ts": "74bc2afc85dd16e3d7746bcc59c4669752e3815407d6f801c4bdcbd0048453f5",
     "src/records/types.ts": "f9bfdc2bc31c632680ff1de39feaafaf1e769cf7ece98609a211e6670569324b",
     "src/records/memory-record-store.ts": "6fb02714f1c7258de7ef25f346683e910404d2030d2f652ffeb3823f917c48ee",
@@ -51,8 +52,7 @@
     "src/migrations/index.ts": "78e9278439fc6b8b6da191acaf81e26445e21a0823f0b8cd6aad6a54f4bf8ada",
     "src/__tests__/shard/presence.test.ts": "d0943473e9d1c7199d222909772743fb9d76f7317e497932f052c493a64239b7",
     "src/__tests__/records/record-store.test.ts": "5ebd62d0b656cd19894fe12a203a8aad59103eb05e5b8577d0411f0089b2e005",
-    "src/__tests__/records/record-shard.test.ts": "896b9e9fedf74dd28fe5a8e9bbe6b6f99938ab5589c05488e1e077e0f24bfac6",
-    "src/migrations/0033_typed_metadata_search.ts": "700d239c8cf130a1fd2222388174ad119c8eb2e6a8c661550d06416fae050f9b"
+    "src/__tests__/records/record-shard.test.ts": "896b9e9fedf74dd28fe5a8e9bbe6b6f99938ab5589c05488e1e077e0f24bfac6"
   },
   "evidence": {
     "command": "pnpm --filter @fortemi/core test:portable-contract",
