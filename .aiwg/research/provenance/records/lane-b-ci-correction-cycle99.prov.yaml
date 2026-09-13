@@ -1,0 +1,63 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-13T17:02:09.296Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:eslint.config.js",
+    "type": "file",
+    "checksum": "sha256:fc19e3b0d17c77637acf8b7f077bcc74630e1a57455d34741179802f19d720a8"
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:lane-b-ci-correction:cycle99",
+    "type": "modification",
+    "description": "fix(ci): declare Node fetch response globals for release tooling",
+    "started_at": "2026-09-13T17:02:09.296Z",
+    "ended_at": "2026-09-13T17:02:09.296Z"
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:eslint.config.js",
+      "activity": "urn:aiwg:activity:lane-b-ci-correction:cycle99"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:lane-b-ci-correction:cycle99",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:eslint.config.js",
+      "agent": "urn:aiwg:agent:codex"
+    }
+  },
+  "verification": {
+    "unit": "fortemi-local-test-1000-a0a5f118-79f2-45be-bec5-564047dad284.service",
+    "result": {
+      "unit": "fortemi-local-test-1000-a0a5f118-79f2-45be-bec5-564047dad284.service",
+      "observedAt": "2026-09-13T17:01:01.383Z",
+      "LoadState": "loaded",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "RuntimeMaxUSec": "2min",
+      "Result": "success",
+      "ExecMainCode": "1",
+      "ExecMainStatus": "0",
+      "ControlGroup": "/system.slice/fortemi-local-test-1000-a0a5f118-79f2-45be-bec5-564047dad284.service",
+      "MemoryPeak": "855437312",
+      "CPUUsageNSec": "6229895000",
+      "CPUQuotaPerSecUSec": "2s",
+      "MemoryHigh": "6442450944",
+      "MemoryMax": "8589934592",
+      "MemorySwapMax": "0",
+      "TasksMax": "256",
+      "exitCode": "exited",
+      "exitStatus": "0",
+      "finishedAt": "2026-09-13T17:01:01.383Z"
+    },
+    "limitation": "Exact-head remote CI still required."
+  }
+}

@@ -12,6 +12,8 @@ const nodeGlobals = {
   URL: 'readonly',
   URLSearchParams: 'readonly',
   fetch: 'readonly',
+  Headers: 'readonly',
+  Response: 'readonly',
   Buffer: 'readonly',
   __dirname: 'readonly',
   __filename: 'readonly',
