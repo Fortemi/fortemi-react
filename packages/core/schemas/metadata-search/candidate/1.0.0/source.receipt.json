@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "fortemi.metadata-search-source-pin.v1",
+  "status": "merged-candidate-unreleased",
+  "authority": {
+    "repository": "Fortemi/fortemi",
+    "issue": 1091,
+    "commit": "e99e4723293d12e76862ea83fda86ed70d3573c8",
+    "path": "contracts/metadata-search/candidate/1.0.0/",
+    "files": {
+      "predicates.schema.json": "e325707ce20abb88ef3a8f4bbb0d02ab09501b1ffe9b48b0c92a96e97dda00c3",
+      "predicate-vectors.json": "df9e129cab4708db71c3e22f87efd252fbcac144daa45a53ee1716f4a1a05ae7",
+      "sql-scope-vectors.json": "dcd35298a3bc485a6f1c87c6c87f136ee98121dad3f2b1c8b590b2e5381aa4d5",
+      "evidence-locator.schema.json": "cd8427c507bca1a08bdb68da0a5d2759d1d7805401db3c00372ab249652efb7a",
+      "evidence-vectors.json": "b532a4fa7697bdfc87e8541575fcee7c94a5b5ac53e4a6472438c49247e6b266",
+      "evidence-set.schema.json": "da7e5d41bd563cb2cfe424cf7dfa92007a865ee0e1a9a4832ef669039d80717e",
+      "evidence-set-vectors.json": "b84061ee252d2ee25d744111d2a04dfcd2c490274d4285bac31f4bd0e91e47d7",
+      "search-rest.schema.json": "df4bdf5c61187a66cc90b760ce9ebc71d062688d67858ed519fbd27141db9470",
+      "search-rest-vectors.json": "eac3b3739aedf037671be4cbd4a89f336d405de8cf06ea7ddebae9d1e4e288f2",
+      "evidence-resolution.schema.json": "92c0cd616d26fad83e56e602d8393a8b6135175c849284d97721da146d923723",
+      "evidence-resolution-vectors.json": "3d217a489a29be0eb152a8efb4f569e7942d4ae2af921218e295c0dba8a38aea"
+    },
+    "openapi": {
+      "path": "contracts/openapi/openapi.yaml",
+      "sha256": "0dd9b77e6d42c73197a489c575107c66d8f66755a2f8141a6788c7f4295c3cf1"
+    },
+    "documentation": {
+      "path": "contracts/metadata-search/candidate/1.0.0/README.md",
+      "sha256": "8156468f6a09ac51d9d6169941dbfa3bc19f1fb9c558ec4ce49de16b1f6bb1b1"
+    }
+  },
+  "consumer": {
+    "repository": "Fortemi/fortemi-react",
+    "issue": 405
+  },
+  "historicalReceipts": {
+    "contract.receipt.json": "970335ba6c711de51ef03cb852044f25b596c1fdfcc85272cb6da62751a0a536",
+    "rest.receipt.json": "79634446d7b33551595e0acf4d5947550cdb2e2db1680ab5d1eebf0dd648cfb7",
+    "resolution.receipt.json": "5739c26964b67846d451e105d27a374cd733c7d5a9cbedde37069561ecd77927"
+  },
+  "claims": {
+    "contractPromoted": false,
+    "fullIssueAcceptance": false,
+    "publishedRuntimeAcceptance": false,
+    "suiteParity": false
+  }
+}

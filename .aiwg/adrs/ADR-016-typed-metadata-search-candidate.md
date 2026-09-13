@@ -1,5 +1,19 @@
 # ADR-016: Typed Metadata Search Candidate
 
+## Immutable Candidate Source Pin (Cycle100)
+
+The candidate schemas/vectors now have an additional `source.receipt.json` bound
+to producer commit `e99e4723293d12e76862ea83fda86ed70d3573c8`. It covers all eleven
+consumed schema/vector files, the current generated OpenAPI and authority README.
+CI verifies upstream bytes independently, with bounded reads, strict inventory
+and negative drift tests. Offline checks use immutable Git objects, not mutable
+working-tree files. The three historical adoption receipts remain byte-identical.
+
+This is a committed candidate source identity, not a contract promotion. Source
+pin reconciliation no longer depends on an uncommitted base, but full producer CI,
+other consumer pins, runtime matrices, release qualification and full issue
+acceptance remain open. Existing source semantics and capability flags do not change.
+
 ## Cycle96 Consumer Regression Boundary
 
 Core runtime/package source remains unchanged;220groups/293actual hosted requests

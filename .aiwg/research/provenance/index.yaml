@@ -1,7 +1,7 @@
 metadata:
   schema_version: 1.0.0
-  updated_at: '2026-09-13T17:02:09.296Z'
-  record_count: 142
+  updated_at: '2026-09-13T19:17:09.490Z'
+  record_count: 145
 records:
   - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
     record: records/lane-b-core-context-owned-views-cycle96.prov.yaml
@@ -588,3 +588,17 @@ records:
     record: records/lane-b-source-delivery-cycle99.prov.yaml
   - entity: urn:aiwg:artifact:eslint.config.js
     record: records/lane-b-ci-correction-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-metadata-source-pin-cycle100.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/architecture/SAD.md
+    record: records/lane-b-metadata-source-pin-cycle100.prov.yaml
+  - entity: urn:aiwg:artifact:.gitea/workflows/ci.yml
+    record: records/lane-b-metadata-source-pin-cycle100.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/README.md
+    record: records/lane-b-metadata-source-pin-cycle100.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/source.receipt.json
+    record: records/lane-b-metadata-source-pin-cycle100.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/verify-metadata-search-source.mjs
+    record: records/lane-b-metadata-source-pin-cycle100.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/verify-metadata-search-source.test.mjs
+    record: records/lane-b-metadata-source-pin-cycle100.prov.yaml

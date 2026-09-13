@@ -191,6 +191,10 @@ jobs:
         run: node --test tools/release/*.test.mjs
       - name: Core partition completeness and coverage gate tests
         run: node --test packages/core/scripts/ci-unit-partitions.test.mjs
+      - name: Immutable candidate search authority
+        run: |
+          node --test packages/core/scripts/verify-metadata-search-source.test.mjs
+          node packages/core/scripts/verify-metadata-search-source.mjs
       - name: OpenBao Git credential bootstrap tests
         run: tools/git/openbao-approle.test.sh
       - name: Shard + AIWG index conformance gate

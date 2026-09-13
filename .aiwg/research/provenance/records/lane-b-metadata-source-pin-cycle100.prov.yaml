@@ -1,0 +1,106 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-13T19:17:09.490Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/source.receipt.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-13T19:17:09.490Z",
+    "checksum": "sha256:6d706e59c771e522213b24e7141f8b0463929a8ee4e82dc50014303472818bd6",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "sha256": "55b25f08697311b5c5046590150a03b8a95ac1e78bb225c9d351ae772cb82dda"
+        },
+        {
+          "path": ".aiwg/architecture/SAD.md",
+          "sha256": "8314039eb347bbe161fd6b00a125678a4b4f153788378ae74164ca0acdf22c6b"
+        },
+        {
+          "path": ".gitea/workflows/ci.yml",
+          "sha256": "82af33c778c1e8db4104a9cacd174c0753b6a62e0b6cd78698f58d424f7a1851"
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/README.md",
+          "sha256": "d77f8b9cbc2188323f2e29160d64e95a544e0320079dcc1af8d87c7bcd51bf3b"
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/source.receipt.json",
+          "sha256": "6d706e59c771e522213b24e7141f8b0463929a8ee4e82dc50014303472818bd6"
+        },
+        {
+          "path": "packages/core/scripts/verify-metadata-search-source.mjs",
+          "sha256": "101e649df8f1c741d9ce87fd6fc67102ab80570b0d6c38d0dc73e95b4fd8ecbe"
+        },
+        {
+          "path": "packages/core/scripts/verify-metadata-search-source.test.mjs",
+          "sha256": "0fe6b28077c2cf87252dfd5d1e52de1dd240c4194e41c995a34339d2bef201fe"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:metadata-source-pin:100",
+    "type": "modification",
+    "started_at": "2026-09-13T19:09:41.923Z",
+    "ended_at": "2026-09-13T19:17:09.490Z",
+    "description": "Pin immutable merged candidate authority bytes without rewriting historical receipts or promoting compatibility."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/source.receipt.json",
+      "activity": "urn:aiwg:activity:modification:metadata-source-pin:100"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:metadata-source-pin:100",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/source.receipt.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/source.receipt.json",
+        "source": "git:Fortemi/fortemi@e99e4723293d12e76862ea83fda86ed70d3573c8:contracts/metadata-search/candidate/1.0.0/",
+        "derivation_type": "documents"
+      }
+    ]
+  },
+  "verification": {
+    "unit": "fortemi-local-test-1000-495a7afe-7e41-400c-aa08-4fe3224fde81.service",
+    "terminal": {
+      "unit": "fortemi-local-test-1000-495a7afe-7e41-400c-aa08-4fe3224fde81.service",
+      "observedAt": "2026-09-13T19:15:32.693Z",
+      "LoadState": "loaded",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "RuntimeMaxUSec": "5min",
+      "Result": "success",
+      "ExecMainCode": "1",
+      "ExecMainStatus": "0",
+      "ControlGroup": "/system.slice/fortemi-local-test-1000-495a7afe-7e41-400c-aa08-4fe3224fde81.service",
+      "MemoryPeak": "959131648",
+      "CPUUsageNSec": "6278735000",
+      "CPUQuotaPerSecUSec": "2s",
+      "MemoryHigh": "6442450944",
+      "MemoryMax": "8589934592",
+      "MemorySwapMax": "0",
+      "TasksMax": "256",
+      "exitCode": "exited",
+      "exitStatus": "0",
+      "finishedAt": "2026-09-13T19:15:32.694Z"
+    },
+    "tests": 27,
+    "upstreamFiles": 13,
+    "rootLint": "PASS",
+    "remoteCI": "PENDING"
+  }
+}

@@ -16,6 +16,13 @@ This Software Architecture Document (SAD) describes the architecture of fortemi-
 
 ### 1.2 Scope
 
+Cycle100 adds a supplemental immutable candidate source receipt for all eleven
+metadata-search schema/vector files at producer `e99e4723`, with the same commit's
+OpenAPI and authority documentation. CI checks actual upstream bytes and rejects
+inventory, digest, historical-receipt and promotion drift. Earlier adoption
+receipts remain frozen; this source identity does not promote capabilities or
+replace producer CI, other consumer pins, runtime acceptance and release gates.
+
 Cycle80 adds remote current-storage evidence resolution under a separate
 producer authority receipt. It validates locator/options/encoded request before
 I/O, retains existing transport auth/archive headers, rejects redirects and uses
