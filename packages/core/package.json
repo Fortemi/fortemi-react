@@ -69,6 +69,7 @@
     "schemas/dataset-lineage",
     "schemas/dataset-materialization",
     "schemas/source-note-upsert",
+    "schemas/metadata-search/candidate",
     "benchmarks/dataset-materialization",
     "tools",
     "README.md",

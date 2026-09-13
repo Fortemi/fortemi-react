@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-13T05:16:53.585Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-selected-memory-context-cycle93.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-13T05:16:53.585Z",
+    "checksum": "sha256:5577709530009d8cb160a6efb361d339689f142621c933a28df0a5685ea610e8",
+    "size_bytes": 6207,
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "bytes": 25171,
+          "sha256": "daaf05f8370d013a2b03bf1160c78839a3be7e23e286347b56be8963336b2c66"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-core-selected-memory-context-cycle93.json",
+          "bytes": 6207,
+          "sha256": "5577709530009d8cb160a6efb361d339689f142621c933a28df0a5685ea610e8"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:selected-memory-context:lane-b:093:core",
+    "type": "modification",
+    "started_at": "2026-09-13T04:51:05.392Z",
+    "ended_at": "2026-09-13T05:16:53.585Z",
+    "description": "Producer GET /api/v1/memory/context returns only authorized canonical name/schema_name from request-owned routing under read scope and no-store. Tenant-qualified partial unique index permits independent tenant defaults while preserving existing rows. Inventory/detail/statistics and management authority unchanged. Producer native/OpenAPI tests PASS; HotM adoption and actual hosted acceptance pending. Full scope retained."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-selected-memory-context-cycle93.json",
+      "activity": "urn:aiwg:activity:selected-memory-context:lane-b:093:core"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:selected-memory-context:lane-b:093:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-selected-memory-context-cycle93.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-selected-memory-context-cycle93.json",
+        "source": "urn:gitea:Fortemi:HotM:issue:1"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-selected-memory-context-cycle93.json",
+        "source": "urn:gitea:Fortemi:fortemi:issue:1091"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-selected-memory-context-cycle93.json",
+        "source": "urn:gitea:Fortemi:fortemi-react:issue:405"
+      }
+    ]
+  }
+}

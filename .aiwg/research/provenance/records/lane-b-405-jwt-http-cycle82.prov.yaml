@@ -1,0 +1,73 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T22:28:55.865Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-jwt-http-cycle82.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T22:28:55.865Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "sha256": "8628224ba938bee5c3c243898b5685fcfbd097d41f67f47277b635551213b23a",
+          "bytes": 17990
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-jwt-http-cycle82.json",
+          "sha256": "6d32205d0a75014c2a82612e0f3ebbf1c2f567306e20fee4691a847a8aadb821",
+          "bytes": 5955
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-jwt-http:082:core",
+    "type": "modification",
+    "started_at": "2026-09-12T22:18:45Z",
+    "ended_at": "2026-09-12T22:28:55.865Z",
+    "description": "Qualify production HTTPS JWT verification through clean-installed Core and scoped producer; preserve cache, lifecycle and release claim limits."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-jwt-http-cycle82.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-jwt-http:082:core"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-jwt-http-cycle82.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-jwt-http:082:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-jwt-http-cycle82.json",
+        "source": "urn:git:commit:f7f09a63e69ec04b5f6b2a8dca5cb5f840ef05f7",
+        "derivation_type": "derives_from"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-jwt-http-cycle82.json",
+        "source": "urn:git:commit:cff36d293d73080c186e2f35115dd92a594982d2",
+        "derivation_type": "tests"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-jwt-http-cycle82.json",
+        "source": "https://git.integrolabs.net/Fortemi/fortemi/issues/1091",
+        "derivation_type": "implements"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-jwt-http-cycle82.json",
+        "source": "https://git.integrolabs.net/Fortemi/fortemi-react/issues/405",
+        "derivation_type": "implements"
+      }
+    ]
+  }
+}

@@ -5,6 +5,9 @@
 
 import type { DatabaseClient } from '../storage-backend.js'
 import type { SearchResponse, SearchOptions, SearchFacets, SearchResult } from './types.js'
+import { resolveStoredSearchEvidence, type SearchEvidenceScope } from './search-evidence-repository.js'
+import { buildSearchEvidenceProjection, projectedSearchEvidence, type ProjectedSearchEvidence } from './search-evidence-projection.js'
+import { mergeSearchEvidenceSets } from '../search-evidence-set.js'
 import { buildNoteConditions } from './condition-builder.js'
 import { EmbeddingSetsRepository, type EmbeddingSetSelector, type ResolvedEmbeddingSet } from './embedding-sets-repository.js'
 import { buildMetadataPredicateConditions, buildMetadataSourceConditions, validateMetadataPredicates, type EvidenceLocator, type RegisteredMetadataPath } from './metadata-predicates.js'
@@ -33,7 +36,12 @@ export class SearchRepository {
     private semanticAvailable = false,
   ) {}
 
-  private tsqueryFn(query: string): string {
+  /** Candidate citation resolution with fresh local scope and content checks. */
+  async resolveEvidence(locator: unknown, scope: SearchEvidenceScope = {}): Promise<string> {
+    return resolveStoredSearchEvidence(this.db, locator, scope)
+  }
+
+  private tsqueryFn(query: string): 'phraseto_tsquery' | 'plainto_tsquery' {
     return query.includes('"') ? 'phraseto_tsquery' : 'plainto_tsquery'
   }
 
@@ -43,7 +51,7 @@ export class SearchRepository {
     const setFilter = embeddingSetId ? ' AND embedding_set_id = $2' : ''
     if (embeddingSetId) params.push(embeddingSetId)
     const result = await this.db.query<{ note_id: string }>(
-      'SELECT note_id FROM embedding WHERE vector IS NOT NULL AND note_id = ANY($1)' + setFilter,
+      'SELECT to_jsonb(note_id) AS note_id FROM embedding WHERE vector IS NOT NULL AND note_id = ANY($1)' + setFilter,
       params,
     )
     return new Set(result.rows.map((r) => r.note_id))
@@ -128,7 +136,7 @@ export class SearchRepository {
       import_run_id: string
       source_schema_version: string
     }>(
-      `SELECT si.note_id, si.namespace, si.external_id_hash, si.import_run_id, si.source_schema_version
+      `SELECT to_jsonb(si.note_id) AS note_id, si.namespace, si.external_id_hash, si.import_run_id, si.source_schema_version
        FROM source_identity si JOIN note n ON n.id = si.note_id
        WHERE n.id = ANY($1) AND ${source.conditions.join(' AND ')}
        ORDER BY si.created_at ASC, si.id ASC`,
@@ -217,7 +225,9 @@ export class SearchRepository {
     )
     const total = parseInt(countResult.rows[0].count, 10)
 
-    const searchParams = [...allParams, limit, offset]
+    const evidence = buildSearchEvidenceProjection(options, paramIdx, { lexical: { fn: tsqFn, parameter: 1 } })
+    paramIdx = evidence.nextIdx
+    const searchParams = [...allParams, ...evidence.params, limit, offset]
     const result = await this.db.query<{
       id: string
       title: string | null
@@ -225,8 +235,9 @@ export class SearchRepository {
       updated_at: Date
       rank: number
       snippet: string
+      evidence_projection: ProjectedSearchEvidence
     }>(
-      `SELECT n.id, n.title, n.created_at, n.updated_at,
+      `SELECT to_jsonb(n.id) AS id, n.title, n.created_at, n.updated_at, ${evidence.sql} AS evidence_projection,
               ts_rank(
                 setweight(n.tsv, 'A') || setweight(${COMBINED_TEXT_VECTOR_SQL}, 'B'),
                 ${tsqFn}('english', $1)
@@ -256,7 +267,7 @@ export class SearchRepository {
     let facets: SearchFacets | undefined
     if (options.include_facets) {
       const idsResult = await this.db.query<{ id: string }>(
-        `SELECT n.id FROM note n
+        `SELECT to_jsonb(n.id) AS id FROM note n
          LEFT JOIN note_revised_current c ON c.note_id = n.id
          ${metadata.joins.join('\n')}
          ${ATTACHMENT_TEXT_JOIN}
@@ -276,6 +287,7 @@ export class SearchRepository {
       updated_at: r.updated_at,
       tags: tagMap.get(r.id) ?? [],
       locators: locatorMap.get(r.id) ?? [],
+      evidence: projectedSearchEvidence(r.id, r.evidence_projection),
     }))
 
     return {
@@ -315,6 +327,8 @@ export class SearchRepository {
     )
     const total = parseInt(countResult.rows[0].count, 10)
 
+    const evidence = buildSearchEvidenceProjection(options, paramIdx, { embedding: true })
+    paramIdx = evidence.nextIdx
     const vecIdx = paramIdx++
     const limIdx = paramIdx++
     const offIdx = paramIdx++
@@ -325,8 +339,10 @@ export class SearchRepository {
       updated_at: Date
       distance: number
       snippet: string
+      evidence_projection: ProjectedSearchEvidence
     }>(
-      `SELECT * FROM (SELECT DISTINCT ON (n.id) n.id, n.title, n.created_at, n.updated_at,
+      `SELECT * FROM (SELECT DISTINCT ON (n.id) to_jsonb(n.id) AS id, n.title, n.created_at, n.updated_at,
+              ${evidence.sql} AS evidence_projection,
               (${vector} <=> $${vecIdx}::vector) as distance,
               LEFT(${COMBINED_TEXT_SQL}, 200) as snippet
        FROM embedding e
@@ -338,13 +354,13 @@ export class SearchRepository {
        ORDER BY n.id, ${vector} <=> $${vecIdx}::vector ASC, e.id) AS best_chunks
        ORDER BY distance ASC, id
        LIMIT $${limIdx} OFFSET $${offIdx}`,
-      [...params, vectorStr, limit, offset],
+      [...params, ...evidence.params, vectorStr, limit, offset],
     )
 
     const tagMap = await this.fetchTagMap(result.rows.map((r) => r.id))
     const facets = options.include_facets
       ? await this.fetchFacets((await this.db.query<{ id: string }>(
-          `SELECT n.id
+          `SELECT to_jsonb(n.id) AS id
            FROM embedding e
            JOIN note n ON n.id = e.note_id
            LEFT JOIN note_revised_current c ON c.note_id = n.id
@@ -366,6 +382,7 @@ export class SearchRepository {
         tags: tagMap.get(r.id) ?? [],
         has_embedding: true,
         locators: locatorMap.get(r.id) ?? [],
+        evidence: projectedSearchEvidence(r.id, r.evidence_projection),
       })),
       total,
       query: '',
@@ -398,12 +415,13 @@ export class SearchRepository {
         ${COMBINED_TEXT_VECTOR_SQL} @@ ${tsqFn}('english', $1))`,
     ]
     textCond.params.push(...textMeta.params)
-    this.scopeToResolvedEmbeddingSet(textConditions, textCond.params, textMeta.nextIdx, resolvedEmbeddingSet)
+    const textNextIdx = this.scopeToResolvedEmbeddingSet(textConditions, textCond.params, textMeta.nextIdx, resolvedEmbeddingSet)
     const textWhere = textConditions.join(' AND ')
-    const textParams = [query, ...textCond.params]
+    const textEvidence = buildSearchEvidenceProjection(options, textNextIdx, { lexical: { fn: tsqFn, parameter: 1 } })
+    const textParams = [query, ...textCond.params, ...textEvidence.params]
 
-    const textResult = await this.db.query<{ id: string; rank: number }>(
-      `SELECT n.id,
+    const textResult = await this.db.query<{ id: string; rank: number; evidence_projection: ProjectedSearchEvidence }>(
+      `SELECT to_jsonb(n.id) AS id, ${textEvidence.sql} AS evidence_projection,
               ts_rank(
                 setweight(n.tsv, 'A') || setweight(${COMBINED_TEXT_VECTOR_SQL}, 'B'),
                 ${tsqFn}('english', $1)
@@ -426,10 +444,12 @@ export class SearchRepository {
     const vector = vectorColumn(queryEmbedding)
     vecCond.conditions.push(`vector_dims(e.vector) = ${queryEmbedding.length}`)
     const vecWhere = vecCond.conditions.join(' AND ')
-    const vecVecIdx = vecCond.nextIdx
+    const vectorEvidence = buildSearchEvidenceProjection(options, vecCond.nextIdx, { embedding: true })
+    const vecVecIdx = vectorEvidence.nextIdx
 
-    const vectorResult = await this.db.query<{ id: string; distance: number }>(
-      `SELECT * FROM (SELECT DISTINCT ON (n.id) n.id, (${vector} <=> $${vecVecIdx}::vector) as distance
+    const vectorResult = await this.db.query<{ id: string; distance: number; evidence_projection: ProjectedSearchEvidence }>(
+      `SELECT * FROM (SELECT DISTINCT ON (n.id) to_jsonb(n.id) AS id, ${vectorEvidence.sql} AS evidence_projection,
+              (${vector} <=> $${vecVecIdx}::vector) as distance
        FROM embedding e
        JOIN note n ON n.id = e.note_id
        LEFT JOIN note_revised_current c ON c.note_id = n.id
@@ -438,10 +458,16 @@ export class SearchRepository {
        ORDER BY n.id, ${vector} <=> $${vecVecIdx}::vector ASC, e.id) AS best_chunks
        ORDER BY distance ASC, id
        LIMIT 100`,
-      [...vecCond.params, vectorStr],
+      [...vecCond.params, ...vectorEvidence.params, vectorStr],
     )
 
     const rrfScores = new Map<string, number>()
+    const evidenceMap = new Map<string, ReturnType<typeof projectedSearchEvidence>[]>()
+    for (const row of [...textResult.rows, ...vectorResult.rows]) {
+      const existing = evidenceMap.get(row.id) ?? []
+      existing.push(projectedSearchEvidence(row.id, row.evidence_projection))
+      evidenceMap.set(row.id, existing)
+    }
     textResult.rows.forEach((row, idx) => {
       rrfScores.set(row.id, (rrfScores.get(row.id) ?? 0) + 1 / (k + idx + 1))
     })
@@ -457,6 +483,8 @@ export class SearchRepository {
       return { results: [], total, query, mode: 'hybrid', semantic_available: this.semanticAvailable, limit, offset }
     }
 
+    const displayConditions = buildNoteConditions(options, 2)
+    const displayMetadata = buildMetadataPredicateConditions(options, displayConditions.nextIdx)
     const noteResult = await this.db.query<{
       id: string
       title: string | null
@@ -464,13 +492,14 @@ export class SearchRepository {
       updated_at: Date
       snippet: string
     }>(
-      `SELECT n.id, n.title, n.created_at, n.updated_at,
+      `SELECT to_jsonb(n.id) AS id, n.title, n.created_at, n.updated_at,
               LEFT(${COMBINED_TEXT_SQL}, 200) as snippet
        FROM note n
        LEFT JOIN note_revised_current c ON c.note_id = n.id
        ${ATTACHMENT_TEXT_JOIN}
-       WHERE n.id = ANY($1)`,
-      [pageIds],
+       ${displayMetadata.joins.join('\n')}
+       WHERE n.id = ANY($1) AND ${[...displayConditions.conditions, ...displayMetadata.conditions].join(' AND ')}`,
+      [pageIds, ...displayConditions.params, ...displayMetadata.params],
     )
 
     const noteMap = new Map(noteResult.rows.map((r) => [r.id, r]))
@@ -496,6 +525,7 @@ export class SearchRepository {
             tags: tagMap.get(id) ?? [],
             has_embedding: embeddingSet.has(id),
             locators: locatorMap.get(id) ?? [],
+            evidence: mergeSearchEvidenceSets(id, evidenceMap.get(id) ?? []),
           }
         })
         .filter((r): r is NonNullable<typeof r> => r !== null),
@@ -537,7 +567,7 @@ export class SearchRepository {
       updated_at: Date
       snippet: string
     }>(
-      `SELECT n.id, n.title, n.created_at, n.updated_at,
+      `SELECT to_jsonb(n.id) AS id, n.title, n.created_at, n.updated_at,
               LEFT(${COMBINED_TEXT_SQL}, 200) as snippet
        FROM note n
        LEFT JOIN note_revised_current c ON c.note_id = n.id
@@ -602,7 +632,7 @@ export class SearchRepository {
     if (noteIds.length === 0) return tagMap
 
     const tagsResult = await this.db.query<{ note_id: string; tag: string }>(
-      `SELECT note_id, tag FROM note_tag WHERE note_id = ANY($1) ORDER BY tag`,
+      `SELECT to_jsonb(note_id) AS note_id, tag FROM note_tag WHERE note_id = ANY($1) ORDER BY tag`,
       [noteIds],
     )
     for (const row of tagsResult.rows) {

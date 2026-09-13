@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import type { BackendConcept, BackendLink, BackendNote, BackendNoteFull } from './data-backend.js'
 import { RemoteBackendError, remoteProjection } from './remote-error.js'
+import { parseSearchEvidenceSet } from './search-evidence-set.js'
+import { isSearchRestRequest, isSearchRestResponse } from './remote-search-schema.js'
 
 const uuid = z.string().uuid().transform((value) => value.toLowerCase())
 const metadata = z.object({
@@ -153,21 +155,27 @@ export function remoteSearchParameters(query: string, options: unknown) {
   if (typeof query !== 'string' || !parsed.success) throw new RemoteBackendError('invalid-request')
   const value = parsed.data
   if ((value.offset ?? 0) !== 0 || (value.source?.length ?? 0) > 0) throw new RemoteBackendError('unsupported-operation')
-  return { q: query, mode: value.mode, limit: value.limit,
+  const parameters = { q: query, mode: value.mode, limit: value.limit,
     ...(value.tags?.length ? { tags: value.tags.join(',') } : {}) }
+  if (!isSearchRestRequest(parameters)) throw new RemoteBackendError('invalid-request')
+  return parameters
 }
 
 const searchHit = z.object({
   note_id: uuid, score: z.number().finite(), snippet: z.string().nullable(),
   title: z.string().optional(), tags: z.array(z.string()).optional(),
   embedding_status: z.enum(['ready', 'pending', 'failed', 'none']).optional(),
+  evidence: z.unknown().optional(),
   chain_info: z.object({
     chain_id: uuid, original_title: z.string(), chunks_matched: z.number().int().nonnegative(),
     best_chunk_sequence: z.number().int().nonnegative(), total_chunks: z.number().int().nonnegative(),
   }).optional(),
-})
+}).transform(({ evidence, ...hit }) => ({
+  ...hit,
+  ...(evidence === undefined ? {} : { evidence: parseSearchEvidenceSet(evidence, hit.note_id) }),
+}))
 const searchDegradation = z.object({
-  code: z.string().regex(/^[a-z][a-z0-9_]{0,63}$/), effective_mode: searchMode,
+  code: z.string().regex(/^[a-z][a-z0-9_]{0,63}$/), effective_mode: z.literal('fts'),
 })
 const searchResponse = z.object({
   query: z.string(), results: z.array(searchHit), total: z.number().int().nonnegative(),
@@ -178,9 +186,11 @@ export type RemoteSearchMetadata = Pick<z.infer<typeof searchHit>, 'title' | 'ta
 
 export function parseRemoteSearch(value: unknown, query: string, limit: number) {
   return remoteProjection(() => {
+    if (!isSearchRestResponse(value)) throw new Error('Invalid search schema')
     const result = searchResponse.parse(value)
     if (result.query !== query || result.total !== result.results.length || result.results.length > limit
       || result.degraded !== (result.degradation !== undefined)) throw new Error('Invalid search envelope')
+    if (result.results.some(hit => hit.chain_info && hit.chain_info.chain_id !== hit.note_id)) throw new Error('Invalid chain identity')
     return result
   })
 }

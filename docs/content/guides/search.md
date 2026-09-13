@@ -4,6 +4,15 @@ fortemi-react provides three search modes that mirror the fortemi server's searc
 
 ## Search Modes
 
+The candidate remote adapter validates the Fortemi-owned search response schema
+before loading note details. Unknown response fields, malformed degradation and
+foreign chain/evidence identities are errors rather than silently discarded data.
+The remote query API remains q/mode/limit/tags with a100-hit maximum; the server's
+additional options are not enabled by schema adoption. `rest.receipt.json` records
+the unpublished REST candidate separately from earlier evidence-only receipts.
+Complete evidence capability and live/released cross-runtime acceptance remain
+unavailable; chain display indices are not native citation coordinates.
+
 | Mode | How It Works | Requires | Status |
 |------|-------------|----------|--------|
 | **text** | PostgreSQL `tsvector`/`tsquery` with BM25 ranking | Nothing (default) | Fully implemented |
@@ -130,6 +139,78 @@ tenant/archive selection with `BACKEND_SEARCH_SCOPE_UNSUPPORTED` before I/O.
 Malformed predicates retain the shared validation errors above. Third-party
 backends with absent flags are unsupported. Complete `evidenceLocators` remains
 false even when partial source projections are returned.
+
+### Candidate Text Evidence (PGlite)
+
+The unreleased citation candidate adds optional `SearchResult.evidence` and
+`BackendSearchHit.evidence`, separate from legacy `locators`. Each envelope has
+`version: '1.0.0'`, up to 64 locators, and explicit `omissions`. A locator binds
+the exact title, current body, completed attachment text, or winning stored
+embedding text using a native unit ID, full-text SHA-256, and half-open UTF-8
+byte offsets. Whole-unit spans are intentional, not snippet offsets. Hybrid
+fusion preserves evidence from both ranking legs, including the winning chunk.
+
+```typescript
+import { SearchRepository, parseSearchEvidenceSet } from '@fortemi/core'
+
+const repository = new SearchRepository(db)
+const scope = { archive_id: 'workspace-archive', tenant_id: 'default' }
+const response = await repository.search('needle', { ...scope, mode: 'text' })
+for (const hit of response.results) {
+  if (!hit.evidence) continue
+  const evidence = parseSearchEvidenceSet(hit.evidence, hit.id)
+  for (const locator of evidence.locators) {
+    const citedText = await repository.resolveEvidence(locator, scope)
+    // Treat citedText as untrusted plain text, not HTML.
+    console.log(citedText)
+  }
+}
+```
+
+`unavailable-unit` reports a match without reproducible in-budget unit evidence;
+`locator-limit` reports bounded truncation. Neither reason authorizes a fallback
+to unrelated current text. Text above 16 MiB is not silently truncated. Changed,
+deleted, purged, missing, or out-of-scope text rejects with
+`SEARCH_EVIDENCE_UNAVAILABLE`; malformed locators/scopes use
+`SEARCH_EVIDENCE_INVALID`. A digest is neither an access grant nor a promise of
+historical retention. Pass the current local scope when resolving, and handle
+unavailability independently of displaying the search result.
+
+The remote adapter also validates and forwards this optional envelope as
+`BackendSearchHit.evidence`, across FTS/semantic/hybrid and the report-bearing
+semantic API. It validates every hit before requesting detail metadata; malformed
+or foreign-note evidence rejects the response with `RemoteBackendError` kind
+`invalid-response`. Older responses without evidence remain supported without
+invented locators. Later detail content does not replace the ranked text snapshot.
+The local `SearchRepository.resolveEvidence` API above is not a remote resolver;
+a remote locator is not permission to retrieve its text.
+
+The remote candidate now exposes `remote.resolveEvidence(locator, options)`:
+
+```typescript
+const citedText = await remote.resolveEvidence(hit.evidence.locators[0], {
+  metadataPredicates: [{ path: 'provider', op: 'eq', value: 'example' }],
+  includeArchived: false,
+  signal: abortController.signal,
+})
+```
+
+The request goes to the producer's current-storage resolver using the backend's
+existing auth/archive headers. Caller tenant/archive/visibility fields reject;
+they are not authorization. Invalid input fails before I/O. Responses require
+strict JSON, no-store and exact UTF-8 span length, with a 30-second operation
+ceiling and caller cancellation. `RemoteBackendError` distinguishes invalid
+request/response, transport, aborted and HTTP status failures; 404 means the
+requested current evidence is unavailable, not an instruction to fetch newer
+detail text. The producer checks full-text digest and current policy. Core cannot
+independently verify a full-unit digest using only its returned partial range.
+
+This is an unpublished candidate. Complete `evidenceLocators` remains false;
+launched producer-to-consumer, production authentication, lifecycle/cache and
+released cross-runtime acceptance remain pending. Candidate schemas and their
+separate evidence, GET REST and resolution hash receipts ship under
+`schemas/metadata-search/candidate/1.0.0` for package verification, not as a
+promoted REST contract or Knowledge Shard profile.
 
 ### Phrase Search
 

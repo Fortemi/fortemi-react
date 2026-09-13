@@ -1,0 +1,143 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T21:37:16Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-remote-resolution-cycle80.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T21:37:16Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": "packages/core/src/data-backend.ts",
+          "sha256": "2c8146b0829b5b079847ae191f4577c4a0f44135f30c9605a16a58e6ac0eaadf",
+          "bytes": 36408
+        },
+        {
+          "path": "packages/core/src/index.ts",
+          "sha256": "4cb41a107f65f17d4f350df77ea5a4ba84bdee284a23893bdf2fc4c2f76a83b0",
+          "bytes": 26546
+        },
+        {
+          "path": "packages/core/src/remote-search-schema.ts",
+          "sha256": "f5bc9212da2859151d0d2071d9c9881b8af57d576fa5f696ee108f802c146e52",
+          "bytes": 1965
+        },
+        {
+          "path": "packages/core/src/remote-evidence-resolution.ts",
+          "sha256": "1b810eccb5c9f494380790bcf542708b590ae15916387abd3b7fdf88915b7eb2",
+          "bytes": 6523
+        },
+        {
+          "path": "packages/core/src/__tests__/remote-evidence-resolution.test.ts",
+          "sha256": "231e0822406be5538c86dd5d2d191bf1c1201d90791674abfd582bb015702b26",
+          "bytes": 12779
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/evidence-resolution.schema.json",
+          "sha256": "92c0cd616d26fad83e56e602d8393a8b6135175c849284d97721da146d923723",
+          "bytes": 839
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/evidence-resolution-vectors.json",
+          "sha256": "3d217a489a29be0eb152a8efb4f569e7942d4ae2af921218e295c0dba8a38aea",
+          "bytes": 9082
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/resolution.receipt.json",
+          "sha256": "5739c26964b67846d451e105d27a374cd733c7d5a9cbedde37069561ecd77927",
+          "bytes": 2171
+        },
+        {
+          "path": "packages/core/scripts/generate-pglite-full-v1-receipt.mjs",
+          "sha256": "10286d51347b95d424b5a817c988efa69a9bddba8895f089abf88ec61639c5be",
+          "bytes": 8972
+        },
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+          "sha256": "a79706a4389a1db6ad6c3bd2fa28718137c3680b4622c751631337b86443cabf",
+          "bytes": 14144
+        },
+        {
+          "path": "tools/release/verify-installed-search-evidence.mjs",
+          "sha256": "40fea8744a5853eccd8952792c05825d8b33b116fd24cef8e9e0dcc24b66b360",
+          "bytes": 19360
+        },
+        {
+          "path": "tools/release/verify-installed-search-evidence.test.mjs",
+          "sha256": "87b64bbcd6f06cf3a2a6e7c1eaf1906d62fa4d154de26662e1845a42b33f6471",
+          "bytes": 4228
+        },
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "sha256": "237320d1876fcb076a3b1417ba7608a3a7cce4f0ed07afeb27fafbd2160cf2d8",
+          "bytes": 16406
+        },
+        {
+          "path": ".aiwg/architecture/SAD.md",
+          "sha256": "5d0b5c6b10f02c11a4057eaaf2c6d119dd07b42cb0d20f522f0756a8803b0f23",
+          "bytes": 49375
+        },
+        {
+          "path": ".aiwg/architecture/adr-backend-seam.md",
+          "sha256": "e3400e3232004ddeb332d94e6533afe3eb7d631190f193c2e56d7dff855ca072",
+          "bytes": 14932
+        },
+        {
+          "path": "docs/content/guides/search.md",
+          "sha256": "f0a1e6bc434d6d6f82d30e6efe692479722b10dafd775971ed120c8107b92f49",
+          "bytes": 23402
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-remote-resolution-cycle80.json",
+          "sha256": "cba27b90bf3b98c3aa245055e3c014a4a3ce3f430d10d8a6d46224d19e5d8fa2",
+          "bytes": 17399
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-remote-resolution:080:core",
+    "type": "modification",
+    "started_at": "2026-09-12T21:10:00Z",
+    "ended_at": "2026-09-12T21:37:16Z",
+    "description": "Adopt producer current-storage resolution in the public remote adapter with strict bounded abortable transport, distinct authority receipt and clean installed acceptance; retain live/released gates."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-remote-resolution-cycle80.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-remote-resolution:080:core"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-remote-resolution-cycle80.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-remote-resolution:080:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-remote-resolution-cycle80.json",
+        "source": "urn:git:commit:f7f09a63e69ec04b5f6b2a8dca5cb5f840ef05f7",
+        "derivation_type": "derives_from"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-remote-resolution-cycle80.json",
+        "source": "https://git.integrolabs.net/Fortemi/fortemi/issues/1091",
+        "derivation_type": "implements"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-remote-resolution-cycle80.json",
+        "source": "https://git.integrolabs.net/Fortemi/fortemi-react/issues/405",
+        "derivation_type": "implements"
+      }
+    ]
+  }
+}

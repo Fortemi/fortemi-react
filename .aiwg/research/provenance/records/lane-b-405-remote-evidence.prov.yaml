@@ -1,0 +1,113 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T19:08:30.131Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-remote-evidence.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T19:08:30.131Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": "packages/core/src/remote-contract.ts",
+          "sha256": "7011b4f4ef08899b25c731a00079d3c9350b0c829db9428ccb11838d79d0f20f",
+          "bytes": 10626
+        },
+        {
+          "path": "packages/core/src/data-backend.ts",
+          "sha256": "e513f2ba04912a8cc92e2e350c4370777bc8b4859548b78f2ea5dc0f57c8df5c",
+          "bytes": 35411
+        },
+        {
+          "path": "packages/core/src/__tests__/remote-evidence.test.ts",
+          "sha256": "992398db35a85081896dd4381751787086880cfdfd5cca5aec73ade6aad73326",
+          "bytes": 8317
+        },
+        {
+          "path": "packages/core/scripts/generate-pglite-full-v1-receipt.mjs",
+          "sha256": "33da7f4dd217977427113be847bbcd39376bf855bb4888ad0297d318f016db21",
+          "bytes": 8372
+        },
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+          "sha256": "85d337aff1143ffe1b9bf7c0e98f8f3a88b358ea10def6d2a756a2487a78c20d",
+          "bytes": 12844
+        },
+        {
+          "path": "tools/release/verify-installed-search-evidence.mjs",
+          "sha256": "5b58441b5e0640f6640fd17e260ea32747262db38a021f1c6e95f49279398b63",
+          "bytes": 11463
+        },
+        {
+          "path": "tools/release/verify-installed-search-evidence.test.mjs",
+          "sha256": "38da96c9b883234a3389f05da5363267f3fc4b9cb9722a346caecd0cef764239",
+          "bytes": 2238
+        },
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "sha256": "80464a56bbd2189fec07b7dcf34241f7c60c2abd782fedd38d6b404c1bf92d78",
+          "bytes": 13031
+        },
+        {
+          "path": ".aiwg/architecture/SAD.md",
+          "sha256": "f10083536ec4944cde03286da248f8b68f23ce380a738e9a51867dec6642e172",
+          "bytes": 48204
+        },
+        {
+          "path": ".aiwg/architecture/adr-backend-seam.md",
+          "sha256": "6bee4e34fba0c72e33af1d628085d17382639baf03dcd7ff1e27688af138ff9f",
+          "bytes": 13922
+        },
+        {
+          "path": "docs/content/guides/search.md",
+          "sha256": "c57f2fcbb11ad753dc0c1a97b42ad9152711107e2afaab67aa550a94bd917bf6",
+          "bytes": 21698
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-remote-evidence.json",
+          "sha256": "aa26b1558c5164f43eb12f60c8aada9efbe076ec211a404e7552ea1644215443",
+          "bytes": 7833
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-remote-evidence:076:core",
+    "type": "modification",
+    "started_at": "2026-09-12T18:44:00Z",
+    "ended_at": "2026-09-12T19:08:30.131Z",
+    "description": "Remote parser validates present candidate evidence with strict same-note semantics before any detail enrichment; invalid envelopes yield bounded invalid-response without input or cause."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-remote-evidence.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-remote-evidence:076:core"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-remote-evidence.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-remote-evidence:076:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-remote-evidence.json",
+        "source": "urn:git:commit:f7f09a63e69ec04b5f6b2a8dca5cb5f840ef05f7",
+        "derivation_type": "derives_from"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-remote-evidence.json",
+        "source": "https://git.integrolabs.net/Fortemi/fortemi/issues/1091",
+        "derivation_type": "implements"
+      }
+    ]
+  }
+}

@@ -16,6 +16,23 @@ This Software Architecture Document (SAD) describes the architecture of fortemi-
 
 ### 1.2 Scope
 
+Cycle80 adds remote current-storage evidence resolution under a separate
+producer authority receipt. It validates locator/options/encoded request before
+I/O, retains existing transport auth/archive headers, rejects redirects and uses
+no-store with a 30-second whole-operation deadline and caller cancellation.
+Bounded strict response validation checks exact UTF-8 span length; producer
+current-storage/policy/full-digest checks cannot be recomputed from partial text.
+Remote search capabilities and historical GET/evidence receipts are unchanged.
+Clean candidate acceptance is not launched producer or released-runtime proof.
+
+Cycle78's remote search adapter consumes the producer-owned candidate REST
+schema via `schemas/metadata-search/candidate/1.0.0/rest.receipt.json`. Offline
+strict validation precedes projection and every detail read; semantic note,
+total and evidence binding remain explicit. The request surface stays
+q/mode/limit/tags with the existing100-hit adapter cap. Extra server query fields
+are not implicitly supported. Historical evidence-only receipts and capability
+false remain unchanged. ADR-016 records the cross-validator authoring and gates.
+
 The #405 PGlite typed-metadata candidate is governed by ADR-016. It validates
 the Fortemi-owned candidate schema before database work, uses bounded typed
 author-metadata indexes with exact rechecks, and quantifies import-run clauses
@@ -28,6 +45,25 @@ before I/O. PGlite semantic operations require an injected embedder and vector
 availability. Complete citation locators, third-party adapter conformance, immutable
 producer pins and released cross-runtime acceptance remain open; suite NO-GO
 and all named-profile boundaries are unchanged.
+
+The citation candidate adds shared authority-owned evidence schema/55vectors and
+pure Rust/TypeScript binding validators. Native text-unit identity, full-text
+SHA-256 and half-open UTF-8 byte spans reject changed or mismatched snapshots.
+The pure helpers perform no database lookup or authorization. A separate candidate
+SearchRepository resolver now checks current unit identity, local scope, source,
+deletion and the16MiB text budget in one SQL statement, with BOM-preserving UTF-8
+hex transport. This is local source selection, not hosted authorization or history
+retention. A new authority-owned per-hit evidence envelope now connects PGlite
+ranking queries to bounded matched-unit projection and hybrid fusion. It preserves
+raw-unit digests, source identities and omission reasons, including semantic-first
+retention at64locators. The six live-query regressions pass with actual resolution;
+producer candidate SearchHit/query/fusion is verified separately in Cycle75.
+The remote adapter validates all present evidence before detail enrichment and
+forwards immutable snapshots across search modes and semantic entry points.
+Absent support remains absent; malformed or foreign-note evidence fails the
+whole response with bounded diagnostics. Detail text cannot rebind a citation.
+Full REST/bundled OpenAPI, producer resolution, hosted/cache/lifecycle and clean
+released consumer acceptance remain open. No capability is promoted.
 
 The #425 scope amendment in ADR-011 governs live `2.0.0/full-v1` exports:
 nonempty note selectors, rejection of combined tag/collection selectors,
@@ -809,6 +845,17 @@ optional receipt binds candidate/authority/verifier bytes; CI retains that
 receipt and tarball with the source run. It is independent of source-unit
 tests but does not qualify published bytes or server/AIWG/live consumers.
 No schema, fixture, wire contract or consumer pin changes are introduced.
+
+The citation candidate adds a separate installed search-evidence gate. It checks
+packaged candidate schemas/corpora against their hash receipt, executes55binding
+and36envelope cases through installed public exports, and exercises actual local
+PGlite lexical/semantic/hybrid results, adapter forwarding, exact UTF-8 resolution
+and changed/deleted text. Missing or altered packaged candidate files fail before
+API execution. The package receipt binds this verifier and its results; source
+tests or a successful pack alone do not satisfy it. Synthetic vectors do not
+qualify inference, hosted authorization or released cross-runtime behavior.
+The current shard implementation receipt includes the new search dependencies;
+its refresh requires current portable-contract evidence, not just new hashes.
 
 **SAD Version History**:
 

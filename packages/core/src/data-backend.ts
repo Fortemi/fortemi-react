@@ -24,7 +24,11 @@ import { RemoteBackendError, isRemoteNoteNotFound, remoteHttpError } from './rem
 import { parseRemoteConcepts, parseRemoteCreated, parseRemoteLinks, parseRemoteManageInput, parseRemoteNoteDetail, parseRemoteNoteList, parseRemoteProvenance, parseRemoteRestored, parseRemoteSearch, remoteNoteId, remoteSearchParameters } from './remote-contract.js'
 import type { RemoteProvenanceGraph, RemoteSearchDegradation, RemoteSearchMetadata, RemoteSearchMode } from './remote-contract.js'
 import type { MetadataPredicate, EvidenceLocator } from './repositories/metadata-predicates.js'
+import type { SearchEvidenceSet } from './search-evidence-set.js'
 import { validateBackendSearchOptions } from './backend-search-options.js'
+import { resolveRemoteEvidence } from './remote-evidence-resolution.js'
+import type { RemoteEvidenceResolutionOptions } from './remote-evidence-resolution.js'
+export type { RemoteEvidenceResolutionOptions } from './remote-evidence-resolution.js'
 
 // ── Capabilities ──────────────────────────────────────────────────────────
 
@@ -140,6 +144,8 @@ export interface BackendSearchHit {
   remoteSearch?: RemoteSearchMetadata
   /** Partial local source projections; does not imply complete citation capability. */
   locators?: EvidenceLocator[]
+  /** Candidate matched-unit evidence; not a negotiated complete capability. */
+  evidence?: SearchEvidenceSet
 }
 
 /** Search response with optional facet counts. */
@@ -471,7 +477,7 @@ export function createPGliteBackend(db: DatabaseClient, options: PGliteBackendOp
     }, vector)
     return {
       hits: r.results.map(res => ({
-        note: searchResultToBackend(res), rank: res.rank, snippet: res.snippet, locators: res.locators,
+        note: searchResultToBackend(res), rank: res.rank, snippet: res.snippet, locators: res.locators, evidence: res.evidence,
       })),
       total: r.total,
       facets: r.facets ? { tags: Object.fromEntries(r.facets.tags.map(t => [t.tag, t.count])) } : undefined,
@@ -600,6 +606,7 @@ export interface RemoteBackendPaths {
   notes: string
   note: string
   search: string
+  resolveEvidence?: string
   links: string
   concepts: string
   provenance: string
@@ -631,6 +638,8 @@ export interface RemoteManageNoteResult {
 }
 
 export interface RemoteDataBackend extends DataBackend {
+  /** Candidate current-storage resolution; not a complete evidence capability advertisement. */
+  resolveEvidence(locator: unknown, options?: RemoteEvidenceResolutionOptions): Promise<string>
   search(query: string, options?: RemoteSearchOptions): Promise<RemoteSearchResult>
   semanticWithReport(query: string, k?: number): Promise<RemoteSearchResult>
   manageNote(input: unknown): Promise<RemoteManageNoteResult>
@@ -649,6 +658,7 @@ const DEFAULT_REMOTE_PATHS: RemoteBackendPaths = {
   notes: '/api/v1/notes',
   note: '/api/v1/notes/:id',
   search: '/api/v1/search',
+  resolveEvidence: '/api/v1/search/evidence/resolve',
   links: '/api/v1/notes/:id/links',
   concepts: '/api/v1/notes/:id/concepts',
   provenance: '/api/v1/notes/:id/provenance',
@@ -742,6 +752,7 @@ export function createRemoteBackend(config: RemoteBackendConfig): RemoteDataBack
           createdAt: detail.createdAt, updatedAt: detail.updatedAt, source: detail.source,
           starred: detail.starred, archived: detail.archived },
         rank: hit.score, ...(hit.snippet === null ? {} : { snippet: hit.snippet }),
+        ...(hit.evidence === undefined ? {} : { evidence: hit.evidence }),
         remoteSearch: { ...(hit.title === undefined ? {} : { title: hit.title }),
           ...(hit.tags === undefined ? {} : { tags: hit.tags }),
           ...(hit.embedding_status === undefined ? {} : { embedding_status: hit.embedding_status }),
@@ -820,6 +831,16 @@ export function createRemoteBackend(config: RemoteBackendConfig): RemoteDataBack
     },
 
     search: searchRemote,
+
+    async resolveEvidence(locator, options) {
+      return resolveRemoteEvidence(locator, options, async (body, signal) => {
+        const headers = await remoteHeaders(config, true)
+        signal.throwIfAborted()
+        return (config.fetchImpl ?? globalThis.fetch)(remoteUrl(config.baseUrl, paths.resolveEvidence ?? DEFAULT_REMOTE_PATHS.resolveEvidence!), {
+          method: 'POST', headers, body, signal, cache: 'no-store', redirect: 'error',
+        })
+      })
+    },
 
     getNoteFull,
     linksOf,

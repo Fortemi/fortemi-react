@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-13T06:50:23.500Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-context-owned-views-cycle96.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-13T06:50:23.500Z",
+    "checksum": "sha256:14bc404b4c249e94281236492a84c896bfb63adc7c26caa1274b63d737ed15e8",
+    "size_bytes": 10016,
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "bytes": 26878,
+          "sha256": "9bc21c2fc20dbe81f1a28010565794e1cfea3a4aca9d6953d1ee90f3dc3086ef"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-core-context-owned-views-cycle96.json",
+          "bytes": 10016,
+          "sha256": "14bc404b4c249e94281236492a84c896bfb63adc7c26caa1274b63d737ed15e8"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:context-owned-views:lane-b:096:core",
+    "type": "modification",
+    "started_at": "2026-09-13T06:20:43.836Z",
+    "ended_at": "2026-09-13T06:50:23.500Z",
+    "description": "Opaque effective-context revision keys desktop/mobile React subtree and media provider. Owned HTTP scopes abort and fence admission/retries/fetch/decode; ContextChangedError is terminal. Compatibility cache/reset and pending completions have independent generation fencing. No credentials in React keys/events; no persistent data removed. Already-dispatched mutations are not rolled back. Browser stream checks pass; application session isolation remains incomplete. Full scope and delivery gates retained."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-context-owned-views-cycle96.json",
+      "activity": "urn:aiwg:activity:context-owned-views:lane-b:096:core"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:context-owned-views:lane-b:096:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-context-owned-views-cycle96.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-context-owned-views-cycle96.json",
+        "source": "urn:gitea:Fortemi:HotM:issue:1"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-context-owned-views-cycle96.json",
+        "source": "urn:gitea:Fortemi:fortemi:issue:1091"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-context-owned-views-cycle96.json",
+        "source": "urn:gitea:Fortemi:fortemi-react:issue:405"
+      }
+    ]
+  }
+}

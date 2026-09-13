@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T23:44:44.000Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-binary-http-cycle84.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T23:44:44.000Z",
+    "checksum": "sha256:1ddd4fa01fdfe9eaf77b7a8daf6e7dbf7baebb9a71d4ca77a5afa7d5f5a3481d",
+    "size_bytes": 5673,
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "bytes": 19094,
+          "sha256": "6876bec64653c6019c1545b920ff4b4e18971f6999a6241c644710f735828bbc"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-binary-http-cycle84.json",
+          "bytes": 5673,
+          "sha256": "1ddd4fa01fdfe9eaf77b7a8daf6e7dbf7baebb9a71d4ca77a5afa7d5f5a3481d"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:binary-http:lane-b:084:core",
+    "type": "validation",
+    "started_at": "2026-09-12T23:23:09.379Z",
+    "ended_at": "2026-09-12T23:44:44.000Z",
+    "description": "Actual-binary installed HTTP matrix and owned fixture corrections; overall acceptance remains NOT_PASS due to reproduced hosted worker scope failure."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-binary-http-cycle84.json",
+      "activity": "urn:aiwg:activity:binary-http:lane-b:084:core"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:binary-http:lane-b:084:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-binary-http-cycle84.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-binary-http-cycle84.json",
+        "source": "urn:aiwg:artifact:.aiwg/working/lane-b/evidence/lane-b-delivery-20260912-cycle83/NEXT.md"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-binary-http-cycle84.json",
+        "source": "urn:gitea:Fortemi:fortemi:issue:1091"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-binary-http-cycle84.json",
+        "source": "urn:gitea:Fortemi:fortemi-react:issue:405"
+      }
+    ]
+  }
+}

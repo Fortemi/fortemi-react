@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-13T05:36:54.087Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-selected-memory-context-cycle94.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-13T05:36:54.087Z",
+    "checksum": "sha256:55e63ee90783cc55bf2bb76599171519bee4ad7e4dce1c3790b3523eadf5fb7f",
+    "size_bytes": 7923,
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "bytes": 25645,
+          "sha256": "e0c358ca56d177c1443ee03d7f439e721ce862eea30a6b68c952549e0c4488c6"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-core-selected-memory-context-cycle94.json",
+          "bytes": 7923,
+          "sha256": "55e63ee90783cc55bf2bb76599171519bee4ad7e4dce1c3790b3523eadf5fb7f"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:selected-memory-context:lane-b:094:core",
+    "type": "modification",
+    "started_at": "2026-09-13T05:21:27.817Z",
+    "ended_at": "2026-09-13T05:36:54.087Z",
+    "description": "HotM reads only selected-memory endpoint through bounded4096byte real HTTP client and exact JSON decoder. Preserves name/schema separation, server-returned public/default semantics and generation/session/selection fencing. No inventory, retry, guessed schema or failed-lookup fallback. Producer harness uses current real consumer without translation. HotM bounded consumer and actual server metadata/SSE tests PASS; full scope and delivery gates remain. Full scope retained."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-selected-memory-context-cycle94.json",
+      "activity": "urn:aiwg:activity:selected-memory-context:lane-b:094:core"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:selected-memory-context:lane-b:094:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-selected-memory-context-cycle94.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-selected-memory-context-cycle94.json",
+        "source": "urn:gitea:Fortemi:HotM:issue:1"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-selected-memory-context-cycle94.json",
+        "source": "urn:gitea:Fortemi:fortemi:issue:1091"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-selected-memory-context-cycle94.json",
+        "source": "urn:gitea:Fortemi:fortemi-react:issue:405"
+      }
+    ]
+  }
+}

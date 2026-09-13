@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-13T04:46:06.855Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-realtime-context-cycle92.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-13T04:46:06.855Z",
+    "checksum": "sha256:46bf8bbf8f9f36ef97c3b1b9b13c24452363420fe83d1b969182610f103913e5",
+    "size_bytes": 8122,
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "bytes": 24700,
+          "sha256": "ba990755bd1edb5c29762fc516dfa158f139536d5a9d0f389b19670c7351143e"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-core-realtime-context-cycle92.json",
+          "bytes": 8122,
+          "sha256": "46bf8bbf8f9f36ef97c3b1b9b13c24452363420fe83d1b969182610f103913e5"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:realtime-context:lane-b:092:core",
+    "type": "modification",
+    "started_at": "2026-09-13T04:09:41.223Z",
+    "ended_at": "2026-09-13T04:46:06.855Z",
+    "description": "HotM request-name/event-schema separation, real metadata resolver, generation-fenced archive selection replacement, cursor and pending-event reset, queue view reset, strict scoped queue/control filtering. Producer harness consumes real candidate resolver/client/parser without name rewrite. Producer runtime and Core package unchanged this cycle. Local tests PASS; actual hosted metadata admission NOT_PASS. Full scope retained."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-realtime-context-cycle92.json",
+      "activity": "urn:aiwg:activity:realtime-context:lane-b:092:core"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:realtime-context:lane-b:092:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-realtime-context-cycle92.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-realtime-context-cycle92.json",
+        "source": "urn:gitea:Fortemi:HotM:issue:1"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-realtime-context-cycle92.json",
+        "source": "urn:gitea:Fortemi:fortemi:issue:1091"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-core-realtime-context-cycle92.json",
+        "source": "urn:gitea:Fortemi:fortemi-react:issue:405"
+      }
+    ]
+  }
+}

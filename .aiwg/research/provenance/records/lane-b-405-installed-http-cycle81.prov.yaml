@@ -1,0 +1,68 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T22:04:56.498Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-installed-http-cycle81.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T22:04:56.498Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "sha256": "d0d469e0084dfa1ee50f6998589de0234dedd48b0d260f847feb3309d4c00eca",
+          "bytes": 17188
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-installed-http-cycle81.json",
+          "sha256": "fb41b61b34dad2dc6ba5abadab322123240b6994092e708132271d626970e13d",
+          "bytes": 10578
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-installed-http:081:core",
+    "type": "modification",
+    "started_at": "2026-09-12T21:45:00Z",
+    "ended_at": "2026-09-12T22:04:56.498Z",
+    "description": "Implement and verify clean-installed Core to scoped producer TCP acceptance, preserving candidate and fixture-auth boundaries."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-installed-http-cycle81.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-installed-http:081:core"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-installed-http-cycle81.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-installed-http:081:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-installed-http-cycle81.json",
+        "source": "urn:git:commit:f7f09a63e69ec04b5f6b2a8dca5cb5f840ef05f7",
+        "derivation_type": "derives_from"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-installed-http-cycle81.json",
+        "source": "https://git.integrolabs.net/Fortemi/fortemi/issues/1091",
+        "derivation_type": "implements"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-installed-http-cycle81.json",
+        "source": "https://git.integrolabs.net/Fortemi/fortemi-react/issues/405",
+        "derivation_type": "implements"
+      }
+    ]
+  }
+}

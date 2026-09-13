@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-13T01:16:01.851Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-dispatch-cycle87.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-13T01:16:01.851Z",
+    "checksum": "sha256:e71c20f75ebea20853f07153195346649e61535becd868e59b4971493080a15b",
+    "size_bytes": 9992,
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "bytes": 21091,
+          "sha256": "f3f291208de149df28b60180d031048faddbbb7220e893b9e2ce7629786b25f1"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-hosted-dispatch-cycle87.json",
+          "bytes": 9992,
+          "sha256": "e71c20f75ebea20853f07153195346649e61535becd868e59b4971493080a15b"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:hosted-dispatch:lane-b:087:core",
+    "type": "modification",
+    "started_at": "2026-09-13T01:01:47.461Z",
+    "ended_at": "2026-09-13T01:16:01.851Z",
+    "description": "Bounded service-authorized committed claim dispatch and fenced settlement capabilities with owned database acceptance; recovery and installed-Core actual-binary regression pass. Production handler integration remains incomplete."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-dispatch-cycle87.json",
+      "activity": "urn:aiwg:activity:hosted-dispatch:lane-b:087:core"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:hosted-dispatch:lane-b:087:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-dispatch-cycle87.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-dispatch-cycle87.json",
+        "source": "urn:gitea:Fortemi:fortemi:issue:1091"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-dispatch-cycle87.json",
+        "source": "urn:gitea:Fortemi:fortemi-react:issue:405"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-dispatch-cycle87.json",
+        "source": "urn:aiwg:artifact:docs/architecture/adr/ADR-090-multi-tenancy-model.md"
+      }
+    ]
+  }
+}

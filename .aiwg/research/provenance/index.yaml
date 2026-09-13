@@ -1,285 +1,588 @@
 metadata:
-  schema_version: "1.0.0"
-  updated_at: "2026-09-12T15:28:17.160Z"
-  record_count: 119
+  schema_version: 1.0.0
+  updated_at: '2026-09-13T16:43:11.647Z'
+  record_count: 142
 records:
-  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-405-search-adapters.json"
-    record: "records/lane-b-405-search-adapters.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-405-esm-reconciliation.json"
-    record: "records/lane-b-405-esm-reconciliation.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-405-typed-pglite.json"
-    record: "records/lane-b-405-typed-pglite.prov.yaml"
-  - entity: "urn:aiwg:artifact:docs/content/releases/v2026.9.5.md"
-    record: "records/release-prep-2026.9.5.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-worktree.json"
-    record: "records/lane-b-422-ci-worktree.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-followup.json"
-    record: "records/lane-b-422-ci-followup.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-partitions.json"
-    record: "records/lane-b-422-ci-partitions.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-422-installed-capability-gate.json"
-    record: "records/lane-b-422-installed-capability-gate.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-419-native-operations.json"
-    record: "records/lane-b-419-native-operations.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-421-negative-consumer.json"
-    record: "records/lane-b-421-negative-consumer.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-421-native-replay.json"
-    record: "records/lane-b-421-native-replay.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-422-capability-validation.json"
-    record: "records/lane-b-422-capability-validation.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-424-native-multirestore-budget.json"
-    record: "records/lane-b-424-native-multirestore-budget.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-424-immutable-release-assets.json"
-    record: "records/lane-b-424-immutable-release-assets.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/lane-b-424-deterministic-pack.json"
-    record: "records/lane-b-424-deterministic-pack.prov.yaml"
-  - entity: "urn:aiwg:artifact:.gitea/workflows/ci.yml"
-    record: "records/lane-b-424-ci-coverage-budget.prov.yaml"
-  - entity: "urn:aiwg:artifact:docs/content/releases/v2026.9.4.md"
-    record: "records/release-prep-2026.9.4.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json"
-    record: "records/lane-b-424-ci-receipts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/native-full-v1-public.test.ts"
-    record: "records/lane-b-424-ci-timing.prov.yaml"
-  - entity: "urn:aiwg:artifact:tools/release/verify-core-package.mjs"
-    record: "records/lane-b-424-native-package-gate.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-full-v1-import.ts"
-    record: "records/lane-b-424-link-graph-retention.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-skos.ts"
-    record: "records/lane-b-424-skos-retained.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/repositories/embedding-sets-repository.ts"
-    record: "records/lane-b-424-native-selector-inputs.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts"
-    record: "records/lane-b-424-vector-value-omission.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts"
-    record: "records/lane-b-424-vector-selector-entry.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts"
-    record: "records/lane-b-424-vector-note-owner.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-full-v1-import.ts"
-    record: "records/lane-b-424-vector-identity.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-full-v1-import.ts"
-    record: "records/lane-b-424-membership-scope.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-full-v1-import.ts"
-    record: "records/lane-b-424-history-provenance.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-full-v1-import.ts"
-    record: "records/lane-b-424-native-public.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-core.ts"
-    record: "records/lane-b-424-native-core.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/geometry-buffer.ts"
-    record: "records/lane-b-424-graph-esm-integration.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-graph.ts"
-    record: "records/lane-b-424-native-graph.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/geometry-buffer.ts"
-    record: "records/lane-b-424-geometry-esm.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-provenance.ts"
-    record: "records/lane-b-424-native-provenance.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-skos.ts"
-    record: "records/lane-b-424-native-skos.prov.yaml"
-  - entity: "urn:aiwg:artifact:examples/knowledge-workspace/src/app/FortemiApp.tsx"
-    record: "records/lane-b-424-gallery-index.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts"
-    record: "records/lane-b-424-native-embeddings.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/native-note-history.ts"
-    record: "records/lane-b-424-native-note-history.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/full-v1-references.ts"
-    record: "records/lane-b-424-reference-preflight.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/full-v1-store.ts"
-    record: "records/lane-b-424-archival-api.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/schemas/source-note-upsert/contract.receipt.json"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/schemas/source-note-upsert/v1.conformance.json"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/repositories/source-upsert-repository.ts"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/records/source-upsert.ts"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/source-upsert-contract.test.ts"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.advertisement.receipt.json"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.cross-repository.receipt.json"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/migrations/0024_source_upsert_contract.ts"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-015-source-addressed-live-persistence.md"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:README.md"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/README.md"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/package.json"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/source-metadata-purge.test.ts"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/index.ts"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/migrations/index.ts"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/records/idb-record-store.ts"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/records/index.ts"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/records/record-projection.ts"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/records/types.ts"
-    record: "records/source-note-upsert-consumer-404.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/threat-assessment-v2026.9.0-release-note.json"
-    record: "records/threat-assessment-v2026.9.0-release-note.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/release.config"
-    record: "records/release-config-workspace-tests.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-last-run.json"
-    record: "records/doc-sync-last-run-20260903.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-20260903-code-to-docs.md"
-    record: "records/doc-sync-20260903-code-to-docs.prov.yaml"
-  - entity: "urn:aiwg:artifact:docs/content/releases/v2026.9.0.md"
-    record: "records/release-v2026.9.0.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/graph/src/index.ts"
-    record: "records/packages-graph-src-index-release-2026.9.0.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/index.ts"
-    record: "records/packages-core-src-index-release-2026.9.0.prov.yaml"
-  - entity: "urn:aiwg:artifact:apps/standalone/src/data/project-docs.ts"
-    record: "records/project-docs-release-2026.9.0.prov.yaml"
-  - entity: "urn:aiwg:artifact:examples/e2e/research-workbench-provenance.test.ts"
-    record: "records/examples-e2e-research-workbench-provenance.test.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:examples/research-workbench/src/seed.test.ts"
-    record: "records/examples-research-workbench-src-seed.test.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/react/src/__tests__/useNoteProvenance.test.ts"
-    record: "records/packages-react-src-tests-useNoteProvenance.test.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/react/src/hooks/useNoteProvenance.ts"
-    record: "records/packages-react-src-hooks-useNoteProvenance.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:examples/research-workbench/src/App.tsx"
-    record: "records/examples-research-workbench-src-App.tsx.prov.yaml"
-  - entity: "urn:aiwg:artifact:examples/research-workbench/src/corpus.ts"
-    record: "records/examples-research-workbench-src-corpus.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:examples/research-workbench/src/seed.ts"
-    record: "records/examples-research-workbench-src-seed.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
-    record: "records/ADR-011-doc-sync-release-2026.7.15.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
-    record: "records/SAD-doc-sync-release-2026.7.15.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-20260729-code-to-docs.md"
-    record: "records/doc-sync-20260729-code-to-docs.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-last-run.json"
-    record: "records/doc-sync-last-run-20260729.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/index.ts"
-    record: "records/packages-core-src-index-release-2026.7.15.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/graph/src/index.ts"
-    record: "records/packages-graph-src-index-release-2026.7.15.prov.yaml"
-  - entity: "urn:aiwg:artifact:apps/standalone/src/data/project-docs.ts"
-    record: "records/project-docs-release-2026.7.15.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
-    record: "records/ADR-011-linux-arm64-platform-399.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/schemas/README.md"
-    record: "records/packages-core-schemas-readme-linux-arm64-399.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/scripts/platform-contract-receipt.mjs"
-    record: "records/platform-contract-receipt-linux-arm64-399.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/scripts/platform-contract-receipt.test.mjs"
-    record: "records/platform-contract-receipt-test-linux-arm64-399.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/.last-doc-sync"
-    record: "records/last-doc-sync-release-2026.7.14.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/reports/doc-sync-audit-2026-07-26.md"
-    record: "records/doc-sync-audit-2026-07-26.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/graph/src/index.ts"
-    record: "records/packages-graph-src-index-release-2026.7.14.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-to-fortemi.receipt.json"
-    record: "records/packages-core-core-v1-pglite-to-fortemi-receipt-354.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-fortemi-to-pglite.receipt.json"
-    record: "records/packages-core-core-v1-fortemi-to-pglite-receipt-354.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-self.receipt.json"
-    record: "records/packages-core-core-v1-pglite-self-receipt-355.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-record-v1-recordstore-self.receipt.json"
-    record: "records/packages-core-record-v1-recordstore-self-receipt-355.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/schemas/README.md"
-    record: "records/packages-core-schemas-readme-record-v1-355.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/scripts/verify-knowledge-shard-contract.mjs"
-    record: "records/packages-core-verify-knowledge-shard-contract-record-v1-355.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json"
-    record: "records/packages-core-v2-presence-receipt-record-v1-355.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/package.json"
-    record: "records/packages-core-package-json-record-v1-producer-355.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/scripts/generate-record-v1-self-fixture.mjs"
-    record: "records/packages-core-generate-record-v1-self-fixture-355.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/recordstore-record-v1-2026.7.13.shard"
-    record: "records/packages-core-recordstore-record-v1-2026.7.13-shard-355.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/scripts/generate-core-v1-self-fixture.mjs"
-    record: "records/packages-core-generate-core-v1-self-fixture-355.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/core-v1-self-cell.test.ts"
-    record: "records/packages-core-core-v1-self-cell-test-355.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fortemi-core-v1-consumer-cell.test.ts"
-    record: "records/packages-core-fortemi-core-v1-consumer-test-354.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/fortemi-core-v1-2026.7.12.shard"
-    record: "records/packages-core-fortemi-core-v1-fixture-354.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/pglite-core-v1-2026.7.13.shard"
-    record: "records/packages-core-pglite-core-v1-2026.7.13-shard-355.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-006-public-api-first.md"
-    record: "records/ADR-006-public-api-first.md.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md"
-    record: "records/ADR-010-portable-schema-topology-and-source-of-truth.md.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md"
-    record: "records/ADR-011-fortemi-to-pglite-core-v1-354.prov.yaml"
-  - entity: "urn:aiwg:artifact:.aiwg/architecture/SAD.md"
-    record: "records/SAD.md.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/blob-store.test.ts"
-    record: "records/packages-core-src-tests-blob-store.test.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/records/record-shard.test.ts"
-    record: "records/packages-core-src-tests-records-record-shard.test.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/records/record-store.test.ts"
-    record: "records/packages-core-src-tests-records-record-store.test.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/profile-registry.test.ts"
-    record: "records/packages-core-src-tests-shard-profile-registry.test.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/schema-validator.test.ts"
-    record: "records/packages-core-src-tests-shard-schema-validator.test.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/shard-export.test.ts"
-    record: "records/packages-core-src-tests-shard-shard-export.test.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/shard-import.test.ts"
-    record: "records/packages-core-src-tests-shard-shard-import.test.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/aiwg-index.ts"
-    record: "records/packages-core-src-aiwg-index.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/aiwg-index-shard.ts"
-    record: "records/packages-core-src-aiwg-index-shard.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/aiwg-index.test.ts"
-    record: "records/packages-core-src-tests-aiwg-index.test.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/__tests__/shard/aiwg-core-v1-projection.test.ts"
-    record: "records/packages-core-src-tests-shard-aiwg-core-v1-projection.test.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/blob-store.ts"
-    record: "records/packages-core-src-blob-store.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/index.ts"
-    record: "records/packages-core-src-index.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/migrations/0018_nullable_revised_content.ts"
-    record: "records/packages-core-src-migrations-0018_nullable_revised_content.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/migrations/index.ts"
-    record: "records/packages-core-src-migrations-index.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/records/idb-record-store.ts"
-    record: "records/packages-core-src-records-idb-record-store.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/records/index.ts"
-    record: "records/packages-core-src-records-index.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/records/memory-record-store.ts"
-    record: "records/packages-core-src-records-memory-record-store.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/records/record-shard.ts"
-    record: "records/packages-core-src-records-record-shard.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/records/types.ts"
-    record: "records/packages-core-src-records-types.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/blob-staging.ts"
-    record: "records/packages-core-src-shard-blob-staging.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/convergence.ts"
-    record: "records/packages-core-src-shard-convergence.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/field-mapper.ts"
-    record: "records/packages-core-src-shard-field-mapper.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/index.ts"
-    record: "records/packages-core-src-shard-index.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/profile-registry.ts"
-    record: "records/packages-core-src-shard-profile-registry.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/schema-validator.ts"
-    record: "records/packages-core-src-shard-schema-validator.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/shard-export.ts"
-    record: "records/packages-core-src-shard-shard-export.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/shard-import.ts"
-    record: "records/packages-core-src-shard-shard-import.ts.prov.yaml"
-  - entity: "urn:aiwg:artifact:packages/core/src/shard/types.ts"
-    record: "records/packages-core-src-shard-types.ts.prov.yaml"
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-core-context-owned-views-cycle96.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-core-context-owned-views-cycle96.json
+    record: records/lane-b-core-context-owned-views-cycle96.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-core-session-browser-cycle95.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-core-session-browser-cycle95.json
+    record: records/lane-b-core-session-browser-cycle95.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-core-selected-memory-context-cycle94.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-core-selected-memory-context-cycle94.json
+    record: records/lane-b-core-selected-memory-context-cycle94.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-core-selected-memory-context-cycle93.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-core-selected-memory-context-cycle93.json
+    record: records/lane-b-core-selected-memory-context-cycle93.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-core-realtime-context-cycle92.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-core-realtime-context-cycle92.json
+    record: records/lane-b-core-realtime-context-cycle92.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-405-hosted-execution-cycle91.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-execution-cycle91.json
+    record: records/lane-b-405-hosted-execution-cycle91.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-405-hosted-execution-cycle90.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-execution-cycle90.json
+    record: records/lane-b-405-hosted-execution-cycle90.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-405-hosted-document-type-cycle89.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-document-type-cycle89.json
+    record: records/lane-b-405-hosted-document-type-cycle89.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-405-hosted-content-cycle88.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-content-cycle88.json
+    record: records/lane-b-405-hosted-content-cycle88.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-405-hosted-dispatch-cycle87.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-dispatch-cycle87.json
+    record: records/lane-b-405-hosted-dispatch-cycle87.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-405-hosted-recovery-cycle86.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-recovery-cycle86.json
+    record: records/lane-b-405-hosted-recovery-cycle86.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-405-scoped-jobs-cycle85.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-scoped-jobs-cycle85.json
+    record: records/lane-b-405-scoped-jobs-cycle85.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-405-binary-http-cycle84.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-binary-http-cycle84.json
+    record: records/lane-b-405-binary-http-cycle84.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-405-jwt-http-cycle82.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-jwt-http-cycle82.json
+    record: records/lane-b-405-jwt-http-cycle82.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-405-installed-http-cycle81.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-installed-http-cycle81.json
+    record: records/lane-b-405-installed-http-cycle81.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/data-backend.ts
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/index.ts
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/remote-search-schema.ts
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/remote-evidence-resolution.ts
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/remote-evidence-resolution.test.ts
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: >-
+      urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/evidence-resolution.schema.json
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: >-
+      urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/evidence-resolution-vectors.json
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: >-
+      urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/resolution.receipt.json
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/generate-pglite-full-v1-receipt.mjs
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: urn:aiwg:artifact:tools/release/verify-installed-search-evidence.mjs
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: urn:aiwg:artifact:tools/release/verify-installed-search-evidence.test.mjs
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/architecture/SAD.md
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/architecture/adr-backend-seam.md
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: urn:aiwg:artifact:docs/content/guides/search.md
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-remote-resolution-cycle80.json
+    record: records/lane-b-405-remote-resolution-cycle80.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-405-producer-resolution.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-producer-resolution.json
+    record: records/lane-b-405-producer-resolution.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/remote-search-schema.ts
+    record: records/lane-b-405-rest-adoption.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/remote-contract.ts
+    record: records/lane-b-405-rest-adoption.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/remote-rest-contract.test.ts
+    record: records/lane-b-405-rest-adoption.prov.yaml
+  - entity: >-
+      urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/search-rest.schema.json
+    record: records/lane-b-405-rest-adoption.prov.yaml
+  - entity: >-
+      urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/search-rest-vectors.json
+    record: records/lane-b-405-rest-adoption.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/rest.receipt.json
+    record: records/lane-b-405-rest-adoption.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/generate-pglite-full-v1-receipt.mjs
+    record: records/lane-b-405-rest-adoption.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json
+    record: records/lane-b-405-rest-adoption.prov.yaml
+  - entity: urn:aiwg:artifact:tools/release/verify-installed-search-evidence.mjs
+    record: records/lane-b-405-rest-adoption.prov.yaml
+  - entity: urn:aiwg:artifact:tools/release/verify-installed-search-evidence.test.mjs
+    record: records/lane-b-405-rest-adoption.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-405-rest-adoption.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/architecture/SAD.md
+    record: records/lane-b-405-rest-adoption.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/architecture/adr-backend-seam.md
+    record: records/lane-b-405-rest-adoption.prov.yaml
+  - entity: urn:aiwg:artifact:docs/content/guides/search.md
+    record: records/lane-b-405-rest-adoption.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-rest-adoption.json
+    record: records/lane-b-405-rest-adoption.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/remote-contract.ts
+    record: records/lane-b-405-remote-evidence.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/data-backend.ts
+    record: records/lane-b-405-remote-evidence.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/remote-evidence.test.ts
+    record: records/lane-b-405-remote-evidence.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/generate-pglite-full-v1-receipt.mjs
+    record: records/lane-b-405-remote-evidence.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json
+    record: records/lane-b-405-remote-evidence.prov.yaml
+  - entity: urn:aiwg:artifact:tools/release/verify-installed-search-evidence.mjs
+    record: records/lane-b-405-remote-evidence.prov.yaml
+  - entity: urn:aiwg:artifact:tools/release/verify-installed-search-evidence.test.mjs
+    record: records/lane-b-405-remote-evidence.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-405-remote-evidence.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/architecture/SAD.md
+    record: records/lane-b-405-remote-evidence.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/architecture/adr-backend-seam.md
+    record: records/lane-b-405-remote-evidence.prov.yaml
+  - entity: urn:aiwg:artifact:docs/content/guides/search.md
+    record: records/lane-b-405-remote-evidence.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-remote-evidence.json
+    record: records/lane-b-405-remote-evidence.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-projection.json
+    record: records/lane-b-405-evidence-projection.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-resolution.json
+    record: records/lane-b-405-evidence-resolution.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-binding.json
+    record: records/lane-b-405-evidence-binding.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-citation-gaps.json
+    record: records/lane-b-405-citation-gaps.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-search-adapters.json
+    record: records/lane-b-405-search-adapters.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-esm-reconciliation.json
+    record: records/lane-b-405-esm-reconciliation.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-typed-pglite.json
+    record: records/lane-b-405-typed-pglite.prov.yaml
+  - entity: urn:aiwg:artifact:docs/content/releases/v2026.9.5.md
+    record: records/release-prep-2026.9.5.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-worktree.json
+    record: records/lane-b-422-ci-worktree.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-followup.json
+    record: records/lane-b-422-ci-followup.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-422-ci-partitions.json
+    record: records/lane-b-422-ci-partitions.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-422-installed-capability-gate.json
+    record: records/lane-b-422-installed-capability-gate.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-419-native-operations.json
+    record: records/lane-b-419-native-operations.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-421-negative-consumer.json
+    record: records/lane-b-421-negative-consumer.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-421-native-replay.json
+    record: records/lane-b-421-native-replay.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-422-capability-validation.json
+    record: records/lane-b-422-capability-validation.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-424-native-multirestore-budget.json
+    record: records/lane-b-424-native-multirestore-budget.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-424-immutable-release-assets.json
+    record: records/lane-b-424-immutable-release-assets.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-424-deterministic-pack.json
+    record: records/lane-b-424-deterministic-pack.prov.yaml
+  - entity: urn:aiwg:artifact:.gitea/workflows/ci.yml
+    record: records/lane-b-424-ci-coverage-budget.prov.yaml
+  - entity: urn:aiwg:artifact:docs/content/releases/v2026.9.4.md
+    record: records/release-prep-2026.9.4.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json
+    record: records/lane-b-424-ci-receipts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/shard/native-full-v1-public.test.ts
+    record: records/lane-b-424-ci-timing.prov.yaml
+  - entity: urn:aiwg:artifact:tools/release/verify-core-package.mjs
+    record: records/lane-b-424-native-package-gate.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/native-full-v1-import.ts
+    record: records/lane-b-424-link-graph-retention.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/native-skos.ts
+    record: records/lane-b-424-skos-retained.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/repositories/embedding-sets-repository.ts
+    record: records/lane-b-424-native-selector-inputs.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts
+    record: records/lane-b-424-vector-value-omission.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts
+    record: records/lane-b-424-vector-selector-entry.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts
+    record: records/lane-b-424-vector-note-owner.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/native-full-v1-import.ts
+    record: records/lane-b-424-vector-identity.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/native-full-v1-import.ts
+    record: records/lane-b-424-membership-scope.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/native-full-v1-import.ts
+    record: records/lane-b-424-history-provenance.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/native-full-v1-import.ts
+    record: records/lane-b-424-native-public.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/native-core.ts
+    record: records/lane-b-424-native-core.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/geometry-buffer.ts
+    record: records/lane-b-424-graph-esm-integration.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/native-graph.ts
+    record: records/lane-b-424-native-graph.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/geometry-buffer.ts
+    record: records/lane-b-424-geometry-esm.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/native-provenance.ts
+    record: records/lane-b-424-native-provenance.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/native-skos.ts
+    record: records/lane-b-424-native-skos.prov.yaml
+  - entity: urn:aiwg:artifact:examples/knowledge-workspace/src/app/FortemiApp.tsx
+    record: records/lane-b-424-gallery-index.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/native-embeddings.ts
+    record: records/lane-b-424-native-embeddings.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/native-note-history.ts
+    record: records/lane-b-424-native-note-history.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/full-v1-references.ts
+    record: records/lane-b-424-reference-preflight.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/full-v1-store.ts
+    record: records/lane-b-424-archival-api.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/source-note-upsert/contract.receipt.json
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/source-note-upsert/v1.conformance.json
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/repositories/source-upsert-repository.ts
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/records/source-upsert.ts
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/source-upsert-contract.test.ts
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.advertisement.receipt.json
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.cross-repository.receipt.json
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/migrations/0024_source_upsert_contract.ts
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-015-source-addressed-live-persistence.md
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/architecture/SAD.md
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:README.md
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/README.md
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/package.json
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/source-metadata-purge.test.ts
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/index.ts
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/migrations/index.ts
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/records/idb-record-store.ts
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/records/index.ts
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/records/record-projection.ts
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/records/types.ts
+    record: records/source-note-upsert-consumer-404.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/threat-assessment-v2026.9.0-release-note.json
+    record: records/threat-assessment-v2026.9.0-release-note.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/release.config
+    record: records/release-config-workspace-tests.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/doc-sync-last-run.json
+    record: records/doc-sync-last-run-20260903.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/doc-sync-20260903-code-to-docs.md
+    record: records/doc-sync-20260903-code-to-docs.prov.yaml
+  - entity: urn:aiwg:artifact:docs/content/releases/v2026.9.0.md
+    record: records/release-v2026.9.0.prov.yaml
+  - entity: urn:aiwg:artifact:packages/graph/src/index.ts
+    record: records/packages-graph-src-index-release-2026.9.0.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/index.ts
+    record: records/packages-core-src-index-release-2026.9.0.prov.yaml
+  - entity: urn:aiwg:artifact:apps/standalone/src/data/project-docs.ts
+    record: records/project-docs-release-2026.9.0.prov.yaml
+  - entity: urn:aiwg:artifact:examples/e2e/research-workbench-provenance.test.ts
+    record: records/examples-e2e-research-workbench-provenance.test.ts.prov.yaml
+  - entity: urn:aiwg:artifact:examples/research-workbench/src/seed.test.ts
+    record: records/examples-research-workbench-src-seed.test.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/react/src/__tests__/useNoteProvenance.test.ts
+    record: records/packages-react-src-tests-useNoteProvenance.test.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/react/src/hooks/useNoteProvenance.ts
+    record: records/packages-react-src-hooks-useNoteProvenance.ts.prov.yaml
+  - entity: urn:aiwg:artifact:examples/research-workbench/src/App.tsx
+    record: records/examples-research-workbench-src-App.tsx.prov.yaml
+  - entity: urn:aiwg:artifact:examples/research-workbench/src/corpus.ts
+    record: records/examples-research-workbench-src-corpus.ts.prov.yaml
+  - entity: urn:aiwg:artifact:examples/research-workbench/src/seed.ts
+    record: records/examples-research-workbench-src-seed.ts.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md
+    record: records/ADR-011-doc-sync-release-2026.7.15.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/architecture/SAD.md
+    record: records/SAD-doc-sync-release-2026.7.15.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/doc-sync-20260729-code-to-docs.md
+    record: records/doc-sync-20260729-code-to-docs.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/doc-sync-last-run.json
+    record: records/doc-sync-last-run-20260729.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/index.ts
+    record: records/packages-core-src-index-release-2026.7.15.prov.yaml
+  - entity: urn:aiwg:artifact:packages/graph/src/index.ts
+    record: records/packages-graph-src-index-release-2026.7.15.prov.yaml
+  - entity: urn:aiwg:artifact:apps/standalone/src/data/project-docs.ts
+    record: records/project-docs-release-2026.7.15.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md
+    record: records/ADR-011-linux-arm64-platform-399.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/README.md
+    record: records/packages-core-schemas-readme-linux-arm64-399.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/platform-contract-receipt.mjs
+    record: records/platform-contract-receipt-linux-arm64-399.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/platform-contract-receipt.test.mjs
+    record: records/platform-contract-receipt-test-linux-arm64-399.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/.last-doc-sync
+    record: records/last-doc-sync-release-2026.7.14.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/doc-sync-audit-2026-07-26.md
+    record: records/doc-sync-audit-2026-07-26.prov.yaml
+  - entity: urn:aiwg:artifact:packages/graph/src/index.ts
+    record: records/packages-graph-src-index-release-2026.7.14.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-to-fortemi.receipt.json
+    record: records/packages-core-core-v1-pglite-to-fortemi-receipt-354.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-fortemi-to-pglite.receipt.json
+    record: records/packages-core-core-v1-fortemi-to-pglite-receipt-354.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/knowledge-shard-core-v1-pglite-self.receipt.json
+    record: records/packages-core-core-v1-pglite-self-receipt-355.prov.yaml
+  - entity: >-
+      urn:aiwg:artifact:packages/core/schemas/knowledge-shard-record-v1-recordstore-self.receipt.json
+    record: records/packages-core-record-v1-recordstore-self-receipt-355.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/README.md
+    record: records/packages-core-schemas-readme-record-v1-355.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/verify-knowledge-shard-contract.mjs
+    record: records/packages-core-verify-knowledge-shard-contract-record-v1-355.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.presence.receipt.json
+    record: records/packages-core-v2-presence-receipt-record-v1-355.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/package.json
+    record: records/packages-core-package-json-record-v1-producer-355.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/generate-record-v1-self-fixture.mjs
+    record: records/packages-core-generate-record-v1-self-fixture-355.prov.yaml
+  - entity: >-
+      urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/recordstore-record-v1-2026.7.13.shard
+    record: records/packages-core-recordstore-record-v1-2026.7.13-shard-355.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/generate-core-v1-self-fixture.mjs
+    record: records/packages-core-generate-core-v1-self-fixture-355.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/shard/core-v1-self-cell.test.ts
+    record: records/packages-core-core-v1-self-cell-test-355.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/shard/fortemi-core-v1-consumer-cell.test.ts
+    record: records/packages-core-fortemi-core-v1-consumer-test-354.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/fortemi-core-v1-2026.7.12.shard
+    record: records/packages-core-fortemi-core-v1-fixture-354.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/shard/fixtures/pglite-core-v1-2026.7.13.shard
+    record: records/packages-core-pglite-core-v1-2026.7.13-shard-355.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-006-public-api-first.md
+    record: records/ADR-006-public-api-first.md.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-010-portable-schema-topology-and-source-of-truth.md
+    record: records/ADR-010-portable-schema-topology-and-source-of-truth.md.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-011-shard-server-conformance-and-version-negotiation.md
+    record: records/ADR-011-fortemi-to-pglite-core-v1-354.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/architecture/SAD.md
+    record: records/SAD.md.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/blob-store.test.ts
+    record: records/packages-core-src-tests-blob-store.test.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/records/record-shard.test.ts
+    record: records/packages-core-src-tests-records-record-shard.test.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/records/record-store.test.ts
+    record: records/packages-core-src-tests-records-record-store.test.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/shard/profile-registry.test.ts
+    record: records/packages-core-src-tests-shard-profile-registry.test.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/shard/schema-validator.test.ts
+    record: records/packages-core-src-tests-shard-schema-validator.test.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/shard/shard-export.test.ts
+    record: records/packages-core-src-tests-shard-shard-export.test.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/shard/shard-import.test.ts
+    record: records/packages-core-src-tests-shard-shard-import.test.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/aiwg-index.ts
+    record: records/packages-core-src-aiwg-index.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/aiwg-index-shard.ts
+    record: records/packages-core-src-aiwg-index-shard.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/aiwg-index.test.ts
+    record: records/packages-core-src-tests-aiwg-index.test.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/shard/aiwg-core-v1-projection.test.ts
+    record: records/packages-core-src-tests-shard-aiwg-core-v1-projection.test.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/blob-store.ts
+    record: records/packages-core-src-blob-store.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/index.ts
+    record: records/packages-core-src-index.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/migrations/0018_nullable_revised_content.ts
+    record: records/packages-core-src-migrations-0018_nullable_revised_content.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/migrations/index.ts
+    record: records/packages-core-src-migrations-index.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/records/idb-record-store.ts
+    record: records/packages-core-src-records-idb-record-store.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/records/index.ts
+    record: records/packages-core-src-records-index.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/records/memory-record-store.ts
+    record: records/packages-core-src-records-memory-record-store.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/records/record-shard.ts
+    record: records/packages-core-src-records-record-shard.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/records/types.ts
+    record: records/packages-core-src-records-types.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/blob-staging.ts
+    record: records/packages-core-src-shard-blob-staging.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/convergence.ts
+    record: records/packages-core-src-shard-convergence.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/field-mapper.ts
+    record: records/packages-core-src-shard-field-mapper.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/index.ts
+    record: records/packages-core-src-shard-index.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/profile-registry.ts
+    record: records/packages-core-src-shard-profile-registry.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/schema-validator.ts
+    record: records/packages-core-src-shard-schema-validator.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/shard-export.ts
+    record: records/packages-core-src-shard-shard-export.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/shard-import.ts
+    record: records/packages-core-src-shard-shard-import.ts.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/shard/types.ts
+    record: records/packages-core-src-shard-types.ts.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/architecture/SAD.md
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/architecture/adr-backend-seam.md
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-binary-http-cycle84.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-citation-gaps.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-binding.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-projection.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-resolution.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-content-cycle88.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-dispatch-cycle87.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-document-type-cycle89.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-execution-cycle90.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-execution-cycle91.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-recovery-cycle86.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-installed-http-cycle81.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-jwt-http-cycle82.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-producer-resolution.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-remote-evidence.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-remote-resolution-cycle80.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-rest-adoption.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-405-scoped-jobs-cycle85.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-core-context-owned-views-cycle96.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-core-realtime-context-cycle92.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-core-selected-memory-context-cycle93.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-core-selected-memory-context-cycle94.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-core-session-browser-cycle95.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:docs/content/guides/search.md
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/package.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/knowledge-shard-v2.implementation.receipt.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/contract.receipt.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: >-
+      urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/evidence-locator.schema.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: >-
+      urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/evidence-resolution-vectors.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: >-
+      urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/evidence-resolution.schema.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: >-
+      urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/evidence-set-vectors.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: >-
+      urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/evidence-set.schema.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/evidence-vectors.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: >-
+      urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/resolution.receipt.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/rest.receipt.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: >-
+      urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/search-rest-vectors.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: >-
+      urn:aiwg:artifact:packages/core/schemas/metadata-search/candidate/1.0.0/search-rest.schema.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/generate-pglite-full-v1-receipt.mjs
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/remote-evidence-resolution.test.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/remote-evidence.test.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/remote-rest-contract.test.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/search-citation-reproduction.test.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/search-evidence-projection.test.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/search-evidence-repository.test.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/search-evidence-set.test.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/search-evidence.test.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/data-backend.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/index.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/remote-contract.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/remote-evidence-resolution.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/remote-search-schema.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/repositories/search-evidence-projection.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/repositories/search-evidence-repository.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/repositories/search-repository.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/repositories/types.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/search-evidence-set.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/search-evidence.ts
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:tools/release/verify-core-package.mjs
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:tools/release/verify-installed-search-evidence.mjs
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:tools/release/verify-installed-search-evidence.test.mjs
+    record: records/lane-b-source-delivery-cycle99.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-source-delivery-cycle99.json
+    record: records/lane-b-source-delivery-cycle99.prov.yaml

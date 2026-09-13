@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-13T00:55:05.642Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-recovery-cycle86.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-13T00:55:05.642Z",
+    "checksum": "sha256:43ca45f813462bb37f4ffbfffa41a9371a82257d50183e0888dcd62339a73583",
+    "size_bytes": 9038,
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "bytes": 20212,
+          "sha256": "a71b1eadae848a9c149f8dcd54fc9cedb7aa1d23299b6892025067cdeb04a41f"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-hosted-recovery-cycle86.json",
+          "bytes": 9038,
+          "sha256": "43ca45f813462bb37f4ffbfffa41a9371a82257d50183e0888dcd62339a73583"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:hosted-recovery:lane-b:086:core",
+    "type": "modification",
+    "started_at": "2026-09-13T00:26:12.327Z",
+    "ended_at": "2026-09-13T00:55:05.642Z",
+    "description": "Bounded active-tenant recovery wired into JobWorker startup and periodic passes; owned database and actual-binary installed-consumer acceptance pass. Full claim and handler execution remain incomplete."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-recovery-cycle86.json",
+      "activity": "urn:aiwg:activity:hosted-recovery:lane-b:086:core"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:hosted-recovery:lane-b:086:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-recovery-cycle86.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-recovery-cycle86.json",
+        "source": "urn:gitea:Fortemi:fortemi:issue:1091"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-recovery-cycle86.json",
+        "source": "urn:gitea:Fortemi:fortemi-react:issue:405"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-recovery-cycle86.json",
+        "source": "urn:aiwg:artifact:docs/architecture/adr/ADR-090-multi-tenancy-model.md"
+      }
+    ]
+  }
+}

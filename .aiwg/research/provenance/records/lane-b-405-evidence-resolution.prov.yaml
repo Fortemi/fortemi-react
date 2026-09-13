@@ -1,0 +1,85 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T16:37:06.786Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-resolution.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T16:37:06.786Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": "packages/core/src/repositories/search-evidence-repository.ts",
+          "sha256": "ff8ff257bf68faff0a56f2705f70ad331174d66b58cd509e56785acddb169ddf"
+        },
+        {
+          "path": "packages/core/src/repositories/search-repository.ts",
+          "sha256": "f02ff4ae9b1cc8853d362fa75544496dc02e22d2a9ba90e3d350e775eb48b5fb"
+        },
+        {
+          "path": "packages/core/src/index.ts",
+          "sha256": "05a83fac7ce63458a1799374eb628327e51b834bcfa6e094081c22600c133a70"
+        },
+        {
+          "path": "packages/core/src/__tests__/search-evidence-repository.test.ts",
+          "sha256": "bffcc3c6af4a14cad99be3c0d0260ed219028da761203c494e8e33c5ef72e0d2"
+        },
+        {
+          "path": "packages/core/src/search-evidence.ts",
+          "sha256": "666fd8e48ea38bace70c33091317bda868e0067a910e23caff0b83e30a42b9e7"
+        },
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "sha256": "1d0301f4a1913baaa99b339723b83049b7cd0b582f47a1381499a95007c012a3"
+        },
+        {
+          "path": ".aiwg/architecture/SAD.md",
+          "sha256": "6dc96660798295f23b58ac6d934d8b415f604a5a3a19224d87aa913d3481ab3a"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-evidence-resolution.json",
+          "sha256": "03c01c7e1e3e3f80048b5e9e2b2091432cce240958323d37c8f626d3d4e0f905"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-evidence:073:core",
+    "type": "modification",
+    "started_at": "2026-09-12T16:20:00Z",
+    "ended_at": "2026-09-12T16:37:06.786Z",
+    "description": "Consumer-local candidate resolver only; no schema/corpus/result envelope/capability promotion. No producer runtime changes or new release."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-resolution.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-evidence:073:core"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-resolution.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-evidence:073:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-resolution.json",
+        "source": "urn:git:commit:f7f09a63e69ec04b5f6b2a8dca5cb5f840ef05f7",
+        "derivation_type": "derives_from"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-resolution.json",
+        "source": "https://git.integrolabs.net/Fortemi/fortemi/issues/1091",
+        "derivation_type": "implements"
+      }
+    ]
+  }
+}

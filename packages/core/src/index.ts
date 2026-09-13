@@ -206,6 +206,7 @@ export type {
   RemoteBackendConfig,
   RemoteBackendPaths,
   RemoteDataBackend,
+  RemoteEvidenceResolutionOptions,
   RemoteSearchOptions,
   RemoteSearchResult,
   RemoteManageNoteResult,
@@ -288,6 +289,11 @@ export { PGliteWorkerClient, TransactionProxy } from './worker/worker-client.js'
 
 export { NotesRepository } from './repositories/notes-repository.js'
 export { SearchRepository } from './repositories/search-repository.js'
+export type { SearchEvidenceScope } from './repositories/search-evidence-repository.js'
+export { bindSearchEvidence, parseSearchEvidenceLocator, resolveSearchEvidence } from './search-evidence.js'
+export type { SearchEvidenceLocator, EvidenceTextUnit, EvidenceSourceIdentity, EvidenceTextSnapshot } from './search-evidence.js'
+export { parseSearchEvidenceSet, createSearchEvidenceSet, mergeSearchEvidenceSets } from './search-evidence-set.js'
+export type { SearchEvidenceSet, SearchEvidenceOmission } from './search-evidence-set.js'
 export { SourceUpsertRepository } from './repositories/source-upsert-repository.js'
 export { LifecyclePurgeRepository } from './repositories/lifecycle-purge-repository.js'
 export { EmbeddingSetsRepository } from './repositories/embedding-sets-repository.js'

@@ -1,0 +1,133 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T20:26:32Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-rest-adoption.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T20:26:32Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": "packages/core/src/remote-search-schema.ts",
+          "sha256": "81edfc4ac8b9f331fa38c5aa64610158417ba1067285759444901b5496fe0348",
+          "bytes": 1591
+        },
+        {
+          "path": "packages/core/src/remote-contract.ts",
+          "sha256": "f607fd67ac02830d535608168bd363523c2db07a62bb8bd56eb0b4faeb829806",
+          "bytes": 11054
+        },
+        {
+          "path": "packages/core/src/__tests__/remote-rest-contract.test.ts",
+          "sha256": "e88ac5ecd49694b3f2a443f3cea0dd33ad5dff1fc3e9e3a126b92db4c261da8a",
+          "bytes": 4211
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/search-rest.schema.json",
+          "sha256": "df4bdf5c61187a66cc90b760ce9ebc71d062688d67858ed519fbd27141db9470",
+          "bytes": 8658
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/search-rest-vectors.json",
+          "sha256": "eac3b3739aedf037671be4cbd4a89f336d405de8cf06ea7ddebae9d1e4e288f2",
+          "bytes": 2630
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/rest.receipt.json",
+          "sha256": "79634446d7b33551595e0acf4d5947550cdb2e2db1680ab5d1eebf0dd648cfb7",
+          "bytes": 1920
+        },
+        {
+          "path": "packages/core/scripts/generate-pglite-full-v1-receipt.mjs",
+          "sha256": "ac4a9d60a75b892419476aa05887ef4ecaaedd6aabda32974567d5d5da096e20",
+          "bytes": 8655
+        },
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+          "sha256": "2d267ad4abb9404d7479b84f24acc39258b0750b71b27040e785d8ab8bad4f97",
+          "bytes": 13477
+        },
+        {
+          "path": "tools/release/verify-installed-search-evidence.mjs",
+          "sha256": "3103e8389d3d1a104fbdb6e051a7ed40884995cc99ceda958a73cbb57b260d03",
+          "bytes": 15654
+        },
+        {
+          "path": "tools/release/verify-installed-search-evidence.test.mjs",
+          "sha256": "15613ee4d31c1e735256b04d4a47572c97f2e508afbb810c3b91571d77d00739",
+          "bytes": 3209
+        },
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "sha256": "2034ea2d47f9e690bcebd5fb646881071fbfce486bc2f283170e4ea13283ae45",
+          "bytes": 14516
+        },
+        {
+          "path": ".aiwg/architecture/SAD.md",
+          "sha256": "f33a4d4329314f63ba69a47740eb20a2a40003b267545f6fa5d7aecea3e93c79",
+          "bytes": 48748
+        },
+        {
+          "path": ".aiwg/architecture/adr-backend-seam.md",
+          "sha256": "35e6e25c16d49961cf8ba85c0f21d986496241946ef577924dc1040edb774a82",
+          "bytes": 14396
+        },
+        {
+          "path": "docs/content/guides/search.md",
+          "sha256": "5a1ad75a37caa00b34b5e6ad6acc0903a3229eaa029f9698fa3863de1d3a6f59",
+          "bytes": 22337
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-rest-adoption.json",
+          "sha256": "f1f58935b904f6b2ca54268e0b9f9f4b662ca3b5a998fa02a7191ff1e711ac32",
+          "bytes": 12000
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-rest-adoption:078:core",
+    "type": "modification",
+    "started_at": "2026-09-12T19:48:00Z",
+    "ended_at": "2026-09-12T20:26:32Z",
+    "description": "Adopt strict producer candidate REST validation in Core, retain request subset and historical receipts, verify source and installed-package boundaries without promoting live/released acceptance."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-rest-adoption.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-rest-adoption:078:core"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-rest-adoption.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-rest-adoption:078:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-rest-adoption.json",
+        "source": "urn:git:commit:f7f09a63e69ec04b5f6b2a8dca5cb5f840ef05f7",
+        "derivation_type": "derives_from"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-rest-adoption.json",
+        "source": "https://git.integrolabs.net/Fortemi/fortemi/issues/1091",
+        "derivation_type": "implements"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-rest-adoption.json",
+        "source": "https://git.integrolabs.net/Fortemi/fortemi-react/issues/405",
+        "derivation_type": "implements"
+      }
+    ]
+  }
+}

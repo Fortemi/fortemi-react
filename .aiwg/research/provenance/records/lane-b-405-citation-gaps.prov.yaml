@@ -1,0 +1,66 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T15:51:17.389Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-citation-gaps.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T15:51:17.389Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": "packages/core/src/__tests__/search-citation-reproduction.test.ts",
+          "sha256": "f677000a4bba30d31e31d62ea9f1570560c7e7f60400e6a58e24f2cf40e090d8"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-citation-gaps.json",
+          "sha256": "e8dcb54a917e832bfcbcee15db728e1f0aba758cb7914b93bb73e24947f05a84"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:generation:lane-b-405:071",
+    "type": "generation",
+    "started_at": "2026-09-12T15:39:00Z",
+    "ended_at": "2026-09-12T15:51:17.389Z",
+    "description": "Executable citation gap reproduction; no product correction or capability promotion."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-citation-gaps.json",
+      "activity": "urn:aiwg:activity:generation:lane-b-405:071"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:generation:lane-b-405:071",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-citation-gaps.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-citation-gaps.json",
+        "source": "urn:git:commit:f7f09a63e69ec04b5f6b2a8dca5cb5f840ef05f7",
+        "derivation_type": "tests"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-citation-gaps.json",
+        "source": "https://git.integrolabs.net/Fortemi/fortemi/issues/1091",
+        "derivation_type": "tests"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-citation-gaps.json",
+        "source": "https://git.integrolabs.net/Fortemi/fortemi-react/issues/405",
+        "derivation_type": "tests"
+      }
+    ]
+  }
+}

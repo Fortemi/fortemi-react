@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-13T02:56:58.228Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-execution-cycle90.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-13T02:56:58.228Z",
+    "checksum": "sha256:8f8109d53e689723a1558c439de0dd29132f4f92f833f27b0a2be83248ce5d23",
+    "size_bytes": 8732,
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "bytes": 22851,
+          "sha256": "ade880ae306c04e40b6af22a87040702f759b3fe2e6be389c2eb68e4bb4ab567"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-hosted-execution-cycle90.json",
+          "bytes": 8732,
+          "sha256": "8f8109d53e689723a1558c439de0dd29132f4f92f833f27b0a2be83248ce5d23"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:hosted-execution:lane-b:090:core",
+    "type": "modification",
+    "started_at": "2026-09-13T02:36:23.804Z",
+    "ended_at": "2026-09-13T02:56:58.228Z",
+    "description": "Explicit hosted registry, bounded claim drain, attempt-fenced lifecycle callbacks and scoped event bridge; native worker and actual-binary document-type execution. Other handlers and full lifecycle/consumer/release gates remain."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-execution-cycle90.json",
+      "activity": "urn:aiwg:activity:hosted-execution:lane-b:090:core"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:hosted-execution:lane-b:090:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-execution-cycle90.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-execution-cycle90.json",
+        "source": "urn:gitea:Fortemi:fortemi:issue:1091"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-execution-cycle90.json",
+        "source": "urn:gitea:Fortemi:fortemi-react:issue:405"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-execution-cycle90.json",
+        "source": "urn:aiwg:artifact:docs/architecture/adr/ADR-090-multi-tenancy-model.md"
+      }
+    ]
+  }
+}

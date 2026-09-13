@@ -1,0 +1,141 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T17:42:08.102Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-projection.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T17:42:08.102Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": "packages/core/src/repositories/search-repository.ts",
+          "sha256": "80014ff5a8354472e7fc999e58440ef8d23b83e7f859612a15fbdd71c9982382"
+        },
+        {
+          "path": "packages/core/src/repositories/search-evidence-projection.ts",
+          "sha256": "81388bba98d411fc14215691b70e82dc637a9c7f3a0308aa2abca9f57f8973c5"
+        },
+        {
+          "path": "packages/core/src/search-evidence-set.ts",
+          "sha256": "7549ed2d391b7770797dbb0839467783d2b885e3e1736e3509ea5205e0632c95"
+        },
+        {
+          "path": "packages/core/src/data-backend.ts",
+          "sha256": "82246d1edeec42fd5014ca1f3cea6cf545b8c0134ad82e27a50269d70cbd9377"
+        },
+        {
+          "path": "packages/core/src/index.ts",
+          "sha256": "b915e3369e6e5133b5cdbf50a57e88b048bb4f818fab072d16e6b35d6465d76a"
+        },
+        {
+          "path": "packages/core/src/repositories/types.ts",
+          "sha256": "3066433bdd6a442540d4aa1d2cdadf51ea93a037ca11ab816629d7976c5fc986"
+        },
+        {
+          "path": "packages/core/src/__tests__/search-evidence-set.test.ts",
+          "sha256": "03c9cf47b02a2a11c0f8a11163b0f45b9be17d2d09cdffa2689df74a61a62f6a"
+        },
+        {
+          "path": "packages/core/src/__tests__/search-evidence-projection.test.ts",
+          "sha256": "f830ad17df26757b2f98ca1831e2cc293c148e11d3150b08347af2bfb8965481"
+        },
+        {
+          "path": "packages/core/src/__tests__/search-citation-reproduction.test.ts",
+          "sha256": "73c974dd2241771b439ef626fadfd27a3d56681679ed4ca615bac1f9e2400505"
+        },
+        {
+          "path": "packages/core/package.json",
+          "sha256": "f2d3f6c928e253a3a9f609883e29c8f3d6372782713b5542c5ffa35a8c7050e6"
+        },
+        {
+          "path": "packages/core/scripts/generate-pglite-full-v1-receipt.mjs",
+          "sha256": "7fec3c9ab4c5a84cd6f670293b78db521caa9c2a9f9c94434fbdb79f94f4be91"
+        },
+        {
+          "path": "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+          "sha256": "944a9be3fccc067b9f20c8a42e1a56b6a48b04a28c92629972b54f4b7b639083"
+        },
+        {
+          "path": "tools/release/verify-core-package.mjs",
+          "sha256": "66731509d630639fec379f2002a7dd49632243892369b00a33471efba5818080"
+        },
+        {
+          "path": "tools/release/verify-installed-search-evidence.mjs",
+          "sha256": "3ac1c3c6dda01224c39b7c07bacf2e102d12653372b5e09284b69bc4696fa391"
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/contract.receipt.json",
+          "sha256": "970335ba6c711de51ef03cb852044f25b596c1fdfcc85272cb6da62751a0a536"
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/evidence-set.schema.json",
+          "sha256": "da7e5d41bd563cb2cfe424cf7dfa92007a865ee0e1a9a4832ef669039d80717e"
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/evidence-set-vectors.json",
+          "sha256": "b84061ee252d2ee25d744111d2a04dfcd2c490274d4285bac31f4bd0e91e47d7"
+        },
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "sha256": "57aaecbe2151b8dc12c8d29adbe1bb82a005f45b132e2928ac37771fb7fd5b88"
+        },
+        {
+          "path": ".aiwg/architecture/SAD.md",
+          "sha256": "7975dfdd6463dd4cf0cb9642eaf43f3f3aea48f99c703151c55a76c6dac9b123"
+        },
+        {
+          "path": "docs/content/guides/search.md",
+          "sha256": "e2b05309c361bfb9f4faccdb4d96f62abb2d7404fad4305fb6edb82b0d7ada38"
+        },
+        {
+          "path": "tools/release/verify-installed-search-evidence.test.mjs",
+          "sha256": "02df8912d0b2c849b22aef140ecd5c8587e4dd3e155548943baa4994aef27c7d"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-evidence-projection.json",
+          "sha256": "ba1fb0db9aaa43356811acd7624a0e16646b75e8dd92994a2ee59fa62f5f936a"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-evidence:074:core",
+    "type": "modification",
+    "started_at": "2026-09-12T16:42:00Z",
+    "ended_at": "2026-09-12T17:42:08.102Z",
+    "description": "Uncommitted local candidate and clean-installed synthetic-vector acceptance only; not producer runtime, hosted/inference or released suite acceptance."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-projection.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-evidence:074:core"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-projection.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-evidence:074:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-projection.json",
+        "source": "urn:git:commit:f7f09a63e69ec04b5f6b2a8dca5cb5f840ef05f7",
+        "derivation_type": "derives_from"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-projection.json",
+        "source": "https://git.integrolabs.net/Fortemi/fortemi/issues/1091",
+        "derivation_type": "implements"
+      }
+    ]
+  }
+}

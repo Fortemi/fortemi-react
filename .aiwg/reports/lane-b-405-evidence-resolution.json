@@ -1,0 +1,71 @@
+{
+  "at": "2026-09-12T16:37:06.786Z",
+  "status": "LOCAL_RESOLVER_PASS_SEARCH_PROJECTION_PENDING",
+  "issues": [
+    "Fortemi/fortemi#1091",
+    "Fortemi/fortemi-react#405"
+  ],
+  "authority": {
+    "repository": "Fortemi/fortemi",
+    "issue": 1091,
+    "baseCommit": "a701847db779a0a3adfa36a09dfa1055a10a0a0a",
+    "sourceState": "uncommitted candidate; base is not the contract revision",
+    "path": "contracts/metadata-search/candidate/1.0.0/",
+    "files": {
+      "predicates.schema.json": "e325707ce20abb88ef3a8f4bbb0d02ab09501b1ffe9b48b0c92a96e97dda00c3",
+      "predicate-vectors.json": "df9e129cab4708db71c3e22f87efd252fbcac144daa45a53ee1716f4a1a05ae7",
+      "sql-scope-vectors.json": "dcd35298a3bc485a6f1c87c6c87f136ee98121dad3f2b1c8b590b2e5381aa4d5",
+      "evidence-locator.schema.json": "cd8427c507bca1a08bdb68da0a5d2759d1d7805401db3c00372ab249652efb7a",
+      "evidence-vectors.json": "b532a4fa7697bdfc87e8541575fcee7c94a5b5ac53e4a6472438c49247e6b266"
+    }
+  },
+  "verification": {
+    "localResolverTests": 45,
+    "bindingAndMetadataTests": 153,
+    "surroundingSearchTests": 689,
+    "greenTotal": 887,
+    "currentCitationControl": 1,
+    "currentCitationFailures": 6,
+    "typecheck": true,
+    "focusedLint": true,
+    "candidateAuthorityBytesUnchanged": true
+  },
+  "behavior": [
+    "Single statement checks current note, exact unit ID/index, local scope and selected source tuple.",
+    "Default local source tenant excludes foreign sources; native no-source notes remain local.",
+    "Only tenant/archive/visibility/typed metadata scope supported; malformed or unknown fields reject before I/O.",
+    "SQL withholds raw text above16MiB, returning accepted text via BOM-preserving UTF-8 hex transport.",
+    "Resolver returns exact cited byte range or uniform unavailable for stale/missing/deleted/purged/out-of-scope text."
+  ],
+  "failuresRetained": [
+    "Initial43 failures came from missing archive fixture FK; archive fixture corrected.",
+    "Corrected190/196 exposed real leading-BOM loss through ordinary PGlite decoding and one invalid pending attachment fixture status. Bounded UTF-8 hex transport and uploaded status fixed these without weakening assertions.",
+    "Six actual search citation failures reproduced unchanged on current candidate source."
+  ],
+  "remaining": [
+    "Producer result-envelope authority and query/fusion/MMR/dedup matched-unit retention.",
+    "Consumer search projection; all six actual citation failures remain.",
+    "Producer database resolution, hosted authorization/cache/full lifecycle and clean installed/released every-consumer acceptance.",
+    "Next Core release after required main/source/release gates; existing2026.9.5 missing publication recovery and full lane release sweep."
+  ],
+  "claims": {
+    "fullEvidenceLocators": false,
+    "searchCitationAcceptance": false,
+    "hostedAuthorization": false,
+    "promotedContract": false,
+    "suiteParity": false
+  },
+  "scope": "Consumer-local candidate resolver only; no schema/corpus/result envelope/capability promotion. No producer runtime changes or new release.",
+  "repository": "core",
+  "parent": "f7f09a63e69ec04b5f6b2a8dca5cb5f840ef05f7",
+  "sourceState": "Uncommitted candidate WIP; adapter parent separately merged as PR455.",
+  "source": {
+    "packages/core/src/repositories/search-evidence-repository.ts": "ff8ff257bf68faff0a56f2705f70ad331174d66b58cd509e56785acddb169ddf",
+    "packages/core/src/repositories/search-repository.ts": "f02ff4ae9b1cc8853d362fa75544496dc02e22d2a9ba90e3d350e775eb48b5fb",
+    "packages/core/src/index.ts": "05a83fac7ce63458a1799374eb628327e51b834bcfa6e094081c22600c133a70",
+    "packages/core/src/__tests__/search-evidence-repository.test.ts": "bffcc3c6af4a14cad99be3c0d0260ed219028da761203c494e8e33c5ef72e0d2",
+    "packages/core/src/search-evidence.ts": "666fd8e48ea38bace70c33091317bda868e0067a910e23caff0b83e30a42b9e7",
+    ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md": "1d0301f4a1913baaa99b339723b83049b7cd0b582f47a1381499a95007c012a3",
+    ".aiwg/architecture/SAD.md": "6dc96660798295f23b58ac6d934d8b415f604a5a3a19224d87aa913d3481ab3a"
+  }
+}

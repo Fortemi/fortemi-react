@@ -1,0 +1,85 @@
+{
+  "at": "2026-09-12T15:51:17.389Z",
+  "status": "REPRODUCED_NOT_FIXED",
+  "issues": [
+    "Fortemi/fortemi#1091",
+    "Fortemi/fortemi-react#405"
+  ],
+  "parent": "f7f09a63e69ec04b5f6b2a8dca5cb5f840ef05f7",
+  "branch": "fix/405-search-citations",
+  "tests": {
+    "total": 7,
+    "passed": 1,
+    "failed": 6,
+    "failuresAreAssertions": true
+  },
+  "cases": [
+    {
+      "name": "control: lexical search returns the correct note and highlights its body match",
+      "status": "passed"
+    },
+    {
+      "name": "body citation supplies an explicit span instead of an unbounded current pointer",
+      "status": "failed"
+    },
+    {
+      "name": "title-only matches are not attributed to unrelated current content",
+      "status": "failed"
+    },
+    {
+      "name": "attachment-only matches retain their attachment source",
+      "status": "failed"
+    },
+    {
+      "name": "semantic retains the winning nonzero embedding chunk",
+      "status": "failed"
+    },
+    {
+      "name": "hybrid retains the winning nonzero embedding chunk",
+      "status": "failed"
+    },
+    {
+      "name": "different source text must not reuse the same citation locator",
+      "status": "failed"
+    }
+  ],
+  "consumerFiles": {
+    "packages/core/src/__tests__/search-citation-reproduction.test.ts": "f677000a4bba30d31e31d62ea9f1570560c7e7f60400e6a58e24f2cf40e090d8",
+    "packages/core/src/repositories/search-repository.ts": "533d214ae71c9e2de9fe477da4842363b63298bc7f087a85b9ebf2d5df7a9ea7",
+    "packages/core/src/repositories/metadata-predicates.ts": "168021f899ce5c6eb90362f8c50321403b4ae2d2ba992e23685a5a94fbbce313"
+  },
+  "producer": {
+    "root": "/var/tmp/lane-b-server-1147",
+    "base": "a701847db779a0a3adfa36a09dfa1055a10a0a0a",
+    "files": {
+      "crates/matric-core/src/models.rs": "c5015606289c4e64cbe2ff511e7bec9eefd2de33aa0e872111e63ef666ad4ae3",
+      "crates/matric-db/src/search_candidates.rs": "bd6e4ec9bc5790c66fc2460f2678959fadd9a78369fa7fbafca447ed7988fef6",
+      "crates/matric-search/src/rrf.rs": "c33d6b6c7348171676e701e67e1f070faaf6c075a322bea561ff25bc17809319",
+      "contracts/metadata-search/candidate/1.0.0/predicates.schema.json": "e325707ce20abb88ef3a8f4bbb0d02ab09501b1ffe9b48b0c92a96e97dda00c3"
+    },
+    "changedThisCycle": false
+  },
+  "findings": [
+    "Body locators have no span; the Unicode body fixture currently establishes absence only, not coordinate correctness.",
+    "A title-only hit and an attachment-only hit are each labeled current/index0 despite no matching text in the current body.",
+    "Real vector ordering chooses stored embedding winner/index7, but semantic and hybrid locators report only current/index0.",
+    "Changing current source text changes the snippet but leaves the entire locator byte-equivalent; no content revision/digest distinguishes them.",
+    "Producer SearchHit lacks locator fields; search_candidates projection discards selected embedding identity/text, and RRF preserves only snippet/title/tags."
+  ],
+  "nextRequiredContractWork": [
+    "Authority-owned request/result/evidence schema and corpus, including exact coordinate unit, half-open bounds and source-text identity.",
+    "Stable note and text-unit identifiers for current/title/attachment/embedding; content revision or digest binding, stale-reference behavior, and deterministic source deduplication.",
+    "Retain actual matched units through lexical/vector retrieval, fusion, MMR, deduplication, pagination and adapters. Do not fabricate current/index0 or reconstruct coordinates from rendered HTML.",
+    "Resolve evidence under the same tenant/archive/auth/deletion/purge policy; source identifiers must not leak raw external keys.",
+    "Common Unicode, multiple-source, content-update, deletion/purge, authorization, cache and clean-installed/released producer-consumer fixtures; immutable authority pins and receipt updates.",
+    "Keep complete evidenceLocators false until the executable end-to-end contract is qualified. These seven tests are a gap reproduction, not the full acceptance matrix."
+  ],
+  "fixtureCorrection": "Initial semantic/hybrid calls passed the vector in options. Corrected to the documented third argument; initial output/source retained. All six final failures occur at product assertions.",
+  "boundaries": [
+    "No production implementation changed; no authority schema or consumer pin promoted.",
+    "No CI/release/merge claim from RED tests; preserve PR455 source and live CI.",
+    "Synthetic vectors only; no model/GPU/shared endpoint.",
+    "Full Lane B original scope and suite NO-GO remain."
+  ],
+  "evidence": ".aiwg/working/lane-b/evidence/lane-b-delivery-20260912-cycle71/"
+}

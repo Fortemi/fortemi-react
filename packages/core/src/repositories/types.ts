@@ -1,5 +1,6 @@
 import type { EmbeddingSetSelector } from './embedding-sets-repository.js'
 import type { EvidenceLocator, MetadataPredicate } from './metadata-predicates.js'
+import type { SearchEvidenceSet } from '../search-evidence-set.js'
 
 /**
  * Shared types for repository layer.
@@ -103,6 +104,8 @@ export interface SearchResult {
   tags: string[]
   has_embedding?: boolean
   locators?: EvidenceLocator[]
+  /** Candidate matched-unit citations, separate from legacy source projections. */
+  evidence?: SearchEvidenceSet
 }
 
 export interface SearchFacets {

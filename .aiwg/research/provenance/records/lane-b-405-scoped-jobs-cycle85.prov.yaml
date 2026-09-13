@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-13T00:18:42.404Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-scoped-jobs-cycle85.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-13T00:18:42.404Z",
+    "checksum": "sha256:168d009ab2ecfcd533f1aa98ad5746d6fd4629d1dd3754c29aa821eb4606a634",
+    "size_bytes": 4498,
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "bytes": 19657,
+          "sha256": "c3acebcd92e109adf48e930d5c12d62f91c234a2bfdc837709d56791abea06e7"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-scoped-jobs-cycle85.json",
+          "bytes": 4498,
+          "sha256": "168d009ab2ecfcd533f1aa98ad5746d6fd4629d1dd3754c29aa821eb4606a634"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:scoped-jobs:lane-b:085:core",
+    "type": "modification",
+    "started_at": "2026-09-12T23:52:07.751Z",
+    "ended_at": "2026-09-13T00:18:42.404Z",
+    "description": "Tenant-scoped queue implementation and attempt UUID fencing with owned bounded acceptance; production worker integration remains incomplete."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-scoped-jobs-cycle85.json",
+      "activity": "urn:aiwg:activity:scoped-jobs:lane-b:085:core"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:scoped-jobs:lane-b:085:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-scoped-jobs-cycle85.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-scoped-jobs-cycle85.json",
+        "source": "urn:gitea:Fortemi:fortemi:issue:1091"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-scoped-jobs-cycle85.json",
+        "source": "urn:gitea:Fortemi:fortemi-react:issue:405"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-scoped-jobs-cycle85.json",
+        "source": "urn:aiwg:artifact:docs/architecture/adr/ADR-090-multi-tenancy-model.md"
+      }
+    ]
+  }
+}

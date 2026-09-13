@@ -1,0 +1,85 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-12T16:10:58.402Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-binding.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-12T16:10:58.402Z",
+    "attributes": {
+      "artifacts": [
+        {
+          "path": "packages/core/src/search-evidence.ts",
+          "sha256": "666fd8e48ea38bace70c33091317bda868e0067a910e23caff0b83e30a42b9e7"
+        },
+        {
+          "path": "packages/core/src/__tests__/search-evidence.test.ts",
+          "sha256": "6982b9d8213225d7ae345653f41025c16bf5dc1e31ad36d1d9c6f54199bb5580"
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/evidence-locator.schema.json",
+          "sha256": "cd8427c507bca1a08bdb68da0a5d2759d1d7805401db3c00372ab249652efb7a"
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/evidence-vectors.json",
+          "sha256": "b532a4fa7697bdfc87e8541575fcee7c94a5b5ac53e4a6472438c49247e6b266"
+        },
+        {
+          "path": "packages/core/schemas/metadata-search/candidate/1.0.0/contract.receipt.json",
+          "sha256": "8315410caeb7818c73b787886ff4aebb8fc7d5208808685756b585ccba85c214"
+        },
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "sha256": "ed41aec7fff48e688f62452fc7ff46034f7c6662d5626de5185da7d650934bfd"
+        },
+        {
+          "path": ".aiwg/architecture/SAD.md",
+          "sha256": "089cc41d99f73f3551485d14343ad07bba0b64ce9e59e4ac1b6a382075f2c011"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-evidence-binding.json",
+          "sha256": "85c141984c1d81b42176cb86eff45c9b43ad614565c32ff4a2e5f9f823ff86e4"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:modification:lane-b-evidence:072:core",
+    "type": "modification",
+    "started_at": "2026-09-12T15:57:00Z",
+    "ended_at": "2026-09-12T16:10:58.402Z",
+    "description": "Pure binding contract and runtime helpers. No database resolver, access grant, search-result field, existing locator type replacement or backend capability promotion."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "name": "Codex",
+    "type": "ai_assistant"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-binding.json",
+      "activity": "urn:aiwg:activity:modification:lane-b-evidence:072:core"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-binding.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:modification:lane-b-evidence:072:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-binding.json",
+        "source": "urn:git:commit:f7f09a63e69ec04b5f6b2a8dca5cb5f840ef05f7",
+        "derivation_type": "derives_from"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-evidence-binding.json",
+        "source": "https://git.integrolabs.net/Fortemi/fortemi/issues/1091",
+        "derivation_type": "implements"
+      }
+    ]
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-13T02:22:32.797Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-document-type-cycle89.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-13T02:22:32.797Z",
+    "checksum": "sha256:c1b5b167490a2b9dac6d780f5f73141cd57dcee666ffa1f1e9faf42cabf5bff1",
+    "size_bytes": 9513,
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "bytes": 22247,
+          "sha256": "0328fd08cf4987d3998ec13c0e58cad492075a556964929ff5d187b95396d5f7"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-hosted-document-type-cycle89.json",
+          "bytes": 9513,
+          "sha256": "c1b5b167490a2b9dac6d780f5f73141cd57dcee666ffa1f1e9faf42cabf5bff1"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:hosted-document-type:lane-b:089:core",
+    "type": "modification",
+    "started_at": "2026-09-13T01:56:13.906Z",
+    "ended_at": "2026-09-13T02:22:32.797Z",
+    "description": "Pool-free document-type handler, scoped atomic assignment/access/provenance and replay, tenant/archive native follow-up/statistics fixes; actual binary regression. Production registry/claim drain/events remain incomplete."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-document-type-cycle89.json",
+      "activity": "urn:aiwg:activity:hosted-document-type:lane-b:089:core"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:hosted-document-type:lane-b:089:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-document-type-cycle89.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-document-type-cycle89.json",
+        "source": "urn:gitea:Fortemi:fortemi:issue:1091"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-document-type-cycle89.json",
+        "source": "urn:gitea:Fortemi:fortemi-react:issue:405"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-document-type-cycle89.json",
+        "source": "urn:aiwg:artifact:docs/architecture/adr/ADR-090-multi-tenancy-model.md"
+      }
+    ]
+  }
+}

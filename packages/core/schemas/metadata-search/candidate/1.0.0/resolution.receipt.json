@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "status": "candidate-unpublished",
+  "authority": {
+    "repository": "Fortemi/fortemi",
+    "issue": 1091,
+    "baseCommit": "a701847db779a0a3adfa36a09dfa1055a10a0a0a",
+    "sourceState": "uncommitted candidate; base is not contract revision",
+    "path": "contracts/metadata-search/candidate/1.0.0/",
+    "files": {
+      "evidence-resolution.schema.json": "92c0cd616d26fad83e56e602d8393a8b6135175c849284d97721da146d923723",
+      "evidence-resolution-vectors.json": "3d217a489a29be0eb152a8efb4f569e7942d4ae2af921218e295c0dba8a38aea",
+      "predicates.schema.json": "e325707ce20abb88ef3a8f4bbb0d02ab09501b1ffe9b48b0c92a96e97dda00c3",
+      "evidence-locator.schema.json": "cd8427c507bca1a08bdb68da0a5d2759d1d7805401db3c00372ab249652efb7a"
+    },
+    "openapi": {
+      "path": "contracts/openapi/openapi.yaml",
+      "sha256": "240d4b16916d7218119937255c0646da8db3ea50bb4313137be9f2f9c42f1b01"
+    }
+  },
+  "consumer": {
+    "repository": "Fortemi/fortemi-react",
+    "issue": 405,
+    "backend": "remote",
+    "test": "src/__tests__/remote-evidence-resolution.test.ts",
+    "operation": "resolveEvidence(locator, { metadataPredicates?, includeArchived?, signal? })",
+    "endpoint": "POST /api/v1/search/evidence/resolve",
+    "requestByteLimit": 65536,
+    "unitByteLimit": 16777216,
+    "deadlineMilliseconds": 30000,
+    "scope": "Existing transport headers carry authorized tenant/archive context; caller-supplied tenant/archive/visibility fields reject before I/O.",
+    "response": "Strict schema, well-formed UTF-8 and exact span byte length. Producer checks current full-text digest and policy; partial text cannot independently prove that digest.",
+    "transport": "No-store request/response, redirect error, bounded streamed JSON, abort and deadline, no detail rebinding or retained server error body."
+  },
+  "claims": {
+    "promotedContract": false,
+    "fullIssueAcceptance": false,
+    "suiteParity": false,
+    "evidenceLocators": false,
+    "liveProducerAcceptance": false,
+    "publishedRuntimeAcceptance": false
+  },
+  "priorReceipt": "contract.receipt.json and rest.receipt.json remain unchanged historical evidence."
+}

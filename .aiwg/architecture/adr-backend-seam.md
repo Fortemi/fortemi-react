@@ -7,6 +7,21 @@
 
 ## Context
 
+Cycle80 adds the explicit remote `resolveEvidence` candidate operation without
+promoting `evidenceLocators`. Separate resolution authority/receipt, strict
+pre-I/O validation, bounded no-store transport and a 30-second cancellation
+boundary prevent detail-text rebinding or arbitrary scope forwarding. This is
+not a new universal local/remote scope contract: configured remote headers own
+tenant/archive selection, and the producer owns current authorization/digest
+checks. Existing remote search options remain unchanged. See ADR-016.
+
+Cycle78 search clarification: the remote adapter validates producer-owned
+candidate REST schemas before projection/detail I/O, then enforces query, total,
+note, chain and evidence semantics. Its separate REST receipt does not replace
+historical predicate/evidence receipts or widen negotiated capabilities. The
+supported query subset and local100-hit bound remain; unsupported server options
+still fail before I/O. See ADR-016 for the full candidate acceptance boundaries.
+
 A host app should code against **one uniform data-access surface**, with the backing store technology-agnostic and swappable by need. fortemi-react already has most of the pieces, but the backend abstraction sits at the wrong altitude:
 
 - `StorageBackend extends DatabaseClient` (`query`/`exec`/`transaction`) is a **SQL-client seam**. It fits PGlite-local and PGlite-worker, and could fit a remote SQL proxy — but a **static-file backend (#189) cannot be a `DatabaseClient`**: it has no SQL engine. It answers *operations* (list/get/search) by reading component files, not by running SQL.
@@ -79,6 +94,16 @@ The app declares the features it needs; the selector returns the lightest backen
 - **Write/merge over static files** — stays PGlite/remote only.
 
 ## Extension point (remote backend readiness)
+
+Cycle76 candidate amendment for Core405/Fortemi1091: remote search now validates
+present evidence envelopes against the shared candidate sub-contract before any
+detail enrichment, and forwards immutable matched-unit snapshots independently
+of display metadata. All search/semantic paths preserve omission reasons and
+native IDs/indexes; absent support stays absent, malformed/foreign evidence fails
+with content-free invalid-response. Full REST/bundled OpenAPI, remote database
+resolution and live/released acceptance remain required. Synthetic response and
+clean-package gates are explicitly not hosted authorization. See ADR-016;
+complete evidenceLocators capability remains false.
 
 The interface is operation-shaped, not SQL-shaped, specifically so the remote backend is *just another implementation*: its `search`/`getNote`/`manageNote` proxy to HTTP endpoints that already share the JSON format-parity the package guarantees. Optional ops (`semantic?`, `manageNote?`) are capability-gated, so a backend implements only what its tier supports without interface churn.
 

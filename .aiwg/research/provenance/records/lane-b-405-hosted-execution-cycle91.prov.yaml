@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-13T04:03:55.126Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-execution-cycle91.json",
+    "type": "artifact_bundle",
+    "created_at": "2026-09-13T04:03:55.126Z",
+    "checksum": "sha256:817cc82bef2e1eb3b379b540ce332a0474bc2dc5e624dc768064f519eda3cae1",
+    "size_bytes": 10488,
+    "attributes": {
+      "artifacts": [
+        {
+          "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+          "bytes": 23862,
+          "sha256": "110ac17fc17c68bd0d9ee7864a42479db72d45a57f7fe1cbab12c584160d1419"
+        },
+        {
+          "path": ".aiwg/reports/lane-b-405-hosted-execution-cycle91.json",
+          "bytes": 10488,
+          "sha256": "817cc82bef2e1eb3b379b540ce332a0474bc2dc5e624dc768064f519eda3cae1"
+        }
+      ]
+    }
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:hosted-execution:lane-b:091:core",
+    "type": "modification",
+    "started_at": "2026-09-13T03:01:45.996Z",
+    "ended_at": "2026-09-13T04:03:55.126Z",
+    "description": "Typed retry classification, bounded fenced note completion snapshot and canonical hosted SSE filtering; real HotM parser live/seeded replay with owned adapter. Fixed bounded HTTP fixture connection profile. Full application/lifecycle/consumer/release gates remain."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-execution-cycle91.json",
+      "activity": "urn:aiwg:activity:hosted-execution:lane-b:091:core"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:hosted-execution:lane-b:091:core",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-execution-cycle91.json",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasDerivedFrom": [
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-execution-cycle91.json",
+        "source": "urn:gitea:Fortemi:fortemi:issue:1091"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-execution-cycle91.json",
+        "source": "urn:gitea:Fortemi:fortemi-react:issue:405"
+      },
+      {
+        "entity": "urn:aiwg:artifact:.aiwg/reports/lane-b-405-hosted-execution-cycle91.json",
+        "source": "urn:aiwg:artifact:docs/architecture/adr/ADR-090-multi-tenancy-model.md"
+      }
+    ]
+  }
+}

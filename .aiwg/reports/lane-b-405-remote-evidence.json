@@ -1,0 +1,238 @@
+{
+  "at": "2026-09-12T19:08:30.131Z",
+  "status": "REMOTE_CANDIDATE_EVIDENCE_PASS",
+  "issues": [
+    "Fortemi/fortemi-react#405",
+    "Fortemi/fortemi#1091"
+  ],
+  "verification": {
+    "focused": 194,
+    "surrounding": 684,
+    "portable": 1845,
+    "total": 2723,
+    "testFiles": 38,
+    "portableFiles": 27,
+    "sourceFiles": 570,
+    "verifierTests": 4,
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "installed": {
+      "binding": 55,
+      "envelope": 36,
+      "storage": 8,
+      "remote": 7
+    },
+    "candidate": {
+      "path": "/home/roctinam/dev/fortemi-suite/.aiwg/working/lane-b/evidence/lane-b-delivery-20260912-cycle76/candidate-package/fortemi-core-2026.9.5.tgz",
+      "sha256": "86a043702850999028deb61d6e4dc174b77d7ba513345f4dc6c9e9f1d4a7c098"
+    }
+  },
+  "behavior": [
+    "Remote parser validates present candidate evidence with strict same-note semantics before any detail enrichment; invalid envelopes yield bounded invalid-response without input or cause.",
+    "All search modes, both semantic entry points and explicit degradation reports forward immutable sets independently of display metadata; absence stays absent.",
+    "Detail changes never rebind ranked text. Repeated note hits retain separate evidence while sharing bounded detail enrichment.",
+    "RED corpus:22 failures/one legacy control; all23cases pass after the correction. Synthetic evidence atop unchanged historical producer envelope is not a new live producer capture.",
+    "Current implementation receipt includes remote parser/regression dependencies. Full portable inventory and clean-installed public API passed; historical receipts/fixtures and candidate authority bytes unchanged."
+  ],
+  "remaining": [
+    "Full producer request/result/EnhancedSearchHit authority and offline bundled OpenAPI; current candidate reference is external/unpublished.",
+    "Authorized producer database resolver, full lifecycle/purge/cache/JWT/JWKS, native pg_bigm and query-cost plans.",
+    "Every declared consumer, fresh producer-to-installed-consumer HTTP and released cross-runtime matrix, immutable authority pins and delivery.",
+    "Original20issue lane release sweep and existing partial-publication recovery; prior holds/escalations/authorization questions remain."
+  ],
+  "claims": {
+    "completeEvidenceLocators": false,
+    "promotedContract": false,
+    "freshLiveProducerAcceptance": false,
+    "hostedAuthorization": false,
+    "releasedCitationAcceptance": false,
+    "suiteParity": false
+  },
+  "cleanup": {
+    "jobs": 8,
+    "cgroupsAbsent": 8,
+    "failedMarkersCleared": 1,
+    "peakBytes": 1756164096,
+    "sharedInferenceChanged": false,
+    "modelLoaded": false,
+    "gpuUsed": false
+  },
+  "releaseInventory": [
+    {
+      "repo": "fortemi",
+      "observedAt": "2026-09-12 18:55:29 UTC",
+      "id": 2324,
+      "tag": "v2026.9.9",
+      "published": "2026-09-09T22:25:15Z",
+      "assets": [
+        {
+          "id": 6233,
+          "name": "SHA256SUMS.txt",
+          "size": 400
+        },
+        {
+          "id": 6231,
+          "name": "matric-api-aarch64-apple-darwin",
+          "size": 61031584
+        },
+        {
+          "id": 6230,
+          "name": "matric-api-aarch64-unknown-linux-gnu",
+          "size": 68659392
+        },
+        {
+          "id": 6232,
+          "name": "matric-api-x86_64-apple-darwin",
+          "size": 65082640
+        },
+        {
+          "id": 6229,
+          "name": "matric-api-x86_64-unknown-linux-gnu",
+          "size": 72938328
+        },
+        {
+          "id": 6234,
+          "name": "sidecar-provenance.intoto.json",
+          "size": 1751
+        }
+      ]
+    },
+    {
+      "repo": "fortemi-react",
+      "observedAt": "2026-09-12 18:55:29 UTC",
+      "id": 2333,
+      "tag": "v2026.9.5",
+      "published": "2026-09-12T15:08:14Z",
+      "assets": [
+        {
+          "id": 6302,
+          "name": "SHA256SUMS",
+          "size": 278
+        },
+        {
+          "id": 6299,
+          "name": "fortemi-core-2026.9.5.tgz",
+          "size": 1257821
+        },
+        {
+          "id": 6300,
+          "name": "fortemi-graph-2026.9.5.tgz",
+          "size": 64363
+        },
+        {
+          "id": 6301,
+          "name": "fortemi-react-2026.9.5.tgz",
+          "size": 147087
+        }
+      ]
+    },
+    {
+      "repo": "HotM",
+      "observedAt": "2026-09-12 18:55:29 UTC",
+      "id": 2331,
+      "tag": "v2026.9.5",
+      "published": "2026-09-11T13:43:47Z",
+      "assets": [
+        {
+          "id": 6294,
+          "name": "HotM_2026.9.5_aarch64.dmg",
+          "size": 29201522
+        },
+        {
+          "id": 6296,
+          "name": "HotM_2026.9.5_amd64.AppImage",
+          "size": 109287928
+        },
+        {
+          "id": 6297,
+          "name": "HotM_2026.9.5_amd64.deb",
+          "size": 32747002
+        },
+        {
+          "id": 6295,
+          "name": "SHA256SUMS-macos.txt",
+          "size": 92
+        },
+        {
+          "id": 6298,
+          "name": "SHA256SUMS.txt",
+          "size": 268
+        },
+        {
+          "id": 6289,
+          "name": "hotm-ui-dist.tar.gz",
+          "size": 3246334
+        }
+      ]
+    }
+  ],
+  "releaseDisposition": {
+    "fortemi": "2026.9.9 pending acceptance/delivery/next release",
+    "core": "2026.9.5 PARTIAL_PUBLICATION; merged and candidate source unreleased",
+    "HotM": "2026.9.5 NO_CHANGE"
+  },
+  "evidenceRoot": "/home/roctinam/dev/fortemi-suite/.aiwg/working/lane-b/evidence/lane-b-delivery-20260912-cycle76",
+  "source": {
+    "worktree": "/var/tmp/lane-b-react-405-citations",
+    "head": "f7f09a63e69ec04b5f6b2a8dca5cb5f840ef05f7",
+    "uncommitted": true
+  },
+  "artifacts": [
+    {
+      "path": "packages/core/src/remote-contract.ts",
+      "sha256": "7011b4f4ef08899b25c731a00079d3c9350b0c829db9428ccb11838d79d0f20f",
+      "bytes": 10626
+    },
+    {
+      "path": "packages/core/src/data-backend.ts",
+      "sha256": "e513f2ba04912a8cc92e2e350c4370777bc8b4859548b78f2ea5dc0f57c8df5c",
+      "bytes": 35411
+    },
+    {
+      "path": "packages/core/src/__tests__/remote-evidence.test.ts",
+      "sha256": "992398db35a85081896dd4381751787086880cfdfd5cca5aec73ade6aad73326",
+      "bytes": 8317
+    },
+    {
+      "path": "packages/core/scripts/generate-pglite-full-v1-receipt.mjs",
+      "sha256": "33da7f4dd217977427113be847bbcd39376bf855bb4888ad0297d318f016db21",
+      "bytes": 8372
+    },
+    {
+      "path": "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json",
+      "sha256": "85d337aff1143ffe1b9bf7c0e98f8f3a88b358ea10def6d2a756a2487a78c20d",
+      "bytes": 12844
+    },
+    {
+      "path": "tools/release/verify-installed-search-evidence.mjs",
+      "sha256": "5b58441b5e0640f6640fd17e260ea32747262db38a021f1c6e95f49279398b63",
+      "bytes": 11463
+    },
+    {
+      "path": "tools/release/verify-installed-search-evidence.test.mjs",
+      "sha256": "38da96c9b883234a3389f05da5363267f3fc4b9cb9722a346caecd0cef764239",
+      "bytes": 2238
+    },
+    {
+      "path": ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md",
+      "sha256": "80464a56bbd2189fec07b7dcf34241f7c60c2abd782fedd38d6b404c1bf92d78",
+      "bytes": 13031
+    },
+    {
+      "path": ".aiwg/architecture/SAD.md",
+      "sha256": "f10083536ec4944cde03286da248f8b68f23ce380a738e9a51867dec6642e172",
+      "bytes": 48204
+    },
+    {
+      "path": ".aiwg/architecture/adr-backend-seam.md",
+      "sha256": "6bee4e34fba0c72e33af1d628085d17382639baf03dcd7ff1e27688af138ff9f",
+      "bytes": 13922
+    },
+    {
+      "path": "docs/content/guides/search.md",
+      "sha256": "c57f2fcbb11ad753dc0c1a97b42ad9152711107e2afaab67aa550a94bd917bf6",
+      "bytes": 21698
+    }
+  ],
+  "scope": "Uncommitted candidate; synthetic remote responses and vectors. Not fresh producer HTTP, hosted authorization, published acceptance or capability promotion."
+}

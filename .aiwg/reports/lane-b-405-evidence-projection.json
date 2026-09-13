@@ -1,0 +1,97 @@
+{
+  "at": "2026-09-12T17:42:08.102Z",
+  "status": "LOCAL_CITATION_PROJECTION_AND_INSTALLED_CANDIDATE_PASS",
+  "issues": [
+    "Fortemi/fortemi#1091",
+    "Fortemi/fortemi-react#405"
+  ],
+  "authority": {
+    "repository": "Fortemi/fortemi",
+    "issue": 1091,
+    "baseCommit": "a701847db779a0a3adfa36a09dfa1055a10a0a0a",
+    "sourceState": "uncommitted candidate; base is not the contract revision",
+    "path": "contracts/metadata-search/candidate/1.0.0/",
+    "files": {
+      "predicates.schema.json": "e325707ce20abb88ef3a8f4bbb0d02ab09501b1ffe9b48b0c92a96e97dda00c3",
+      "predicate-vectors.json": "df9e129cab4708db71c3e22f87efd252fbcac144daa45a53ee1716f4a1a05ae7",
+      "sql-scope-vectors.json": "dcd35298a3bc485a6f1c87c6c87f136ee98121dad3f2b1c8b590b2e5381aa4d5",
+      "evidence-locator.schema.json": "cd8427c507bca1a08bdb68da0a5d2759d1d7805401db3c00372ab249652efb7a",
+      "evidence-vectors.json": "b532a4fa7697bdfc87e8541575fcee7c94a5b5ac53e4a6472438c49247e6b266",
+      "evidence-set.schema.json": "da7e5d41bd563cb2cfe424cf7dfa92007a865ee0e1a9a4832ef669039d80717e",
+      "evidence-set-vectors.json": "b84061ee252d2ee25d744111d2a04dfcd2c490274d4285bac31f4bd0e91e47d7"
+    }
+  },
+  "verification": {
+    "focused": 165,
+    "surroundingSearch": 782,
+    "portable": 1845,
+    "portableFiles": 27,
+    "portablePending": 0,
+    "rustCore": 639,
+    "bindingCorpus": 55,
+    "envelopeCorpus": 36,
+    "installedStorageChecks": 8,
+    "packageVerifierTests": 21,
+    "typecheck": true,
+    "focusedLint": true,
+    "sixFormerCitationFailuresNowPass": true,
+    "candidateAuthorityByteIdentical": true,
+    "implementationReceiptCurrent": true
+  },
+  "behavior": [
+    "Authority-owned strict per-hit envelope, same-note validation before dedup, Unicode scalar order, max64, semantic-first retention and explicit omissions.",
+    "Pure Rust and TypeScript build/merge preserve source identities and already-bound snapshots.",
+    "Actual PGlite lexical/vector ranking binds exact raw unit UTF-8 SHA-256 in SQL; no rendered snippet coordinates or post-ranking rebinding.",
+    "Title/current/attachment attribution and winning embedding ID/index survive hybrid fusion; hydration rechecks deletion and original filters.",
+    "Native hit IDs use JSON transport to preserve leading BOMs. PGlite adapter forwards candidate evidence; complete capability remains false.",
+    "Clean-installed public package executes both shared corpora and actual three-mode PGlite/adapter/resolver checks.",
+    "Current shard implementation receipt refreshed with new dependencies and portable-contract rerun; no shard authority or fixture-byte change."
+  ],
+  "failuresRetained": [
+    "Initial strict-AJV collection error from missing conditional array types corrected without weakening schema.",
+    "Historical Cycle71-73 RED receipts preserved; current regression assertions explicitly require new evidence field and exact stored-text resolution.",
+    "Full Rust journal lost test-level output to rate limiting; repeated bounded run writes a complete file and hash-bound receipt.",
+    "Initial full portable command hit540second step deadline; the same complete inventory passed three serial partitions, with exact file-union verification.",
+    "Package-verifier tests initially exited0 but the receipt parser expected TAP while Node emitted spec; explicit TAP reporter corrected the evidence capture, without changing tests.",
+    "First offline install failedENOTCACHED forwkx in the default cache. Existing Cycle70-qualified cache and empty npm configuration corrected installation; network stayed private.",
+    "npm pack retained0600 generated-file modes under the guarded umask, which the release normalizer rejected. The established pnpm pack path supplied its required archive modes; normalizer policy and runner umask were not relaxed. Prior tarballs retained."
+  ],
+  "remaining": [
+    "Full producer SearchHit/request/response authority and SQL lexical/vector projection, fusion/MMR/dedup and scoped database resolution.",
+    "Hosted authorization/cache/full lifecycle and every declared consumer including clean released cross-runtime acceptance.",
+    "Citation WIP delivery, immutable authority pins, next Core release and existing partial-publication recovery, full original lane release sweep."
+  ],
+  "claims": {
+    "fullEvidenceLocators": false,
+    "hostedAuthorization": false,
+    "promotedContract": false,
+    "suiteParity": false,
+    "releasedCitationAcceptance": false
+  },
+  "scope": "Uncommitted local candidate and clean-installed synthetic-vector acceptance only; not producer runtime, hosted/inference or released suite acceptance.",
+  "repository": "core",
+  "parent": "f7f09a63e69ec04b5f6b2a8dca5cb5f840ef05f7",
+  "source": {
+    "packages/core/src/repositories/search-repository.ts": "80014ff5a8354472e7fc999e58440ef8d23b83e7f859612a15fbdd71c9982382",
+    "packages/core/src/repositories/search-evidence-projection.ts": "81388bba98d411fc14215691b70e82dc637a9c7f3a0308aa2abca9f57f8973c5",
+    "packages/core/src/search-evidence-set.ts": "7549ed2d391b7770797dbb0839467783d2b885e3e1736e3509ea5205e0632c95",
+    "packages/core/src/data-backend.ts": "82246d1edeec42fd5014ca1f3cea6cf545b8c0134ad82e27a50269d70cbd9377",
+    "packages/core/src/index.ts": "b915e3369e6e5133b5cdbf50a57e88b048bb4f818fab072d16e6b35d6465d76a",
+    "packages/core/src/repositories/types.ts": "3066433bdd6a442540d4aa1d2cdadf51ea93a037ca11ab816629d7976c5fc986",
+    "packages/core/src/__tests__/search-evidence-set.test.ts": "03c9cf47b02a2a11c0f8a11163b0f45b9be17d2d09cdffa2689df74a61a62f6a",
+    "packages/core/src/__tests__/search-evidence-projection.test.ts": "f830ad17df26757b2f98ca1831e2cc293c148e11d3150b08347af2bfb8965481",
+    "packages/core/src/__tests__/search-citation-reproduction.test.ts": "73c974dd2241771b439ef626fadfd27a3d56681679ed4ca615bac1f9e2400505",
+    "packages/core/package.json": "f2d3f6c928e253a3a9f609883e29c8f3d6372782713b5542c5ffa35a8c7050e6",
+    "packages/core/scripts/generate-pglite-full-v1-receipt.mjs": "7fec3c9ab4c5a84cd6f670293b78db521caa9c2a9f9c94434fbdb79f94f4be91",
+    "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "944a9be3fccc067b9f20c8a42e1a56b6a48b04a28c92629972b54f4b7b639083",
+    "tools/release/verify-core-package.mjs": "66731509d630639fec379f2002a7dd49632243892369b00a33471efba5818080",
+    "tools/release/verify-installed-search-evidence.mjs": "3ac1c3c6dda01224c39b7c07bacf2e102d12653372b5e09284b69bc4696fa391",
+    "packages/core/schemas/metadata-search/candidate/1.0.0/contract.receipt.json": "970335ba6c711de51ef03cb852044f25b596c1fdfcc85272cb6da62751a0a536",
+    "packages/core/schemas/metadata-search/candidate/1.0.0/evidence-set.schema.json": "da7e5d41bd563cb2cfe424cf7dfa92007a865ee0e1a9a4832ef669039d80717e",
+    "packages/core/schemas/metadata-search/candidate/1.0.0/evidence-set-vectors.json": "b84061ee252d2ee25d744111d2a04dfcd2c490274d4285bac31f4bd0e91e47d7",
+    ".aiwg/adrs/ADR-016-typed-metadata-search-candidate.md": "57aaecbe2151b8dc12c8d29adbe1bb82a005f45b132e2928ac37771fb7fd5b88",
+    ".aiwg/architecture/SAD.md": "7975dfdd6463dd4cf0cb9642eaf43f3f3aea48f99c703151c55a76c6dac9b123",
+    "docs/content/guides/search.md": "e2b05309c361bfb9f4faccdb4d96f62abb2d7404fad4305fb6edb82b0d7ada38",
+    "tools/release/verify-installed-search-evidence.test.mjs": "02df8912d0b2c849b22aef140ecd5c8587e4dd3e155548943baa4994aef27c7d"
+  }
+}
