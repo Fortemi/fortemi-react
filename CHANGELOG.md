@@ -4,6 +4,30 @@ All notable changes to fortemi-react are documented here.
 
 ## Unreleased
 
+## v2026.9.6 - 2026-09-13
+
+### Typed search and evidence (#405, #419-421)
+
+- Preserve typed metadata predicates and source scope through search adapters;
+  enforce declared capabilities and apply supported prefilters before ranking.
+- Bind search citations to validated source evidence and reject malformed remote
+  responses. Pin the merged producer candidate's schema/vector and OpenAPI bytes
+  without rewriting historical receipts or promoting remote capability maturity.
+- Correct native JSON schema loading and release-tooling lint declarations.
+
+### Native test efficiency
+
+- Seed independent PGlite test databases from one pristine migrated schema.
+  Keep all145native restore cases, empty-state checks, legacy migration fixtures,
+  global coverage and existing CI deadlines.
+
+This is release preparation, not a publication or lane-acceptance receipt.
+Installed candidate checks against the unreleased producer do not establish
+published-server search behavior or full cross-adapter/platform parity. Named
+shard profiles, remote alpha limits, specific authorization holds and suite NO-GO
+remain. Final-source CI and actual registry/release/mirror bytes must pass before
+publication is complete; existing immutable versions must not be replaced.
+
 ## v2026.9.5 - 2026-09-12
 
 ### Capability validation and remote evidence (#422, #419-421)

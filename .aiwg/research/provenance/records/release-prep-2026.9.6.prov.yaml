@@ -1,0 +1,123 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-13T22:44:51.079Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:package.json",
+    "type": "configuration",
+    "created_at": "2026-09-13T22:44:51.079Z",
+    "checksum": "sha256:19047ca5ac63e570b2230b0e8b5923b3bd8bd7ae4c6d6dd94e27db48e0c32246"
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:release-prep:2026.9.6",
+    "type": "modification",
+    "started_at": "2026-09-13T22:44:51.079Z",
+    "ended_at": "2026-09-13T22:44:51.079Z",
+    "description": "Prepare lockstep2026.9.6 release versions, current receipt hashes and bounded release notes; no publication or acceptance claim."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:package.json",
+      "activity": "urn:aiwg:activity:release-prep:2026.9.6"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:release-prep:2026.9.6",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:package.json",
+      "agent": "urn:aiwg:agent:codex"
+    }
+  },
+  "artifacts": {
+    ".aiwg/reports/doc-sync-20260913-release-2026.9.6.md": "2cc729f5c7593658c06087eb5b73e932319fbd189f8e64982cce9dd93888df76",
+    ".aiwg/reports/doc-sync-last-run.json": "8ee01368891c3b511514e308f8d4a363889b15dab89c351bda05c12da6e6795c",
+    "CHANGELOG.md": "e89c5c9ea46955f58c55a878025be232222df1ec1dfd7ca184b0865a9c31d666",
+    "apps/standalone/package.json": "956d3d66d051f769f7528d409318ffa52f17037bfdf70d2f9f95a413eb8443aa",
+    "docs/content/api-reference.md": "9f8468828716196e4a465e176e5d99c961248d0d3d53a9d864b91086d29439d7",
+    "docs/content/releases/v2026.9.6.md": "a9134ab2761e351ffc200ed79d01275d7380fc155e3c371f5ab3fae8992ae02a",
+    "package.json": "19047ca5ac63e570b2230b0e8b5923b3bd8bd7ae4c6d6dd94e27db48e0c32246",
+    "packages/core/package.json": "8bc17c28d4ce6c399856e0768034dd8d5b60da3de356ca19444711a9f607efa2",
+    "packages/core/schemas/knowledge-shard-v2.implementation.receipt.json": "1bd7bbf89f2bb7e9d1db804642306d6b967cb7d8bdacf20cbbd4a7269a9ee588",
+    "packages/core/src/index.ts": "f4c30c62ffaea33b240773dd244a0a21d2441d79d8ff2a316945c4493161ffba",
+    "packages/graph/package.json": "dec5602021d42160122dc651fdae4a855f2afad5657a56dcd3480fc96fc458f0",
+    "packages/graph/src/index.ts": "d5f606ba9c34ae9e83795ae96809d4e3267148e9fe3c7391381f3e97e0abe13f",
+    "packages/react/package.json": "497f13c381320c852fdb377b85d53f3cdaa1fb68bd50cc7ec5818b50f3acdc52"
+  },
+  "verification": {
+    "unit": "fortemi-local-test-1000-1361bfb7-5bf3-4956-aa72-0cd21a87b7df.service",
+    "steps": [
+      {
+        "name": "release-tools",
+        "command": "node",
+        "args": [
+          "--test",
+          "--test-reporter=tap",
+          "--test-concurrency=1",
+          "tools/release/create-repo-release-handoff.test.mjs",
+          "tools/release/create-repo-release-immutable.test.mjs",
+          "tools/release/create-repo-release.test.mjs",
+          "tools/release/normalize-packed-manifest.test.mjs",
+          "tools/release/publish-workflows.test.mjs",
+          "tools/release/verify-installed-capabilities.test.mjs",
+          "tools/release/verify-installed-search-evidence.test.mjs",
+          "tools/release/verify-published-artifacts.test.mjs"
+        ],
+        "status": 0,
+        "signal": null,
+        "elapsedMs": 3608
+      },
+      {
+        "name": "contract",
+        "command": "node",
+        "args": [
+          "scripts/verify-knowledge-shard-contract.mjs"
+        ],
+        "status": 0,
+        "signal": null,
+        "elapsedMs": 47
+      },
+      {
+        "name": "typecheck",
+        "command": "pnpm",
+        "args": [
+          "-r",
+          "--workspace-concurrency=1",
+          "typecheck"
+        ],
+        "status": 0,
+        "signal": null,
+        "elapsedMs": 56040
+      },
+      {
+        "name": "lint",
+        "command": "pnpm",
+        "args": [
+          "lint"
+        ],
+        "status": 0,
+        "signal": null,
+        "elapsedMs": 3634
+      },
+      {
+        "name": "build",
+        "command": "pnpm",
+        "args": [
+          "-r",
+          "--workspace-concurrency=1",
+          "build"
+        ],
+        "status": 0,
+        "signal": null,
+        "elapsedMs": 122244
+      }
+    ],
+    "scope": "Local release preparation and built exports; final remote CI and clean-installed publication gates remain."
+  }
+}
