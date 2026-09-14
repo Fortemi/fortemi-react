@@ -29,6 +29,15 @@ All33sequencer/partition/progress regression tests passed. The complete110-file
 fixed-root CI plan remains37/37/36, with the two long suites in different shards.
 The new regression tests are included in the existing required CI tools step.
 
+The first PR CI60818 tools run passed32of33cases, but its real interruption test
+recorded module-start instead of beforeEach-start when the five-second interrupt
+fired. CI used concurrent test files; the passing local run used serial files.
+The CI command now explicitly sets test-concurrency=1, matching local validation.
+All33tests, the synthetic five-second interrupt and its20-second outer deadline
+remain unchanged. The retained CI failure is not waived; fresh exact-head CI is
+required. No cached Node22 executable was found locally, so local Node24 results
+do not claim to execute the remote Node22 environment.
+
 No production API, dependency, version, contract schema, authority pin, fixture
 archive, coverage threshold, worker cap or deadline changed. Config identity
 changes are explicit and must receive new source-bound execution and CI receipts.

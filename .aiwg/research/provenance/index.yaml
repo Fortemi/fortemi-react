@@ -685,3 +685,7 @@ records:
     record: records/lane-b-local-fixtures-cycle126.prov.yaml
   - entity: urn:aiwg:artifact:docs/content/advanced/deployment.md
     record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:.gitea/workflows/ci.yml
+    record: records/lane-b-ci-tools-serial-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/local-fixture-efficiency-cycle126.md
+    record: records/lane-b-ci-tools-serial-cycle126.prov.yaml
