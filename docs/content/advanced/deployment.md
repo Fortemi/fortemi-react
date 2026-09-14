@@ -582,7 +582,7 @@ All packages in the monorepo are versioned together. When cutting a release, upd
 
 1. Update `package.json`, every workspace `package.json`, and the exported `VERSION` constants in `packages/core/src/index.ts` and `packages/graph/src/index.ts` to the target CalVer.
 2. Add a top-level `CHANGELOG.md` entry and a matching `docs/content/releases/v<version>.md` release note.
-3. Run `pnpm typecheck`, `pnpm lint`, `pnpm test:core`, `pnpm build`, and `tools/release/test-e2e.sh`.
+3. Run `pnpm typecheck`, `pnpm lint`, `pnpm test:workspace`, `pnpm build`, and `tools/release/test-e2e.sh`, as required by `.aiwg/release.config`. The workspace gate includes Core, Graph, React and example unit suites; a partial run or timeout is not a passing gate.
 4. Commit the release-prep changes and wait for Gitea CI on `main` to pass.
 5. Export the `ci-fortemi-react` OpenBao reader AppRole credentials and routing
    variables, then run `tools/release/cut-tag.sh <version> --dry-run`.

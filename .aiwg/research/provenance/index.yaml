@@ -641,3 +641,13 @@ records:
     record: records/lane-b-release-e2e-logging-cycle124.prov.yaml
   - entity: urn:aiwg:artifact:tools/release/test-e2e.test.mjs
     record: records/lane-b-release-e2e-logging-cycle124.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/.last-doc-sync
+    record: records/lane-b-doc-sync-cycle125.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/doc-sync-audit-20260914-cycle125.md
+    record: records/lane-b-doc-sync-cycle125.prov.yaml
+  - entity: urn:aiwg:artifact:CHANGELOG.md
+    record: records/lane-b-doc-sync-cycle125.prov.yaml
+  - entity: urn:aiwg:artifact:docs/content/advanced/deployment.md
+    record: records/lane-b-doc-sync-cycle125.prov.yaml
+  - entity: urn:aiwg:artifact:docs/content/releases/v2026.9.6.md
+    record: records/lane-b-doc-sync-cycle125.prov.yaml

@@ -21,6 +21,15 @@ All notable changes to fortemi-react are documented here.
   Keep all145native restore cases, empty-state checks, legacy migration fixtures,
   global coverage and existing CI deadlines.
 
+### Release and test reliability
+
+- Bound the offline local browser fixture independently of its Docker client:
+  two CPUs, 8 GiB memory, no swap, 256 tasks and an internal deadline. Preserve
+  all browser projects, resource-event receipts and owned-container cleanup.
+- Retain bounded Core CI progress diagnostics alongside native test, coverage
+  and partition-completeness reports without relaxing their acceptance gates.
+- Align the release checklist with the configured full workspace unit-test gate.
+
 This is release preparation, not a publication or lane-acceptance receipt.
 Installed candidate checks against the unreleased producer do not establish
 published-server search behavior or full cross-adapter/platform parity. Named

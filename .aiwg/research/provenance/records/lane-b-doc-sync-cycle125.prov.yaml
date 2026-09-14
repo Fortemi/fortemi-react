@@ -1,0 +1,37 @@
+metadata:
+  schema_version: 1.0.0
+  created_at: '2026-09-14T18:23:00Z'
+entity:
+  id: urn:aiwg:artifact:.aiwg/reports/doc-sync-audit-20260914-cycle125.md
+  type: documentation
+activity:
+  id: urn:aiwg:activity:lane-b-doc-sync:125
+  type: modification
+  description: >-
+    Reconcile the release checklist with the unchanged workspace gate and
+    document bounded browser execution and CI progress diagnostics. Preserve
+    the failed local workspace attempt and historical source-bound receipts.
+agent:
+  id: urn:aiwg:agent:codex
+  type: ai_assistant
+  name: Codex
+relationships:
+  wasGeneratedBy:
+    entity: urn:aiwg:artifact:.aiwg/reports/doc-sync-audit-20260914-cycle125.md
+    activity: urn:aiwg:activity:lane-b-doc-sync:125
+  wasAssociatedWith:
+    activity: urn:aiwg:activity:lane-b-doc-sync:125
+    agent: urn:aiwg:agent:codex
+  wasDerivedFrom:
+    entity: urn:aiwg:artifact:.aiwg/reports/doc-sync-audit-20260914-cycle125.md
+    source: git:ee34ccc5a00c54bb06383e16f5262a3ddf691a9e
+scope:
+  - .aiwg/.last-doc-sync
+  - .aiwg/reports/doc-sync-audit-20260914-cycle125.md
+  - CHANGELOG.md
+  - docs/content/advanced/deployment.md
+  - docs/content/releases/v2026.9.6.md
+boundaries:
+  publication: not_asserted
+  workspace_timeout: NOT_PASS
+  suite_audit: NO-GO
