@@ -651,3 +651,37 @@ records:
     record: records/lane-b-doc-sync-cycle125.prov.yaml
   - entity: urn:aiwg:artifact:docs/content/releases/v2026.9.6.md
     record: records/lane-b-doc-sync-cycle125.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/embedding-pipeline.test.ts
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/job-queue-worker.test.ts
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/notes-repository.test.ts
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/tools-extended.test.ts
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/tools.test.ts
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/shard/shard-import.test.ts
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/helpers/migrated-test-db.ts
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/src/__tests__/migrated-test-db.test.ts
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/vitest.config.ts
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/bounded-suite-sequencer.mjs
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/bounded-suite-sequencer.test.mjs
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:.gitea/workflows/ci.yml
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/.last-doc-sync
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/local-fixture-efficiency-cycle126.md
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:CHANGELOG.md
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:docs/content/releases/v2026.9.6.md
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml
+  - entity: urn:aiwg:artifact:docs/content/advanced/deployment.md
+    record: records/lane-b-local-fixtures-cycle126.prov.yaml

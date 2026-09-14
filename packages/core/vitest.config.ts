@@ -1,8 +1,10 @@
 import { defineConfig } from 'vitest/config'
 import { cpus } from 'os'
+import { BoundedSuiteSequencer } from './scripts/bounded-suite-sequencer.mjs'
 
 export default defineConfig({
   test: {
+    sequence: { sequencer: BoundedSuiteSequencer },
     include: ['src/**/__tests__/**/*.test.ts'],
     coverage: {
       provider: 'v8',

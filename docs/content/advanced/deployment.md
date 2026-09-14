@@ -437,7 +437,13 @@ VITEST_MAX_WORKERS=2 pnpm test:core
 VITEST_MAX_WORKERS=8 pnpm test:core
 ```
 
-The Gitea Actions workflow does not set `VITEST_MAX_WORKERS`, so it uses the default (half the runner's CPU count). If unit tests are timing out or the runner runs out of memory, add the variable to the `unit-test` job's `env` block.
+Gitea runs three Core partitions with two workers each and verifies complete
+file/case coverage before applying the unchanged global coverage threshold.
+The Core sequencer starts the two measured long-running native suites early,
+including on a cold cache; it preserves shard membership and the remaining
+per-project order. Six database-heavy suites clone an immutable empty migrated
+schema into independent databases. These setup and scheduling optimizations do
+not replace host resource containment or turn an incomplete run into a pass.
 
 ### End-to-end tests
 

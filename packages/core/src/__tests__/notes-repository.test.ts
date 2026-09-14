@@ -7,11 +7,9 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { PGlite } from '@electric-sql/pglite'
-import { vector } from '@electric-sql/pglite/vector'
-import { MigrationRunner } from '../migration-runner.js'
+import type { PGlite } from '@electric-sql/pglite'
+import { createMigratedTestDb } from './helpers/migrated-test-db.js'
 import { TypedEventBus } from '../event-bus.js'
-import { allMigrations } from '../migrations/index.js'
 import { NotesRepository } from '../repositories/notes-repository.js'
 import type { NoteRevision } from '../repositories/types.js'
 
@@ -20,11 +18,7 @@ import type { NoteRevision } from '../repositories/types.js'
 // ---------------------------------------------------------------------------
 
 async function createTestDb(): Promise<PGlite> {
-  const db = await PGlite.create({ extensions: { vector } })
-  await db.exec('CREATE EXTENSION IF NOT EXISTS vector')
-  const runner = new MigrationRunner(db)
-  await runner.apply(allMigrations)
-  return db
+  return createMigratedTestDb()
 }
 
 // ---------------------------------------------------------------------------

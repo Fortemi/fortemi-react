@@ -11,10 +11,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { PGlite } from '@electric-sql/pglite'
-import { vector } from '@electric-sql/pglite/vector'
-import { MigrationRunner } from '../migration-runner.js'
-import { allMigrations } from '../migrations/index.js'
+import type { PGlite } from '@electric-sql/pglite'
+import { createMigratedTestDb } from './helpers/migrated-test-db.js'
 import { chunkText } from '../capabilities/chunking.js'
 import {
   setEmbedFunction,
@@ -54,11 +52,7 @@ function mockEmbed(texts: string[]): Promise<number[][]> {
 // ---------------------------------------------------------------------------
 
 async function setupDb(): Promise<PGlite> {
-  const db = await PGlite.create({ extensions: { vector } })
-  await db.exec('CREATE EXTENSION IF NOT EXISTS vector')
-  const runner = new MigrationRunner(db)
-  await runner.apply(allMigrations)
-  return db
+  return createMigratedTestDb()
 }
 
 let noteCounter = 0

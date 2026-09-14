@@ -11,13 +11,11 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { PGlite } from '@electric-sql/pglite'
-import { vector } from '@electric-sql/pglite/vector'
+import type { PGlite } from '@electric-sql/pglite'
+import { createMigratedTestDb } from '../helpers/migrated-test-db.js'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { MigrationRunner } from '../../migration-runner.js'
-import { allMigrations } from '../../migrations/index.js'
 import { NotesRepository } from '../../repositories/notes-repository.js'
 import { CollectionsRepository } from '../../repositories/collections-repository.js'
 import { LinksRepository } from '../../repositories/links-repository.js'
@@ -56,11 +54,7 @@ function canonicalCoreV1Files(): Map<string, Uint8Array> {
 }
 
 async function createTestDb(): Promise<PGlite> {
-  const db = await PGlite.create({ extensions: { vector } })
-  await db.exec('CREATE EXTENSION IF NOT EXISTS vector')
-  const runner = new MigrationRunner(db)
-  await runner.apply(allMigrations)
-  return db
+  return createMigratedTestDb()
 }
 
 /** Helper: create a populated DB and export a shard from it. */

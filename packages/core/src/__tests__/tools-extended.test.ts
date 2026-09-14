@@ -11,13 +11,11 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { PGlite } from '@electric-sql/pglite'
-import { vector } from '@electric-sql/pglite/vector'
-import { MigrationRunner } from '../migration-runner.js'
+import type { PGlite } from '@electric-sql/pglite'
+import { createMigratedTestDb } from './helpers/migrated-test-db.js'
 import { TypedEventBus } from '../event-bus.js'
 import { ArchiveManager } from '../archive-manager.js'
 import { CapabilityManager } from '../capability-manager.js'
-import { allMigrations } from '../migrations/index.js'
 import { NotesRepository } from '../repositories/notes-repository.js'
 import { getNote } from '../tools/get-note.js'
 import { listNotes } from '../tools/list-notes.js'
@@ -32,11 +30,7 @@ import { manageCapabilities } from '../tools/manage-capabilities.js'
 // ---------------------------------------------------------------------------
 
 async function createTestDb(): Promise<PGlite> {
-  const db = await PGlite.create({ extensions: { vector } })
-  await db.exec('CREATE EXTENSION IF NOT EXISTS vector')
-  const runner = new MigrationRunner(db)
-  await runner.apply(allMigrations)
-  return db
+  return createMigratedTestDb()
 }
 
 async function createTestNote(db: PGlite, content = 'Test content', title?: string) {

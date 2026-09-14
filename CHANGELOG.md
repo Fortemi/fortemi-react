@@ -20,6 +20,10 @@ All notable changes to fortemi-react are documented here.
 - Seed independent PGlite test databases from one pristine migrated schema.
   Keep all145native restore cases, empty-state checks, legacy migration fixtures,
   global coverage and existing CI deadlines.
+- Reuse immutable empty migrated schema bytes in six database-heavy suites,
+  with independent databases, empty-state and migration checks for every clone.
+  Start the two measured long-running suites early without changing shard
+  membership, assertions, coverage thresholds or test deadlines.
 
 ### Release and test reliability
 
