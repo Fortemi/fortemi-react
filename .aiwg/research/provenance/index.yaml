@@ -1,7 +1,7 @@
 metadata:
   schema_version: 1.0.0
-  updated_at: 2026-09-14T17:37:27.661Z
-  record_count: 150
+  updated_at: 2026-09-14T17:45:49.030Z
+  record_count: 152
 records:
   - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
     record: records/lane-b-core-context-owned-views-cycle96.prov.yaml
@@ -637,3 +637,7 @@ records:
     record: records/lane-b-release-e2e-cycle124.prov.yaml
   - entity: urn:aiwg:artifact:docs/content/advanced/deployment.md
     record: records/lane-b-release-e2e-cycle124.prov.yaml
+  - entity: urn:aiwg:artifact:tools/release/test-e2e.sh
+    record: records/lane-b-release-e2e-logging-cycle124.prov.yaml
+  - entity: urn:aiwg:artifact:tools/release/test-e2e.test.mjs
+    record: records/lane-b-release-e2e-logging-cycle124.prov.yaml

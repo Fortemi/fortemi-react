@@ -1,0 +1,50 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-14T17:45:49.030Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:tools/release/test-e2e.sh",
+    "type": "code",
+    "created_at": "2026-09-14T17:45:49.030Z",
+    "checksum": "sha256:27948bb173f4875964fbf5a2becd2ec287f3aed59aade463c2d5f0a1ccf45fd5"
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:release-e2e-logging:124",
+    "type": "modification",
+    "started_at": "2026-09-14T17:45:49.030Z",
+    "ended_at": "2026-09-14T17:45:49.030Z",
+    "description": "Disable local log compression explicitly with max-file=1 after the actual Docker daemon rejected its default. Preserve 1MiB single-file log bound, failed attempt and owned cleanup evidence."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:tools/release/test-e2e.sh",
+      "activity": "urn:aiwg:activity:release-e2e-logging:124"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:release-e2e-logging:124",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:tools/release/test-e2e.sh",
+      "agent": "urn:aiwg:agent:codex"
+    }
+  },
+  "artifacts": {
+    "tools/release/test-e2e.sh": "27948bb173f4875964fbf5a2becd2ec287f3aed59aade463c2d5f0a1ccf45fd5",
+    "tools/release/test-e2e.test.mjs": "add97df5fb16da42b5aa0f7784349bc11fc8e81369f5d46123eb89b4266d248d"
+  },
+  "verification": {
+    "unit": "fortemi-local-test-1000-75b9998b-811e-4185-8518-4fcb2adb2ee9.service",
+    "release_tool_tests": 91,
+    "failed": 0,
+    "skipped": 0,
+    "root_lint": "PASS",
+    "scope": "Logging correction tested with mocked Docker; failed real attempt preserved; actual corrected browser gate remains required."
+  }
+}

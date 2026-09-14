@@ -96,7 +96,7 @@ docker --host unix:///var/run/docker.sock run --name "$name" \
   --network=none --ipc=private --shm-size=256m --read-only \
   --tmpfs /tmp:rw,nosuid,nodev,size=1g,mode=1777 \
   --cap-drop=ALL --security-opt=no-new-privileges \
-  --log-driver=local --log-opt=max-size=1m --log-opt=max-file=1 \
+  --log-driver=local --log-opt=max-size=1m --log-opt=max-file=1 --log-opt=compress=false \
   --ulimit nofile=65536:65536 \
   --user "$(id -u):$(id -g)" \
   -e CI=true \

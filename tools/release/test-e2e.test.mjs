@@ -134,7 +134,7 @@ test('wrapper enforces daemon-side bounds, offline immutable runtime, all browse
   const run = r.calls.find(a => a[2] === 'run');
   for (const flag of ['--pull=never', '--init', '--cpus=2', '--memory=8g', '--memory-swap=8g', '--pids-limit=256',
     '--network=none', '--ipc=private', '--shm-size=256m', '--read-only', '--cap-drop=ALL', '--security-opt=no-new-privileges',
-    '--log-driver=local', '--log-opt=max-size=1m', '--log-opt=max-file=1', 'COREPACK_ENABLE_NETWORK=0',
+    '--log-driver=local', '--log-opt=max-size=1m', '--log-opt=max-file=1', '--log-opt=compress=false', 'COREPACK_ENABLE_NETWORK=0',
     'npm_config_offline=true', 'CUDA_VISIBLE_DEVICES=', 'NVIDIA_VISIBLE_DEVICES=void']) assert.ok(run.includes(flag), flag);
   assert.deepEqual(run.slice(run.indexOf('--entrypoint'), -1),
     ['--entrypoint', '/usr/bin/timeout', 'sha256:' + 'a'.repeat(64), '--signal=TERM', '--kill-after=10', '720', 'bash', '-lc']);
