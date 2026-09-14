@@ -591,6 +591,25 @@ All packages in the monorepo are versioned together. When cutting a release, upd
 7. Push the signed tag to the authoritative origin with `tools/git/push-origin-as-roctinam.sh refs/tags/v<version>`, then mirror it with `git push github refs/tags/v<version>`.
 8. Confirm Gitea publishes the internal registry packages and the GitHub mirror publishes npmjs.org packages with provenance.
 
+The release browser wrapper requires a local Docker daemon using cgroup v2,
+the cached Playwright `v1.58.2-noble` image, and installed workspace dependencies.
+It resolves the cached image to an immutable image ID and never pulls during tests.
+Provide pnpm at the version in `packageManager`, either in the normal Corepack
+cache (`COREPACK_HOME`) or as a standalone executable (`FORTEMI_RELEASE_PNPM_BIN`).
+No network is available inside the test container. All configured browser projects
+and existing assertions remain enabled.
+
+The container has a two-CPU quota, 8-GiB hard memory limit, no swap, 256-task limit,
+private IPC, and a 720-second internal deadline independent of the Docker client.
+The payload additionally selects at most two allowed CPUs. Results and container
+inspection are retained under `test-results/fortemi-release-e2e-*/`; cleanup removes
+only the uniquely named container after verifying its ownership label. A missing
+dependency, resource validation failure, timeout or failed test is a failed gate.
+Resource-event receipts reject OOM, hard-memory-limit and task-limit events; browser
+reports must show passing execution in each project and no unexpected failures.
+On shared hosts, launch through an approved detached container-fixture controller;
+these container limits do not replace host admission checks or bound other builds.
+
 ---
 
 ## Troubleshooting

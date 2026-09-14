@@ -1,0 +1,41 @@
+metadata:
+  schema_version: 1.0.0
+  created_at: 2026-09-14T17:37:27.661Z
+entity:
+  id: urn:aiwg:artifact:tools/release/test-e2e.sh
+  type: code
+  created_at: 2026-09-14T17:37:27.661Z
+  checksum: sha256:5e5247b8023f57a2e5ab307ab4f600898d20d4f3b3446cfde91c624e31405296
+activity:
+  id: urn:aiwg:activity:release-e2e-containment:124
+  type: modification
+  started_at: 2026-09-14T17:37:27.661Z
+  ended_at: 2026-09-14T17:37:27.661Z
+  description: Bound the actual release browser container, retain all configured browser tests, validate runtime limits and resource events, and require owned cleanup and complete passing browser reports.
+agent:
+  id: urn:aiwg:agent:codex
+  type: ai_assistant
+  name: Codex
+relationships:
+  wasGeneratedBy:
+    entity: urn:aiwg:artifact:tools/release/test-e2e.sh
+    activity: urn:aiwg:activity:release-e2e-containment:124
+  wasAssociatedWith:
+    activity: urn:aiwg:activity:release-e2e-containment:124
+    agent: urn:aiwg:agent:codex
+  wasAttributedTo:
+    entity: urn:aiwg:artifact:tools/release/test-e2e.sh
+    agent: urn:aiwg:agent:codex
+artifacts:
+  tools/release/test-e2e.sh: 5e5247b8023f57a2e5ab307ab4f600898d20d4f3b3446cfde91c624e31405296
+  tools/release/e2e-runtime.mjs: 23cf6624df7ce487fdef023f5332cff9e2d4ff4710772acde64c6e369f25e95e
+  tools/release/test-e2e.test.mjs: c1c980c2cc0e0144faaa53f4e3ff78b37799cb8d890f664439ddb6b305880e36
+  docs/content/advanced/deployment.md: 13d24a6a80969f51ece66c4d08269d22d3586de8116c61f2a1b3c435d385a91d
+verification:
+  unit: fortemi-local-test-1000-5561792c-0461-461d-a020-025369a9b700.service
+  release_tool_tests: 91
+  failed: 0
+  skipped: 0
+  root_lint: PASS
+  offline_frozen_install: PASS
+  scope: Mocked Docker and pure validator tests only; actual container/browser execution and exact-head CI remain required. No release or suite compatibility acceptance.
