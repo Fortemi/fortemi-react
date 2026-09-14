@@ -1,0 +1,31 @@
+metadata:
+  schema_version: 1.0.0
+entity:
+  id: urn:aiwg:artifact:tools/release/workspace-stages.mjs
+  type: code
+activity:
+  id: urn:aiwg:activity:lane-b-staged-workspace:128
+  type: modification
+  description: >-
+    Execute the complete local workspace release gate in separately bounded
+    stages with existing Core partitions/global coverage and every consumer.
+    Bind clean source/runtime and native artifacts; preserve failed evidence.
+agent:
+  id: urn:aiwg:agent:codex
+  type: ai_assistant
+relationships:
+  wasGeneratedBy:
+    entity: urn:aiwg:artifact:tools/release/workspace-stages.mjs
+    activity: urn:aiwg:activity:lane-b-staged-workspace:128
+  wasAssociatedWith:
+    activity: urn:aiwg:activity:lane-b-staged-workspace:128
+    agent: urn:aiwg:agent:codex
+verification:
+  release_tools: 110_PASS
+  core_tools: 36_PASS
+  root_lint: PASS
+  offline_frozen_install: PASS
+  stage_deadline_ms: 825000
+  ordinary_runner_deadline_seconds: 900
+  real_workspace_stages: required
+  exact_head_ci: required

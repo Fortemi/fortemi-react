@@ -588,7 +588,7 @@ All packages in the monorepo are versioned together. When cutting a release, upd
 
 1. Update `package.json`, every workspace `package.json`, and the exported `VERSION` constants in `packages/core/src/index.ts` and `packages/graph/src/index.ts` to the target CalVer.
 2. Add a top-level `CHANGELOG.md` entry and a matching `docs/content/releases/v<version>.md` release note.
-3. Run `pnpm typecheck`, `pnpm lint`, `pnpm test:workspace`, `pnpm build`, and `tools/release/test-e2e.sh`, as required by `.aiwg/release.config`. The workspace gate includes Core, Graph, React and example unit suites; a partial run or timeout is not a passing gate.
+3. Run the local steps in `.aiwg/release.config`: typecheck and lint, each workspace stage (`core-1`, `core-2`, `core-3`, `core-merge`, `consumers`, `verify`), then build and the release browser fixture. Invoke stages with `node tools/release/workspace-stages.mjs STAGE`, one separately bounded job at a time in the same clean committed owned worktree. The final workspace gate requires all Core files/cases, global coverage, Graph, React and every declared example test. Partial execution, source/runtime drift or a timeout is not a passing gate. See [staged local acceptance](https://git.integrolabs.net/Fortemi/fortemi-react/src/branch/main/tools/release/README.md#staged-local-workspace-acceptance).
 4. Commit the release-prep changes and wait for Gitea CI on `main` to pass.
 5. Export the `ci-fortemi-react` OpenBao reader AppRole credentials and routing
    variables, then run `tools/release/cut-tag.sh <version> --dry-run`.

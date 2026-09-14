@@ -35,6 +35,8 @@ All notable changes to fortemi-react are documented here.
 - Patch the pinned Vitest runner's exact-boundary progress timer so the last
   hook update is retained when a test is interrupted, without extending deadlines.
 - Align the release checklist with the configured full workspace unit-test gate.
+- Stage local workspace acceptance into bounded Core partitions, global coverage
+  merge and complete consumer tests, with source/runtime/artifact-bound receipts.
 
 This is release preparation, not a publication or lane-acceptance receipt.
 Installed candidate checks against the unreleased producer do not establish

@@ -7,6 +7,7 @@ apps/standalone/playwright-report/
 apps/standalone/test-results/
 /playwright-report/
 /test-results/
+/packages/core/test-results/
 tmux-*.log
 .claude/
 .agents/

@@ -188,7 +188,7 @@ jobs:
           apt-get install -y --no-install-recommends jq
           tools/release/cut-tag.test.sh
       - name: Release artifact and publication handoff tests
-        run: node --test tools/release/*.test.mjs
+        run: node --test --test-concurrency=1 tools/release/*.test.mjs
       - name: Core partition completeness and coverage gate tests
         run: node --test --test-concurrency=1 packages/core/scripts/ci-unit-partitions.test.mjs packages/core/scripts/ci-progress-reporter.test.mjs packages/core/scripts/bounded-suite-sequencer.test.mjs packages/core/scripts/runner-progress-throttle.test.mjs
       - name: Immutable candidate search authority

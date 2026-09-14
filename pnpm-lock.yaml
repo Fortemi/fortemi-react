@@ -22,6 +22,9 @@ importers:
       eslint:
         specifier: ^9.0.0
         version: 9.39.4
+      js-yaml:
+        specifier: 4.1.1
+        version: 4.1.1
       tar:
         specifier: 7.5.13
         version: 7.5.13

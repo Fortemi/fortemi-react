@@ -1,8 +1,36 @@
 metadata:
   schema_version: 1.0.0
-  updated_at: 2026-09-14T19:31:48.029Z
-  record_count: 161
+  updated_at: 2026-09-14T20:17:31Z
+  record_count: 175
 records:
+  - entity: urn:aiwg:artifact:.aiwg/release.config
+    record: records/lane-b-staged-workspace-cycle128.prov.yaml
+  - entity: urn:aiwg:artifact:.gitea/workflows/ci.yml
+    record: records/lane-b-staged-workspace-cycle128.prov.yaml
+  - entity: urn:aiwg:artifact:.gitignore
+    record: records/lane-b-staged-workspace-cycle128.prov.yaml
+  - entity: urn:aiwg:artifact:CHANGELOG.md
+    record: records/lane-b-staged-workspace-cycle128.prov.yaml
+  - entity: urn:aiwg:artifact:docs/content/advanced/deployment.md
+    record: records/lane-b-staged-workspace-cycle128.prov.yaml
+  - entity: urn:aiwg:artifact:docs/content/releases/v2026.9.6.md
+    record: records/lane-b-staged-workspace-cycle128.prov.yaml
+  - entity: urn:aiwg:artifact:package.json
+    record: records/lane-b-staged-workspace-cycle128.prov.yaml
+  - entity: urn:aiwg:artifact:pnpm-lock.yaml
+    record: records/lane-b-staged-workspace-cycle128.prov.yaml
+  - entity: urn:aiwg:artifact:tools/release/README.md
+    record: records/lane-b-staged-workspace-cycle128.prov.yaml
+  - entity: urn:aiwg:artifact:tools/release/workspace-stages.mjs
+    record: records/lane-b-staged-workspace-cycle128.prov.yaml
+  - entity: urn:aiwg:artifact:tools/release/workspace-stages.test.mjs
+    record: records/lane-b-staged-workspace-cycle128.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/.last-doc-sync
+    record: records/lane-b-staged-workspace-cycle128.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/doc-sync-last-run.json
+    record: records/lane-b-staged-workspace-cycle128.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/doc-sync-20260914-staged-workspace.md
+    record: records/lane-b-staged-workspace-cycle128.prov.yaml
   - entity: urn:aiwg:artifact:patches/vitest-runner-4.1.1-progress.patch
     record: records/lane-b-progress-timer-cycle127.prov.yaml
   - entity: urn:aiwg:artifact:patches/README.md

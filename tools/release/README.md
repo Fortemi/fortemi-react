@@ -1,5 +1,48 @@
 # Release Artifact Reproducibility
 
+## Staged Local Workspace Acceptance
+
+The local release gate executes these commands as separate bounded jobs, in this
+order, in one clean committed owned worktree with the pinned package manager:
+
+```bash
+node tools/release/workspace-stages.mjs core-1
+node tools/release/workspace-stages.mjs core-2
+node tools/release/workspace-stages.mjs core-3
+node tools/release/workspace-stages.mjs core-merge
+node tools/release/workspace-stages.mjs consumers
+node tools/release/workspace-stages.mjs verify
+```
+
+On Titan, launch each through the suite's detached local-test runner, one job at
+a time. Keep its2CPU,8GiB,zero-swap,256-task,network/device/Docker restrictions and
+900-second bound. The stage itself has an825-second deadline including discovery.
+Do not run this sequence as a foreground bulk command or combine it into one
+runner job. Other hosts must use their approved bounded execution environment.
+
+The stages reuse the existing Core partition/merge implementation. Native reports,
+blobs, progress and global coverage remain required. `consumers` builds Core,
+tests/builds Graph, tests React and runs every example workspace with a test script.
+Discovery and native JSON reports must match. Unsupported test-script changes
+require review instead of being silently skipped. The original monolithic
+`pnpm test:workspace` convenience command remains, but does not fit Titan's normal
+job budget and is no longer the configured local release execution route.
+
+Receipts under `test-results/local-workspace/` bind clean source, lock/config,
+runtime, command sequence and native artifacts. `verify` requires every stage,
+the unchanged79percent global statement threshold and all consumer reports.
+Only its `complete.json` is aggregate workspace acceptance. Failed stages retain
+their logs/failure records and prevent later acceptance. Do not overwrite or
+delete them to force a retry: preserve the owned worktree/evidence, diagnose the
+failure, and prepare a fresh owned run. A missing receipt is not a passing stage.
+
+This is only the workspace gate. Typecheck, lint, full build, bounded release
+browser acceptance, exact-head CI, stable UAT and publication verification remain
+separate requirements. No test case, profile/platform requirement, shared service
+or resource limit is removed by the staged route.
+
+## Packed Artifacts
+
 Both registry workflows build with the pinned toolchain, run `pnpm pack`, then
 run `normalize-packed-manifest.mjs` on all three unpublished tarballs before
 inspection, checksum creation, upload or publication. Publication consumes those
