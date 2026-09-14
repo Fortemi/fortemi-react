@@ -32,6 +32,8 @@ All notable changes to fortemi-react are documented here.
   all browser projects, resource-event receipts and owned-container cleanup.
 - Retain bounded Core CI progress diagnostics alongside native test, coverage
   and partition-completeness reports without relaxing their acceptance gates.
+- Patch the pinned Vitest runner's exact-boundary progress timer so the last
+  hook update is retained when a test is interrupted, without extending deadlines.
 - Align the release checklist with the configured full workspace unit-test gate.
 
 This is release preparation, not a publication or lane-acceptance receipt.

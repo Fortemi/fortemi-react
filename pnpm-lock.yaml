@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@vitest/runner@4.1.1':
+    hash: b019eb3deef9a24d8446ccb79a0edeca4674e988d5b783e2b42d30b407e2b8aa
+    path: patches/vitest-runner-4.1.1-progress.patch
+
 importers:
 
   .:
@@ -3983,7 +3988,7 @@ snapshots:
       '@vitest/utils': 4.1.0
       pathe: 2.0.3
 
-  '@vitest/runner@4.1.1':
+  '@vitest/runner@4.1.1(patch_hash=b019eb3deef9a24d8446ccb79a0edeca4674e988d5b783e2b42d30b407e2b8aa)':
     dependencies:
       '@vitest/utils': 4.1.1
       pathe: 2.0.3
@@ -5605,7 +5610,7 @@ snapshots:
       '@vitest/expect': 4.1.1
       '@vitest/mocker': 4.1.1(vite@7.3.1(@types/node@22.19.15))
       '@vitest/pretty-format': 4.1.1
-      '@vitest/runner': 4.1.1
+      '@vitest/runner': 4.1.1(patch_hash=b019eb3deef9a24d8446ccb79a0edeca4674e988d5b783e2b42d30b407e2b8aa)
       '@vitest/snapshot': 4.1.1
       '@vitest/spy': 4.1.1
       '@vitest/utils': 4.1.1

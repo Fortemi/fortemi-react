@@ -1,8 +1,26 @@
 metadata:
   schema_version: 1.0.0
-  updated_at: 2026-09-14T17:45:49.030Z
-  record_count: 152
+  updated_at: 2026-09-14T19:31:48.029Z
+  record_count: 161
 records:
+  - entity: urn:aiwg:artifact:patches/vitest-runner-4.1.1-progress.patch
+    record: records/lane-b-progress-timer-cycle127.prov.yaml
+  - entity: urn:aiwg:artifact:patches/README.md
+    record: records/lane-b-progress-timer-cycle127.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/runner-progress-throttle.test.mjs
+    record: records/lane-b-progress-timer-cycle127.prov.yaml
+  - entity: urn:aiwg:artifact:pnpm-lock.yaml
+    record: records/lane-b-progress-timer-cycle127.prov.yaml
+  - entity: urn:aiwg:artifact:pnpm-workspace.yaml
+    record: records/lane-b-progress-timer-cycle127.prov.yaml
+  - entity: urn:aiwg:artifact:.gitea/workflows/ci.yml
+    record: records/lane-b-progress-timer-cycle127.prov.yaml
+  - entity: urn:aiwg:artifact:.aiwg/reports/progress-timer-cycle127.md
+    record: records/lane-b-progress-timer-cycle127.prov.yaml
+  - entity: urn:aiwg:artifact:CHANGELOG.md
+    record: records/lane-b-progress-timer-cycle127.prov.yaml
+  - entity: urn:aiwg:artifact:docs/content/releases/v2026.9.6.md
+    record: records/lane-b-progress-timer-cycle127.prov.yaml
   - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
     record: records/lane-b-core-context-owned-views-cycle96.prov.yaml
   - entity: urn:aiwg:artifact:.aiwg/reports/lane-b-core-context-owned-views-cycle96.json

@@ -15,3 +15,6 @@ minimumReleaseAgeExclude:
 
 # Reject git+, tarball URL, file:, and link: subdependency sources.
 blockExoticSubdeps: true
+
+patchedDependencies:
+  '@vitest/runner@4.1.1': patches/vitest-runner-4.1.1-progress.patch

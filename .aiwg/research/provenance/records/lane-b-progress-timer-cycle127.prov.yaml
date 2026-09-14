@@ -1,0 +1,32 @@
+metadata:
+  schema_version: 1.0.0
+entity:
+  id: urn:aiwg:artifact:patches/vitest-runner-4.1.1-progress.patch
+  type: code
+activity:
+  id: urn:aiwg:activity:lane-b-progress-timer:127
+  type: modification
+  description: >-
+    Correct a deterministically reproduced exact-boundary timer defect in the
+    installed pinned test runner, retaining the real interruption assertion,
+    all existing cases, timeouts and coverage gates.
+agent:
+  id: urn:aiwg:agent:codex
+  type: ai_assistant
+relationships:
+  wasGeneratedBy:
+    entity: urn:aiwg:artifact:patches/vitest-runner-4.1.1-progress.patch
+    activity: urn:aiwg:activity:lane-b-progress-timer:127
+  wasAssociatedWith:
+    activity: urn:aiwg:activity:lane-b-progress-timer:127
+    agent: urn:aiwg:agent:codex
+  wasDerivedFrom:
+    entity: urn:aiwg:artifact:patches/vitest-runner-4.1.1-progress.patch
+    source: https://github.com/vitest-dev/vitest/blob/v4.1.1/packages/runner/src/run.ts#L466
+verification:
+  unpatched_probe: 1_pass_2_fail
+  patched_tooling: 36_pass_0_fail
+  frozen_offline_install: PASS
+  root_lint: PASS
+  unchanged_interrupt_ms: 5000
+  exact_head_ci: required
