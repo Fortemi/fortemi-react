@@ -190,7 +190,7 @@ jobs:
       - name: Release artifact and publication handoff tests
         run: node --test tools/release/*.test.mjs
       - name: Core partition completeness and coverage gate tests
-        run: node --test packages/core/scripts/ci-unit-partitions.test.mjs
+        run: node --test packages/core/scripts/ci-unit-partitions.test.mjs packages/core/scripts/ci-progress-reporter.test.mjs
       - name: Immutable candidate search authority
         run: |
           node --test packages/core/scripts/verify-metadata-search-source.test.mjs

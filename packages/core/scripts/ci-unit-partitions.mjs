@@ -90,9 +90,9 @@ export function verifyPartitions(entries, identity, partitions) {
   return allCases
 }
 
-function run(root, args, capture = false) {
+function run(root, args, capture = false, extraEnv = {}) {
   const result = spawnSync(process.execPath, [cli, ...args], {
-    cwd: root, env: { ...process.env, VITEST_MAX_WORKERS: '2' },
+    cwd: root, env: { ...process.env, VITEST_MAX_WORKERS: '2', ...extraEnv },
     ...(capture ? { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 } : { stdio: 'inherit' }),
     timeout: 26 * 60 * 1000,
   })
@@ -122,9 +122,11 @@ export async function execute(args, { coreRoot = core, repositoryRoot = repo } =
     mkdirSync(output)
     const blobPath = join(output, 'blob.json')
     const reportPath = join(output, 'report.json')
+    const progressPath = join(output, 'progress.json')
     run(coreRoot, ['run', '--maxWorkers=2', '--coverage', '--coverage.thresholds.statements=0', '--coverage.reporter=json-summary',
-      '--reporter=default', '--reporter=blob', '--reporter=json', '--outputFile.blob=' + blobPath, '--outputFile.json=' + reportPath,
-      '--shard=' + partition + '/' + partitionCount])
+      '--reporter=default', '--reporter=blob', '--reporter=json', '--reporter=' + join(import.meta.dirname, 'ci-progress-reporter.mjs'),
+      '--outputFile.blob=' + blobPath, '--outputFile.json=' + reportPath,
+      '--shard=' + partition + '/' + partitionCount], false, { FORTEMI_CI_PROGRESS: progressPath })
     const reportBytes = readFileSync(reportPath)
     const cases = reportCases(JSON.parse(reportBytes), coreRoot)
     assert.deepEqual(sorted(Object.keys(cases)), partitions[partition - 1])
@@ -137,7 +139,7 @@ export async function execute(args, { coreRoot = core, repositoryRoot = repo } =
   assert.deepEqual(sorted(readdirSync(evidence)), ['1', '2', '3'], 'Unexpected partition directories')
   const entries = partitions.map((_, index) => {
     const dir = join(evidence, String(index + 1))
-    assert.deepEqual(sorted(readdirSync(dir)), ['blob.json', 'receipt.json', 'report.json'])
+    assert.deepEqual(sorted(readdirSync(dir)), ['blob.json', 'progress.json', 'receipt.json', 'report.json'])
     const reportBytes = readFileSync(join(dir, 'report.json'))
     return { receipt: json(join(dir, 'receipt.json')), report: JSON.parse(reportBytes), reportBytes, blobBytes: readFileSync(join(dir, 'blob.json')) }
   })

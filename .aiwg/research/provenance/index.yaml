@@ -1,6 +1,6 @@
 metadata:
   schema_version: 1.0.0
-  updated_at: 2026-09-13T22:44:51.079Z
+  updated_at: 2026-09-14T01:08:53.934Z
   record_count: 146
 records:
   - entity: urn:aiwg:artifact:.aiwg/adrs/ADR-016-typed-metadata-search-candidate.md
@@ -619,3 +619,13 @@ records:
     record: records/release-prep-2026.9.6.prov.yaml
   - entity: urn:aiwg:artifact:packages/react/package.json
     record: records/release-prep-2026.9.6.prov.yaml
+  - entity: urn:aiwg:artifact:.gitea/workflows/ci.yml
+    record: records/lane-b-ci-progress-cycle117.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/ci-unit-partitions.mjs
+    record: records/lane-b-ci-progress-cycle117.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/ci-unit-partitions.test.mjs
+    record: records/lane-b-ci-progress-cycle117.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/ci-progress-reporter.mjs
+    record: records/lane-b-ci-progress-cycle117.prov.yaml
+  - entity: urn:aiwg:artifact:packages/core/scripts/ci-progress-reporter.test.mjs
+    record: records/lane-b-ci-progress-cycle117.prov.yaml

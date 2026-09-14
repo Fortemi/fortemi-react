@@ -1,0 +1,61 @@
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "created_at": "2026-09-14T01:08:53.934Z"
+  },
+  "entity": {
+    "id": "urn:aiwg:artifact:packages/core/scripts/ci-progress-reporter.mjs",
+    "type": "code",
+    "created_at": "2026-09-14T01:08:53.934Z",
+    "checksum": "sha256:fa8e29cf9bae360f94f9a7fe6b7c1cc8986709e12216c7830c772ba8b25c3b03"
+  },
+  "activity": {
+    "id": "urn:aiwg:activity:ci-progress:117",
+    "type": "modification",
+    "started_at": "2026-09-14T01:08:53.934Z",
+    "ended_at": "2026-09-14T01:08:53.934Z",
+    "description": "Retain bounded per-module lifecycle diagnostics during interrupted CI. Preserve all tests, coverage thresholds, inventories and time limits; remote timeout cause remains unproven."
+  },
+  "agent": {
+    "id": "urn:aiwg:agent:codex",
+    "type": "ai_assistant",
+    "name": "Codex"
+  },
+  "relationships": {
+    "wasGeneratedBy": {
+      "entity": "urn:aiwg:artifact:packages/core/scripts/ci-progress-reporter.mjs",
+      "activity": "urn:aiwg:activity:ci-progress:117"
+    },
+    "wasAssociatedWith": {
+      "activity": "urn:aiwg:activity:ci-progress:117",
+      "agent": "urn:aiwg:agent:codex"
+    },
+    "wasAttributedTo": {
+      "entity": "urn:aiwg:artifact:packages/core/scripts/ci-progress-reporter.mjs",
+      "agent": "urn:aiwg:agent:codex"
+    }
+  },
+  "artifacts": {
+    ".gitea/workflows/ci.yml": "85ca25db46eeb5d65952ebcf8d72e1cd52cc445828cd6a5d1e636ae393e2244c",
+    "packages/core/scripts/ci-unit-partitions.mjs": "41e886f48e535364c2f3f978af2eb060c80b827a4c906f394a2e11c0c1b98f3e",
+    "packages/core/scripts/ci-unit-partitions.test.mjs": "f345b9ec34b6aff67e266f1652edf578c545c04ddb1d95e670b9a4edbd0799f0",
+    "packages/core/scripts/ci-progress-reporter.mjs": "fa8e29cf9bae360f94f9a7fe6b7c1cc8986709e12216c7830c772ba8b25c3b03",
+    "packages/core/scripts/ci-progress-reporter.test.mjs": "77fc8d30157e391a0e22d68e59df033d3fea55967718a25cda46117d5d98e62a"
+  },
+  "verification": {
+    "unit": "fortemi-local-test-1000-0a1b01dd-57e4-4a0b-8a4e-9dda04a21bad.service",
+    "steps": [
+      {
+        "name": "tests",
+        "status": 0,
+        "signal": null
+      },
+      {
+        "name": "lint",
+        "status": 0,
+        "signal": null
+      }
+    ],
+    "scope": "29 focused and full partition-verifier tests plus root lint; diagnostic change only, not a proven remote timeout fix."
+  }
+}

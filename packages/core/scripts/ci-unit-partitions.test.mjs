@@ -86,6 +86,12 @@ test('actual three-shard runner merges complete coverage and fails closed on rep
   const root = fixture(100)
   try {
     for (const i of [1, 2, 3]) await execute(['run', String(i)], { coreRoot: root })
+    for (const i of [1, 2, 3]) {
+      const progress = JSON.parse(readFileSync(join(root, 'test-results/core-shards', String(i), 'progress.json')))
+      assert.equal(progress.phase, 'passed')
+      assert.equal(progress.completedTests, 1)
+      assert.deepEqual(progress.active, {})
+    }
     await assert.rejects(execute(['run', '1'], { coreRoot: root }), /EEXIST/)
     mkdirSync(join(root, 'test-results/core-shards/4'))
     await assert.rejects(execute(['merge'], { coreRoot: root }), /Unexpected partition/)
@@ -145,7 +151,7 @@ test('fixed-path worktrees merge unmodified blobs from different checkout locati
       await execute(['run', String(i)], options)
       const output = join(artifacts, String(i))
       mkdirSync(output, { recursive: true })
-      for (const name of ['blob.json', 'receipt.json', 'report.json']) {
+      for (const name of ['blob.json', 'progress.json', 'receipt.json', 'report.json']) {
         copyFileSync(join(workspace, 'test-results/core-shards', String(i), name), join(output, name), constants.COPYFILE_EXCL)
       }
       const receipt = JSON.parse(readFileSync(join(output, 'receipt.json')))
@@ -157,7 +163,7 @@ test('fixed-path worktrees merge unmodified blobs from different checkout locati
     for (const i of [1, 2, 3]) {
       const output = join(workspace, 'test-results/core-shards', String(i))
       mkdirSync(output, { recursive: true })
-      for (const name of ['blob.json', 'receipt.json', 'report.json']) {
+      for (const name of ['blob.json', 'progress.json', 'receipt.json', 'report.json']) {
         const sourceFile = join(artifacts, String(i), name)
         copyFileSync(sourceFile, join(output, name), constants.COPYFILE_EXCL)
         assert.equal(digest(readFileSync(join(output, name))), digest(readFileSync(sourceFile)))
